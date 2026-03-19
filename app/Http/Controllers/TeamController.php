@@ -13,6 +13,9 @@ class TeamController extends Controller
      */
     public function index()
     {
+        $user = auth()->user();
+        if (!$user->can('module teams')) abort(403);
+
         // N+1 query problem
         // $team = Team::all();
 
@@ -20,9 +23,18 @@ class TeamController extends Controller
         //$teams = Team::with('users')->get();
 
         // Eager loading with pivot tables
-        $teams = Team::with(['users', 'leaders'])
-            ->latest()
-            ->paginate(10);
+        $query = Team::with(['users', 'leaders'])
+            ->latest();
+
+        if ($user->can('view teams')) {
+            // no filter — see all
+        } elseif ($user->can('view own teams')) {
+            $query->whereHas('users', fn($q) => $q->where('users.id', $user->id));
+        } else {
+            abort(403);
+        }
+
+        $teams = $query->paginate(10);
 
         return view('teams.index', compact('teams'));
     }
@@ -32,6 +44,8 @@ class TeamController extends Controller
      */
     public function create()
     {
+        if (!auth()->user()->can('edit teams')) abort(403);
+
         return view('teams.form', [
             'users' => User::all(),
             'team' => null
@@ -43,6 +57,8 @@ class TeamController extends Controller
      */
     public function store(Request $request)
     {
+        if (!auth()->user()->can('edit teams')) abort(403);
+
         $request->validate([
             'name' => 'required|string|max:255',
             'users' => 'array',
@@ -73,6 +89,17 @@ class TeamController extends Controller
      */
     public function show(Team $team)
     {
+        $user = auth()->user();
+        if (!$user->can('module teams')) abort(403);
+
+        if ($user->can('view teams')) {
+            // no restriction
+        } elseif ($user->can('view own teams')) {
+            if (!$team->users()->where('users.id', $user->id)->exists()) abort(403);
+        } else {
+            abort(403);
+        }
+
         $team->load('users'); // eager load
 
         return view('teams.show', compact('team'));
@@ -83,6 +110,8 @@ class TeamController extends Controller
      */
     public function edit(Team $team)
     {
+        if (!auth()->user()->can('edit teams')) abort(403);
+
         $team->load('users');
 
         return view('teams.form', [
@@ -96,6 +125,8 @@ class TeamController extends Controller
      */
     public function update(Request $request, Team $team)
     {
+        if (!auth()->user()->can('edit teams')) abort(403);
+
         $request->validate([
             'name' => 'required|string|max:255',
             'users' => 'array',
@@ -130,6 +161,8 @@ class TeamController extends Controller
      */
     public function destroy(Team $team)
     {
+        if (!auth()->user()->can('delete teams')) abort(403);
+
         $team->users()->detach(); // optional cleanup
         $team->delete();
 

@@ -5,11 +5,11 @@
                 Roles
             </h2>
 
-            <a href="{{ route('roles.create') }}">
-                <x-primary-button>
-                    Create Role
-                </x-primary-button>
-            </a>
+            @can('edit roles')
+			    <a href="{{ route('roles.create') }}">
+			        <x-primary-button>Create Role</x-primary-button>
+			    </a>
+			@endcan
         </div>
     </x-slot>
 
@@ -93,21 +93,21 @@
                                 <!-- Actions -->
                                 <td class="px-6 py-4 text-right space-x-2">
 
-                                    <a href="{{ route('roles.edit', $role) }}">
-                                        <x-secondary-button>
-                                            Edit
-                                        </x-secondary-button>
-                                    </a>
+                                    @can('edit roles')
+									    <a href="{{ route('roles.edit', $role) }}">
+									        <x-secondary-button>Edit</x-secondary-button>
+									    </a>
+									@endcan
 
-                                    <form method="POST" action="{{ route('roles.destroy', $role) }}" class="inline">
-                                        @csrf
-                                        @method('DELETE')
-
-                                        <x-danger-button onclick="return confirm('Delete this role?')">
-                                            Delete
-                                        </x-danger-button>
-                                    </form>
-
+                                    @can('delete roles')
+									    <form method="POST" action="{{ route('roles.destroy', $role) }}" class="inline">
+									        @csrf
+									        @method('DELETE')
+									        <x-danger-button onclick="return confirm('Delete this role?')">
+									            Delete
+									        </x-danger-button>
+									    </form>
+									@endcan
                                 </td>
 
                             </tr>

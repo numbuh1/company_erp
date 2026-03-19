@@ -10,6 +10,8 @@ class RoleController extends Controller
 {
     public function index()
     {
+        if (!auth()->user()->can('module roles')) abort(403);
+
         $roles = Role::with(['permissions.parent'])->get();
 
         return view('roles.index', compact('roles'));
@@ -17,6 +19,8 @@ class RoleController extends Controller
 
     public function create()
     {
+        if (!auth()->user()->can('edit roles')) abort(403);
+
         $permissions = Permission::whereNull('parent_id')
             ->with('children')
             ->get();
@@ -26,6 +30,8 @@ class RoleController extends Controller
 
     public function store(Request $request)
     {
+        if (!auth()->user()->can('edit roles')) abort(403);
+
         $request->validate([
             'name' => 'required|unique:roles,name',
             'permissions' => 'array'
@@ -41,6 +47,8 @@ class RoleController extends Controller
 
     public function edit(Role $role)
     {
+        if (!auth()->user()->can('edit roles')) abort(403);
+
         $permissions = Permission::whereNull('parent_id')
             ->with('children')
             ->get();
@@ -51,6 +59,8 @@ class RoleController extends Controller
 
     public function update(Request $request, Role $role)
     {
+        if (!auth()->user()->can('edit roles')) abort(403);
+
         $request->validate([
             'name' => 'required|unique:roles,name,' . $role->id,
             'permissions' => 'array'
@@ -66,6 +76,8 @@ class RoleController extends Controller
 
     public function destroy(Role $role)
     {
+        if (!auth()->user()->can('delete roles')) abort(403);
+
         $role->delete();
 
         return redirect()->route('roles.index')

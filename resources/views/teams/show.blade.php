@@ -6,9 +6,11 @@
             </h2>
 
             <div class="space-x-2">
-                <a href="{{ route('teams.edit', $team) }}">
-                    <x-secondary-button>Edit</x-secondary-button>
-                </a>
+                @can('edit teams')
+                    <a href="{{ route('teams.edit', $team) }}">
+                        <x-secondary-button>Edit</x-secondary-button>
+                    </a>
+                @endcan
 
                 <a href="{{ route('teams.index') }}">
                     <x-secondary-button>Back</x-secondary-button>

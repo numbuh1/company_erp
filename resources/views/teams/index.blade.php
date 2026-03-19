@@ -5,11 +5,13 @@
                 Teams
             </h2>
 
-            <a href="{{ route('teams.create') }}">
-                <x-primary-button>
-                    Create Team
-                </x-primary-button>
-            </a>
+            @can('edit teams')
+                <a href="{{ route('teams.create') }}">
+                    <x-primary-button>
+                        Create Team
+                    </x-primary-button>
+                </a>
+            @endcan
         </div>
     </x-slot>
 
@@ -71,20 +73,24 @@
                                         </x-secondary-button>
                                     </a>
 
-                                    <a href="{{ route('teams.edit', $team) }}">
-                                        <x-secondary-button>
-                                            Edit
-                                        </x-secondary-button>
-                                    </a>
+                                    @can('edit teams')
+                                        <a href="{{ route('teams.edit', $team) }}">
+                                            <x-secondary-button>
+                                                Edit
+                                            </x-secondary-button>
+                                        </a>
+                                    @endcan
 
-                                    <form method="POST" action="{{ route('teams.destroy', $team) }}" class="inline">
-                                        @csrf
-                                        @method('DELETE')
+                                    @can('delete teams')
+                                        <form method="POST" action="{{ route('teams.destroy', $team) }}" class="inline">
+                                            @csrf
+                                            @method('DELETE')
 
-                                        <x-danger-button onclick="return confirm('Delete this team?')">
-                                            Delete
-                                        </x-danger-button>
-                                    </form>
+                                            <x-danger-button onclick="return confirm('Delete this team?')">
+                                                Delete
+                                            </x-danger-button>
+                                        </form>
+                                    @endcan
 
                                 </td>
 
