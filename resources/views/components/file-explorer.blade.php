@@ -100,7 +100,8 @@
 
                 @forelse($items as $item)
                     @php
-                        $canManageItem = $canManageAll || $item->uploaded_by === auth()->id();
+                        $canManageItem   = $canManageAll || $item->uploaded_by === auth()->id();
+                        $canDeleteItem   = $canManageAll || (!$item->is_folder && $item->uploaded_by === auth()->id());
                         $renameUrl     = route($routePrefix . '.files.rename', [$model, $item]);
                         $deleteUrl     = route($routePrefix . '.files.delete', [$model, $item]);
                         $downloadUrl   = route($routePrefix . '.files.download', [$model, $item]);
@@ -168,7 +169,9 @@
                                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H9v-2.414A2 2 0 019.586 13z"/></svg>
                                         <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-0.5 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Rename</span>
                                     </button>
+                                @endif
 
+                                @if($canDeleteItem)
                                     {{-- Delete --}}
                                     <form method="POST" action="{{ $deleteUrl }}" class="inline">
                                         @csrf @method('DELETE')

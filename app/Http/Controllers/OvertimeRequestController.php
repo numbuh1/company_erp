@@ -4,7 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\OvertimeRequest;
 use App\Models\User;
-use Helper\Helper;
+use App\Helper\Helper;
+use App\Helper\NotificationHelper;
 use Illuminate\Http\Request;
 
 class OvertimeRequestController extends Controller
@@ -76,7 +77,7 @@ class OvertimeRequestController extends Controller
      */
     public function show(OvertimeRequest $overtimeRequest)
     {
-        $this->authorize('view all ot', 'view team ot');
+        Helper::authorizeRequest('view all ot', 'view team ot', $overtimeRequest);
 
         return view('overtime_requests.form', [
             'ot'       => $overtimeRequest,
@@ -94,7 +95,7 @@ class OvertimeRequestController extends Controller
             abort(403, 'Cannot edit an approved or rejected OT request.');
         }
 
-        $this->authorize('edit all ot', 'edit team ot');
+        Helper::authorizeRequest('edit all ot', 'edit team ot', $overtimeRequest);
 
         return view('overtime_requests.form', [
             'ot'    => $overtimeRequest,
@@ -107,7 +108,7 @@ class OvertimeRequestController extends Controller
      */
     public function update(Request $request, OvertimeRequest $overtimeRequest)
     {
-        $this->authorize('edit all ot', 'edit team ot');
+        Helper::authorizeRequest('edit all ot', 'edit team ot', $overtimeRequest);
 
         $data = $request->validate([
             'user_id'     => 'required|exists:users,id',
@@ -131,7 +132,7 @@ class OvertimeRequestController extends Controller
             abort(403, 'Cannot delete an approved or rejected OT request.');
         }
 
-        $this->authorize('delete all ot', 'delete team ot');
+        Helper::authorizeRequest('delete all ot', 'delete team ot', $overtimeRequest);
 
         $overtimeRequest->delete();
         return back()->with('success', 'OT request deleted.');
@@ -143,13 +144,15 @@ class OvertimeRequestController extends Controller
     public function approve(OvertimeRequest $overtimeRequest)
     {
         $user = auth()->user();
-        $this->authorize('approve all ot', 'approve team ot');        
+        Helper::authorizeRequest('approve all ot', 'approve team ot', $overtimeRequest);        
 
         $overtimeRequest->update([
             'status'        => 'approved',
             'approved_by'   => $user->id,
             'reject_reason' => null,
         ]);
+
+        NotificationHelper::sendRequestApprovalNotification($overtimeRequest, 'ot');
 
         return back()->with('success', 'OT request approved.');
     }
@@ -160,7 +163,7 @@ class OvertimeRequestController extends Controller
     public function reject(Request $request, OvertimeRequest $overtimeRequest)
     {
         $user = auth()->user();
-        $this->authorize('approve all ot', 'approve team ot');        
+        Helper::authorizeRequest('approve all ot', 'approve team ot', $overtimeRequest);        
 
         $data = $request->validate(['reject_reason' => 'required|string|max:500']);
 
@@ -170,23 +173,25 @@ class OvertimeRequestController extends Controller
             'reject_reason' => $data['reject_reason'],
         ]);
 
+        NotificationHelper::sendRequestApprovalNotification($overtimeRequest, 'ot');
+
         return back()->with('success', 'OT request rejected.');
     }
 
-    public function authorize(string $all_permission, string $team_permission) {
-        $user = auth()->user();
+    // public function authorize(string $all_permission, string $team_permission, $overtimeRequest) {
+    //     $user = auth()->user();
 
-        if (!$user->can($all_permission)) {
-            if(!$user->can($team_permission)) {
-                return abort(403);
-            }
+    //     if (!$user->can($all_permission)) {
+    //         if(!$user->can($team_permission)) {
+    //             return abort(403);
+    //         }
 
-            $check_leader = Helper::checkLeadOfTeamMate($leaveRequest->user);
-            if(!$check_leader) {
-                return abort(403);
-            }
-        }
+    //         $check_leader = Helper::checkLeadOfTeamMate($overtimeRequest->user);
+    //         if(!$check_leader) {
+    //             return abort(403);
+    //         }
+    //     }
 
-        return true;
-    }
+    //     return true;
+    // }
 }

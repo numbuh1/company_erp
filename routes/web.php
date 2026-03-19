@@ -11,6 +11,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TimeLogController;
+use App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -52,7 +53,7 @@ Route::middleware('auth')->group(function () {
     Route::post('overtime-requests/{overtimeRequest}/reject', [OvertimeRequestController::class, 'reject'])
         ->name('overtime-requests.reject');
 
-        
+
     Route::get('/projects/search', [ProjectController::class, 'search'])->name('projects.search');
     Route::get('/tasks/search', [TaskController::class, 'search'])->name('tasks.search');
 
@@ -77,6 +78,8 @@ Route::middleware('auth')->group(function () {
         ->name('announcements.upload-image');
     Route::resource('announcements', AnnouncementController::class);
 
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/mark-read', [NotificationController::class, 'mark-read'])->name('notifications.mark-read'); 
 });
 
 require __DIR__.'/auth.php';

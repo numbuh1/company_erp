@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\LeaveRequest;
 use App\Models\User;
 use App\Models\LeaveBalanceLog;
-use Helper\Helper;
+use App\Helper\Helper;
+use App\Helper\NotificationHelper;
 use Illuminate\Http\Request;
 
 class LeaveRequestController extends Controller
@@ -19,7 +20,7 @@ class LeaveRequestController extends Controller
 
         $query = LeaveRequest::with('user', 'approver');
 
-        // 👇 View team leaves
+        // View team leaves
         if ($user->can('view all leaves')) {
             // No condition
         } else if ($user->can('view team leaves')) {
@@ -41,18 +42,28 @@ class LeaveRequestController extends Controller
     public function create()
     {
         $user = auth()->user();
-        $query = User::query();
 
-        if ($user->can('view all leaves')) {
-           // No filter
-        } elseif ($user->can('view team leaves')) {
-            $teamUserIds = $user->teamMembers()->pluck('id');
-            $query->whereIn('id', $teamUserIds);
+        if ($user->can('edit all leaves')) {
+            $users = User::orderBy('name')->get();
+        } elseif ($user->can('edit team leaves')) {
+            $ledTeamIds = $user->teams()->wherePivot('is_leader', true)->pluck('teams.id');
+            if ($ledTeamIds->isEmpty()) {
+                // Has permission but leads no team — can only create for self
+                $users = collect([$user]);
+            } else {
+                $memberIds = \App\Models\Team::whereIn('id', $ledTeamIds)
+                    ->with('users')
+                    ->get()
+                    ->flatMap->users
+                    ->pluck('id')
+                    ->unique();
+                $users = User::whereIn('id', $memberIds)->orderBy('name')->get();
+            }
+        } elseif ($user->can('edit own leaves')) {
+            $users = collect([$user]);
         } else {
-            $query->where('id', $user->id);
+            abort(403);
         }
-
-        $users = $query->get();
 
         return view('leave_requests.form', compact('users'));
     }
@@ -62,17 +73,30 @@ class LeaveRequestController extends Controller
      */
     public function store(Request $request)
     {
+        $user = auth()->user();
+
+        if (!$user->can('edit all leaves') && !$user->can('edit team leaves') && !$user->can('edit own leaves')) {
+            abort(403);
+        }
+
         $request->validate([
-            'start_at' => 'required|date',
-            'end_at' => 'required|date|after_or_equal:start_at',
-            'type' => 'required|string',
+            'start_at'    => 'required|date',
+            'end_at'      => 'required|date|after_or_equal:start_at',
+            'type'        => 'required|string',
             'description' => 'nullable|string',
         ]);
 
-        $user = auth()->user();
+        $requestedUserId = $request->user_id;
 
-        // 👇 If no permission, can only create own
-        if (!$user->can('edit team leaves') && !$user->can('edit all leaves')) {
+        if ($user->can('edit all leaves')) {
+            // Any user_id allowed — keep as-is
+        } elseif ($user->can('edit team leaves') && $requestedUserId && $requestedUserId != $user->id) {
+            // Creating for someone else — must be their team leader
+            $targetUser = User::findOrFail($requestedUserId);
+            if (!Helper::checkLeadOfTeamMate($targetUser)) {
+                $request->merge(['user_id' => $user->id]);
+            }
+        } else {
             $request->merge(['user_id' => $user->id]);
         }
 
@@ -87,7 +111,7 @@ class LeaveRequestController extends Controller
     public function show(LeaveRequest $leaveRequest)
     {
         $user = auth()->user();
-        $this->authorize('view all leaves', 'view team leaves');
+        Helper::authorizeRequest('view all leaves', 'view team leaves', $leaveRequest);
 
         $user_show = User::where('id', $leaveRequest->user_id)->get();
 
@@ -103,11 +127,23 @@ class LeaveRequestController extends Controller
      */
     public function edit(LeaveRequest $leaveRequest)
     {
+        $user = auth()->user();
+
         if (in_array($leaveRequest->status, ['approved', 'rejected'])) {
             abort(403, 'Cannot edit an approved or rejected leave request.');
         }
 
-        $this->authorize('edit all leaves', 'edit team leaves');
+        if ($user->can('edit all leaves')) {
+            // allowed
+        } elseif ($user->can('edit team leaves')) {
+            if ($leaveRequest->user_id !== $user->id) {
+                if (!Helper::checkLeadOfTeamMate($leaveRequest->user)) abort(403);
+            }
+        } elseif ($user->can('edit own leaves')) {
+            if ($leaveRequest->user_id !== $user->id) abort(403);
+        } else {
+            abort(403);
+        }
 
         return view('leave_requests.form', [
             'leave' => $leaveRequest,
@@ -121,14 +157,25 @@ class LeaveRequestController extends Controller
     public function update(Request $request, LeaveRequest $leaveRequest)
     {
         $user = auth()->user();
-        $this->authorize('edit all leaves', 'edit team leaves');
+
+        if ($user->can('edit all leaves')) {
+            // allowed
+        } elseif ($user->can('edit team leaves')) {
+            if ($leaveRequest->user_id !== $user->id) {
+                if (!Helper::checkLeadOfTeamMate($leaveRequest->user)) abort(403);
+            }
+        } elseif ($user->can('edit own leaves')) {
+            if ($leaveRequest->user_id !== $user->id) abort(403);
+        } else {
+            abort(403);
+        }
 
         $data = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'type' => 'required|string',
-            'start_at' => 'required|date',
-            'end_at' => 'required|date|after:start_at',
-            'hours' => 'required|numeric|min:0',
+            'user_id'     => 'required|exists:users,id',
+            'type'        => 'required|string',
+            'start_at'    => 'required|date',
+            'end_at'      => 'required|date|after:start_at',
+            'hours'       => 'required|numeric|min:0',
             'description' => 'nullable|string',
         ]);
 
@@ -155,7 +202,7 @@ class LeaveRequestController extends Controller
     public function approve(LeaveRequest $leaveRequest)
     {
         $user = auth()->user();
-        $this->authorize('approve all leaves', 'approve team leaves');
+        Helper::authorizeRequest('approve all leaves', 'approve team leaves', $leaveRequest);
 
         // If annual leave => Deduct leave balance and log it
         if ($leaveRequest->type == 'annual') {
@@ -179,6 +226,18 @@ class LeaveRequestController extends Controller
             'reject_reason' => null
         ]);
 
+        NotificationHelper::sendRequestApprovalNotification($leaveRequest, 'leave');
+
+        // NotificationHelper::send(
+        //     receivingUser: $leaveRequest->user,
+        //     title: 'Leave Request Approved',
+        //     description: 'Your ' . $leaveRequest->type . ' leave request (' .
+        //         $leaveRequest->start_at->format('d/m/Y') . ' – ' .
+        //         $leaveRequest->end_at->format('d/m/Y') . ') has been approved.',
+        //     url: route('leave-requests.index'),
+        //     incomingUser: auth()->user(),
+        // );
+
         return back()->with('success', 'Leave approved.');
     }
 
@@ -189,7 +248,7 @@ class LeaveRequestController extends Controller
     public function reject(Request $request, LeaveRequest $leaveRequest)
     {
         $user = auth()->user();
-        $this->authorize('approve all leaves', 'approve team leaves');
+        Helper::authorizeRequest('approve all leaves', 'approve team leaves', $leaveRequest);
 
         $data = $request->validate([
             'reject_reason' => 'required|string|max:500'
@@ -201,23 +260,35 @@ class LeaveRequestController extends Controller
             'reject_reason' => $data['reject_reason']
         ]);
 
+        // NotificationHelper::send(
+        //     receivingUser: $leaveRequest->user,
+        //     title: 'Leave Request Rejected',
+        //     description: 'Your ' . $leaveRequest->type . ' leave request (' .
+        //         $leaveRequest->start_at->format('d/m/Y') . ' – ' .
+        //         $leaveRequest->end_at->format('d/m/Y') . ') has been rejected.',
+        //     url: route('leave-requests.index'),
+        //     incomingUser: auth()->user(),
+        // );
+
+        NotificationHelper::sendRequestApprovalNotification($leaveRequest, 'leave');
+
         return back()->with('success', 'Leave rejected.');
     }
 
-    public function authorize(string $all_permission, string $team_permission) {
-        $user = auth()->user();
+    // public function authorize(string $all_permission, string $team_permission, $leaveRequest) {
+    //     $user = auth()->user();
 
-        if (!$user->can($all_permission)) {
-            if(!$user->can($team_permission)) {
-                return abort(403);
-            }
+    //     if (!$user->can($all_permission)) {
+    //         if(!$user->can($team_permission)) {
+    //             return abort(403);
+    //         }
 
-            $check_leader = Helper::checkLeadOfTeamMate($leaveRequest->user);
-            if(!$check_leader) {
-                return abort(403);
-            }
-        }
+    //         $check_leader = Helper::checkLeadOfTeamMate($leaveRequest->user);
+    //         if(!$check_leader) {
+    //             return abort(403);
+    //         }
+    //     }
 
-        return true;
-    }
+    //     return true;
+    // }
 }

@@ -11,7 +11,17 @@
     <div class="py-12">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
-                <form method="POST" action="{{ isset($task) ? route('tasks.update', $task) : route('tasks.store') }}">
+                <form method="POST" action="{{ isset($task) ? route('tasks.update', $task) : route('tasks.store') }}"
+                    x-data="{
+                        selectedProject: '{{ old('project_id', $task->project_id ?? $default_project_id ?? '') }}',
+                        projectMembers: {{ Js::from($projectMembers) }},
+                        isUserAllowed(userId) {
+                            if (!this.selectedProject) return true;
+                            const members = this.projectMembers[this.selectedProject];
+                            if (!members || members.length === 0) return true;
+                            return members.includes(userId);
+                        }
+                    }">
                     @csrf
                     @if(isset($task)) @method('PUT') @endif
 
@@ -26,7 +36,7 @@
                     {{-- Project --}}
                     <div class="mb-4">
                         <x-input-label for="project_id" value="Linked Project" />
-                        <select id="project_id" name="project_id"
+                        <select id="project_id" name="project_id" x-model="selectedProject"
                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                             <option value="">— None (standalone) —</option>
                             @foreach($projects as $project)
@@ -98,8 +108,10 @@
                             class="mt-2 mb-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500" />
                         <div id="assignee-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-700 rounded-md p-3">
                             @foreach($users as $user)
-                                <label class="assignee-item flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                                <label class="assignee-item flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
+                                    x-show="isUserAllowed({{ $user->id }})">
                                     <input type="checkbox" name="assignees[]" value="{{ $user->id }}"
+                                        :disabled="!isUserAllowed({{ $user->id }})"
                                         {{ in_array($user->id, old('assignees', isset($task) ? $task->assignees->pluck('id')->toArray() : [])) ? 'checked' : '' }}
                                         class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" />
                                     {{ $user->name }}

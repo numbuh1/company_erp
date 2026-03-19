@@ -28,12 +28,18 @@ class TaskController extends Controller
     public function create()
     {
         if (!auth()->user()->can('edit tasks')) abort(403);
+        $projects = Project::with(['users', 'teams.users'])->orderBy('name')->get();
+        $projectMembers = $projects->mapWithKeys(fn($p) => [
+            $p->id => $p->users->pluck('id')
+                ->merge($p->teams->flatMap->users->pluck('id'))
+                ->unique()->values()->toArray()
+        ]);
         return view('tasks.form', [
-            'projects'          => Project::orderBy('name')->get(),
-            'users'             => User::orderBy('name')->get(),
+            'projects'           => $projects,
+            'users'              => User::orderBy('name')->get(),
+            'projectMembers'     => $projectMembers,
             'default_project_id' => request('project_id'),
         ]);
-
     }
 
     /**
@@ -90,12 +96,20 @@ class TaskController extends Controller
             if (!$user->can('edit assigned tasks') || !$this->_isAssigned($task, $user)) abort(403);
         }
 
+        $projects = Project::with(['users', 'teams.users'])->orderBy('name')->get();
+        $projectMembers = $projects->mapWithKeys(fn($p) => [
+            $p->id => $p->users->pluck('id')
+                ->merge($p->teams->flatMap->users->pluck('id'))
+                ->unique()->values()->toArray()
+        ]);
         $task->load('assignees');
         return view('tasks.form', [
-            'task'     => $task,
-            'projects' => Project::orderBy('name')->get(),
-            'users'    => User::orderBy('name')->get(),
+            'task'           => $task,
+            'projects'       => $projects,
+            'users'          => User::orderBy('name')->get(),
+            'projectMembers' => $projectMembers,
         ]);
+
     }
 
     /**

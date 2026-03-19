@@ -8,6 +8,7 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/js/app.js',
                 'resources/js/leave_requests/form.js',
+                'resources/js/overtime_requests/form.js',
                 'resources/js/roles/form.js',
                 'resources/js/teams/form.js',
                 'resources/js/users/form.js',

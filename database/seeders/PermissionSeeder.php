@@ -199,6 +199,8 @@ class PermissionSeeder extends Seeder
             'edit projects' => 'Create/Edit Projects',
             'edit assigned projects' => 'Edit Assigned Projects',
             'delete projects' => 'Delete All Projects',
+            'edit own project files' => 'Upload/Edit Own Files',
+            'edit all project files' => 'Upload/Edit All Files & Folders',
         ];
 
         foreach ($project_permissions as $name => $label) {

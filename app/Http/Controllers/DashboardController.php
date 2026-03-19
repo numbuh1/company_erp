@@ -63,7 +63,7 @@ class DashboardController extends Controller
 
         // ── In Progress tasks nearing deadline (≤ 5 days) ─────────
         $deadlineQuery = Task::with(['project', 'assignees'])
-            ->where('status', 'In Progress')
+            ->whereNot('status', 'Done')
             ->whereNotNull('expected_end_date')
             ->where('expected_end_date', '>=', now()->toDateString())
             ->where('expected_end_date', '<=', now()->addDays(5)->toDateString())

@@ -98,7 +98,10 @@ class ProjectController extends Controller
             ->latest()
             ->get();
 
-        return view('projects.show', compact('project', 'items', 'currentFolder', 'breadcrumb', 'activities'));
+        $canUpload    = $user->can('edit all project files') || $user->can('edit own project files');
+        $canManageAll = $user->can('edit all project files');
+
+        return view('projects.show', compact('project', 'items', 'currentFolder', 'breadcrumb', 'activities', 'canUpload', 'canManageAll'));
     }
 
 
@@ -186,7 +189,8 @@ class ProjectController extends Controller
     public function uploadFile(Request $request, Project $project)
     {
         $user = auth()->user();
-        if (!$this->_filePermission($project, $user)) abort(403);
+        if (!$this->_canAccessProject($project, $user)) abort(403);
+        if (!$user->can('edit all project files') && !$user->can('edit own project files')) abort(403);
 
         $request->validate([
             'file'      => 'required|file|max:51200',
@@ -221,7 +225,15 @@ class ProjectController extends Controller
     public function deleteItem(Project $project, ProjectFile $file)
     {
         $user = auth()->user();
-        if (!$this->_filePermission($project, $user)) abort(403);
+        if (!$this->_canAccessProject($project, $user)) abort(403);
+        if ($user->can('edit all project files')) {
+            // allowed — fall through
+        } elseif ($user->can('edit own project files')) {
+            if ($file->is_folder || $file->uploaded_by !== $user->id) abort(403);
+        } else {
+            abort(403);
+        }
+
 
         $itemName = $file->name;
         $itemType = $file->is_folder ? 'folder' : 'file';
@@ -252,7 +264,7 @@ class ProjectController extends Controller
     public function createFolder(Request $request, Project $project)
     {
         $user = auth()->user();
-        if (!$this->_filePermission($project, $user)) abort(403);
+        if (!$this->_canAccessProject($project, $user)) abort(403);
 
         $request->validate([
             'name'      => 'required|string|max:255',
@@ -276,7 +288,15 @@ class ProjectController extends Controller
     public function renameItem(Request $request, Project $project, ProjectFile $file)
     {
         $user = auth()->user();
-        if (!$user->can('edit projects') && $file->uploaded_by !== $user->id) abort(403);
+        if (!$this->_canAccessProject($project, $user)) abort(403);
+        if ($user->can('edit all project files')) {
+            // allowed — fall through
+        } elseif ($user->can('edit own project files')) {
+            if ($file->is_folder || $file->uploaded_by !== $user->id) abort(403);
+        } else {
+            abort(403);
+        }
+
 
         $request->validate(['name' => 'required|string|max:255']);
 
@@ -371,16 +391,10 @@ class ProjectController extends Controller
     /**
      * Check if current user is assigned to the Project
      */
-    private function _filePermission(Project $project, $user)
+    private function _canAccessProject(Project $project, $user): bool
     {
-        if (!$user->can('view all projects')) {
-            if ($user->can('view assigned projects') && $this->_isAssigned($project, $user)) {
-                return true;
-            } else {
-                return false;
-            }
-        }
-
-        return true;
+        return $user->can('view all projects') ||
+               ($user->can('view assigned projects') && $this->_isAssigned($project, $user));
     }
+
 }

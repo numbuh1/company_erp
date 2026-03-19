@@ -59,7 +59,7 @@
 
                         <!-- LEFT: Unassigned -->
                         <div>
-                            <h3 class="font-bold mb-2">Unassigned Users</h3>
+                            <h3 class="font-bold mb-2 text-gray-800 dark:text-gray-200">Unassigned Users</h3>
 
                             <input 
                                 type="text" 
@@ -68,13 +68,13 @@
                                 id="search-unassigned"
                             >
 
-                            <div id="unassigned-list" class="border rounded p-3 min-h-[300px] space-y-2">
+                            <div id="unassigned-list" class="border border-gray-300 dark:border-gray-600 rounded p-3 min-h-[300px] space-y-2">
                                 @foreach($unassigned as $user)
                                     <div class="user-item flex items-center justify-between" data-id="{{ $user->id }}">
                                         
                                         <label class="flex items-center space-x-2">
                                             <input type="checkbox" class="assign-toggle">
-                                            <span>{{ $user->name }}</span>
+                                            <span class="text-sm text-gray-800 dark:text-gray-200">{{ $user->name }}</span>
                                         </label>
 
                                         <!-- hidden input -->
@@ -86,7 +86,7 @@
 
                         <!-- RIGHT: Assigned -->
                         <div>
-                            <h3 class="font-bold mb-2">Assigned Users</h3>
+                            <h3 class="font-bold mb-2 text-gray-800 dark:text-gray-200">Assigned Users</h3>
 
                             <input 
                                 type="text" 
@@ -101,7 +101,7 @@
                                         
                                         <label class="flex items-center space-x-2">
                                             <input type="checkbox" class="assign-toggle" checked>
-                                            <span>{{ $item['model']->name }}</span>
+                                            <span class="text-sm text-gray-800 dark:text-gray-200">{{ $item['model']->name }}</span>
                                         </label>
 
                                         <div class="flex items-center space-x-2">
@@ -114,7 +114,7 @@
                                                     value="{{ $item['model']->id }}"
                                                     {{ $item['is_leader'] ? 'checked' : '' }}
                                                 >
-                                                <span>Leader</span>
+                                                <span class="text-sm text-gray-700 dark:text-gray-300">Leader</span>
                                             </label>
                                         </div>
 

@@ -7,6 +7,16 @@
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
+        <!-- Dark mode init (must be before CSS to avoid flash) -->
+        <script>
+            (function() {
+                const theme = localStorage.getItem('theme');
+                if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.documentElement.classList.add('dark');
+                }
+            })();
+        </script>
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
@@ -33,6 +43,28 @@
                 {{ $slot }}
             </main>
         </div>
+        <script>
+            function toggleDarkMode() {
+                const html = document.documentElement;
+                const isDark = html.classList.toggle('dark');
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            }
+
+            function markNotificationsRead() {
+                const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                fetch('{{ route("notifications.mark-read") }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': token,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                }).then(() => {
+                    const badge = document.querySelector('[x-ref="badge"]');
+                    if (badge) badge.remove();
+                }).catch(() => {});
+            }
+        </script>
         @stack('scripts')
     </body>
 </html>
