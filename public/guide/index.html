@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A6-ERP User Guide</title>
+    <style>
+        /* ── Reset & Base ── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --sidebar-w: 260px;
+            --accent:    #4f46e5;
+            --accent-lt: #eef2ff;
+            --text:      #1e293b;
+            --muted:     #64748b;
+            --border:    #e2e8f0;
+            --bg:        #f8fafc;
+            --white:     #ffffff;
+            --green:     #16a34a;
+            --green-lt:  #dcfce7;
+            --blue:      #1d4ed8;
+            --blue-lt:   #dbeafe;
+            --amber:     #b45309;
+            --amber-lt:  #fef3c7;
+            --red:       #dc2626;
+            --red-lt:    #fee2e2;
+            --radius:    8px;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--text);
+            background: var(--bg);
+            display: flex;
+        }
+
+        /* ── Sidebar ── */
+        #toc {
+            position: fixed;
+            top: 0; left: 0;
+            width: var(--sidebar-w);
+            height: 100vh;
+            background: var(--white);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 24px 0 40px;
+            z-index: 100;
+        }
+
+        #toc .toc-brand {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 12px;
+        }
+
+        #toc .toc-brand span {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        #toc .toc-brand strong {
+            font-size: 16px;
+            color: var(--text);
+        }
+
+        #toc ul { list-style: none; }
+
+        #toc > ul > li > a {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 20px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--muted);
+            text-decoration: none;
+            transition: color .15s, background .15s;
+            border-left: 3px solid transparent;
+        }
+
+        #toc > ul > li > a:hover,
+        #toc > ul > li > a.active {
+            color: var(--accent);
+            background: var(--accent-lt);
+            border-left-color: var(--accent);
+        }
+
+        #toc > ul > li > a .icon {
+            width: 18px;
+            text-align: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        /* ── Main Content ── */
+        #content {
+            margin-left: var(--sidebar-w);
+            flex: 1;
+            min-width: 0;
+            padding: 48px 56px 80px;
+            max-width: 900px;
+        }
+
+        /* ── Typography ── */
+        h1 {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 6px;
+            line-height: 1.2;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 15px;
+            margin-bottom: 40px;
+        }
+
+        h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text);
+            margin: 56px 0 16px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border);
+            scroll-margin-top: 24px;
+        }
+
+        h2 .num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text);
+            margin: 28px 0 10px;
+            scroll-margin-top: 24px;
+        }
+
+        p { margin-bottom: 12px; }
+
+        a { color: var(--accent); }
+
+        strong { font-weight: 600; }
+
+        ul, ol {
+            padding-left: 22px;
+            margin-bottom: 14px;
+        }
+
+        li { margin-bottom: 4px; }
+
+        /* ── Tables ── */
+        .table-wrap { overflow-x: auto; margin: 16px 0 24px; border-radius: var(--radius); border: 1px solid var(--border); }
+
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+
+        thead { background: #f1f5f9; }
+
+        th {
+            padding: 10px 14px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: var(--muted);
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+
+        tr:last-child td { border-bottom: none; }
+
+        tr:hover td { background: #f8fafc; }
+
+        td code {
+            background: #f1f5f9;
+            color: var(--accent);
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            white-space: nowrap;
+        }
+
+        /* ── Code / Badges ── */
+        code {
+            background: #f1f5f9;
+            color: var(--accent);
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+
+        /* ── Callout Boxes ── */
+        .callout {
+            display: flex;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: var(--radius);
+            margin: 16px 0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+        .callout.info    { background: var(--blue-lt);  border-left: 4px solid var(--blue); }
+        .callout.tip     { background: var(--green-lt); border-left: 4px solid var(--green); }
+        .callout.warning { background: var(--amber-lt); border-left: 4px solid var(--amber); }
+        .callout.danger  { background: var(--red-lt);   border-left: 4px solid var(--red); }
+
+        /* ── Status Badges ── */
+        .badge {
+            display: inline-block;
+            padding: 2px 9px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-gray   { background: #f1f5f9; color: #475569; }
+        .badge-blue   { background: var(--blue-lt);  color: var(--blue); }
+        .badge-green  { background: var(--green-lt); color: var(--green); }
+        .badge-amber  { background: var(--amber-lt); color: var(--amber); }
+        .badge-red    { background: var(--red-lt);   color: var(--red); }
+        .badge-indigo { background: var(--accent-lt); color: var(--accent); }
+
+        /* ── Steps ── */
+        .steps { counter-reset: step; list-style: none; padding: 0; margin: 12px 0 20px; }
+
+        .steps li {
+            counter-increment: step;
+            display: flex;
+            gap: 14px;
+            margin-bottom: 10px;
+            align-items: flex-start;
+        }
+
+        .steps li::before {
+            content: counter(step);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            min-width: 26px;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: 700;
+            margin-top: 1px;
+        }
+
+        /* ── Section divider ── */
+        .section-intro {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        /* ── Keyboard Shortcut ── */
+        kbd {
+            display: inline-block;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 1px 7px;
+            font-size: 12px;
+            font-family: monospace;
+        }
+
+        /* ── Header hero ── */
+        .hero {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            border-radius: 12px;
+            padding: 36px 40px;
+            margin-bottom: 48px;
+            color: white;
+        }
+
+        .hero h1 { color: white; font-size: 28px; margin-bottom: 6px; }
+        .hero p  { color: rgba(255,255,255,.8); margin: 0; font-size: 14px; }
+
+        /* ── Feature Grid ── */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 16px 0 24px;
+        }
+
+        .feature-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+            font-size: 13px;
+        }
+
+        .feature-card .fc-icon { font-size: 20px; margin-bottom: 6px; }
+        .feature-card strong   { display: block; margin-bottom: 2px; font-size: 14px; }
+        .feature-card span     { color: var(--muted); font-size: 12px; }
+
+        /* ── Scroll-spy highlight ── */
+        section { scroll-margin-top: 20px; }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            #toc { display: none; }
+            #content { margin-left: 0; padding: 24px 20px 60px; }
+        }
+
+        @media print {
+            #toc { display: none; }
+            #content { margin-left: 0; }
+        }
+
+        .guide-img {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════
+     SIDEBAR TABLE OF CONTENTS
+════════════════════════════════════════════════ -->
+<nav id="toc">
+    <div class="toc-brand">
+        <span>Documentation</span>
+        <strong>A6-ERP User Guide</strong>
+    </div>
+    <ul>
+        <li><a href="#getting-started"><span class="icon">🚀</span> Getting Started</a></li>
+        <li><a href="#navigation"><span class="icon">🧭</span> Navigation</a></li>
+        <li><a href="#dashboard"><span class="icon">📊</span> Dashboard</a></li>
+        <li><a href="#announcements"><span class="icon">📢</span> Announcements</a></li>
+        <li><a href="#projects"><span class="icon">📁</span> Projects</a></li>
+        <li><a href="#tasks"><span class="icon">✅</span> Tasks</a></li>
+        <li><a href="#timesheet"><span class="icon">⏱️</span> Timesheet</a></li>
+        <li><a href="#teams"><span class="icon">👥</span> Teams</a></li>
+        <li><a href="#users"><span class="icon">👤</span> Users</a></li>
+        <li><a href="#leave-requests"><span class="icon">🏖️</span> Leave Requests</a></li>
+        <li><a href="#ot-requests"><span class="icon">🕐</span> OT Requests</a></li>
+        <li><a href="#roles"><span class="icon">🔑</span> Roles &amp; Permissions</a></li>
+        <li><a href="#notifications"><span class="icon">🔔</span> Notifications</a></li>
+        <li><a href="#dark-mode"><span class="icon">🌙</span> Dark Mode</a></li>
+        <li><a href="#permission-reference"><span class="icon">📋</span> Permission Reference</a></li>
+    </ul>
+</nav>
+
+<!-- ════════════════════════════════════════════════
+     MAIN CONTENT
+════════════════════════════════════════════════ -->
+<main id="content">
+
+    <!-- Hero -->
+    <div class="hero">
+        <h1>A6-ERP User Guide</h1>
+        <p>Everything you need to know to use the platform — from logging time to managing leave requests.</p>
+    </div>
+
+    <!-- ── Module Overview ── -->
+    <div class="feature-grid">
+        <div class="feature-card"><div class="fc-icon">📊</div><strong>Dashboard</strong><span>Your daily overview</span></div>
+        <div class="feature-card"><div class="fc-icon">📢</div><strong>Announcements</strong><span>Company-wide posts</span></div>
+        <div class="feature-card"><div class="fc-icon">📁</div><strong>Projects</strong><span>Manage work & files</span></div>
+        <div class="feature-card"><div class="fc-icon">✅</div><strong>Tasks</strong><span>Track individual work</span></div>
+        <div class="feature-card"><div class="fc-icon">⏱️</div><strong>Timesheet</strong><span>Log & review hours</span></div>
+        <div class="feature-card"><div class="fc-icon">👥</div><strong>Teams</strong><span>Organise people</span></div>
+        <div class="feature-card"><div class="fc-icon">👤</div><strong>Users</strong><span>Accounts & profiles</span></div>
+        <div class="feature-card"><div class="fc-icon">🏖️</div><strong>Leave</strong><span>Request time off</span></div>
+        <div class="feature-card"><div class="fc-icon">🕐</div><strong>Overtime</strong><span>Log extra hours</span></div>
+        <div class="feature-card"><div class="fc-icon">🔑</div><strong>Roles</strong><span>Access control</span></div>
+    </div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <section id="getting-started">
+        <h2><span class="num">1</span> Getting Started</h2>
+
+        <img class="guide-img" src="/guide/01-login.png">
+
+        <h3>Logging In</h3>
+        <p>Navigate to the application URL and sign in with your <strong>email and password</strong>. All features require authentication — you will be redirected to the login page if you are not signed in.</p>
+
+        <h3>Access Control</h3>
+        <p>What you can see and do depends on the <strong>permissions assigned to your role</strong>. If you try to access a page you do not have permission for, you will see a <code>403 Forbidden</code> error.</p>
+
+        <div class="callout info">
+            <span class="callout-icon">ℹ️</span>
+            <div>Contact your administrator to request additional access. Permissions are managed through the <strong>Roles</strong> module.</div>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════ -->
+    <section id="navigation">
+        <h2><span class="num">2</span> Navigation</h2>
+
+        <img class="guide-img" src="/guide/02-layout.png">
+
+        <h3>Top Bar</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Element</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Logo / App Name</strong></td><td>Click to go to the Dashboard</td></tr>
+                    <tr><td><strong>Dark Mode Toggle</strong></td><td>Sun/Moon icon — switches between light and dark theme (saved automatically)</td></tr>
+                    <tr><td><strong>Bell Icon</strong></td><td>Notifications with unread count badge; click to preview the latest 5 unread notifications</td></tr>
+                    <tr><td><strong>Profile Menu</strong></td><td>Your name — dropdown with Profile settings and Log Out</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Left Sidebar</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Group</th><th>Links</th></tr></thead>
+                <tbody>
+                    <tr><td>—</td><td>Dashboard</td></tr>
+                    <tr><td><strong>Work</strong></td><td>Announcements, Projects, Tasks, Timesheet</td></tr>
+                    <tr><td><strong>People</strong></td><td>Teams, Users</td></tr>
+                    <tr><td><strong>Requests</strong></td><td>Leave Requests, OT Requests</td></tr>
+                    <tr><td><strong>Admin</strong></td><td>Roles</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="callout info">
+            <span class="callout-icon">ℹ️</span>
+            <div>All links on the left sidebar can be shown/hidden based on user's roles, which is set up in the Roles module.</div>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════ -->
+    <section id="dashboard">
+        <h2><span class="num">3</span> Dashboard</h2>
+        <p class="section-intro">A quick overview of what matters most — your time, leave, upcoming deadlines, and pending actions.</p>
+
+        <img class="guide-img" src="/guide/03-dashboard.png">
+
+        <h3>Stats Bar</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Card</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Leave Balance</strong></td><td>Your remaining leave hours</td></tr>
+                    <tr><td><strong>This Week</strong></td><td>Total hours you have logged this week</td></tr>
+                    <tr><td><strong>This Month</strong></td><td>Total hours you have logged this month</td></tr>
+                    <tr><td><strong>OT This Month</strong></td><td>Your approved overtime hours this month</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Announcements Panel <em>(left)</em></h3>
+        <ul>
+            <li>Shows the <strong>latest announcement</strong> with full rendered content.</li>
+            <li>Below it, a list of the <strong>5 previous announcements</strong> with links to read each one.</li>
+        </ul>
+
+        <h3>Notifications Panel <em>(right)</em></h3>
+        <p>Three sections stacked vertically:</p>
+
+        <p><strong>Pending Approvals</strong> — visible to approvers only. Lists pending Leave and OT requests waiting for your review, with direct links to action them.</p>
+
+        <p><strong>Upcoming Approved Leaves</strong> — approved leaves happening in the next <strong>14 days</strong>. Shows your own leaves, or your team's/all users' if you have broader access.</p>
+
+        <p><strong>Tasks Nearing Deadline</strong> — In Progress tasks with an expected end date <strong>within 5 days</strong>. Click a task name to view its details.</p>
+    </section>
+
+    <!-- ══════════════════════════════════════════ -->
+    <section id="announcements">
+        <h2><span class="num">4</span> Announcements</h2>
+        <p class="section-intro">Company-wide posts with rich text formatting — bold, italic, lists, headings, and embedded images.</p>
+
+        <img class="guide-img" src="/guide/04-1-announcement-list.png">
+
+        <h3>Viewing Announcements</h3>
+        <p>The index page lists all announcements as cards. Click a title to read the full content on its own page.</p>
+
+        <img class="guide-img" src="/guide/04-3-announcement-show.png">
+
+        <h3>Creating an Announcement</h3>
+        <div class="callout info"><span class="callout-icon">🔑</span><div>Requires the <code>Create/Edit Announcements</code> permission.</div></div>
+        <ol class="steps">
+            <li>Click <strong>New Announcement</strong> on the index page.</li>
+            <li>Enter a <strong>Title</strong>.</li>
+            <li>Write your content using the rich text editor. Use the toolbar for formatting.</li>
+            <li>To insert an image, click the image icon in the toolbar — it uploads automatically.</li>
+            <li>Click <strong>Save</strong>.</li>
+        </ol>
+
+        <h3>Editing &amp; Deleting</h3>
+        <ul>
+            <li><strong>Edit</strong> — available on the index card and the show page with <code>Create/Edit Announcements</code> permission.</li>
+            <li><strong>Delete</strong> — requires <code>Delete Announcements</code> permission.</li>
+        </ul>
+
+        <img class="guide-img" src="/guide/04-2-announcement-edit.png">
+    </section>
+
+    <!-- ══════════════════════════════════════════ -->
+    <section id="projects">
+        <h2><span class="num">5</span> Projects</h2>
+        <p class="section-intro">Track large bodies of work with assigned teams, members, files, and tasks.</p>
+
+        <h3>Project ID Format</h3>
+        <p>Every project has a unique identifier: <code>PJ-{number}</code> (e.g. <code>PJ-12</code>). This appears in list views and inside task/time-log references.</p>
+
+        <img class="guide-img" src="/guide/05-1-project-list.png">
+
+        <h3>Index Page Columns</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Column</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>ID</strong></td><td>Clickable <code>PJ-{n}</code> link to the detail page</td></tr>
+                    <tr><td><strong>Name</strong></td><td>Project name</td></tr>
+                    <tr><td><strong>Status</strong></td><td><span class="badge badge-gray">Not Started</span> <span class="badge badge-blue">In Progress</span> <span class="badge badge-green">Done</span></td></tr>
+                    <tr><td><strong>Teams</strong></td><td>Assigned teams</td></tr>
+                    <tr><td><strong>Members</strong></td><td>Count of directly assigned users</td></tr>
+                    <tr><td><strong>Dates</strong></td><td>Start and expected end date</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Project Detail Page</h3>
+
+        <img class="guide-img" src="/guide/05-2-project-show.png">
+
+        <p><strong>Left Panel — Details</strong></p>
+        <ul>
+            <li>Status, description, start and end dates</li>
+            <li>Assigned teams and members</li>
+            <li><strong>Activity Log</strong> — full change history (who changed what and when)</li>
+        </ul>
+
+        <p><strong>Right Panel — Work</strong></p>
+        <ul>
+            <li><strong>File Explorer</strong> — manage files and folders</li>
+            <li><strong>Tasks</strong> — all tasks in this project with status and progress</li>
+            <li><strong>Log Time</strong> button — quick link to log time against this project</li>
+        </ul>
+
+        <h3>File Explorer</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Action</th><th>How</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Navigate</strong></td><td>Click a folder name; use the breadcrumb to go back up</td></tr>
+                    <tr><td><strong>Upload</strong></td><td>Click Upload or drag a file into the explorer</td></tr>
+                    <tr><td><strong>Create Folder</strong></td><td>Click the New Folder button</td></tr>
+                    <tr><td><strong>Rename</strong></td><td>Click the rename icon next to any file or folder</td></tr>
+                    <tr><td><strong>Download</strong></td><td>Click the download icon to save locally</td></tr>
+                    <tr><td><strong>Delete</strong></td><td>Click the delete icon — this cannot be undone</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="callout info">
+            <span class="callout-icon">🔑</span>
+            <div>Users with  <code>Upload/Edit Own Files</code> permission can only upload and modify their own files and folders.<br>
+            Users with  <code>Upload/Edit All Files & Folders</code> permission can modify everything regardless of who create them.</div>
+        </div>
+
+        <h3>Editing &amp; Deleting</h3>
+        <ul>
+            <li><strong>Create</strong> — available on the index card with <code>Create/Edit Projects</code> permission.</li>
+            <li><strong>Edit</strong> — available on the index card and the show page with <code>Create/Edit Projects</code> permission.</li>
+            <li><strong>Delete</strong> — requires <code>Delete Projects</code> permission.</li>
+        </ul>
+
+        <img class="guide-img" src="/guide/05-3-project-edit.png">
+    </section>
+
+    <!-- ══════════════════════════════════════════ -->
+    <section id="tasks">
+        <h2><span class="num">6</span> Tasks</h2>
+        <p class="section-intro">Units of work that can be standalone or linked to a project. Each task can have multiple assignees and a progress percentage.</p>
+
+        <h3>Task ID Format</h3>
+        <p>Every task has a unique identifier: <code>TK-{number}</code> (e.g. <code>TK-7</code>).</p>
+
+        <img class="guide-img" src="/guide/06-1-task-list.png">
+
+        <h3>Index Page Columns</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Column</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>ID</strong></td><td>Clickable <code>TK-{n}</code> link</td></tr>
+                    <tr><td><strong>Name</strong></td><td>Task name</td></tr>
+                    <tr><td><strong>Status</strong></td><td>Badge: Not Started / In Progress / Done</td></tr>
+                    <tr><td><strong>Project</strong></td><td>Linked project's <code>PJ-{n}</code> (if any)</td></tr>
+                    <tr><td><strong>Assignees</strong></td><td>Users assigned to the task</td></tr>
+                    <tr><td><strong>Progress</strong></td><td>Visual progress bar (0–100%)</td></tr>
+                    <tr><td><strong>Dates</strong></td><td>Start and expected end date</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Task Detail Page</h3>
+        
+        <img class="guide-img" src="/guide/06-2-task-show.png">
+
+        <ul>
+            <li>Task ID badge, name, status badge</li>
+            <li>Linked project (if any)</li>
+            <li>Description, progress bar</li>
+            <li>Start, expected end, and actual end dates</li>
+            <li>Assignees list</li>
+            <li><strong>Activity Log</strong> — all changes</li>
+            <li><strong>Edit</strong> and <strong>Log Time</strong> buttons <em>(permission-gated)</em></li>
+        </ul>
+
+        <h3>Statuses</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Status</th><th>Meaning</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="badge badge-gray">Not Started</span></td><td>Work has not begun</td></tr>
+                    <tr><td><span class="badge badge-blue">In Progress</span></td><td>Currently being worked on</td></tr>
+                    <tr><td><span class="badge badge-green">Done</span></td><td>Completed</td></tr>
+                </tbody>
+            </table>
+        </div>        
+    </section>
+
+    <!-- ══════════════════════════════════════════ -->
+    <section id="timesheet">
+        <h2><span class="num">7</span> Timesheet</h2>
+        <p class="section-intro">Two views for tracking time — a filterable log list and a weekly grid.</p>
+
+        <h3>Log List — <code>/time-logs</code></h3>
+        <p>A table of all time entries. Available filters: User, Team, Date, Project, Task.</p>
+        <p>Each row shows: Date · User (if visible) · Context (Task / Project / Other) · Description · Time Spent formatted as <code>Xh Ym</code>.</p>
+
+        <img class="guide-img" src="/guide/07-1-timelog-list.png">
+
+        <h3>Logging Time</h3>
+        <p>Click <strong>Log Time</strong> on the time-log index, project detail, or task detail pages.</p>
+
+        <img class="guide-img" src="/guide/07-3-timelog-edit.png">
+
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Field</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Date</strong></td><td>Date worked (defaults to today)</td></tr>
+                    <tr><td><strong>Project</strong></td><td>Optional — link to a project</td></tr>
+                    <tr><td><strong>Task</strong></td><td>Optional — filtered to the selected project's tasks</td></tr>
+                    <tr><td><strong>Description</strong></td><td>What you worked on</td></tr>
+                    <tr><td><strong>Time Spent</strong></td><td>Decimal hours (e.g. <code>1.5</code> = 1h 30m). Min: 0.25 · Max: 24</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="callout tip">
+            <span class="callout-icon">⚡</span>
+            <div><strong>Quick-time buttons</strong> (30m, 1h, 2h, 4h, 8h) fill the time field instantly — no need to type.</div>
+        </div>
+
+        <h3>Weekly View — <code>/timesheets/weekly</code></h3>
+        <p>A grid showing the current week. Days are columns; tasks/projects/other are rows.</p>
+        <ul>
+            <li>Use <strong>Prev / Next</strong> to navigate weeks, or click <strong>This Week</strong> to return.</li>
+            <li><strong>Hover</strong> over any time cell to see the log description in a tooltip.</li>
+            <li>The <strong>Today</strong> column is highlighted.</li>
+            <li><strong>Day totals</strong> appear in the bottom row; the <strong>week total</strong> in the bottom-right.</li>
+            <li>Click a cell to view that log entry (or a filtered list if multiple entries exist that day).</li>
+        </ul>
+
+        <img class="guide-img" src="/guide/07-2-timelog-weekly.png">
+
+        <div class="callout info">
+            <span class="callout-icon">ℹ️</span>
+            <div>With team/all timesheet permissions, use the <strong>User</strong> or <strong>Team</strong> filter to view other users' weekly logs.</div>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════ -->
+    <section id="teams">
+        <h2><span class="num">8</span> Teams</h2>
+        <p class="section-intro">Teams group users together. They are used for scoping leave/OT approvals, timesheet visibility, and project assignment.</p>
+
+        <h3>Index Page</h3>
+        <p>Lists all teams <em>(or only your own teams, depending on your permission)</em> with member count, leader names, and action buttons.</p>
+
+        <img class="guide-img" src="/guide/08-1-team-list.png">
+
+        <h3>Team Detail Page</h3>
+        <p>Shows two panels side by side:</p>
+        <ul>
+            <li><strong>Leaders</strong> — users who lead the team</li>
+            <li><strong>Members</strong> — regular members</li>
+        </ul>
+
+        <img class="guide-img" src="/guide/08-2-team-view.png">
+
+        <h3>Creating / Editing a Team</h3>
+        <div class="callout info"><span class="callout-icon">🔑</span><div>Requires <code>Create/Edit Teams</code>.</div></div>
+        <ol class="steps">
+            <li>Click <strong>Create Team</strong> or the Edit button.</li>
+            <li>Enter the <strong>Team Name</strong>.</li>
+            <li>Check the users you want as <strong>members</strong>.</li>
+            <li>Among the checked users, tick the <strong>Leader</strong> checkbox for those who should lead.</li>
+            <li>Click <strong>Save</strong>.</li>
+        </ol>
+
+        <img class="guide-img" src="/guide/08-3-team-edit.png">
+
+        <div class="callout tip">
+            <span class="callout-icon">💡</span>
+            <div>Leaders can approve leave and OT requests from their team members, and can view their team's timesheets.</div>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════ -->
+    <section id="users">
+        <h2><span class="num">9</span> Users</h2>
+        <p class="section-intro">Manage user accounts, roles, and leave balances.</p>
+
+        <img class="guide-img" src="/guide/09-1-user-list.png">
+
+        <h3>User Profile</h3>
+        <p>Every user has a profile page showing:</p>
+        <ul>
+            <li>Profile picture (or initial avatar), name, position, email</li>
+            <li><strong>Roles</strong> assigned as badges</li>
+            <li><strong>Teams</strong> — with Leader / Member label</li>            
+            <li><strong>Leave Balance</strong> in hours, with a link to the full change history <strong>(private info)</strong></li>
+            <li><strong>Leave Requests</strong> — a summary table of recent requests <strong>(private info)</strong></li>
+        </ul>
+        <div class="callout info">
+            <span class="callout-icon">ℹ️</span>
+            <div>User can see their own company private info. Other user without <code>Edit All User Profile</code> permission can't.</div>
+        </div>
+
+        <img class="guide-img" src="/guide/09-3-user-show.png">
+
+        <h3>Editing Your Own Profile</h3>
+        <p>Click <strong>Profile</strong> in the top-right profile menu to edit your own name, email, password, position, and profile picture.</p>
+        <div class="callout info">
+            <span class="callout-icon">ℹ️</span>
+            <div>Only users with <code>Edit All User Profile</code> can edit other user's company private info.</div>
+        </div>
+
+        <img class="guide-img" src="/guide/09-2-user-edit.png">
+
+        <h3>Managing Users <em>(admin)</em></h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Action</th><th>Required Permission</th></tr></thead>
+                <tbody>
+                    <tr><td>Create a new user account</td><td><code>Create All User Profile</code></td></tr>
+                    <tr><td>Edit any user's details or roles</td><td><code>Edit All User Profile</code></td></tr>
+                    <tr><td>Reset another user's password</td><td><code>Edit All User Profile</code></td></tr>
+                    <tr><td>Adjust a user's leave balance</td><td><code>Edit All Leaves Balance</code></td></tr>
+                    <tr><td>Delete a user account</td><td><code>Delete All User Profile</code></td></tr>
+                </tbody>
+            </table>
+        </div>        
+
+        <h3>Leave Balance History</h3>
+        <p>Click the <strong>Leave Balance History</strong> link on a user's profile to see a paginated log of all adjustments — change amount, balance after, reason, and who made the change.</p>
+
+        <img class="guide-img" src="/guide/09-4-user-leave-balance.png">
+    </section>
+
+    <!-- ══════════════════════════════════════════ -->
+    <section id="leave-requests">
+        <h2><span class="num">10</span> Leave Requests</h2>
+        <p class="section-intro">Request time off. Leave is measured in <strong>hours</strong> and deducted from your leave balance upon approval.</p>
+
+        <img class="guide-img" src="/guide/10-1-leave-list.png">
+
+        <h3>Submitting a Request</h3>
+        <ol class="steps">
+            <li>Click <strong>New Request</strong>.</li>
+            <li>Select the <strong>Type</strong> (e.g. Annual, Sick, Emergency).</li>
+            <li>Set the <strong>Start</strong> and <strong>End</strong> date/time.</li>
+            <li>Enter the <strong>Hours</strong> being consumed.</li>
+            <li>Write a <strong>Description</strong> (reason for the leave).</li>
+            <li>Click <strong>Submit</strong>.</li>
+        </ol>
+
+        <img class="guide-img" src="/guide/10-2-leave-edit.png">
+
+        <h3>Request Statuses</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Status</th><th>Meaning</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="badge badge-amber">Pending</span></td><td>Awaiting approval</td></tr>
+                    <tr><td><span class="badge badge-green">Approved</span></td><td>Approved — leave balance deducted</td></tr>
+                    <tr><td><span class="badge badge-red">Rejected</span></td><td>Not approved — a rejection reason is provided</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Approving / Rejecting <em>(approvers)</em></h3>
+        <p>Users with <code>Approve Team Leaves</code> or <code>Approve All Leaves</code> see <strong>Approve</strong> and <strong>Reject</strong> buttons on pending requests.</p>
+        <ul>
+            <li><strong>Approve</strong> — sets status to Approved and notifies the requester.</li>
+            <li><strong>Reject</strong> — prompts for a rejection reason, then notifies the requester.</li>
+        </ul>
+
+        <img class="guide-img" src="/guide/10-3-leave-reject.png">
+
+        <div class="callout tip">
+            <span class="callout-icon">🔔</span>
+            <div>The requester receives a <strong>bell notification</strong> the moment their request is approved or rejected.</div>
+        </div>
+
+        <img class="guide-img" src="/guide/10-4-leave-reject-noti.png">
+    </section>
+
+    <!-- ══════════════════════════════════════════ -->
+    <section id="ot-requests">
+        <h2><span class="num">11</span> Overtime (OT) Requests</h2>
+        <p class="section-intro">Log overtime hours worked outside regular hours. The approval flow mirrors Leave Requests.</p>
+
+        <img class="guide-img" src="/guide/11-1-ot-list.png">
+
+        <h3>Submitting an OT Request</h3>
+        <ol class="steps">
+            <li>Click <strong>New OT Request</strong>.</li>
+            <li>Set the start time, end time, hours, type, and description.</li>
+            <li>Click <strong>Submit</strong>.</li>
+        </ol>
+
+        <img class="guide-img" src="/guide/11-2-ot-edit.png">
+
+        <h3>Approval Flow</h3>
+        <p>Approvers with <code>Approve Team OT Requests</code> or <code>Approve All OT Requests</code> can approve or reject. The requester receives a notification either way.</p>
+
+        <div class="callout info">
+            <span class="callout-icon">ℹ️</span>
+            <div><code>Approve Team OT Requests</code> only covers requests from team members in teams you <strong>lead</strong>. You will not see requests from teams you belong to but do not lead.</div>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════ -->
+    <section id="roles">
+        <h2><span class="num">12</span> Roles &amp; Permissions</h2>
+        <p class="section-intro">Roles bundle permissions together and are assigned to users to control what they can access.</p>
+        <div class="callout info"><span class="callout-icon">🔑</span><div>Requires <code>Roles</code> module enabled to access this section.</div></div>
+
+        <img class="guide-img" src="/guide/12-1-role-list.png">
+
+        <h3>Managing Roles</h3>
+        <div class="callout info"><span class="callout-icon">🔑</span><div>Requires <code>Create/Edit Roles</code> to create or edit.</div></div>
+        <ol class="steps">
+            <li>Go to <strong>Roles</strong> in the sidebar (Admin group).</li>
+            <li>Click <strong>Create Role</strong>.</li>
+            <li>Give the role a <strong>Name</strong>.</li>
+            <li>Check the <strong>permissions</strong> to grant — grouped by module.</li>
+            <li>Click <strong>Save</strong>.</li>
+        </ol>
+
+        <img class="guide-img" src="/guide/12-2-role-edit.png">
+
+        <h3>Assigning Roles to Users</h3>
+        <p>Roles are assigned from the <strong>User edit form</strong> — look for the Roles section when editing a user.</p>
+
+        <img class="guide-img" src="/guide/09-2-user-edit.png">
+
+        <h3>Deleting Roles</h3>
+        <div class="callout warning">
+            <span class="callout-icon">⚠️</span>
+            <div>Requires <code>Delete Roles</code>. Deleting a role removes it from <strong>all users</strong> currently assigned to it.</div>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════ -->
+    <section id="notifications">
+        <h2><span class="num">13</span> Notifications</h2>
+
+        <h3>Bell Dropdown</h3>
+        <p>Click the <strong>🔔 bell icon</strong> in the top bar to see your 5 most recent unread notifications. Each shows the sender's avatar, a title, a short description, and a relative timestamp. Click any notification to jump to the relevant page.</p>
+        <p>Click <strong>View All</strong> to open the full notifications page.</p>
+
+        <img class="guide-img" src="/guide/10-4-leave-reject-noti.png">
+
+        <h3>Notifications Page — <code>/notifications</code></h3>
+        <p>All notifications are listed here. Unread entries are highlighted with an indigo background. Opening this page marks all unread notifications as read.</p>
+
+        <img class="guide-img" src="/guide/10-5-noti.png">
+
+        <h3>When Are Notifications Sent?</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Event</th><th>Who is Notified</th></tr></thead>
+                <tbody>
+                    <tr><td>Leave request <strong>approved</strong></td><td>The requester</td></tr>
+                    <tr><td>Leave request <strong>rejected</strong></td><td>The requester</td></tr>
+                    <tr><td>OT request <strong>approved</strong></td><td>The requester</td></tr>
+                    <tr><td>OT request <strong>rejected</strong></td><td>The requester</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════ -->
+    <section id="dark-mode">
+        <h2><span class="num">14</span> Dark Mode</h2>
+        <p>Click the <strong>☀️ / 🌙 icon</strong> in the top navigation bar to toggle between light and dark themes.</p>
+        <p>Your preference is <strong>saved automatically</strong> and persists across sessions. On first visit, the theme follows your operating system's default.</p>
+
+        <img class="guide-img" src="/guide/13-darkmode.png">
+    </section>
+
+    <!-- ══════════════════════════════════════════ -->
+    <section id="permission-reference">
+        <h2><span class="num">15</span> Permission Reference</h2>
+        <p class="section-intro">Permissions are assigned to roles by your administrator. The tables below show what each permission grants.</p>
+
+        <h3>Teams</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Permission</th><th>Access Granted</th></tr></thead>
+                <tbody>
+                    <tr><td><code>Enable</code></td><td>Access the Teams module</td></tr>
+                    <tr><td><code>View Own Teams</code></td><td>See only teams you belong to</td></tr>
+                    <tr><td><code>View All Teams</code></td><td>See all teams</td></tr>
+                    <tr><td><code>Create/Edit Teams</code></td><td>Create and edit teams</td></tr>
+                    <tr><td><code>Delete Teams</code></td><td>Delete teams</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Roles</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Permission</th><th>Access Granted</th></tr></thead>
+                <tbody>
+                    <tr><td><code>Enable</code></td><td>Access the Roles module</td></tr>
+                    <tr><td><code>Create/Edit roles</code></td><td>Create and edit roles</td></tr>
+                    <tr><td><code>Delete roles</code></td><td>Delete roles</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Users</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Permission</th><th>Access Granted</th></tr></thead>
+                <tbody>
+                    <tr><td><code>Enable</code></td><td>Access the Users module</td></tr>
+                    <tr><td><code>View Team's User Profile</code></td><td>View profiles of users in your teams</td></tr>
+                    <tr><td><code>Edit Team's User Profile</code></td><td>Edit users in your teams</td></tr>
+                    <tr><td><code>Delete Team's User Profile</code></td><td>Delete users in your teams</td></tr>
+                    <tr><td><code>View All User Profile</code></td><td>View all user profiles</td></tr>
+                    <tr><td><code>Create All User Profile</code></td><td>Create new user accounts</td></tr>
+                    <tr><td><code>Edit All User Profile</code></td><td>Edit any user, reset passwords, adjust private infos</td></tr>
+                    <tr><td><code>Delete All User Profile</code></td><td>Delete any user</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Leave Requests</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Permission</th><th>Access Granted</th></tr></thead>
+                <tbody>
+                    <tr><td><code>Enable</code></td><td>Access the Leave Requests module</td></tr>
+                    <tr><td><code>View Own Leaves</code></td><td>See your own leave requests</td></tr>
+                    <tr><td><code>Create/Edit Own Leaves</code></td><td>Submit and edit your own leave requests</td></tr>
+                    <tr><td><code>Delete Own Leaves</code></td><td>Delete your own leave requests</td></tr>
+                    <tr><td><code>View Team Leaves</code></td><td>See leave requests from your team</td></tr>
+                    <tr><td><code>Create/Edit Team Leaves</code></td><td>Edit leave requests from your team</td></tr>
+                    <tr><td><code>Approve Team Leaves</code></td><td>Approve/reject leave requests from your team</td></tr>
+                    <tr><td><code>Delete Team Leaves</code></td><td>Delete leave requests from your team</td></tr>
+                    <tr><td><code>Edit Team Leaves Balance</code></td><td>Adjust leave balance for team members</td></tr>
+                    <tr><td><code>View All Leaves</code></td><td>See all leave requests</td></tr>
+                    <tr><td><code>Create/Edit All Leaves</code></td><td>Edit any leave request</td></tr>
+                    <tr><td><code>Approve All Leaves</code></td><td>Approve/reject any leave request</td></tr>
+                    <tr><td><code>Delete All Leaves</code></td><td>Delete any leave request</td></tr>
+                    <tr><td><code>Edit All Leaves Balance</code></td><td>Adjust leave balance for any user</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Overtime Requests</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Permission</th><th>Access Granted</th></tr></thead>
+                <tbody>
+                    <tr><td><code>Enable</code></td><td>Access the OT Requests module</td></tr>
+                    <tr><td><code>View Own OT Requests</code></td><td>See your own OT requests</td></tr>
+                    <tr><td><code>Create/Edit Own OT Requests</code></td><td>Submit and edit your own OT requests</td></tr>
+                    <tr><td><code>Delete Own OT Requests</code></td><td>Delete your own OT requests</td></tr>
+                    <tr><td><code>View Team OT Requests</code></td><td>See OT requests from teams you <strong>lead</strong></td></tr>
+                    <tr><td><code>Create/Edit Team OT Requests</code></td><td>Edit OT requests from teams you lead</td></tr>
+                    <tr><td><code>Delete Team OT Requests</code></td><td>Approve/reject OT requests from teams you lead</td></tr>
+                    <tr><td><code>Approve Team OT Requests</code></td><td>Delete OT requests from teams you lead</td></tr>
+                    <tr><td><code>View All OT Requests</code></td><td>See all OT requests</td></tr>
+                    <tr><td><code>Create/Edit All OT Requests</code></td><td>Edit any OT request</td></tr>
+                    <tr><td><code>Delete All OT Requests</code></td><td>Approve/reject any OT request</td></tr>
+                    <tr><td><code>Approve All OT Requests</code></td><td>Delete any OT request</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Projects</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Permission</th><th>Access Granted</th></tr></thead>
+                <tbody>
+                    <tr><td><code>Enable</code></td><td>Access the Projects module</td></tr>
+                    <tr><td><code>View All Projects</code></td><td>View all projects</td></tr>
+                    <tr><td><code>View Assigned Projects</code></td><td>View only projects you are assigned to</td></tr>
+                    <tr><td><code>Create/Edit Projects</code></td><td>Create and edit any project</td></tr>
+                    <tr><td><code>Edit Assigned Projects</code></td><td>Edit projects you are assigned to</td></tr>
+                    <tr><td><code>Delete All Projects</code></td><td>Delete projects</td></tr>
+                    <tr><td><code>Upload/Edit Own Files</code></td><td>Upload/Edit/Delete own project files</td></tr>
+                    <tr><td><code>Upload/Edit All Files & Folders</code></td><td>Upload/Edit/Delete all project files</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Tasks</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Permission</th><th>Access Granted</th></tr></thead>
+                <tbody>
+                    <tr><td><code>Enable</code></td><td>Access the Tasks module</td></tr>
+                    <tr><td><code>View All Tasks</code></td><td>View all tasks</td></tr>
+                    <tr><td><code>View Team Tasks</code></td><td>View tasks assigned to your team members</td></tr>
+                    <tr><td><code>View Assigned Tasks</code></td><td>View only tasks assigned to you</td></tr>
+                    <tr><td><code>Create/Edit All Tasks</code></td><td>Create and edit any task</td></tr>
+                    <tr><td><code>Create/Edit Team Tasks</code></td><td>Edit tasks for your team</td></tr>
+                    <tr><td><code>Edit Assigned Tasks</code></td><td>Edit tasks assigned to you</td></tr>
+                    <tr><td><code>Delete All Tasks</code></td><td>Delete tasks</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Timesheet</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Permission</th><th>Access Granted</th></tr></thead>
+                <tbody>
+                    <tr><td><code>Enable</code></td><td>Access the Timesheet module</td></tr>
+                    <tr><td><code>View All Timesheet</code></td><td>See time logs for all users</td></tr>
+                    <tr><td><code>View Team Timesheet</code></td><td>See time logs from users in your teams</td></tr>
+                    <tr><td><code>View Own Timesheet</code></td><td>See only your own time logs</td></tr>
+                    <tr><td><code>Log Time For All</code></td><td>Log, edit, and delete time for any user</td></tr>
+                    <tr><td><code>Log Time For Team</code></td><td>Log, edit, and delete time for team members</td></tr>
+                    <tr><td><code>Log Time For Yourself</code></td><td>Log, edit, and delete your own entries</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Announcements</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Permission</th><th>Access Granted</th></tr></thead>
+                <tbody>
+                    <tr><td><code>Enable</code></td><td>Access the Announcements module</td></tr>
+                    <tr><td><code>Create/Edit Announcements</code></td><td>Create and edit announcements</td></tr>
+                    <tr><td><code>Delete Announcements</code></td><td>Delete announcements</td></tr>
+                    <tr><td><code>Edit Policies</code></td><td>Edit company policies (reserved for future use)</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+    </section>
+
+</main>
+
+<script>
+    // Scroll-spy: highlight active TOC link
+    const sections  = document.querySelectorAll('section[id]');
+    const navLinks  = document.querySelectorAll('#toc a');
+
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                navLinks.forEach(a => a.classList.remove('active'));
+                const active = document.querySelector(`#toc a[href="#${entry.target.id}"]`);
+                if (active) active.classList.add('active');
+            }
+        });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+
+    sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>
