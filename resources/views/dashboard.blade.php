@@ -125,6 +125,46 @@
 
                 {{-- ── Right: Notifications ───────────────────────────────── --}}
                 <div class="lg:col-span-3 space-y-4">
+                    {{-- Today's Attendance --}}
+                    @if($attendanceStats)
+                        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
+                            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-4">
+                                Today's Attendance
+                                <span class="font-normal text-gray-400 normal-case">— {{ $attendanceStats['label'] }}</span>
+                            </h3>
+
+                            <div class="grid grid-cols-2 gap-3 mb-4">
+                                <div class="text-center bg-gray-50 dark:bg-gray-700 rounded-lg py-3">
+                                    <p class="text-2xl font-bold text-green-600 dark:text-green-400">{{ $attendanceStats['present'] }}</p>
+                                    <p class="text-xs text-gray-500 mt-0.5">Present</p>
+                                </div>
+                                <!-- <div class="text-center bg-green-50 dark:bg-green-900/20 rounded-lg py-3">
+                                    <p class="text-2xl font-bold text-gray-700 dark:text-gray-200">{{ $attendanceStats['total'] }}</p>
+                                    <p class="text-xs text-gray-500 mt-0.5">Total</p>
+                                </div> -->
+                                <div class="text-center bg-yellow-50 dark:bg-yellow-900/20 rounded-lg py-3">
+                                    <p class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{{ $attendanceStats['on_leave'] }}</p>
+                                    <p class="text-xs text-gray-500 mt-0.5">On Leave</p>
+                                </div>
+                            </div>
+
+                            @if($attendanceStats['on_leave_users']->isNotEmpty())
+                                <div class="border-t border-gray-100 dark:border-gray-700 pt-3">
+                                    <p class="text-xs font-semibold text-gray-400 uppercase mb-2">On leave today</p>
+                                    <div class="flex flex-wrap gap-1.5">
+                                        @foreach($attendanceStats['on_leave_users'] as $ou)
+                                            <span class="inline-flex items-center gap-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 text-xs px-2 py-0.5 rounded">
+                                                {{ $ou->name }}
+                                                @if($ou->position)
+                                                    <span class="text-yellow-600 dark:text-yellow-400 opacity-70">· {{ $ou->position }}</span>
+                                                @endif
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    @endif
 
                     {{-- Pending request counts (approvers only) --}}
                     @if($pendingLeavesCount !== null || $pendingOTCount !== null)

@@ -18,7 +18,7 @@
             @forelse($announcements as $announcement)
                 <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
                     <div class="flex justify-between items-start">
-                        <div>
+                        <div class="flex-1 min-w-0 mr-4">
                             <a href="{{ route('announcements.show', $announcement) }}"
                                 class="text-lg font-semibold text-gray-800 dark:text-gray-100 hover:text-indigo-600 dark:hover:text-indigo-400">
                                 {{ $announcement->title }}
@@ -27,8 +27,21 @@
                                 By {{ $announcement->author?->name ?? 'System' }}
                                 · {{ $announcement->created_at->format('d/m/Y H:i') }}
                             </p>
+                            <div class="mt-2">
+                                @if($announcement->teams->isEmpty())
+                                    <span class="inline-flex items-center gap-1 text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded">
+                                        🌐 All Company
+                                    </span>
+                                @else
+                                    @foreach($announcement->teams as $team)
+                                        <span class="inline-flex items-center gap-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded mr-1">
+                                            👥 {{ $team->name }}
+                                        </span>
+                                    @endforeach
+                                @endif
+                            </div>
                         </div>
-                        <div class="flex gap-2 shrink-0 ml-4">
+                        <div class="flex gap-2 shrink-0">
                             @can('edit announcements')
                                 <a href="{{ route('announcements.edit', $announcement) }}">
                                     <x-secondary-button>Edit</x-secondary-button>

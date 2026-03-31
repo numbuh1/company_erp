@@ -45,6 +45,41 @@
                         @enderror
                     </div>
 
+                    <!-- Audience -->
+                    @php
+                        $isAllCompany = old('all_company') !== null
+                            ? (bool) old('all_company')
+                            : (!isset($announcement) || $announcement->teams->isEmpty());
+                        $selectedTeams = old('teams', isset($announcement) ? $announcement->teams->pluck('id')->toArray() : []);
+                    @endphp
+                    <div class="mb-5" x-data="{ allCompany: {{ $isAllCompany ? 'true' : 'false' }} }">
+                        <x-input-label value="Audience" />
+
+                        <label class="inline-flex items-center gap-2 mt-2 cursor-pointer">
+                            <input type="checkbox" name="all_company" value="1"
+                                x-model="allCompany"
+                                class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
+                            <span class="text-sm text-gray-700 dark:text-gray-300 font-medium">All Company</span>
+                        </label>
+
+                        <div x-show="!allCompany" x-cloak class="mt-3">
+                            @if($teams->isEmpty())
+                                <p class="text-xs text-gray-400">No teams exist yet.</p>
+                            @else
+                                <x-input-label value="Visible to these teams only" class="mb-1" />
+                                <select name="teams[]" id="teams-select" data-multi-select
+                                        data-placeholder="Select teams…" class="w-full" multiple>
+                                    @foreach($teams as $team)
+                                        <option value="{{ $team->id }}"
+                                            {{ in_array($team->id, $selectedTeams) ? 'selected' : '' }}>
+                                            {{ $team->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            @endif
+                        </div>
+                    </div>
+
                     <!-- Rich Text Content -->
                     <div class="mb-5">
                         <x-input-label value="Content" class="mb-1" />
