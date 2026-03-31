@@ -12,10 +12,14 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TimeLogController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\SettingController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return auth()->check()
+        ? redirect()->route('dashboard')
+        : redirect()->route('login');
 });
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
@@ -78,8 +82,16 @@ Route::middleware('auth')->group(function () {
         ->name('announcements.upload-image');
     Route::resource('announcements', AnnouncementController::class);
 
+    Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+    Route::post('/attendance', [AttendanceController::class, 'store'])->name('attendance.store');
+    Route::post('/attendance/{attendance}/approve', [AttendanceController::class, 'approve'])->name('attendance.approve');
+    Route::post('/attendance/{attendance}/reject', [AttendanceController::class, 'reject'])->name('attendance.reject');
+
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/mark-read', [NotificationController::class, 'mark-read'])->name('notifications.mark-read'); 
+
+    Route::get('/admin/settings', [SettingController::class, 'edit'])->name('admin.settings.edit');
+    Route::put('/admin/settings', [SettingController::class, 'update'])->name('admin.settings.update');
 });
 
 require __DIR__.'/auth.php';

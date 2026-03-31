@@ -44,13 +44,13 @@
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                                 <td class="px-4 py-4">
                                     <a href="{{ route('tasks.show', $task) }}"
-                                        class="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
+                                        class="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline whitespace-nowrap">
                                         TK-{{ $task->id }}
                                     </a>
                                 </td>
                                 <td class="px-4 py-4 font-medium text-gray-900 dark:text-gray-100">{{ $task->name }}</td>
                                 <td class="px-4 py-4">
-                                    <span class="text-xs font-medium px-2 py-0.5 rounded {{ $statusClass }}">{{ $task->status }}</span>
+                                    <span class="text-xs font-medium px-2 py-0.5 rounded {{ $statusClass }} whitespace-nowrap">{{ $task->status }}</span>
                                 </td>
                                 <td class="px-4 py-4 text-sm">
                                     @if($task->project)
@@ -65,7 +65,7 @@
                                 <td class="px-4 py-4">
                                     <div class="flex flex-wrap gap-1">
                                         @forelse($task->assignees as $assignee)
-                                            <span class="bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 text-xs px-2 py-0.5 rounded">{{ $assignee->name }}</span>
+                                            <x-user-status :user="$assignee" :show-name="false" />
                                         @empty
                                             <span class="text-gray-400 text-xs">—</span>
                                         @endforelse

@@ -18,14 +18,16 @@ class UserController extends Controller
 
     public function create()
     {
-        $roles = Role::all();
-        return view('users.form', compact('roles'));
+        $roles            = Role::all();
+        $supervisorOptions = User::orderBy('name')->get(['id', 'name', 'position']);
+        return view('users.form', compact('roles', 'supervisorOptions'));
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
             'name' => 'required',
+            'full_name' => 'nullable|string|max:255',
             'email' => 'required|email|unique:users',
             'password' => 'required|min:6',            
             'roles' => 'array'
@@ -37,6 +39,8 @@ class UserController extends Controller
 
         if (auth()->user()->can('edit all user')) {
             $user->syncRoles($request->roles ?? []);
+            $user->supervisors()->sync($request->input('supervisors', []));
+            $user->update(['wfh_without_approval' => $request->boolean('wfh_without_approval')]);
         }
 
         if (auth()->user()->canAny(['edit team leaves balance', 'edit all leaves balance'])) {
@@ -56,20 +60,24 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        $roles = Role::all();
-        return view('users.form', compact('user', 'roles'));
+        $roles             = Role::all();
+        $supervisorOptions = User::where('id', '!=', $user->id)->orderBy('name')->get(['id', 'name', 'position']);
+        $user->load('supervisors');
+        return view('users.form', compact('user', 'roles', 'supervisorOptions'));
     }
 
     public function profile()
     {
         $user = auth()->user();
-        $roles = Role::all();
-        return view('users.form', compact('user', 'roles'));
+        $user->load('supervisors');
+        $roles             = Role::all();
+        $supervisorOptions = User::where('id', '!=', $user->id)->orderBy('name')->get(['id', 'name', 'position']);
+        return view('users.form', compact('user', 'roles', 'supervisorOptions'));
     }
 
     public function show(User $user)
     {
-        $user->load(['roles', 'teams']);
+        $user->load(['roles', 'teams', 'supervisors']);
         $leaveRequests = \App\Models\LeaveRequest::where('user_id', $user->id)
             ->whereIn('status', ['pending', 'approved'])
             ->orderByRaw("FIELD(status, 'pending', 'approved')")
@@ -83,6 +91,7 @@ class UserController extends Controller
     {
         $data = $request->validate([
             'name' => 'required',
+            'full_name' => 'nullable|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'password' => 'nullable|min:6',
             'position' => 'nullable|string|max:255',
@@ -96,7 +105,9 @@ class UserController extends Controller
         }
 
         $user->update($data);
-
+        if (auth()->user()->can('edit all user')) {
+            $user->update(['is_active' => $request->boolean('is_active')]);
+        }
 
         if ($request->filled('profile_picture_cropped')) {
             // Decode base64 and save
@@ -119,6 +130,11 @@ class UserController extends Controller
 
         if (auth()->user()->can('edit all user')) {
             $user->syncRoles($request->roles ?? []);
+            $user->supervisors()->sync($request->input('supervisors', []));
+            $user->update([
+                'is_active'            => $request->boolean('is_active'),
+                'wfh_without_approval' => $request->boolean('wfh_without_approval'),
+            ]);
         }
 
         if (auth()->user()->canAny(['edit team leaves balance', 'edit all leaves balance'])

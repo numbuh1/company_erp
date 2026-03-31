@@ -3,32 +3,47 @@
 namespace App\Http\Controllers;
 
 use App\Models\Announcement;
+use App\Models\Team;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class AnnouncementController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Scope query to announcements visible to the current user.
      */
+    private function _visibilityScope($query, $user): void
+    {
+        // Admins and editors see everything
+        if ($user->can('edit announcements') || $user->can('edit all user') || $user->can('view all user')) {
+            return;
+        }
+
+        // Others see company-wide (no teams) OR announcements for their teams
+        $userTeamIds = $user->teams()->pluck('teams.id');
+        $query->where(function ($q) use ($userTeamIds) {
+            $q->whereDoesntHave('teams')
+              ->orWhereHas('teams', fn($tq) => $tq->whereIn('teams.id', $userTeamIds));
+        });
+    }
+
     public function index()
     {
-        $announcements = Announcement::with('author')->latest()->paginate(15);
+        $user  = auth()->user();
+        $query = Announcement::with(['author', 'teams'])->latest();
+        $this->_visibilityScope($query, $user);
+
+        $announcements = $query->paginate(15);
         return view('announcements.index', compact('announcements'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         if (!auth()->user()->can('edit announcements')) abort(403);
-        return view('announcements.form');
+        $teams = Team::orderBy('name')->get();
+        return view('announcements.form', compact('teams'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         if (!auth()->user()->can('edit announcements')) abort(403);
@@ -41,29 +56,42 @@ class AnnouncementController extends Controller
         $data['user_id'] = auth()->id();
         $announcement = Announcement::create($data);
 
+        // Sync teams — empty means company-wide
+        if ($request->boolean('all_company') || empty($request->teams)) {
+            $announcement->teams()->detach();
+        } else {
+            $announcement->teams()->sync($request->teams);
+        }
+
         return redirect()->route('announcements.show', $announcement)->with('success', 'Announcement published.');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Announcement $announcement)
     {
+        $user = auth()->user();
+        $announcement->load('teams');
+
+        // Enforce visibility
+        if (!$user->can('edit announcements') && !$user->can('edit all user') && !$user->can('view all user')) {
+            if ($announcement->teams->isNotEmpty()) {
+                $userTeamIds = $user->teams()->pluck('teams.id');
+                if ($announcement->teams->pluck('id')->intersect($userTeamIds)->isEmpty()) {
+                    abort(403);
+                }
+            }
+        }
+
         return view('announcements.show', compact('announcement'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Announcement $announcement)
     {
         if (!auth()->user()->can('edit announcements')) abort(403);
-        return view('announcements.form', compact('announcement'));
+        $announcement->load('teams');
+        $teams = Team::orderBy('name')->get();
+        return view('announcements.form', compact('announcement', 'teams'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Announcement $announcement)
     {
         if (!auth()->user()->can('edit announcements')) abort(403);
@@ -74,12 +102,17 @@ class AnnouncementController extends Controller
         ]);
 
         $announcement->update($data);
+
+        // Sync teams
+        if ($request->boolean('all_company') || empty($request->teams)) {
+            $announcement->teams()->detach();
+        } else {
+            $announcement->teams()->sync($request->teams);
+        }
+
         return redirect()->route('announcements.show', $announcement)->with('success', 'Announcement updated.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Announcement $announcement)
     {
         if (!auth()->user()->can('delete announcements')) abort(403);

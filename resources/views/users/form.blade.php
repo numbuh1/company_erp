@@ -71,6 +71,16 @@
                                 value="{{ old('name', $user->name ?? '') }}" />
                         </div>
 
+                        <!-- Full Name -->
+                        <div class="mb-4">
+                            <x-input-label for="full_name" value="Full Name" />
+                            <x-text-input id="full_name" name="full_name" type="text" class="mt-1 block w-full"
+                                value="{{ old('full_name', $user->full_name ?? '') }}"
+                                placeholder="Legal full name (optional)" />
+                            <p class="text-xs text-gray-400 mt-1">Used for official documents. Leave blank to use Display Name.</p>
+                            @error('full_name')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                        </div>
+
                         <!-- Position -->
                         <div class="mb-4">
                             <x-input-label value="Position" />
@@ -102,19 +112,65 @@
                                 <p class="text-xs font-semibold text-yellow-700 dark:text-yellow-400 uppercase tracking-wide mb-4">
                                     HR Only
                                 </p>
+                                
+                                <!-- Active Status -->
+                                <div class="mb-4">
+                                    <x-input-label value="Account Status" />
+                                    <label class="inline-flex items-center gap-2 mt-2 cursor-pointer">
+                                        <input type="hidden" name="is_active" value="0">
+                                        <input type="checkbox" name="is_active" value="1"
+                                            class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                                            {{ old('is_active', $user->is_active ?? true) ? 'checked' : '' }}>
+                                        <span class="text-sm text-gray-700 dark:text-gray-300">Active (can log in)</span>
+                                    </label>
+                                    <p class="text-xs text-gray-400 mt-1">Uncheck to prevent this user from signing in.</p>
+                                </div>
+
 
                                 <!-- Roles -->
                                 <div class="mb-4">
                                     <x-input-label value="Role" />
-                                    <select name="roles[]" class="w-full border rounded p-2" multiple>
+                                    <select name="roles[]" id="roles-select" data-multi-select
+                                            data-placeholder="Select roles…">
                                         @foreach($roles as $role)
                                             <option value="{{ $role->name }}"
-                                                @selected(isset($user) && $user->hasRole($role->name))>
+                                                {{ isset($user) && $user->hasRole($role->name) ? 'selected' : '' }}>
                                                 {{ $role->name }}
                                             </option>
                                         @endforeach
                                     </select>
-                                    <small class="text-gray-400">Hold Ctrl (Windows) or Cmd (Mac) to select multiple</small>
+                                </div>
+
+                                <!-- Supervisors -->
+                                <div class="mb-4">
+                                    <x-input-label value="Supervisors" />
+                                    <p class="text-xs text-gray-400 mb-1">Users who supervise this person</p>
+                                    @if(empty($supervisorOptions) || $supervisorOptions->isEmpty())
+                                        <p class="text-xs text-gray-400 px-1">No other users yet.</p>
+                                    @else
+                                        <select name="supervisors[]" id="supervisors-select" data-multi-select
+                                                data-placeholder="Select supervisors…" class="mt-1 block w-full" multiple>
+                                            @foreach($supervisorOptions ?? [] as $opt)
+                                                <option value="{{ $opt->id }}"
+                                                    {{ (isset($user) && $user->supervisors->contains($opt->id)) ? 'selected' : '' }}>
+                                                    {{ $opt->name }}{{ $opt->position ? ' · ' . $opt->position : '' }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    @endif
+                                </div>
+
+                                <!-- WFH Without Approval -->
+                                <div class="mb-4">
+                                    <x-input-label value="WFH Policy" />
+                                    <label class="inline-flex items-center gap-2 mt-2 cursor-pointer">
+                                        <input type="hidden" name="wfh_without_approval" value="0">
+                                        <input type="checkbox" name="wfh_without_approval" value="1"
+                                            class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                                            {{ old('wfh_without_approval', $user->wfh_without_approval ?? false) ? 'checked' : '' }}>
+                                        <span class="text-sm text-gray-700 dark:text-gray-300">WFH without approval</span>
+                                    </label>
+                                    <p class="text-xs text-gray-400 mt-1">WFH requests will be auto-approved for this user.</p>
                                 </div>
 
                                 <!-- Leave Balance -->

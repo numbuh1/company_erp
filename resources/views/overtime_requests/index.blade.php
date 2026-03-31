@@ -34,17 +34,25 @@
                     <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         @forelse($otRequests as $ot)
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                                <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">{{ $ot->created_at->format('d/m/y H:i') }}</td>
-                                <td class="px-6 py-4 font-medium text-gray-900 dark:text-gray-100">{{ $ot->user->name }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                                    {{ $ot->created_at->format('d/m/y H:i') }}
+                                </td>
+                                <td class="px-6 py-4">
+                                    <x-user-status :user="$ot->user" />
+                                </td>
                                 <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
                                     <div>{{ $ot->start_at->format('d/m/y H:i') }}</div>
                                     <div class="text-xs text-gray-500">→ {{ $ot->end_at->format('d/m/y H:i') }}</div>
                                 </td>
-                                <td class="px-6 py-4 text-gray-700 dark:text-gray-300">{{ $ot->hours }}h</td>
+                                <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
+                                    {{ $ot->hours }}h
+                                </td>
                                 <td class="px-6 py-4">
                                     <span class="inline-block bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded">{{ $ot->type }}</span>
                                 </td>
-                                <td class="px-6 py-4 text-gray-700 dark:text-gray-300">{{ $ot->description }}</td>
+                                <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
+                                    {{ $ot->description }}
+                                </td>
                                 <td class="px-6 py-4">
                                     <span class="inline-block text-xs px-2 py-1 rounded
                                         @if($ot->status === 'approved') bg-green-100 text-green-800
@@ -54,7 +62,9 @@
                                         {{ ucfirst($ot->status) }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 text-gray-700 dark:text-gray-300">{{ $ot->approver?->name ?? '-' }}</td>
+                                <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
+                                    {{ $ot->approver?->name ?? '-' }}
+                                </td>
                                 <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
                                     @if($ot->status === 'rejected')
                                         <span class="text-red-500 text-sm">{{ $ot->reject_reason ?? '-' }}</span>

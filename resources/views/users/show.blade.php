@@ -32,7 +32,11 @@
                         </div>
                     @endif
                     <div>
-                        <p class="text-xl font-semibold text-gray-800 dark:text-gray-100">{{ $user->name }}</p>
+                        <p class="text-xl font-semibold text-gray-800 dark:text-gray-100">{{ $user->name }}
+                            @if($user->full_name)
+                             ({{ $user->full_name }})
+                            @endif
+                        </p>
                         @if($user->position)
                             <p class="text-sm font-medium text-indigo-600 dark:text-indigo-400">{{ $user->position }}</p>
                         @endif
@@ -110,6 +114,39 @@
                             @endforeach
                         </tbody>
                     </table>
+                @endif
+            </div>
+
+            {{-- Supervisors --}}
+            <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
+                <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">Supervisors</h3>
+
+                @if($user->supervisors->isEmpty())
+                    <p class="text-sm text-gray-400">No supervisors assigned.</p>
+                @else
+                    <div class="space-y-2">
+                        @foreach($user->supervisors as $supervisor)
+                            <div class="flex items-center gap-3 border rounded px-4 py-3 dark:border-gray-600">
+                                @if($supervisor->profile_picture)
+                                    <img src="{{ asset('storage/profile_pictures/' . $supervisor->profile_picture) }}"
+                                        class="w-8 h-8 rounded-full object-cover border border-gray-300">
+                                @else
+                                    <div class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-600 dark:text-indigo-300 text-sm font-bold">
+                                        {{ strtoupper(substr($supervisor->name, 0, 1)) }}
+                                    </div>
+                                @endif
+                                <div>
+                                    <a href="{{ route('users.show', $supervisor) }}"
+                                        class="text-sm font-medium text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400">
+                                        {{ $supervisor->name }}
+                                    </a>
+                                    @if($supervisor->position)
+                                        <p class="text-xs text-gray-400">{{ $supervisor->position }}</p>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
                 @endif
             </div>
 

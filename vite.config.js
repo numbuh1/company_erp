@@ -12,6 +12,7 @@ export default defineConfig({
                 'resources/js/roles/form.js',
                 'resources/js/teams/form.js',
                 'resources/js/users/form.js',
+                'resources/js/attendance/check-in.js',
             ],
             refresh: true,
         }),

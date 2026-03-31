@@ -38,6 +38,7 @@
         <div class="pt-4 pb-1">
             <p class="px-3 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Work</p>
         </div>
+        <a href="{{ route('attendance.index') }}" class="{{ $navLink('attendance.*') }}">Attendance</a>
         @can('module announcements')
             <a href="{{ route('announcements.index') }}" class="{{ $navLink('announcements.*') }}">Announcements</a>
         @endcan
@@ -71,11 +72,16 @@
             <a href="{{ route('overtime-requests.index') }}" class="{{ $navLink('overtime-requests.*') }}">OT Requests</a>
         @endcan
 
-        @can('module roles')
+        @canany(['module roles', 'module settings'])
         <div class="pt-4 pb-1">
             <p class="px-3 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Admin</p>
         </div>
+        @endcanany
+        @can('module roles')
             <a href="{{ route('roles.index') }}" class="{{ $navLink('roles.*') }}">Roles</a>
+        @endcan
+        @can('module settings')
+            <a href="{{ route('admin.settings.edit') }}" class="{{ $navLink('admin.settings.*') }}">Settings</a>
         @endcan
 
     </nav>

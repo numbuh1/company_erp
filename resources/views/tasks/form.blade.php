@@ -11,17 +11,7 @@
     <div class="py-12">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
-                <form method="POST" action="{{ isset($task) ? route('tasks.update', $task) : route('tasks.store') }}"
-                    x-data="{
-                        selectedProject: '{{ old('project_id', $task->project_id ?? $default_project_id ?? '') }}',
-                        projectMembers: {{ Js::from($projectMembers) }},
-                        isUserAllowed(userId) {
-                            if (!this.selectedProject) return true;
-                            const members = this.projectMembers[this.selectedProject];
-                            if (!members || members.length === 0) return true;
-                            return members.includes(userId);
-                        }
-                    }">
+                <form method="POST" action="{{ isset($task) ? route('tasks.update', $task) : route('tasks.store') }}">
                     @csrf
                     @if(isset($task)) @method('PUT') @endif
 
@@ -36,7 +26,7 @@
                     {{-- Project --}}
                     <div class="mb-4">
                         <x-input-label for="project_id" value="Linked Project" />
-                        <select id="project_id" name="project_id" x-model="selectedProject"
+                        <select id="project_id" name="project_id"
                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                             <option value="">— None (standalone) —</option>
                             @foreach($projects as $project)
@@ -103,21 +93,15 @@
                     {{-- Assignees --}}
                     <div class="mb-6">
                         <x-input-label value="Assignees" />
-                        <input type="text" id="assignee-search" placeholder="Search assignees..."
-                            oninput="filterAssignees(this.value)"
-                            class="mt-2 mb-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500" />
-                        <div id="assignee-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-700 rounded-md p-3">
+                        <select name="assignees[]" id="assignees-select" data-multi-select
+                                data-placeholder="Select assignees…" class="mt-2 block w-full" multiple>
                             @foreach($users as $user)
-                                <label class="assignee-item flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
-                                    x-show="isUserAllowed({{ $user->id }})">
-                                    <input type="checkbox" name="assignees[]" value="{{ $user->id }}"
-                                        :disabled="!isUserAllowed({{ $user->id }})"
-                                        {{ in_array($user->id, old('assignees', isset($task) ? $task->assignees->pluck('id')->toArray() : [])) ? 'checked' : '' }}
-                                        class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" />
+                                <option value="{{ $user->id }}"
+                                    {{ in_array($user->id, old('assignees', isset($task) ? $task->assignees->pluck('id')->toArray() : [])) ? 'selected' : '' }}>
                                     {{ $user->name }}
-                                </label>
+                                </option>
                             @endforeach
-                        </div>
+                        </select>
                         <x-input-error :messages="$errors->get('assignees')" class="mt-1" />
                     </div>
 
@@ -130,13 +114,29 @@
         </div>
     </div>
     @push('scripts')
-        <script>
-        function filterAssignees(query) {
-            const q = query.toLowerCase();
-            document.querySelectorAll('#assignee-grid .assignee-item').forEach(item => {
-                item.style.display = item.textContent.trim().toLowerCase().includes(q) ? '' : 'none';
-            });
-        }
-        </script>
+    <script>
+        var projectMembers = @json($projectMembers);
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var projectSelect   = document.getElementById('project_id');
+            var assigneeSelect  = document.getElementById('assignees-select');
+
+            function updateAssignees() {
+                var ms = assigneeSelect._multiSelect;
+                if (!ms) return;
+
+                var pid     = projectSelect.value;
+                var allowed = pid && projectMembers[pid] ? projectMembers[pid] : null;
+
+                ms.data.forEach(function (item) {
+                    item.disabled = allowed !== null && !allowed.includes(parseInt(item.value));
+                });
+                ms.refresh();
+            }
+
+            projectSelect.addEventListener('change', updateAssignees);
+            updateAssignees(); // run on page load
+        });
+    </script>
     @endpush
 </x-app-layout>

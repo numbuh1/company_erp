@@ -66,33 +66,29 @@
                         {{-- Teams --}}
                         <div>
                             <x-input-label value="Assigned Teams" />
-                            <input type="text" placeholder="Search teams…" id="search-teams"
-                                class="mt-1 mb-2 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm p-2">
-                            <div class="border border-gray-300 dark:border-gray-600 rounded-md p-3 space-y-2 max-h-60 overflow-y-auto">
+                            <select name="teams[]" id="teams-select" data-multi-select
+                                    data-placeholder="Select teams…" class="mt-1 block w-full" multiple>
                                 @foreach($teams as $team)
-                                    <label class="flex items-center gap-2 team-item text-sm text-gray-700 dark:text-gray-300">
-                                        <input type="checkbox" name="teams[]" value="{{ $team->id }}"
-                                            {{ collect(old('teams', isset($project) ? $project->teams->pluck('id')->toArray() : []))->contains($team->id) ? 'checked' : '' }}>
+                                    <option value="{{ $team->id }}"
+                                        {{ collect(old('teams', isset($project) ? $project->teams->pluck('id')->toArray() : []))->contains($team->id) ? 'selected' : '' }}>
                                         {{ $team->name }}
-                                    </label>
+                                    </option>
                                 @endforeach
-                            </div>
+                            </select>
                         </div>
 
                         {{-- Members --}}
                         <div>
                             <x-input-label value="Assigned Members" />
-                            <input type="text" placeholder="Search members…" id="search-members"
-                                class="mt-1 mb-2 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm p-2">
-                            <div class="border border-gray-300 dark:border-gray-600 rounded-md p-3 space-y-2 max-h-60 overflow-y-auto">
+                            <select name="members[]" id="members-select" data-multi-select
+                                    data-placeholder="Select members…" class="mt-1 block w-full" multiple>
                                 @foreach($users as $u)
-                                    <label class="flex items-center gap-2 member-item text-sm text-gray-700 dark:text-gray-300">
-                                        <input type="checkbox" name="members[]" value="{{ $u->id }}"
-                                            {{ collect(old('members', isset($project) ? $project->users->pluck('id')->toArray() : []))->contains($u->id) ? 'checked' : '' }}>
+                                    <option value="{{ $u->id }}"
+                                        {{ collect(old('members', isset($project) ? $project->users->pluck('id')->toArray() : []))->contains($u->id) ? 'selected' : '' }}>
                                         {{ $u->name }}
-                                    </label>
+                                    </option>
                                 @endforeach
-                            </div>
+                            </select>
                         </div>
 
                     </div>

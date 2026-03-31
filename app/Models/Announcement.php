@@ -23,6 +23,11 @@ class Announcement extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function teams()
+    {
+        return $this->belongsToMany(Team::class);
+    }
+
     // Activity
     public function getActivitylogOptions(): LogOptions
     {

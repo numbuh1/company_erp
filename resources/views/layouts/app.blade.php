@@ -24,6 +24,12 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @stack('styles')
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/multi-select-dropdown-js/MultiSelect.min.css">
+
+        {{-- Tom Select --}}
+        <link href="https://cdn.jsdelivr.net/npm/tom-select@2.5.2/dist/css/tom-select.css" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/tom-select@2.5.2/dist/js/tom-select.complete.min.js" defer></script>
+
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-gray-100 dark:bg-gray-900" x-data="{ sidebarOpen: false }">
@@ -75,5 +81,30 @@
             }
         </script>
         @stack('scripts')
+        <script src="https://cdn.jsdelivr.net/npm/multi-select-dropdown-js/MultiSelect.min.js"></script>
+        <script>
+            (function () {
+                function getTheme() {
+                    return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+                }
+
+                function initMultiSelects() {
+                    document.querySelectorAll('[data-multi-select]').forEach(function (el) {
+                        if (el._multiSelect) el._multiSelect.destroy();
+                        new MultiSelect(el, { theme: getTheme() });
+                    });
+                }
+
+                document.addEventListener('DOMContentLoaded', initMultiSelects);
+
+                // Keep theme in sync when dark mode is toggled
+                new MutationObserver(function () {
+                    var theme = getTheme();
+                    document.querySelectorAll('.multi-select').forEach(function (ms) {
+                        ms.setAttribute('data-theme', theme);
+                    });
+                }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+            })();
+        </script>
     </body>
 </html>

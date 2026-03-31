@@ -53,8 +53,8 @@
                                 </td>
 
                                 <!-- User -->
-                                <td class="px-6 py-4 font-medium text-gray-900 dark:text-gray-100">
-                                    {{ $leave->user->name }}
+                                <td class="px-6 py-4">
+                                    <x-user-status :user="$leave->user" />
                                 </td>
 
                                 <!-- Period -->

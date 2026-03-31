@@ -40,10 +40,12 @@
             @if($filterUsers || $filterTeams)
                 <form method="GET" class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-4 flex flex-wrap gap-3 items-end">
                     <input type="hidden" name="offset" value="{{ $offset }}">
+
                     @if($filterUsers)
                         <div>
                             <x-input-label value="User" />
-                            <select name="user_id" class="mt-1 block border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
+                            <select id="filter-user" name="user_id"
+                                class="mt-1 block w-56 border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
                                 @foreach($filterUsers as $u)
                                     <option value="{{ $u->id }}" {{ $selectedUserId == $u->id ? 'selected' : '' }}>
                                         {{ $u->name }}
@@ -52,10 +54,12 @@
                             </select>
                         </div>
                     @endif
+
                     @if($filterTeams)
                         <div>
                             <x-input-label value="Team" />
-                            <select name="team_id" class="mt-1 block border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
+                            <select id="filter-team" name="team_id"
+                                class="mt-1 block w-56 border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
                                 <option value="">— Individual —</option>
                                 @foreach($filterTeams as $team)
                                     <option value="{{ $team->id }}" {{ $selectedTeamId == $team->id ? 'selected' : '' }}>
@@ -65,9 +69,14 @@
                             </select>
                         </div>
                     @endif
+
                     <x-primary-button type="submit">Apply</x-primary-button>
-                    <a href="{{ route('timesheets.weekly', ['offset' => $offset]) }}"><x-secondary-button type="button">Reset</x-secondary-button></a>
+                    <a href="{{ route('timesheets.weekly', ['offset' => $offset]) }}">
+                        <x-secondary-button type="button">Reset</x-secondary-button>
+                    </a>
                 </form>
+
+
             @endif
 
             <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-x-auto">
@@ -186,4 +195,45 @@
             </div>
         </div>
     </div>
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const userEl  = document.getElementById('filter-user');
+            const teamEl  = document.getElementById('filter-team');
+
+            if (userEl)  new TomSelect(userEl,  { maxOptions: null });
+            if (teamEl)  new TomSelect(teamEl,  { maxOptions: null });
+        });
+    </script>
+    @endpush
+    @push('styles')
+    <style>
+        .ts-wrapper .ts-control {
+            border-color: rgb(209 213 219);
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            min-height: unset;
+            padding: 0.25rem 0.5rem;
+        }
+        .dark .ts-wrapper .ts-control {
+            background-color: rgb(17 24 39);
+            border-color: rgb(55 65 81);
+            color: rgb(209 213 219);
+        }
+        .dark .ts-wrapper .ts-dropdown {
+            background-color: rgb(31 41 55);
+            border-color: rgb(55 65 81);
+            color: rgb(209 213 219);
+        }
+        .dark .ts-wrapper .ts-dropdown .option:hover,
+        .dark .ts-wrapper .ts-dropdown .option.active {
+            background-color: rgb(55 65 81);
+        }
+        .dark .ts-wrapper .ts-dropdown input {
+            background-color: rgb(17 24 39);
+            color: rgb(209 213 219);
+        }
+    </style>
+    @endpush
+
 </x-app-layout>

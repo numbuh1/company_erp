@@ -25,7 +25,7 @@
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Teams</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Members</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Other Members</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Start</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Start</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">End (EST)</th>
@@ -44,13 +44,13 @@
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                                 <td class="px-4 py-4">
                                     <a href="{{ route('projects.show', $project) }}"
-                                        class="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
+                                        class="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline whitespace-nowrap">
                                         PJ-{{ $project->id }}
                                     </a>
                                 </td>
                                 <td class="px-4 py-4 font-medium text-gray-900 dark:text-gray-100">{{ $project->name }}</td>
                                 <td class="px-4 py-4">
-                                    <span class="text-xs font-medium px-2 py-0.5 rounded {{ $statusClass }}">{{ $project->status }}</span>
+                                    <span class="text-xs font-medium px-2 py-0.5 rounded {{ $statusClass }} whitespace-nowrap">{{ $project->status }}</span>
                                 </td>
                                 <td class="px-4 py-4">
                                     <div class="flex flex-wrap gap-1">
@@ -61,13 +61,22 @@
                                         @endforelse
                                     </div>
                                 </td>
-                                <td class="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+                                <td class="px-4 py-4">
                                     @php
-                                        $memberCount = $project->users->pluck('id')
-                                            ->merge($project->teams->flatMap->users->pluck('id'))
-                                            ->unique()->count();
+                                        $directMembers = $project->users->take(4);
+                                        $extra = max(0, $project->users->count() - 4);
                                     @endphp
-                                    {{ $memberCount }}
+                                    <div class="flex items-center flex-wrap gap-1">
+                                        @foreach($directMembers as $member)
+                                            <x-user-status :user="$member" :show-name="false" />
+                                        @endforeach
+                                        @if($extra > 0)
+                                            <span class="text-xs text-gray-500 dark:text-gray-400 ml-1">+{{ $extra }}</span>
+                                        @endif
+                                        @if($project->users->isEmpty())
+                                            <span class="text-gray-400 text-xs">—</span>
+                                        @endif
+                                    </div>
                                 </td>
                                 <td class="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">{{ $project->start_date?->format('d/m/Y') ?? '—' }}</td>
                                 <td class="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">{{ $project->start_date?->format('d/m/Y') ?? '—' }}</td>

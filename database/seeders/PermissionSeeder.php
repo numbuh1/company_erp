@@ -255,5 +255,45 @@ class PermissionSeeder extends Seeder
                 ]
             );
         }
+
+        // ATTENDANCE
+        $attendance_permission = Permission::updateOrCreate(
+            ['name' => 'attendance'],
+            ['display_name' => 'Attendance', 'parent_id' => null]
+        );
+
+        $attendance_permissions = [
+            'module attendance'   => 'Enable',
+            'view all attendance' => 'View All Attendance',
+            'approve attendance'  => 'Approve WFH Requests',
+        ];
+
+        foreach ($attendance_permissions as $name => $label) {
+            Permission::firstOrCreate(
+                ['name' => $name],
+                [
+                    'display_name' => $label,
+                    'parent_id'    => $attendance_permission->id,
+                ]
+            );
+        }
+
+        // SETTINGS
+        $settings_permission = Permission::updateOrCreate(
+            ['name' => 'settings'],
+            ['display_name' => 'Settings', 'parent_id' => null]
+        );
+
+        $settings_permissions = [
+            'module settings' => 'Enable',
+            'manage settings' => 'Manage System Settings',
+        ];
+
+        foreach ($settings_permissions as $name => $label) {
+            Permission::firstOrCreate(
+                ['name' => $name],
+                ['display_name' => $label, 'parent_id' => $settings_permission->id]
+            );
+        }
     }
 }

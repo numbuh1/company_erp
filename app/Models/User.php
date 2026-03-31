@@ -29,10 +29,13 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'full_name',
         'email',
         'password',
         'leave_balance',
-        'position'
+        'position',
+        'is_active',
+        'wfh_without_approval',
     ];
 
     /**
@@ -44,7 +47,9 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'password'          => 'hashed',
+            'is_active'         => 'boolean',
+            'wfh_without_approval' => 'boolean',
         ];
     }
 
@@ -66,6 +71,20 @@ class User extends Authenticatable
     public function leaveBalanceLogs()
     {
         return $this->hasMany(LeaveBalanceLog::class);
+    }
+
+    public function supervisors()
+    {
+        return $this->belongsToMany(
+            User::class, 'user_supervisors', 'user_id', 'supervisor_id'
+        );
+    }
+
+    public function subordinates()
+    {
+        return $this->belongsToMany(
+            User::class, 'user_supervisors', 'supervisor_id', 'user_id'
+        );
     }
 
     // Log Functions

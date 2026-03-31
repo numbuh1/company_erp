@@ -16,11 +16,20 @@ class DashboardController extends Controller
         $user = auth()->user();
 
         // ── Announcements ──────────────────────────────────────────
-        $latestAnnouncement    = Announcement::latest()->first();
-        $previousAnnouncements = Announcement::latest()
-            ->when($latestAnnouncement, fn($q) => $q->where('id', '!=', $latestAnnouncement->id))
-            ->limit(5)
-            ->get();
+        $announcementQuery = \App\Models\Announcement::with('teams')->latest();
+
+        // Scope to announcements visible to this user
+        if (!$user->can('edit announcements') && !$user->can('edit all user') && !$user->can('view all user')) {
+            $userTeamIds = $user->teams()->pluck('teams.id');
+            $announcementQuery->where(function ($q) use ($userTeamIds) {
+                $q->whereDoesntHave('teams')
+                  ->orWhereHas('teams', fn($tq) => $tq->whereIn('teams.id', $userTeamIds));
+            });
+        }
+
+        $visibleAnnouncements  = $announcementQuery->limit(6)->get();
+        $latestAnnouncement    = $visibleAnnouncements->first();
+        $previousAnnouncements = $visibleAnnouncements->skip(1)->values();
 
         // ── User stats ─────────────────────────────────────────────
         $weekStart  = Carbon::now()->startOfWeek(Carbon::MONDAY);
@@ -61,6 +70,49 @@ class DashboardController extends Controller
 
         $upcomingLeaves = $leaveQuery->get();
 
+        // ── Today's Attendance ─────────────────────────────────────
+        $today = now()->toDateString();
+        $attendanceStats = null;
+
+        if ($user->can('view all user') || $user->can('edit all user')) {
+            $scopedUserIds   = \App\Models\User::where('is_active', true)->pluck('id');
+            $attendanceLabel = 'Company';
+        } elseif ($user->canAny(['view team user', 'edit team user'])) {
+            $teamUserIds   = $user->teamMembers()->pluck('id')->toArray();
+            $teamUserIds[] = $user->id;
+            $scopedUserIds = \App\Models\User::whereIn('id', array_unique($teamUserIds))
+                ->where('is_active', true)->pluck('id');
+            $attendanceLabel = 'Your Team';
+        } else {
+            $scopedUserIds   = null;
+            $attendanceLabel = null;
+        }
+
+        if ($scopedUserIds !== null && $scopedUserIds->isNotEmpty()) {
+            $onLeaveIds = LeaveRequest::where('status', 'approved')
+                ->whereDate('start_at', '<=', $today)
+                ->whereDate('end_at',   '>=', $today)
+                ->whereIn('user_id', $scopedUserIds)
+                ->distinct()
+                ->pluck('user_id');
+
+            $onLeaveCount = $onLeaveIds->count();
+            $totalCount   = $scopedUserIds->count();
+            $presentCount = $totalCount - $onLeaveCount;
+
+            $onLeaveUsers = \App\Models\User::whereIn('id', $onLeaveIds)
+                ->orderBy('name')
+                ->get(['id', 'name', 'position']);
+
+            $attendanceStats = [
+                'total'          => $totalCount,
+                'present'        => $presentCount,
+                'on_leave'       => $onLeaveCount,
+                'on_leave_users' => $onLeaveUsers,
+                'label'          => $attendanceLabel,
+            ];
+        }
+
         // ── In Progress tasks nearing deadline (≤ 5 days) ─────────
         $deadlineQuery = Task::with(['project', 'assignees'])
             ->whereNot('status', 'Done')
@@ -90,7 +142,8 @@ class DashboardController extends Controller
             'latestAnnouncement', 'previousAnnouncements',
             'weekTimeLogs', 'monthTimeLogs', 'monthOTHours',
             'upcomingLeaves', 'deadlineTasks',
-            'pendingLeavesCount', 'pendingOTCount'
+            'pendingLeavesCount', 'pendingOTCount',
+            'attendanceStats'
         ));
     }
 }

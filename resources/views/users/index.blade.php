@@ -25,6 +25,7 @@
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Full Name</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Roles</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Teams</th>
@@ -36,8 +37,19 @@
                         @forelse($users as $user)
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
 
-                                <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
-                                    {{ $user->name }}
+                                <td class="px-6 py-4 text-sm font-medium">
+								    <div class="flex items-center gap-2 flex-wrap">
+								        <x-user-status :user="$user" />
+								        @if(!$user->is_active)
+								            <span class="text-xs font-medium px-2 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300">
+								                Inactive
+								            </span>
+								        @endif
+								    </div>
+								</td>
+
+								<td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                                    {{ $user->full_name ?? $user->name }}
                                 </td>
 
                                 <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
