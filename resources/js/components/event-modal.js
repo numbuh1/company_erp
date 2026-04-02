@@ -3,6 +3,8 @@ let _tsLocation   = null;
 let _usersLoaded  = false;
 let _locsLoaded   = false;
 
+const _eventCache = new Map();
+
 async function _loadUsers() {
     if (_usersLoaded) return;
     try {
@@ -38,20 +40,47 @@ async function _loadLocations() {
     } catch(e) { console.error('Failed to load locations', e); }
 }
 
+async function _fetchEvent(id) {
+    if (_eventCache.has(id)) return _eventCache.get(id);
+    try {
+        const res  = await fetch(`/events/${id}/data`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        const data = await res.json();
+        _eventCache.set(id, data);
+        return data;
+    } catch(e) {
+        console.error('Failed to fetch event', e);
+        return null;
+    }
+}
+
+// Delegate click on any element with data-event-id
+document.addEventListener('click', async function(e) {
+    const btn = e.target.closest('[data-event-id]');
+    if (!btn) return;
+    const id   = btn.dataset.eventId;
+    const data = await _fetchEvent(id);
+    if (data) openEventModal({ ...data, title: 'Edit Event' });
+});
+
 window.openEventModal = async function(data = {}) {
-    // Reset form
     const form = document.getElementById('event-modal-form');
     form.reset();
-    form.action = '/events';
-    document.getElementById('event-modal-method').value = 'POST';
-    document.getElementById('event-modal-title').textContent = data.title || 'New Event';
+
+    if (data.id) {
+        form.action = '/events/' + data.id;
+        document.getElementById('event-modal-method').value = 'PUT';
+        document.getElementById('event-modal-title').textContent = data.title || 'Edit Event';
+    } else {
+        form.action = '/events';
+        document.getElementById('event-modal-method').value = 'POST';
+        document.getElementById('event-modal-title').textContent = data.title || 'New Event';
+    }
+
     document.getElementById('event-modal-source').value = data.source || '';
 
-    // Set applicant ID (single value — controller wraps in array via hidden input name="applicant_ids[]")
     const applicantInput = document.getElementById('event-applicant-id');
-    applicantInput.value = data.applicantId || '';
+    if (applicantInput) applicantInput.value = data.applicantId || '';
 
-    // Show/hide file section
     const fileSection = document.getElementById('event-file-section');
     if (data.hideFile) {
         fileSection.classList.add('hidden');
@@ -59,20 +88,22 @@ window.openEventModal = async function(data = {}) {
         fileSection.classList.remove('hidden');
     }
 
-    // Load Tom Select options lazily
     await Promise.all([_loadUsers(), _loadLocations()]);
 
-    // Pre-fill fields
     if (data.name)        document.getElementById('event-name').value        = data.name;
     if (data.event_type)  document.getElementById('event-type').value        = data.event_type;
     if (data.description) document.getElementById('event-description').value = data.description;
     if (data.start_at)    document.getElementById('event-start').value       = data.start_at;
     if (data.end_at)      document.getElementById('event-end').value         = data.end_at;
 
-    if (data.location && _tsLocation) {
+    if (_tsLocation) {
         _tsLocation.clear();
-        _tsLocation.createItem(data.location);
-        _tsLocation.setValue(data.location);
+        if (data.location) {
+            if (!_tsLocation.getOption(data.location)) {
+                _tsLocation.addOption({ value: data.location, text: data.location });
+            }
+            _tsLocation.setValue(data.location);
+        }
     }
 
     if (data.attendants && _tsAttendants) {
@@ -89,7 +120,6 @@ window.closeEventModal = function() {
     document.body.style.overflow = '';
 };
 
-// Close on Escape
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeEventModal();
 });

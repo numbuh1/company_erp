@@ -234,6 +234,73 @@
                         @endif
                     </div>
 
+                                        {{-- Today's & This Week's Events --}}
+                    @if($todayEvents->isNotEmpty() || $weekEvents->isNotEmpty())
+                        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
+                                    Events
+                                </h3>
+                                <a href="{{ route('calendar.index') }}"
+                                    class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">
+                                    View calendar →
+                                </a>
+                            </div>
+
+                            @if($todayEvents->isNotEmpty())
+                                <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Today</p>
+                                <div class="space-y-2 mb-4">
+                                    @foreach($todayEvents as $ev)
+                                        @php
+                                            $evColor = match($ev->event_type) {
+                                                'interview'     => 'border-blue-400',
+                                                'company_event' => 'border-emerald-400',
+                                                default         => 'border-indigo-400',
+                                            };
+                                        @endphp
+                                        <div class="flex items-start gap-3 text-sm border-l-2 {{ $evColor }} pl-3 py-1">
+                                            <div class="w-20 shrink-0 text-xs text-gray-400">
+                                                {{ $ev->start_at->format('H:i') }}<br>{{ $ev->end_at->format('H:i') }}
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <p class="font-medium text-gray-800 dark:text-gray-100 truncate">{{ $ev->name }}</p>
+                                                @if($ev->location)
+                                                    <p class="text-xs text-gray-400">📍 {{ $ev->location }}</p>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            @if($weekEvents->isNotEmpty())
+                                <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Later this week</p>
+                                <div class="space-y-2">
+                                    @foreach($weekEvents as $ev)
+                                        @php
+                                            $evColor = match($ev->event_type) {
+                                                'interview'     => 'border-blue-400',
+                                                'company_event' => 'border-emerald-400',
+                                                default         => 'border-indigo-400',
+                                            };
+                                        @endphp
+                                        <div class="flex items-start gap-3 text-sm border-l-2 {{ $evColor }} pl-3 py-1">
+                                            <div class="w-20 shrink-0 text-xs text-gray-400">
+                                                {{ $ev->start_at->format('D d/m') }}<br>{{ $ev->start_at->format('H:i') }}
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <p class="font-medium text-gray-800 dark:text-gray-100 truncate">{{ $ev->name }}</p>
+                                                @if($ev->location)
+                                                    <p class="text-xs text-gray-400">📍 {{ $ev->location }}</p>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                    @endif
+
                     {{-- Tasks nearing deadline --}}
                     <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
                         <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-3">

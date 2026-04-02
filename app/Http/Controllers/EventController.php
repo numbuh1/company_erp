@@ -149,4 +149,25 @@ class EventController extends Controller
         if (!auth()->check()) abort(403);
         return response()->json(EventLocation::orderBy('name')->pluck('name'));
     }
+
+    // Show the modal
+    public function apiShow(Event $event)
+    {
+        if (!auth()->check()) abort(403);
+
+        $event->load('attendants');
+
+        return response()->json([
+            'id'          => $event->id,
+            'name'        => $event->name,
+            'event_type'  => $event->event_type,
+            'location'    => $event->location ?? '',
+            'start_at'    => $event->start_at->format('Y-m-d\TH:i'),
+            'end_at'      => $event->end_at->format('Y-m-d\TH:i'),
+            'description' => $event->description ?? '',
+            'attendants'  => $event->attendants->pluck('id'),
+            'file_path'   => $event->file_path,
+        ]);
+    }
+
 }

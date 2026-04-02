@@ -111,6 +111,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/events/{event}',           [EventController::class, 'destroy'])->name('events.destroy');
     Route::get('/events/users',                [EventController::class, 'userOptions'])->name('events.users');
     Route::get('/events/locations',            [EventController::class, 'locationOptions'])->name('events.locations');
+    Route::get('/events/{event}/data',         [EventController::class, 'apiShow'])->name('events.data');
 
 
     // Recruitment

@@ -7,6 +7,7 @@ use App\Models\LeaveRequest;
 use App\Models\OvertimeRequest;
 use App\Models\Task;
 use App\Models\TimeLog;
+use App\Models\Event;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -138,12 +139,36 @@ class DashboardController extends Controller
             $pendingOTCount = OvertimeRequest::where('status', 'pending')->count();
         }
 
+        // ── Today & this week events ─────────────────────────────
+        $todayEvents = collect();
+        $weekEvents  = collect();
+
+        if ($user->can('module calendar')) {
+            $baseQuery = fn() => Event::with('attendants')
+                ->where(function ($q) use ($user) {
+                    $q->whereHas('attendants', fn($sq) => $sq->where('users.id', $user->id))
+                      ->orWhere('created_by', $user->id);
+                });
+
+            $todayEvents = $baseQuery()
+                ->whereBetween('start_at', [now()->startOfDay(), now()->endOfDay()])
+                ->orderBy('start_at')
+                ->get();
+
+            $weekEvents = $baseQuery()
+                ->where('start_at', '>', now()->endOfDay())
+                ->where('start_at', '<=', now()->endOfWeek(Carbon::SUNDAY)->endOfDay())
+                ->orderBy('start_at')
+                ->get();
+        }
+
         return view('dashboard', compact(
             'latestAnnouncement', 'previousAnnouncements',
             'weekTimeLogs', 'monthTimeLogs', 'monthOTHours',
             'upcomingLeaves', 'deadlineTasks',
             'pendingLeavesCount', 'pendingOTCount',
-            'attendanceStats'
+            'attendanceStats',
+            'todayEvents', 'weekEvents'
         ));
     }
 }

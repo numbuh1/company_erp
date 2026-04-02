@@ -2,6 +2,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\EventLocation;
+use App\Models\LeaveRequest;
+use App\Models\OvertimeRequest;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -11,8 +14,12 @@ class CalendarController extends Controller
     {
         if (!auth()->user()->can('module calendar')) abort(403);
 
-        $view = $request->input('view', 'month');
-        $date = Carbon::parse($request->input('date', now()->toDateString()));
+        $user  = auth()->user();
+        $view  = $request->input('view', 'month');
+        $date  = Carbon::parse($request->input('date', now()->toDateString()));
+
+        $filterTypes    = $request->input('filter_types', []);
+        $filterLocations = array_filter((array) $request->input('filter_location', []));
 
         [$rangeStart, $rangeEnd, $calStart, $calEnd] = match($view) {
             'week'  => [
@@ -27,7 +34,7 @@ class CalendarController extends Controller
                 $date->copy()->startOfDay(),
                 $date->copy()->endOfDay(),
             ],
-            default => [ // month
+            default => [
                 $date->copy()->startOfMonth(),
                 $date->copy()->endOfMonth(),
                 $date->copy()->startOfMonth()->startOfWeek(Carbon::MONDAY),
@@ -35,21 +42,106 @@ class CalendarController extends Controller
             ],
         };
 
-        $userId = auth()->id();
+        $userId = $user->id;
 
-        $events = Event::with('attendants')
-            ->where(function ($q) use ($userId) {
-                $q->whereHas('attendants', fn($sq) => $sq->where('users.id', $userId))
-                  ->orWhere('created_by', $userId);
-            })
-            ->where('start_at', '<=', $calEnd)
-            ->where('end_at',   '>=', $calStart)
-            ->orderBy('start_at')
-            ->get()
-            ->groupBy(fn($e) => $e->start_at->toDateString());
+        // ── Leave scoping ────────────────────────────────────────────
+        if ($user->can('view all leaves') || $user->can('edit all user')) {
+            $leaveUserIds = null;
+        } elseif ($user->can('view team leaves')) {
+            $teamIds = $user->teamMembers()->pluck('id')->toArray();
+            $leaveUserIds = array_unique(array_merge([$userId], $teamIds));
+        } else {
+            $leaveUserIds = [$userId];
+        }
 
+        // ── OT scoping ───────────────────────────────────────────────
+        if ($user->can('view all ot') || $user->can('edit all user')) {
+            $otUserIds = null;
+        } elseif ($user->can('view team ot')) {
+            $teamIds = $user->teamMembers()->pluck('id')->toArray();
+            $otUserIds = array_unique(array_merge([$userId], $teamIds));
+        } else {
+            $otUserIds = [$userId];
+        }
 
-        // Nav dates
+        // ── Events ──────────────────────────────────────────────────
+        $allEventTypes   = ['internal_meeting', 'interview', 'company_event'];
+        $showEventTypes  = empty($filterTypes)
+            ? $allEventTypes
+            : array_values(array_intersect($filterTypes, $allEventTypes));
+
+        $events = collect();
+        if (!empty($showEventTypes)) {
+            $eventQuery = Event::with('attendants')
+                ->where(function ($q) use ($userId) {
+                    $q->whereHas('attendants', fn($sq) => $sq->where('users.id', $userId))
+                      ->orWhere('created_by', $userId);
+                })
+                ->where('start_at', '<=', $calEnd)
+                ->where('end_at',   '>=', $calStart)
+                ->orderBy('start_at');
+
+            if (!empty($filterTypes)) {
+                $eventQuery->whereIn('event_type', $showEventTypes);
+            }
+            if (!empty($filterLocations)) {
+                $eventQuery->whereIn('location', $filterLocations);
+            }
+
+            $events = $eventQuery->get()->groupBy(fn($e) => $e->start_at->toDateString());
+        }
+
+        // ── Leaves ──────────────────────────────────────────────────
+        $showLeaves  = empty($filterTypes) || in_array('leave', $filterTypes);
+        $leavesByDay = collect();
+
+        if ($showLeaves) {
+            $leaveQuery = LeaveRequest::with('user')
+                ->where('status', 'approved')
+                ->where('start_at', '<=', $calEnd)
+                ->where('end_at',   '>=', $calStart)
+                ->orderBy('start_at');
+
+            if ($leaveUserIds !== null) {
+                $leaveQuery->whereIn('user_id', $leaveUserIds);
+            }
+
+            foreach ($leaveQuery->get() as $leave) {
+                $start  = Carbon::parse($leave->start_at)->startOfDay()->max($calStart->copy()->startOfDay());
+                $end    = Carbon::parse($leave->end_at)->startOfDay()->min($calEnd->copy()->startOfDay());
+                $cursor = $start->copy();
+                while ($cursor->lte($end)) {
+                    $key = $cursor->toDateString();
+                    if (!$leavesByDay->has($key)) $leavesByDay->put($key, collect());
+                    $leavesByDay->get($key)->push($leave);
+                    $cursor->addDay();
+                }
+            }
+        }
+
+        // ── OT ──────────────────────────────────────────────────────
+        $showOT   = empty($filterTypes) || in_array('ot', $filterTypes);
+        $otsByDay = collect();
+
+        if ($showOT) {
+            $otQuery = OvertimeRequest::with('user')
+                ->where('status', 'approved')
+                ->where('start_at', '<=', $calEnd)
+                ->where('end_at',   '>=', $calStart)
+                ->orderBy('start_at');
+
+            if ($otUserIds !== null) {
+                $otQuery->whereIn('user_id', $otUserIds);
+            }
+
+            foreach ($otQuery->get() as $ot) {
+                $key = Carbon::parse($ot->start_at)->toDateString();
+                if (!$otsByDay->has($key)) $otsByDay->put($key, collect());
+                $otsByDay->get($key)->push($ot);
+            }
+        }
+
+        // ── Nav ──────────────────────────────────────────────────────
         $prevDate = match($view) {
             'week'  => $date->copy()->subWeek()->toDateString(),
             'day'   => $date->copy()->subDay()->toDateString(),
@@ -61,10 +153,17 @@ class CalendarController extends Controller
             default => $date->copy()->addMonth()->toDateString(),
         };
 
+        $filterParams = [];
+        if (!empty($filterTypes))   $filterParams['filter_types']    = $filterTypes;
+        if (!empty($filterLocations)) $filterParams['filter_location'] = $filterLocations;
+
+        $locationOptions = EventLocation::orderBy('name')->pluck('name');
+
         return view('calendar.index', compact(
-            'view', 'date', 'events',
+            'view', 'date', 'events', 'leavesByDay', 'otsByDay',
             'calStart', 'calEnd', 'rangeStart', 'rangeEnd',
-            'prevDate', 'nextDate'
+            'prevDate', 'nextDate',
+            'filterTypes', 'filterLocations', 'locationOptions', 'filterParams'
         ));
     }
 }
