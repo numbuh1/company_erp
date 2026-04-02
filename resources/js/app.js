@@ -1,6 +1,7 @@
 import './bootstrap';
 
 import searchableSelect from './components/searchable-select.js';
+import './components/event-modal.js';
 
 import Alpine from 'alpinejs';
 

@@ -295,5 +295,41 @@ class PermissionSeeder extends Seeder
                 ['display_name' => $label, 'parent_id' => $settings_permission->id]
             );
         }
+
+        // RECRUITMENT
+        $recruitment_parent = Permission::updateOrCreate(
+            ['name' => 'recruitment'],
+            ['display_name' => 'Recruitment', 'parent_id' => null]
+        );
+
+        $recruitment_permissions = [
+            'module recruitment' => 'Enable',
+            'edit recruitment'   => 'Create / Edit / Delete Positions & Applicants',
+        ];
+
+        foreach ($recruitment_permissions as $name => $label) {
+            Permission::firstOrCreate(
+                ['name' => $name],
+                ['display_name' => $label, 'parent_id' => $recruitment_parent->id]
+            );
+        }
+
+        // CALENDAR & EVENTS
+        $calendar_parent = Permission::updateOrCreate(
+            ['name' => 'calendar'],
+            ['display_name' => 'Calendar & Events', 'parent_id' => null]
+        );
+
+        $calendar_permissions = [
+            'module calendar' => 'Enable',
+            'edit events'     => 'Create / Edit / Delete Events',
+        ];
+
+        foreach ($calendar_permissions as $name => $label) {
+            Permission::firstOrCreate(
+                ['name' => $name],
+                ['display_name' => $label, 'parent_id' => $calendar_parent->id]
+            );
+        }
     }
 }

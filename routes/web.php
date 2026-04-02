@@ -14,6 +14,11 @@ use App\Http\Controllers\TimeLogController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\RecruitmentController;
+use App\Http\Controllers\RecruitmentApplicantController;
+use App\Http\Controllers\SkillController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\CalendarController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -92,6 +97,41 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/admin/settings', [SettingController::class, 'edit'])->name('admin.settings.edit');
     Route::put('/admin/settings', [SettingController::class, 'update'])->name('admin.settings.update');
+
+    Route::resource('skills', SkillController::class)->except(['show']);
+
+    // Calendar
+    Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar.index');
+
+    // Events
+    Route::get('/events',                      [EventController::class, 'index'])->name('events.index');
+    Route::post('/events',                     [EventController::class, 'store'])->name('events.store');
+    Route::get('/events/{event}/edit',         [EventController::class, 'edit'])->name('events.edit');
+    Route::put('/events/{event}',              [EventController::class, 'update'])->name('events.update');
+    Route::delete('/events/{event}',           [EventController::class, 'destroy'])->name('events.destroy');
+    Route::get('/events/users',                [EventController::class, 'userOptions'])->name('events.users');
+    Route::get('/events/locations',            [EventController::class, 'locationOptions'])->name('events.locations');
+
+
+    // Recruitment
+    Route::prefix('recruitment')->name('recruitment.')->group(function () {
+        Route::get('/',                                             [RecruitmentController::class, 'index'])->name('index');
+        Route::get('/create',                                       [RecruitmentController::class, 'create'])->name('create');
+        Route::post('/',                                            [RecruitmentController::class, 'store'])->name('store');
+        Route::get('/{recruitmentPosition}',                        [RecruitmentController::class, 'show'])->name('show');
+        Route::get('/{recruitmentPosition}/edit',                   [RecruitmentController::class, 'edit'])->name('edit');
+        Route::put('/{recruitmentPosition}',                        [RecruitmentController::class, 'update'])->name('update');
+        Route::delete('/{recruitmentPosition}',                     [RecruitmentController::class, 'destroy'])->name('destroy');
+        Route::get('/{recruitmentPosition}/jd/download',            [RecruitmentController::class, 'downloadJd'])->name('jd.download');
+
+        Route::get('/{recruitmentPosition}/applicants/create',                              [RecruitmentApplicantController::class, 'create'])->name('applicants.create');
+        Route::post('/{recruitmentPosition}/applicants',                                    [RecruitmentApplicantController::class, 'store'])->name('applicants.store');
+        Route::get('/{recruitmentPosition}/applicants/{recruitmentApplicant}/edit',         [RecruitmentApplicantController::class, 'edit'])->name('applicants.edit');
+        Route::put('/{recruitmentPosition}/applicants/{recruitmentApplicant}',              [RecruitmentApplicantController::class, 'update'])->name('applicants.update');
+        Route::delete('/{recruitmentPosition}/applicants/{recruitmentApplicant}',           [RecruitmentApplicantController::class, 'destroy'])->name('applicants.destroy');
+        Route::get('/{recruitmentPosition}/applicants/{recruitmentApplicant}/cv/download',  [RecruitmentApplicantController::class, 'downloadCv'])->name('applicants.cv.download');
+    });
+
 });
 
 require __DIR__.'/auth.php';

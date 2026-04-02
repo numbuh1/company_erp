@@ -51,6 +51,9 @@
         @can('module timesheet')
             <a href="{{ route('timesheets.weekly') }}" class="{{ $navLink('timesheets.*', 'time-logs.*') }}">Timesheet</a>
         @endcan
+        @can('module calendar')
+            <a href="{{ route('calendar.index') }}" class="{{ $navLink('calendar.*') }}">Calendar</a>
+        @endcan
 
         <div class="pt-4 pb-1">
             <p class="px-3 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">People</p>
@@ -60,6 +63,12 @@
         @endcan
         @can('module user')
             <a href="{{ route('users.index') }}" class="{{ $navLink('users.*') }}">Users</a>
+        @endcan
+        @can('module recruitment')
+            <a href="{{ route('recruitment.index') }}" class="{{ $navLink('recruitment.*') }}">Recruitment</a>
+        @endcan
+        @can('edit recruitment')
+            <a href="{{ route('skills.index') }}" class="{{ $navLink('skills.*') }}">Skills</a>
         @endcan
 
         <div class="pt-4 pb-1">
