@@ -19,6 +19,16 @@
                 <input type="hidden" name="_source" id="event-modal-source" value="">
                 <input type="hidden" name="applicant_ids[]" id="event-applicant-id" value="">
 
+                {{-- Applicant link (shown when booking an interview for a specific applicant) --}}
+                <div id="event-applicant-link-row" class="hidden mb-4 flex items-center gap-2 p-2.5 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
+                    <svg class="w-4 h-4 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    <a id="event-applicant-link" href="#" target="_blank"
+                        class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline truncate">
+                    </a>
+                </div>
+
                 @if($errors->any())
                     <div class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded text-sm text-red-700 dark:text-red-300">
                         <ul class="list-disc list-inside space-y-1">

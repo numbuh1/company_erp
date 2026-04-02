@@ -127,6 +127,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/{recruitmentPosition}/applicants/create',                              [RecruitmentApplicantController::class, 'create'])->name('applicants.create');
         Route::post('/{recruitmentPosition}/applicants',                                    [RecruitmentApplicantController::class, 'store'])->name('applicants.store');
+        Route::get('/{recruitmentPosition}/applicants/{recruitmentApplicant}',       [RecruitmentApplicantController::class, 'show'])->name('applicants.show');
         Route::get('/{recruitmentPosition}/applicants/{recruitmentApplicant}/edit',         [RecruitmentApplicantController::class, 'edit'])->name('applicants.edit');
         Route::put('/{recruitmentPosition}/applicants/{recruitmentApplicant}',              [RecruitmentApplicantController::class, 'update'])->name('applicants.update');
         Route::delete('/{recruitmentPosition}/applicants/{recruitmentApplicant}',           [RecruitmentApplicantController::class, 'destroy'])->name('applicants.destroy');

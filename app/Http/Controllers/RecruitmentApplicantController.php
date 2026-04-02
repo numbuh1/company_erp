@@ -38,6 +38,20 @@ class RecruitmentApplicantController extends Controller
         ));
     }
 
+    public function show(RecruitmentPosition $recruitmentPosition, RecruitmentApplicant $recruitmentApplicant)
+    {
+        $this->_authorizePosition($recruitmentPosition);
+
+        $recruitmentApplicant->load(['skills', 'tags', 'referer', 'events.attendants']);
+        $recruitmentPosition->load('assignedUsers');
+
+        $canEdit = auth()->user()->can('edit recruitment');
+
+        return view('recruitment.applicants.show', compact(
+            'recruitmentPosition', 'recruitmentApplicant', 'canEdit'
+        ));
+    }
+
     public function store(Request $request, RecruitmentPosition $recruitmentPosition)
     {
         $canFullEdit = $this->_authorizePosition($recruitmentPosition);
@@ -69,7 +83,7 @@ class RecruitmentApplicantController extends Controller
             );
         }
 
-        RecruitmentApplicant::create($data);
+        $applicant = RecruitmentApplicant::create($data);
         $skillsData = [];
         foreach ($request->input('skills', []) as $skillId) {
             $skillsData[(int)$skillId] = [

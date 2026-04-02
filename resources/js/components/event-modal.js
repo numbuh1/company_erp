@@ -81,6 +81,19 @@ window.openEventModal = async function(data = {}) {
     const applicantInput = document.getElementById('event-applicant-id');
     if (applicantInput) applicantInput.value = data.applicantId || '';
 
+    // Applicant link row
+    const linkRow = document.getElementById('event-applicant-link-row');
+    const linkEl  = document.getElementById('event-applicant-link');
+    if (linkRow && linkEl) {
+        if (data.applicantUrl) {
+            linkEl.href        = data.applicantUrl;
+            linkEl.textContent = data.applicantName ? 'Applicant: ' + data.applicantName : 'View Applicant';
+            linkRow.classList.remove('hidden');
+        } else {
+            linkRow.classList.add('hidden');
+        }
+    }
+
     const fileSection = document.getElementById('event-file-section');
     if (data.hideFile) {
         fileSection.classList.add('hidden');

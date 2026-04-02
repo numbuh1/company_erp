@@ -172,6 +172,11 @@
                             'Hired'                  => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300',
                             default                  => 'bg-gray-100 text-gray-600',
                         };
+                        $assignedIds   = $recruitmentPosition->assignedUsers->pluck('id')->push(auth()->id())->unique()->values()->toJson();
+                        $cvUrl         = $applicant->cv_path ? route('recruitment.applicants.cv.download', [$recruitmentPosition, $applicant]) : '';
+                        $interviewName = $recruitmentPosition->name . ' Interview - ' . $applicant->name;
+                        $interviewDesc = $cvUrl ? 'CV: ' . $cvUrl : '';
+                        $applicantUrl  = route('recruitment.applicants.show', [$recruitmentPosition, $applicant]);
                     @endphp
                     <div class="border-b border-gray-100 dark:border-gray-700 last:border-0 px-5 py-4">
                         <div class="flex items-start justify-between gap-4">
@@ -180,7 +185,10 @@
 
                                 {{-- Line 1: Name + Status + Stars --}}
                                 <div class="flex flex-wrap items-center gap-2 mb-2">
-                                    <span class="font-semibold text-gray-800 dark:text-gray-100">{{ $applicant->name }}</span>
+                                    <a href="{{ $applicantUrl }}"
+                                        class="font-semibold text-gray-800 dark:text-gray-100 hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline">
+                                        {{ $applicant->name }}
+                                    </a>
                                     <span class="text-xs font-medium px-2 py-0.5 rounded {{ $statusColor }}">{{ $applicant->status }}</span>
                                     @if($applicant->evaluation > 0)
                                         <span class="text-amber-400 tracking-tight text-sm">
@@ -198,31 +206,44 @@
                                     </div>
                                 @endif
 
-                                {{-- 2-column info grid --}}
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1 text-xs text-gray-500 dark:text-gray-400 mb-2">
-                                    @if($applicant->email)
-                                        <span>✉ <a href="mailto:{{ $applicant->email }}" class="hover:text-indigo-400">{{ $applicant->email }}</a></span>
-                                    @endif
-                                    @if($applicant->available_date)
-                                        <span>📅 Available {{ $applicant->available_date->format('d/m/Y') }}</span>
-                                    @endif
-                                    @if($applicant->phone)
-                                        <span>📞 {{ $applicant->phone }}</span>
-                                    @endif
-                                    @if($applicant->salary_expectation)
-                                        <span>💰 {{ number_format($applicant->salary_expectation) }}</span>
-                                    @endif
-                                    @if($applicant->profile_url)
-                                        <span class="sm:col-span-2 truncate">🔗 <a href="{{ $applicant->profile_url }}" target="_blank" class="hover:text-indigo-400">{{ $applicant->profile_url }}</a></span>
-                                    @endif
-                                    @if($applicant->referer)
-                                        <span class="sm:col-span-2">👤 Referred by {{ $applicant->referer->name }}</span>
-                                    @endif
+                                {{-- responsive 2-column grouped layout --}}
+                                <div class="flex flex-col sm:flex-row sm:gap-8 text-xs text-gray-500 dark:text-gray-400 mb-2">
+
+                                    {{-- Column 1 --}}
+                                    <div class="flex-1 space-y-1">
+                                        @if($applicant->email)
+                                            <div>✉ <a href="mailto:{{ $applicant->email }}" class="hover:text-indigo-400">{{ $applicant->email }}</a></div>
+                                        @endif
+
+                                        @if($applicant->phone)
+                                            <div>📞 {{ $applicant->phone }}</div>
+                                        @endif
+
+                                        @if($applicant->profile_url)
+                                            <div class="truncate">🔗 <a href="{{ $applicant->profile_url }}" target="_blank" class="hover:text-indigo-400">{{ $applicant->profile_url }}</a></div>
+                                        @endif
+                                    </div>
+
+                                    {{-- Column 2 --}}
+                                    <div class="flex-1 space-y-1 mt-1 sm:mt-0">
+                                        @if($applicant->salary_expectation)
+                                            <div>💰 {{ number_format($applicant->salary_expectation) }}</div>
+                                        @endif
+
+                                        @if($applicant->available_date)
+                                            <div>📅 Available {{ $applicant->available_date->format('d/m/Y') }}</div>
+                                        @endif
+
+                                        @if($applicant->referer)
+                                            <div>👤 Referred by {{ $applicant->referer->name }}</div>
+                                        @endif
+                                    </div>
+
                                 </div>
 
                                 {{-- Skills --}}
                                 @if($applicant->skills->isNotEmpty())
-                                    <div class="flex flex-wrap gap-1">
+                                    <div class="flex flex-wrap gap-1 mb-2">
                                         @foreach($applicant->skills as $skill)
                                             <span class="text-xs px-1.5 py-0.5 rounded-full {{ $levelColor($skill->pivot->level) }}">
                                                 {{ $skill->name }} <span class="opacity-60">· {{ ucfirst($skill->pivot->level) }}</span>
@@ -231,23 +252,51 @@
                                     </div>
                                 @endif
 
+                                {{-- Linked Interview Events --}}
+                                @if($applicant->events->isNotEmpty())
+                                    <div class="flex flex-wrap gap-1.5 mt-1">
+                                        @foreach($applicant->events as $event)
+                                            <button type="button" data-event-id="{{ $event->id }}"
+                                                class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full
+                                                       bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300
+                                                       hover:bg-blue-100 dark:hover:bg-blue-900/50 transition cursor-pointer">
+                                                <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                                </svg>
+                                                {{ $event->start_at->format('d/m/Y H:i') }} · {{ $event->name }}
+                                            </button>
+                                        @endforeach
+                                    </div>
+                                @endif
+
                             </div>
 
-                            {{-- Right: CV + Actions --}}
+                            {{-- Right: Actions --}}
                             <div class="flex items-center gap-2 shrink-0 pt-0.5">
+
+                                {{-- View button --}}
+                                <a href="{{ $applicantUrl }}" title="View"
+                                    class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-indigo-600 hover:border-indigo-400 bg-white dark:bg-gray-700 transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">View</span>
+                                </a>
+
+                                {{-- CV download button --}}
                                 @if($applicant->cv_path)
-                                    <a href="{{ route('recruitment.applicants.cv.download', [$recruitmentPosition, $applicant]) }}"
-                                        class="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:underline whitespace-nowrap">
-                                        📄 CV
+                                    <a href="{{ $cvUrl }}" title="Download CV"
+                                        class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-indigo-600 hover:border-indigo-400 bg-white dark:bg-gray-700 transition">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                        </svg>
+                                        <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Download CV</span>
                                     </a>
                                 @endif
 
-                                @php
-                                    $assignedIds = $recruitmentPosition->assignedUsers->pluck('id')->push(auth()->id())->unique()->values()->toJson();
-                                    $cvUrl = $applicant->cv_path ? route('recruitment.applicants.cv.download', [$recruitmentPosition, $applicant]) : '';
-                                    $interviewName = $recruitmentPosition->name . ' Interview - ' . $applicant->name;
-                                    $interviewDesc = $cvUrl ? 'CV: ' . $cvUrl : '';
-                                @endphp
+                                {{-- Book Interview button --}}
                                 <button type="button"
                                     onclick='openEventModal({
                                         name: @json($interviewName),
@@ -256,7 +305,9 @@
                                         description: @json($interviewDesc),
                                         hideFile: true,
                                         title: "Book Interview",
-                                        applicantId: {{ $applicant->id }}
+                                        applicantId: {{ $applicant->id }},
+                                        applicantUrl: @json($applicantUrl),
+                                        applicantName: @json($applicant->name)
                                     })'
                                     title="Book Interview"
                                     class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-indigo-600 hover:border-indigo-400 bg-white dark:bg-gray-700 transition">
@@ -267,6 +318,7 @@
                                     <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Book Interview</span>
                                 </button>
 
+                                {{-- Edit button --}}
                                 <a href="{{ route('recruitment.applicants.edit', [$recruitmentPosition, $applicant]) }}" title="Edit"
                                     class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-yellow-600 hover:border-yellow-400 bg-white dark:bg-gray-700 transition">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
