@@ -26,6 +26,11 @@
                             border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
                         Weekly View
                     </a>
+                    <a href="{{ route('timesheets.monthly') }}"
+                        class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
+                            border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                        Monthly View
+                    </a>
                 </nav>
             </div>
 

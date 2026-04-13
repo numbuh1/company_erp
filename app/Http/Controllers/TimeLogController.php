@@ -9,6 +9,8 @@ use App\Models\Team;
 use App\Models\User;
 use App\Models\PublicHoliday;
 use Carbon\Carbon;
+use App\Models\LeaveRequest;
+use App\Models\OvertimeRequest;
 use Illuminate\Http\Request;
 
 class TimeLogController extends Controller
@@ -294,6 +296,102 @@ class TimeLogController extends Controller
             'holidayDates'
         ));
     }
+
+    public function monthly(Request $request)
+    {
+        $user        = auth()->user();
+        $viewableIds = $this->_viewableUserIds($user);
+
+        // Build user dropdown
+        $filterUsers = null;
+        if ($viewableIds === null) {
+            $filterUsers = User::orderBy('name')->get();
+        } elseif (count($viewableIds) > 1) {
+            $filterUsers = User::whereIn('id', $viewableIds)->orderBy('name')->get();
+        }
+
+        // Resolve selected user
+        $selectedUserId = (int) $request->query('user_id', $user->id);
+        if ($viewableIds !== null && !in_array($selectedUserId, $viewableIds)) {
+            $selectedUserId = $user->id;
+        }
+        $selectedUser = User::with('teams')->find($selectedUserId) ?? $user;
+
+        // Month
+        $monthStr   = $request->query('month', now()->format('Y-m'));
+        $monthDate  = Carbon::parse($monthStr . '-01');
+        $monthStart = $monthDate->copy()->startOfMonth();
+        $monthEnd   = $monthDate->copy()->endOfMonth();
+        $calStart   = $monthStart->copy()->startOfWeek(Carbon::MONDAY);
+        $calEnd     = $monthEnd->copy()->endOfWeek(Carbon::SUNDAY);
+        $prevMonth  = $monthDate->copy()->subMonth()->format('Y-m');
+        $nextMonth  = $monthDate->copy()->addMonth()->format('Y-m');
+
+        // Time logs
+        $timeLogs = TimeLog::where('user_id', $selectedUserId)
+            ->whereBetween('date', [$monthStart->toDateString(), $monthEnd->toDateString()])
+            ->get();
+
+        $logsByDay = [];
+        foreach ($timeLogs as $log) {
+            $dk = $log->date->format('Y-m-d');
+            $logsByDay[$dk] = ($logsByDay[$dk] ?? 0) + $log->time_spent;
+        }
+        $totalWork = $timeLogs->sum('time_spent');
+
+        // OT requests (show on start date, within current month only)
+        $otRequests = OvertimeRequest::where('user_id', $selectedUserId)
+            ->where('status', 'approved')
+            ->where('start_at', '<=', $monthEnd)
+            ->where('end_at',   '>=', $monthStart)
+            ->get();
+
+        $otByDay  = [];
+        $totalOt  = 0;
+        foreach ($otRequests as $ot) {
+            $dk = Carbon::parse($ot->start_at)->toDateString();
+            if ($dk >= $monthStart->toDateString() && $dk <= $monthEnd->toDateString()) {
+                $otByDay[$dk] = ($otByDay[$dk] ?? 0) + $ot->hours;
+                $totalOt += $ot->hours;
+            }
+        }
+
+        // Leave requests (distribute hours evenly across covered days)
+        $leaveRequests = LeaveRequest::where('user_id', $selectedUserId)
+            ->where('status', 'approved')
+            ->where('start_at', '<=', $monthEnd)
+            ->where('end_at',   '>=', $monthStart)
+            ->get();
+
+        $leaveByDay = [];
+        $totalLeave = 0;
+        foreach ($leaveRequests as $leave) {
+            $lStart      = Carbon::parse($leave->start_at)->startOfDay();
+            $lEnd        = Carbon::parse($leave->end_at)->startOfDay();
+            $totalDays   = max(1, $lStart->diffInDays($lEnd) + 1);
+            $hoursPerDay = $leave->hours / $totalDays;
+
+            $cursor   = $lStart->copy()->max($monthStart->copy()->startOfDay());
+            $clampEnd = $lEnd->copy()->min($monthEnd->copy()->startOfDay());
+            while ($cursor->lte($clampEnd)) {
+                $dk = $cursor->toDateString();
+                $leaveByDay[$dk] = ($leaveByDay[$dk] ?? 0) + $hoursPerDay;
+                $totalLeave += $hoursPerDay;
+                $cursor->addDay();
+            }
+        }
+
+        $holidayDates = PublicHoliday::getHolidayDates($calStart->copy(), $calEnd->copy());
+
+        return view('time_logs.monthly', compact(
+            'selectedUser', 'filterUsers', 'selectedUserId',
+            'monthDate', 'monthStart', 'monthEnd', 'calStart', 'calEnd',
+            'logsByDay', 'otByDay', 'leaveByDay',
+            'totalWork', 'totalOt', 'totalLeave',
+            'holidayDates', 'prevMonth', 'nextMonth', 'monthStr'
+        ));
+    }
+
 
     /**
      * Determine which user IDs the current user may view.

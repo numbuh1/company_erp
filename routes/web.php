@@ -106,6 +106,7 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('time-logs', TimeLogController::class);
     Route::get('timesheets/weekly', [TimeLogController::class, 'weekly'])->name('timesheets.weekly');
+    Route::get('timesheets/monthly', [TimeLogController::class, 'monthly'])->name('timesheets.monthly');
 
     Route::post('announcements/upload-image', [AnnouncementController::class, 'uploadImage'])
         ->name('announcements.upload-image');

@@ -7,6 +7,7 @@
     $nextParams     = array_merge(['offset' => $offset + 1], $filterParams);
     $thisWeekParams = $filterParams;
 @endphp
+@include('partials.cal-colors')
 
 <x-app-layout>
     <x-slot name="header">
@@ -49,6 +50,11 @@
                             border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400">
                         Weekly View
                     </a>
+                    <a href="{{ route('timesheets.monthly') }}"
+                        class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
+                            border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                        Monthly View
+                    </a>
                 </nav>
             </div>
 
@@ -58,32 +64,24 @@
                     <input type="hidden" name="offset" value="{{ $offset }}">
 
                     @if($filterUsers)
-                        <div>
-                            <x-input-label value="User" />
-                            <select id="filter-user" name="user_id"
-                                class="mt-1 block w-56 border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
-                                @foreach($filterUsers as $u)
-                                    <option value="{{ $u->id }}" {{ $selectedUserId == $u->id ? 'selected' : '' }}>
-                                        {{ $u->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
+                        <x-tom-select name="user_id" label="User" class="w-56">
+                            @foreach($filterUsers as $u)
+                                <option value="{{ $u->id }}" {{ $selectedUserId == $u->id ? 'selected' : '' }}>
+                                    {{ $u->name }}
+                                </option>
+                            @endforeach
+                        </x-tom-select>
                     @endif
 
                     @if($filterTeams)
-                        <div>
-                            <x-input-label value="Team" />
-                            <select id="filter-team" name="team_id"
-                                class="mt-1 block w-56 border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
-                                <option value="">— Individual —</option>
-                                @foreach($filterTeams as $team)
-                                    <option value="{{ $team->id }}" {{ $selectedTeamId == $team->id ? 'selected' : '' }}>
-                                        {{ $team->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
+                        <x-tom-select name="team_id" label="Team" class="w-56">
+                            <option value="">— Individual —</option>
+                            @foreach($filterTeams as $team)
+                                <option value="{{ $team->id }}" {{ $selectedTeamId == $team->id ? 'selected' : '' }}>
+                                    {{ $team->name }}
+                                </option>
+                            @endforeach
+                        </x-tom-select>
                     @endif
 
                     <x-primary-button type="submit">Apply</x-primary-button>
@@ -102,11 +100,15 @@
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-64">Context</th>
                             <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase w-20">Total</th>
                             @foreach($days as $day)
-                                @php $isGrayDay = $day->isWeekend() || in_array($day->format('Y-m-d'), $holidayDates); @endphp
+                                @php
+                                    $isHolidayDay = in_array($day->format('Y-m-d'), $holidayDates);
+                                    $isWeekendDay = $day->isWeekend();
+                                @endphp
                                 <th class="px-3 py-3 text-center text-xs font-medium uppercase w-24
                                     {{ $day->isToday()
                                         ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950'
-                                        : ($isGrayDay ? 'text-gray-400 dark:text-gray-500 bg-gray-100/70 dark:bg-gray-900/40' : 'text-gray-500') }}">
+                                        : ($isHolidayDay ? $calHolidayHeaderCls
+                                            : ($isWeekendDay ? $calWeekendHeaderCls : 'text-gray-500')) }}">
                                     {{ $day->format('D') }}<br>
                                     <span class="font-normal normal-case">{{ $day->format('d/m') }}</span>
                                 </th>
@@ -136,11 +138,15 @@
                                 {{-- Day cells --}}
                                 @foreach($days as $day)
                                     @php
-                                        $dayKey    = $day->format('Y-m-d');
-                                        $cell      = $row['days'][$dayKey] ?? null;
-                                        $isGrayDay = $day->isWeekend() || in_array($dayKey, $holidayDates);
+                                        $dayKey       = $day->format('Y-m-d');
+                                        $cell         = $row['days'][$dayKey] ?? null;
+                                        $isHolidayDay = in_array($dayKey, $holidayDates);
+                                        $isWeekendDay = $day->isWeekend();
                                     @endphp
-                                    <td class="px-2 py-1 text-center {{ $day->isToday() ? 'bg-indigo-50 dark:bg-indigo-950' : ($isGrayDay ? 'bg-gray-100/70 dark:bg-gray-900/40' : '') }}">
+                                    <td class="px-2 py-1 text-center
+                                        {{ $day->isToday() ? 'bg-indigo-50 dark:bg-indigo-950'
+                                            : ($isHolidayDay ? $calHolidayBg
+                                                : ($isWeekendDay ? $calWeekendBg : '')) }}">
                                         @if($cell)
                                             @php
                                                 $cellDescs = array_filter($cell['descriptions']);
@@ -195,10 +201,14 @@
                                 </td>
                                 @foreach($days as $day)
                                     @php
-                                        $dk        = $day->format('Y-m-d');
-                                        $isGrayDay = $day->isWeekend() || in_array($dk, $holidayDates);
+                                        $dk           = $day->format('Y-m-d');
+                                        $isHolidayDay = in_array($dk, $holidayDates);
+                                        $isWeekendDay = $day->isWeekend();
                                     @endphp
-                                    <td class="px-2 py-3 text-center {{ $day->isToday() ? 'bg-indigo-50 dark:bg-indigo-950' : ($isGrayDay ? 'bg-gray-100/70 dark:bg-gray-900/40' : '') }}">
+                                    <td class="px-2 py-3 text-center
+                                        {{ $day->isToday() ? 'bg-indigo-50 dark:bg-indigo-950'
+                                            : ($isHolidayDay ? $calHolidayBg
+                                                : ($isWeekendDay ? $calWeekendBg : '')) }}">
                                         @if($dayTotals[$dk] > 0)
                                             <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">
                                                 {{ \App\Models\TimeLog::formatTime($dayTotals[$dk]) }}
@@ -215,45 +225,4 @@
             </div>
         </div>
     </div>
-    @push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const userEl  = document.getElementById('filter-user');
-            const teamEl  = document.getElementById('filter-team');
-
-            if (userEl)  new TomSelect(userEl,  { maxOptions: null });
-            if (teamEl)  new TomSelect(teamEl,  { maxOptions: null });
-        });
-    </script>
-    @endpush
-    @push('styles')
-    <style>
-        .ts-wrapper .ts-control {
-            border-color: rgb(209 213 219);
-            border-radius: 0.375rem;
-            font-size: 0.875rem;
-            min-height: unset;
-            padding: 0.25rem 0.5rem;
-        }
-        .dark .ts-wrapper .ts-control {
-            background-color: rgb(17 24 39);
-            border-color: rgb(55 65 81);
-            color: rgb(209 213 219);
-        }
-        .dark .ts-wrapper .ts-dropdown {
-            background-color: rgb(31 41 55);
-            border-color: rgb(55 65 81);
-            color: rgb(209 213 219);
-        }
-        .dark .ts-wrapper .ts-dropdown .option:hover,
-        .dark .ts-wrapper .ts-dropdown .option.active {
-            background-color: rgb(55 65 81);
-        }
-        .dark .ts-wrapper .ts-dropdown input {
-            background-color: rgb(17 24 39);
-            color: rgb(209 213 219);
-        }
-    </style>
-    @endpush
-
 </x-app-layout>
