@@ -36,6 +36,22 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-4">
 
+            {{-- Tabs --}}
+            <div class="border-b border-gray-200 dark:border-gray-700">
+                <nav class="flex gap-1">
+                    <a href="{{ route('time-logs.index') }}"
+                        class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
+                            border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                        List View
+                    </a>
+                    <a href="{{ route('timesheets.weekly') }}"
+                        class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
+                            border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400">
+                        Weekly View
+                    </a>
+                </nav>
+            </div>
+
             {{-- User / Team filter --}}
             @if($filterUsers || $filterTeams)
                 <form method="GET" class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-4 flex flex-wrap gap-3 items-end">
@@ -196,10 +212,6 @@
                         </tfoot>
                     @endif
                 </table>
-            </div>
-
-            <div class="mt-4 text-right">
-                <a href="{{ route('time-logs.index') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">View all logs →</a>
             </div>
         </div>
     </div>

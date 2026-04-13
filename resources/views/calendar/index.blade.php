@@ -172,7 +172,7 @@
                                     $shown     = 0;
                                 @endphp
                                 <div class="min-h-[90px] px-2 py-1.5 border-r border-gray-100 dark:border-gray-700 last:border-0
-                                    {{ !$isInMonth ? 'bg-gray-50 dark:bg-gray-900/40' : ($isGray ? 'bg-gray-100/80 dark:bg-gray-900/30' : '' }}">
+                                    {{ !$isInMonth ? 'bg-gray-50 dark:bg-gray-900/40' : ($isGray ? 'bg-gray-100/80 dark:bg-gray-900/30' : '') }}">
 
                                     <a href="{{ route('calendar.index', array_merge(['view' => 'day', 'date' => $dk], $filterParams)) }}"
                                         class="text-xs font-semibold mb-1 w-6 h-6 flex items-center justify-center rounded-full

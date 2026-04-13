@@ -11,13 +11,13 @@ class PublicHolidayController extends Controller
     {
         $this->_authorize();
         $holidays = PublicHoliday::orderBy('start_date')->get();
-        return view('admin.public-holidays.index', compact('holidays'));
+        return view('admin.public_holidays.index', compact('holidays'));
     }
 
     public function create()
     {
         $this->_authorize();
-        return view('admin.public-holidays.form');
+        return view('admin.public_holidays.form');
     }
 
     public function store(Request $request)
@@ -37,7 +37,7 @@ class PublicHolidayController extends Controller
     public function edit(PublicHoliday $publicHoliday)
     {
         $this->_authorize();
-        return view('admin.public-holidays.form', compact('publicHoliday'));
+        return view('admin.public_holidays.form', compact('publicHoliday'));
     }
 
     public function update(Request $request, PublicHoliday $publicHoliday)

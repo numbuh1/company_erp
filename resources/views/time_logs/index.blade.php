@@ -1,11 +1,8 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Time Logs</h2>
-            <div class="flex gap-2">
-                <a href="{{ route('timesheets.weekly') }}"><x-secondary-button>Weekly View</x-secondary-button></a>
-                <a href="{{ route('time-logs.create') }}"><x-primary-button>Log Time</x-primary-button></a>
-            </div>
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Timesheet</h2>
+            <a href="{{ route('time-logs.create') }}"><x-primary-button>Log Time</x-primary-button></a>
         </div>
     </x-slot>
 
@@ -15,6 +12,22 @@
             @if(session('success'))
                 <div class="p-3 bg-green-100 text-green-800 rounded">{{ session('success') }}</div>
             @endif
+
+            {{-- Tabs --}}
+            <div class="border-b border-gray-200 dark:border-gray-700">
+                <nav class="flex gap-1">
+                    <a href="{{ route('time-logs.index') }}"
+                        class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
+                            border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400">
+                        List View
+                    </a>
+                    <a href="{{ route('timesheets.weekly') }}"
+                        class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
+                            border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                        Weekly View
+                    </a>
+                </nav>
+            </div>
 
             {{-- Filters --}}
             <form method="GET" class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-4 flex flex-wrap gap-3 items-end">
@@ -45,22 +58,22 @@
                     </div>
                 @endif
                 <div>
-                    <x-input-label value="Date From" />
+                    <x-input-label value="From" />
                     <x-text-input type="date" id="date_from" name="date_from" class="mt-1 block" value="{{ request('date_from') }}" />
                 </div>
                 <div>
-                    <x-input-label value="Date To" />
+                    <x-input-label value="To" />
                     <x-text-input type="date" id="date_to" name="date_to" class="mt-1 block" value="{{ request('date_to') }}" />
                 </div>
                 <div class="flex flex-col gap-1 justify-end">
-                    <x-input-label value="Shortcuts" />
+                    <x-input-label value="Quick" />
                     <div class="flex gap-1 mt-1">
                         <button type="button" onclick="setDateRange('this_month')"
-                            class="px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition whitespace-nowrap">
+                            class="px-2.5 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition whitespace-nowrap">
                             This Month
                         </button>
                         <button type="button" onclick="setDateRange('last_month')"
-                            class="px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition whitespace-nowrap">
+                            class="px-2.5 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition whitespace-nowrap">
                             Last Month
                         </button>
                     </div>
@@ -171,4 +184,27 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        function setDateRange(range) {
+            const now   = new Date();
+            const year  = now.getFullYear();
+            const month = now.getMonth(); // 0-indexed
+
+            let from, to;
+            if (range === 'this_month') {
+                from = new Date(year, month, 1);
+                to   = new Date(year, month + 1, 0);
+            } else {
+                from = new Date(year, month - 1, 1);
+                to   = new Date(year, month, 0);
+            }
+
+            const fmt = d => d.toISOString().split('T')[0];
+            document.getElementById('date_from').value = fmt(from);
+            document.getElementById('date_to').value   = fmt(to);
+        }
+    </script>
+    @endpush
 </x-app-layout>
