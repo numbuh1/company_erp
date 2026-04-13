@@ -45,8 +45,25 @@
                     </div>
                 @endif
                 <div>
-                    <x-input-label value="Date" />
-                    <x-text-input type="date" name="date" class="mt-1 block" value="{{ request('date') }}" />
+                    <x-input-label value="Date From" />
+                    <x-text-input type="date" id="date_from" name="date_from" class="mt-1 block" value="{{ request('date_from') }}" />
+                </div>
+                <div>
+                    <x-input-label value="Date To" />
+                    <x-text-input type="date" id="date_to" name="date_to" class="mt-1 block" value="{{ request('date_to') }}" />
+                </div>
+                <div class="flex flex-col gap-1 justify-end">
+                    <x-input-label value="Shortcuts" />
+                    <div class="flex gap-1 mt-1">
+                        <button type="button" onclick="setDateRange('this_month')"
+                            class="px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition whitespace-nowrap">
+                            This Month
+                        </button>
+                        <button type="button" onclick="setDateRange('last_month')"
+                            class="px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition whitespace-nowrap">
+                            Last Month
+                        </button>
+                    </div>
                 </div>
                 <div>
                     <x-input-label value="Project" />

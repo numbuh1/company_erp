@@ -86,12 +86,16 @@
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-64">Context</th>
                             <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase w-20">Total</th>
                             @foreach($days as $day)
+                                @php $isGrayDay = $day->isWeekend() || in_array($day->format('Y-m-d'), $holidayDates); @endphp
                                 <th class="px-3 py-3 text-center text-xs font-medium uppercase w-24
-                                    {{ $day->isToday() ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500' }}">
+                                    {{ $day->isToday()
+                                        ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950'
+                                        : ($isGrayDay ? 'text-gray-400 dark:text-gray-500 bg-gray-100/70 dark:bg-gray-900/40' : 'text-gray-500') }}">
                                     {{ $day->format('D') }}<br>
                                     <span class="font-normal normal-case">{{ $day->format('d/m') }}</span>
                                 </th>
                             @endforeach
+
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -116,10 +120,11 @@
                                 {{-- Day cells --}}
                                 @foreach($days as $day)
                                     @php
-                                        $dayKey = $day->format('Y-m-d');
-                                        $cell   = $row['days'][$dayKey] ?? null;
+                                        $dayKey    = $day->format('Y-m-d');
+                                        $cell      = $row['days'][$dayKey] ?? null;
+                                        $isGrayDay = $day->isWeekend() || in_array($dayKey, $holidayDates);
                                     @endphp
-                                    <td class="px-2 py-1 text-center {{ $day->isToday() ? 'bg-indigo-50 dark:bg-indigo-950' : '' }}">
+                                    <td class="px-2 py-1 text-center {{ $day->isToday() ? 'bg-indigo-50 dark:bg-indigo-950' : ($isGrayDay ? 'bg-gray-100/70 dark:bg-gray-900/40' : '') }}">
                                         @if($cell)
                                             @php
                                                 $cellDescs = array_filter($cell['descriptions']);
@@ -173,8 +178,11 @@
                                     </span>
                                 </td>
                                 @foreach($days as $day)
-                                    @php $dk = $day->format('Y-m-d'); @endphp
-                                    <td class="px-2 py-3 text-center {{ $day->isToday() ? 'bg-indigo-50 dark:bg-indigo-950' : '' }}">
+                                    @php
+                                        $dk        = $day->format('Y-m-d');
+                                        $isGrayDay = $day->isWeekend() || in_array($dk, $holidayDates);
+                                    @endphp
+                                    <td class="px-2 py-3 text-center {{ $day->isToday() ? 'bg-indigo-50 dark:bg-indigo-950' : ($isGrayDay ? 'bg-gray-100/70 dark:bg-gray-900/40' : '') }}">
                                         @if($dayTotals[$dk] > 0)
                                             <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">
                                                 {{ \App\Models\TimeLog::formatTime($dayTotals[$dk]) }}

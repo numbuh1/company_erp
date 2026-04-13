@@ -179,4 +179,19 @@ class RecruitmentApplicantController extends Controller
         return Storage::disk('public')->download($recruitmentApplicant->cv_path,
             $recruitmentApplicant->name . '_CV.' . pathinfo($recruitmentApplicant->cv_path, PATHINFO_EXTENSION));
     }
+
+    public function updateStatus(Request $request, RecruitmentPosition $recruitmentPosition, RecruitmentApplicant $recruitmentApplicant)
+    {
+        $canFullEdit = $this->_authorizePosition($recruitmentPosition);
+        if (!$canFullEdit) abort(403);
+
+        $request->validate([
+            'status' => 'required|in:' . implode(',', RecruitmentApplicant::$statuses),
+        ]);
+
+        $recruitmentApplicant->update(['status' => $request->status]);
+
+        return response()->json(['ok' => true]);
+    }
+
 }

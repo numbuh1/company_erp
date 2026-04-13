@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calendar — A6-ERP User Guide</title>
+    <link rel="stylesheet" href="guide.css" />
+</head>
+<body>
+<nav id="toc">
+    <div class="toc-brand"><span>Documentation</span><a href="index.html" class="toc-home">A6-ERP User Guide</a></div>
+    <ul>
+        <li><a href="index.html"><span class="icon">🚀</span> Getting Started</a></li>
+        <li><a href="dashboard.html"><span class="icon">📊</span> Dashboard</a></li>
+        <li class="nav-group"><span>Work</span></li>
+        <li><a href="attendance.html"><span class="icon">📍</span> Attendance</a></li>
+        <li><a href="announcements.html"><span class="icon">📢</span> Announcements</a></li>
+        <li><a href="projects.html"><span class="icon">📁</span> Projects</a></li>
+        <li><a href="tasks.html"><span class="icon">✅</span> Tasks</a></li>
+        <li><a href="timesheet.html"><span class="icon">⏱️</span> Timesheet</a></li>
+        <li><a href="calendar.html"><span class="icon">📅</span> Calendar</a></li>
+        <li class="nav-group"><span>People</span></li>
+        <li><a href="teams.html"><span class="icon">👥</span> Teams</a></li>
+        <li><a href="users.html"><span class="icon">👤</span> Users</a></li>
+        <li><a href="recruitment.html"><span class="icon">🎯</span> Recruitment</a></li>
+        <li><a href="skills.html"><span class="icon">🏷️</span> Skills</a></li>
+        <li class="nav-group"><span>Requests</span></li>
+        <li><a href="leave-requests.html"><span class="icon">🏖️</span> Leave Requests</a></li>
+        <li><a href="ot-requests.html"><span class="icon">🕐</span> OT Requests</a></li>
+        <li class="nav-group"><span>Admin</span></li>
+        <li><a href="roles.html"><span class="icon">🔑</span> Roles &amp; Permissions</a></li>
+        <li class="nav-group"><span>Reference</span></li>
+        <li><a href="notifications.html"><span class="icon">🔔</span> Notifications</a></li>
+        <li><a href="permission-reference.html"><span class="icon">📋</span> Permission Reference</a></li>
+    </ul>
+</nav>
+<main id="content">
+    <section id="calendar">
+        <h2><span class="num">9</span> Calendar</h2>
+        <p class="section-intro">A shared calendar showing your events alongside approved leaves and overtime requests, with Month, Week, and Day views.</p>
+
+        <img class="guide-img" src="/guide/calendar.png" alt="Calendar">
+
+        <h3>Views</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>View</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Month</strong></td><td>Full month grid — each day shows event pills. Use Prev/Next arrows to navigate months.</td></tr>
+                    <tr><td><strong>Week</strong></td><td>Seven-column grid with full event names, one row per day.</td></tr>
+                    <tr><td><strong>Day</strong></td><td>Single day detail showing all events with times.</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>What Is Shown</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Item</th><th>Colour</th><th>Visibility</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Internal Meeting</strong></td><td><span class="badge badge-indigo">Indigo</span></td><td>Events you created or are attending</td></tr>
+                    <tr><td><strong>Interview</strong></td><td><span class="badge badge-blue">Blue</span></td><td>Events you created or are attending</td></tr>
+                    <tr><td><strong>Company Event</strong></td><td><span class="badge badge-purple">Purple</span></td><td>Events you created or are attending</td></tr>
+                    <tr><td><strong>Approved Leave</strong></td><td><span class="badge badge-amber">Yellow</span></td><td>Scoped by your leave view permission</td></tr>
+                    <tr><td><strong>Approved OT</strong></td><td><span class="badge badge-red">Orange</span></td><td>Scoped by your OT view permission</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Filters</h3>
+        <p>Use the filter bar at the top of the calendar to narrow what is shown:</p>
+        <ul>
+            <li><strong>Event Types</strong> — multi-select tag dropdown. Choose from Internal Meeting, Interview, Company Event, Leave, OT. Leave empty to show all.</li>
+            <li><strong>Location</strong> — multi-select tag dropdown. Filter events by one or more locations.</li>
+        </ul>
+        <p>Filters are applied instantly. The URL updates so you can share or bookmark a filtered view.</p>
+
+        <h3>Creating an Event</h3>
+        <div class="callout info"><span class="callout-icon">🔑</span><div>Requires the <code>module calendar</code> permission.</div></div>
+        <ol class="steps">
+            <li>Click <strong>New Event</strong> on the calendar page.</li>
+            <li>Fill in the event details (see fields below).</li>
+            <li>Add <strong>Attendants</strong> — search by name. Each attendant receives a bell notification.</li>
+            <li>Optionally attach a <strong>File</strong>.</li>
+            <li>Click <strong>Save Event</strong>.</li>
+        </ol>
+
+        <h3>Event Fields</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Field</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Name</strong></td><td>Event title</td></tr>
+                    <tr><td><strong>Type</strong></td><td>Internal Meeting, Interview, or Company Event</td></tr>
+                    <tr><td><strong>Location</strong></td><td>Free-text; saved to the location list for future filtering</td></tr>
+                    <tr><td><strong>Start / End</strong></td><td>Date and time — end must be on or after start</td></tr>
+                    <tr><td><strong>Description</strong></td><td>Optional notes or agenda</td></tr>
+                    <tr><td><strong>File</strong></td><td>Optional attachment (max 20 MB)</td></tr>
+                    <tr><td><strong>Attendants</strong></td><td>Users to invite — they are notified by bell notification</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Editing an Event</h3>
+        <p>Click any event pill on the calendar to open the edit modal. Change any field and click <strong>Save Event</strong>.</p>
+        <div class="callout info">
+            <span class="callout-icon">🔑</span>
+            <div>You can edit events you created. Users with <code>edit events</code> permission can edit any event.</div>
+        </div>
+
+        <h3>Deleting an Event</h3>
+        <p>Open the event modal and click <strong>Delete Event</strong> at the bottom-left of the dialog. A confirmation prompt appears. All attendants receive a cancellation notification.</p>
+
+        <h3>Booking an Interview</h3>
+        <p>From the <a href="recruitment.html">Recruitment</a> position page, click the <strong>Book Interview</strong> button next to an applicant. The event modal opens pre-filled with the position name, applicant name, interview type, and assigned users as attendants. The event is linked to the applicant so it appears on their profile.</p>
+
+        <h3>Permissions</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Permission</th><th>Access Granted</th></tr></thead>
+                <tbody>
+                    <tr><td><code>module calendar</code></td><td>Access the Calendar page and create events</td></tr>
+                    <tr><td><code>edit events</code></td><td>Edit or delete any event (not just your own)</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+    <div class="page-nav">
+        <a href="timesheet.html">← Timesheet</a>
+        <a href="teams.html">Teams →</a>
+    </div>
+</main>
+<script>(function(){const p=location.pathname.split('/').pop()||'index.html';document.querySelectorAll('#toc a').forEach(a=>{if(a.getAttribute('href')===p)a.classList.add('active');});})();</script>
+</body>
+</html>

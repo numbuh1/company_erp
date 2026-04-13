@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Models\Task;
 use App\Models\Team;
 use App\Models\User;
+use App\Models\PublicHoliday;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -34,7 +35,8 @@ class TimeLogController extends Controller
             $query->where('user_id', $request->user_id);
         }
 
-        if ($request->filled('date'))        $query->whereDate('date', $request->date);
+        if ($request->filled('date_from'))   $query->whereDate('date', '>=', $request->date_from);
+        if ($request->filled('date_to'))     $query->whereDate('date', '<=', $request->date_to);
         if ($request->filled('project_id'))  $query->where('project_id', $request->project_id);
         if ($request->filled('task_id'))     $query->where('task_id', $request->task_id);
         if ($request->boolean('no_context')) $query->whereNull('project_id')->whereNull('task_id');
@@ -283,11 +285,13 @@ class TimeLogController extends Controller
             }
         }
 
-        $weekTotal = $logs->sum('time_spent');
+        $weekTotal    = $logs->sum('time_spent');
+        $holidayDates = PublicHoliday::getHolidayDates($weekStart->copy(), $weekEnd->copy());
 
         return view('time_logs.weekly', compact(
             'days', 'rows', 'weekStart', 'weekEnd', 'offset', 'dayTotals', 'weekTotal',
-            'filterUsers', 'filterTeams', 'selectedUserId', 'selectedTeamId'
+            'filterUsers', 'filterTeams', 'selectedUserId', 'selectedTeamId',
+            'holidayDates'
         ));
     }
 

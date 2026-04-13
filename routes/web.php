@@ -19,12 +19,36 @@ use App\Http\Controllers\RecruitmentApplicantController;
 use App\Http\Controllers\SkillController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\CalendarController;
+use App\Http\Controllers\PublicHolidayController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return auth()->check()
         ? redirect()->route('dashboard')
         : redirect()->route('login');
+});
+
+Route::prefix('help')->group(function () {
+    Route::view('/', 'help.index')->name('help.index');
+    Route::view('/getting-started', 'help.getting-started')->name('help.getting-started');
+    Route::view('/navigation', 'help.navigation')->name('help.navigation');
+    Route::view('/dashboard', 'help.dashboard')->name('help.dashboard');
+    Route::view('/announcements', 'help.announcements')->name('help.announcements');
+    Route::view('/projects', 'help.projects')->name('help.projects');
+    Route::view('/tasks', 'help.tasks')->name('help.tasks');
+    Route::view('/timesheet', 'help.timesheet')->name('help.timesheet');
+    Route::view('/teams', 'help.teams')->name('help.teams');
+    Route::view('/users', 'help.users')->name('help.users');
+    Route::view('/leave-requests', 'help.leave-requests')->name('help.leave-requests');
+    Route::view('/ot-requests', 'help.ot-requests')->name('help.ot-requests');
+    Route::view('/roles', 'help.roles')->name('help.roles');
+    Route::view('/notifications', 'help.notifications')->name('help.notifications');
+    Route::view('/dark-mode', 'help.dark-mode')->name('help.dark-mode');
+    Route::view('/permission-reference', 'help.permission-reference')->name('help.permission-reference');
+    Route::view('/attendance', 'help.attendance')->name('help.attendance');
+    Route::view('/calendar', 'help.calendar')->name('help.calendar');
+    Route::view('/recruitment', 'help.recruitment')->name('help.recruitment');
+    Route::view('/skills', 'help.skills')->name('help.skills');
 });
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
@@ -132,7 +156,22 @@ Route::middleware('auth')->group(function () {
         Route::put('/{recruitmentPosition}/applicants/{recruitmentApplicant}',              [RecruitmentApplicantController::class, 'update'])->name('applicants.update');
         Route::delete('/{recruitmentPosition}/applicants/{recruitmentApplicant}',           [RecruitmentApplicantController::class, 'destroy'])->name('applicants.destroy');
         Route::get('/{recruitmentPosition}/applicants/{recruitmentApplicant}/cv/download',  [RecruitmentApplicantController::class, 'downloadCv'])->name('applicants.cv.download');
+        Route::patch('/{recruitmentPosition}/applicants/{recruitmentApplicant}/status',
+            [RecruitmentApplicantController::class, 'updateStatus'])
+            ->name('applicants.updateStatus');
     });
+
+    // Holidays
+    Route::resource('admin/public-holidays', PublicHolidayController::class)
+    ->except(['show'])
+    ->names([
+        'index'   => 'admin.public-holidays.index',
+        'create'  => 'admin.public-holidays.create',
+        'store'   => 'admin.public-holidays.store',
+        'edit'    => 'admin.public-holidays.edit',
+        'update'  => 'admin.public-holidays.update',
+        'destroy' => 'admin.public-holidays.destroy',
+    ]);
 
 });
 

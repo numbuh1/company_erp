@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Announcements — A6-ERP User Guide</title>
+    <link rel="stylesheet" href="guide.css" />
+</head>
+<body>
+<nav id="toc">
+    <div class="toc-brand"><span>Documentation</span><a href="index.html" class="toc-home">A6-ERP User Guide</a></div>
+    <ul>
+        <li><a href="index.html"><span class="icon">🚀</span> Getting Started</a></li>
+        <li><a href="dashboard.html"><span class="icon">📊</span> Dashboard</a></li>
+        <li class="nav-group"><span>Work</span></li>
+        <li><a href="attendance.html"><span class="icon">📍</span> Attendance</a></li>
+        <li><a href="announcements.html"><span class="icon">📢</span> Announcements</a></li>
+        <li><a href="projects.html"><span class="icon">📁</span> Projects</a></li>
+        <li><a href="tasks.html"><span class="icon">✅</span> Tasks</a></li>
+        <li><a href="timesheet.html"><span class="icon">⏱️</span> Timesheet</a></li>
+        <li><a href="calendar.html"><span class="icon">📅</span> Calendar</a></li>
+        <li class="nav-group"><span>People</span></li>
+        <li><a href="teams.html"><span class="icon">👥</span> Teams</a></li>
+        <li><a href="users.html"><span class="icon">👤</span> Users</a></li>
+        <li><a href="recruitment.html"><span class="icon">🎯</span> Recruitment</a></li>
+        <li><a href="skills.html"><span class="icon">🏷️</span> Skills</a></li>
+        <li class="nav-group"><span>Requests</span></li>
+        <li><a href="leave-requests.html"><span class="icon">🏖️</span> Leave Requests</a></li>
+        <li><a href="ot-requests.html"><span class="icon">🕐</span> OT Requests</a></li>
+        <li class="nav-group"><span>Admin</span></li>
+        <li><a href="roles.html"><span class="icon">🔑</span> Roles &amp; Permissions</a></li>
+        <li class="nav-group"><span>Reference</span></li>
+        <li><a href="notifications.html"><span class="icon">🔔</span> Notifications</a></li>
+        <li><a href="permission-reference.html"><span class="icon">📋</span> Permission Reference</a></li>
+    </ul>
+</nav>
+<main id="content">
+    <section id="announcements">
+        <h2><span class="num">5</span> Announcements</h2>
+        <p class="section-intro">Company-wide posts with rich text formatting — bold, italic, lists, headings, and embedded images.</p>
+
+        <img class="guide-img" src="/guide/04-1-announcement-list.png" alt="Announcement list">
+
+        <h3>Viewing Announcements</h3>
+        <p>The index page lists all announcements as cards. Click a title to read the full content on its own page.</p>
+
+        <img class="guide-img" src="/guide/04-3-announcement-show.png" alt="Announcement detail">
+
+        <h3>Creating an Announcement</h3>
+        <div class="callout info"><span class="callout-icon">🔑</span><div>Requires the <code>Create/Edit Announcements</code> permission.</div></div>
+        <ol class="steps">
+            <li>Click <strong>New Announcement</strong> on the index page.</li>
+            <li>Enter a <strong>Title</strong>.</li>
+            <li>Write your content using the rich text editor. Use the toolbar for formatting.</li>
+            <li>To insert an image, click the image icon in the toolbar — it uploads automatically.</li>
+            <li>Click <strong>Save</strong>.</li>
+        </ol>
+
+        <h3>Editing &amp; Deleting</h3>
+        <ul>
+            <li><strong>Edit</strong> — available on the index card and the show page with <code>Create/Edit Announcements</code> permission.</li>
+            <li><strong>Delete</strong> — requires <code>Delete Announcements</code> permission.</li>
+        </ul>
+
+        <img class="guide-img" src="/guide/04-2-announcement-edit.png" alt="Announcement editor">
+    </section>
+    <div class="page-nav">
+        <a href="attendance.html">← Attendance</a>
+        <a href="projects.html">Projects →</a>
+    </div>
+</main>
+<script>(function(){const p=location.pathname.split('/').pop()||'index.html';document.querySelectorAll('#toc a').forEach(a=>{if(a.getAttribute('href')===p)a.classList.add('active');});})();</script>
+</body>
+</html>

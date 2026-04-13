@@ -126,6 +126,22 @@ class EventController extends Controller
     {
         if (!auth()->user()->can('edit events') && $event->created_by !== auth()->id()) abort(403);
 
+        $event->load('attendants');
+        $actorId = auth()->id();
+
+        foreach ($event->attendants as $attendant) {
+            if ($attendant->id === $actorId) continue;
+            NotificationHelper::send(
+                receivingUser: $attendant,
+                title: 'Event Cancelled: ' . $event->name,
+                description: Event::$types[$event->event_type]
+                    . ' on ' . $event->start_at->format('d/m/Y H:i')
+                    . ($event->location ? ' at ' . $event->location : ''),
+                url: route('calendar.index'),
+                incomingUser: auth()->user(),
+            );
+        }
+
         $event->delete();
         return back()->with('success', 'Event deleted.');
     }

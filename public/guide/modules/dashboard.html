@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard — A6-ERP User Guide</title>
+    <link rel="stylesheet" href="guide.css" />
+</head>
+<body>
+
+<nav id="toc">
+    <div class="toc-brand">
+        <span>Documentation</span>
+        <a href="index.html" class="toc-home">A6-ERP User Guide</a>
+    </div>
+    <ul>
+        <li><a href="index.html"><span class="icon">🚀</span> Getting Started</a></li>
+        <li><a href="dashboard.html"><span class="icon">📊</span> Dashboard</a></li>
+        <li class="nav-group"><span>Work</span></li>
+        <li><a href="attendance.html"><span class="icon">📍</span> Attendance</a></li>
+        <li><a href="announcements.html"><span class="icon">📢</span> Announcements</a></li>
+        <li><a href="projects.html"><span class="icon">📁</span> Projects</a></li>
+        <li><a href="tasks.html"><span class="icon">✅</span> Tasks</a></li>
+        <li><a href="timesheet.html"><span class="icon">⏱️</span> Timesheet</a></li>
+        <li><a href="calendar.html"><span class="icon">📅</span> Calendar</a></li>
+        <li class="nav-group"><span>People</span></li>
+        <li><a href="teams.html"><span class="icon">👥</span> Teams</a></li>
+        <li><a href="users.html"><span class="icon">👤</span> Users</a></li>
+        <li><a href="recruitment.html"><span class="icon">🎯</span> Recruitment</a></li>
+        <li><a href="skills.html"><span class="icon">🏷️</span> Skills</a></li>
+        <li class="nav-group"><span>Requests</span></li>
+        <li><a href="leave-requests.html"><span class="icon">🏖️</span> Leave Requests</a></li>
+        <li><a href="ot-requests.html"><span class="icon">🕐</span> OT Requests</a></li>
+        <li class="nav-group"><span>Admin</span></li>
+        <li><a href="roles.html"><span class="icon">🔑</span> Roles &amp; Permissions</a></li>
+        <li class="nav-group"><span>Reference</span></li>
+        <li><a href="notifications.html"><span class="icon">🔔</span> Notifications</a></li>
+        <li><a href="permission-reference.html"><span class="icon">📋</span> Permission Reference</a></li>
+    </ul>
+</nav>
+
+<main id="content">
+
+    <section id="dashboard">
+        <h2><span class="num">3</span> Dashboard</h2>
+        <p class="section-intro">A quick overview of what matters most — your time, leave, upcoming deadlines, pending actions, and today's events.</p>
+
+        <img class="guide-img" src="/guide/03-dashboard.png" alt="Dashboard">
+
+        <h3>Stats Bar</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Card</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Leave Balance</strong></td><td>Your remaining leave hours</td></tr>
+                    <tr><td><strong>This Week</strong></td><td>Total hours you have logged this week</td></tr>
+                    <tr><td><strong>This Month</strong></td><td>Total hours you have logged this month</td></tr>
+                    <tr><td><strong>OT This Month</strong></td><td>Your approved overtime hours this month</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Announcements Panel <em>(left)</em></h3>
+        <ul>
+            <li>Shows the <strong>latest announcement</strong> with full rendered content.</li>
+            <li>Below it, a list of the <strong>5 previous announcements</strong> with links to read each one.</li>
+        </ul>
+
+        <h3>Notifications Panel <em>(right)</em></h3>
+        <p>Three sections stacked vertically:</p>
+        <p><strong>Pending Approvals</strong> — visible to approvers only. Lists pending Leave and OT requests waiting for your review, with direct links to action them.</p>
+        <p><strong>Upcoming Approved Leaves</strong> — approved leaves happening in the next <strong>14 days</strong>. Shows your own leaves, or your team's/all users' if you have broader access.</p>
+        <p><strong>Events</strong> — List of this week's upcoming events.</p>
+        <p><strong>Tasks Nearing Deadline</strong> — In Progress tasks with an expected end date <strong>within 5 days</strong>. Click a task name to view its details.</p>
+
+        <h3>Events Panel <em>(right)</em></h3>
+        <p>Visible to users with the <strong>Calendar</strong> module enabled.</p>
+        <ul>
+            <li><strong>Today</strong> — events you are attending or created that start today.</li>
+            <li><strong>Later This Week</strong> — upcoming events for the rest of the current week.</li>
+        </ul>
+        <p>Each event card shows the time, name, and location. Click the event to open it in the Calendar.</p>
+    </section>
+
+    <div class="page-nav">
+        <a href="index.html">← Getting Started</a>
+        <a href="attendance.html">Attendance →</a>
+    </div>
+
+</main>
+
+<script>
+(function () {
+    const page = location.pathname.split('/').pop() || 'index.html';
+    document.querySelectorAll('#toc a').forEach(a => {
+        if (a.getAttribute('href') === page) a.classList.add('active');
+    });
+})();
+</script>
+</body>
+</html>

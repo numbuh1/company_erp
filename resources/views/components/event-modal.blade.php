@@ -106,9 +106,21 @@
         </div>
 
         <!-- Footer -->
-        <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
+        <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center gap-3">
+
+            {{-- Delete form (shown only in edit mode via JS) --}}
+            <form id="event-delete-form" method="POST" action="" class="hidden mr-auto">
+                @csrf
+                <input type="hidden" name="_method" value="DELETE">
+                <button type="submit"
+                    onclick="return confirm('Delete this event? All attendants will be notified of the cancellation.')"
+                    class="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition">
+                    Delete Event
+                </button>
+            </form>
+
             <button type="button" onclick="closeEventModal()"
-                class="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                class="ml-auto px-4 py-2 text-sm text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                 Cancel
             </button>
             <button type="button" onclick="document.getElementById('event-modal-form').submit()"

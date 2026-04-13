@@ -137,43 +137,21 @@
 
                     <!-- Skills -->
                     <div class="mb-4">
-                        <x-input-label value="Required Skills" />
-                        <div class="mt-2 space-y-4 max-h-72 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-900">
-                            @foreach($skillOptions->groupBy('category') as $cat => $group)
-                                <div>
-                                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5">{{ ucfirst($cat) }}</p>
-                                    <div class="space-y-1.5">
-                                        @foreach($group as $skill)
-                                            @php
-                                                $checked  = isset($recruitmentPosition) && $recruitmentPosition->skills->contains($skill->id);
-                                                $curLevel = $checked ? $recruitmentPosition->skills->find($skill->id)->pivot->level : 'beginner';
-                                            @endphp
-                                            <div class="flex items-center gap-3">
-                                                <input type="checkbox" name="skills[]" value="{{ $skill->id }}"
-                                                    id="skill_pos_{{ $skill->id }}"
-                                                    {{ $checked ? 'checked' : '' }}
-                                                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
-                                                <label for="skill_pos_{{ $skill->id }}"
-                                                    class="text-sm text-gray-700 dark:text-gray-300 flex-1 cursor-pointer">
-                                                    {{ $skill->name }}
-                                                </label>
-                                                <select name="skill_levels[{{ $skill->id }}]"
-                                                    class="text-xs border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 rounded shadow-sm py-0.5">
-                                                    @foreach(\App\Models\Skill::$levels as $lvl)
-                                                        <option value="{{ $lvl }}" {{ $curLevel === $lvl ? 'selected' : '' }}>
-                                                            {{ ucfirst($lvl) }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            @endforeach
-                            @if($skillOptions->isEmpty())
-                                <p class="text-xs text-gray-400">No skills defined yet.</p>
+                        <div class="flex items-center justify-between mb-2">
+                            <x-input-label value="Required Skills" />
+                            @if($skillOptions->isNotEmpty())
+                                <button type="button" onclick="openSkillModal()"
+                                    class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">
+                                    Edit Skills
+                                </button>
                             @endif
                         </div>
+                        {{-- Read-only summary --}}
+                        <div id="skills-summary"
+                            class="flex flex-wrap gap-1.5 min-h-[2.5rem] p-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900">
+                        </div>
+                        {{-- Hidden inputs synced by JS --}}
+                        <div id="skills-inputs"></div>
                         @error('skills')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                     </div>
 
@@ -203,23 +181,47 @@
             </div>
         </div>
     </div>
+    <x-skill-picker-modal />
     @push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            new TomSelect('#team-select', { maxOptions: null });
+    @php
+        // Reconstruct initial skill state: prefer old() on validation error, else model values
+        if (old('skills')) {
+            $existingSkills = [];
+            foreach (old('skills', []) as $sid) {
+                $existingSkills[(int)$sid] = old("skill_levels.$sid", 'beginner');
+            }
+        } elseif (isset($recruitmentPosition)) {
+            $existingSkills = $recruitmentPosition->skills
+                ->mapWithKeys(fn($s) => [$s->id => $s->pivot->level])
+                ->toArray();
+        } else {
+            $existingSkills = [];
+        }
+        $skillsByCategory = $skillOptions
+            ->groupBy('category')
+            ->map(fn($g) => $g->values()->map(fn($s) => ['id' => $s->id, 'name' => $s->name]));
+    @endphp
+    document.addEventListener('DOMContentLoaded', function () {
+        initSkillPicker(
+            @json($skillsByCategory),
+            @json($existingSkills)
+        );
 
-            new TomSelect('#position-tags-select', {
-                create: true,
-                createOnBlur: true,
-                persist: false,
-                maxOptions: null,
-                render: {
-                    option_create: function(data, escape) {
-                        return '<div class="create">Create tag <strong>' + escape(data.input) + '</strong></div>';
-                    }
+        new TomSelect('#team-select', { maxOptions: null });
+
+        new TomSelect('#position-tags-select', {
+            create: true,
+            createOnBlur: true,
+            persist: false,
+            maxOptions: null,
+            render: {
+                option_create: function(data, escape) {
+                    return '<div class="create">Create tag <strong>' + escape(data.input) + '</strong></div>';
                 }
-            });
+            }
         });
+    });
     </script>
     @endpush
 </x-app-layout>

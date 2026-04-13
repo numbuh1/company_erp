@@ -95,7 +95,7 @@
                 </div>
 
                 {{-- Buttons --}}
-                <div class="flex justify-end gap-2">
+                <div class="flex justify-end gap-2 mt-5 mb-10">
                     <a href="{{ isset($project) ? route('projects.show', $project) : route('projects.index') }}">
                         <x-secondary-button type="button">Cancel</x-secondary-button>
                     </a>

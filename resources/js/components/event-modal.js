@@ -76,6 +76,15 @@ window.openEventModal = async function(data = {}) {
         document.getElementById('event-modal-title').textContent = data.title || 'New Event';
     }
 
+    // Show/hide delete button
+    const deleteForm = document.getElementById('event-delete-form');
+    if (data.id) {
+        deleteForm.action = '/events/' + data.id;
+        deleteForm.classList.remove('hidden');
+    } else {
+        deleteForm.classList.add('hidden');
+    }
+
     document.getElementById('event-modal-source').value = data.source || '';
 
     const applicantInput = document.getElementById('event-applicant-id');

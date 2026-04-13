@@ -164,6 +164,7 @@
                                     $dk        = $cursor->toDateString();
                                     $isToday   = $dk === $today;
                                     $isInMonth = $cursor->month === $date->month;
+                                    $isGray    = $cursor->isWeekend() || in_array($dk, $holidayDates);
                                     $dayEvs    = $events->get($dk, collect());
                                     $dayLeaves = $leavesByDay->get($dk, collect());
                                     $dayOts    = $otsByDay->get($dk, collect());
@@ -171,7 +172,7 @@
                                     $shown     = 0;
                                 @endphp
                                 <div class="min-h-[90px] px-2 py-1.5 border-r border-gray-100 dark:border-gray-700 last:border-0
-                                    {{ !$isInMonth ? 'bg-gray-50 dark:bg-gray-900/40' : '' }}">
+                                    {{ !$isInMonth ? 'bg-gray-50 dark:bg-gray-900/40' : ($isGray ? 'bg-gray-100/80 dark:bg-gray-900/30' : '' }}">
 
                                     <a href="{{ route('calendar.index', array_merge(['view' => 'day', 'date' => $dk], $filterParams)) }}"
                                         class="text-xs font-semibold mb-1 w-6 h-6 flex items-center justify-center rounded-full
@@ -226,11 +227,12 @@
                             @php
                                 $dk        = $cursor->toDateString();
                                 $isToday   = $dk === $today;
+                                $isGray    = $cursor->isWeekend() || in_array($dk, $holidayDates);
                                 $dayEvs    = $events->get($dk, collect());
                                 $dayLeaves = $leavesByDay->get($dk, collect());
                                 $dayOts    = $otsByDay->get($dk, collect());
                             @endphp
-                            <div class="flex flex-col">
+                            <div class="flex flex-col {{ !$isToday && $isGray ? 'bg-gray-50 dark:bg-gray-900/30' : '' }}">
                                 <div class="px-3 py-3 border-b border-gray-200 dark:border-gray-700 text-center">
                                     <p class="text-xs text-gray-400 uppercase">{{ $cursor->format('D') }}</p>
                                     <p class="text-sm font-semibold mt-0.5 w-7 h-7 flex items-center justify-center rounded-full mx-auto
@@ -270,10 +272,12 @@
 
             {{-- ── DAY VIEW ─────────────────────────────────────────── --}}
             @else
+                @php $isDayGray = $date->isWeekend() || in_array($date->toDateString(), $holidayDates); @endphp
                 <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl overflow-hidden">
-                    <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 {{ $isDayGray ? 'bg-gray-50 dark:bg-gray-900/30' : '' }}">
                         <h3 class="font-semibold text-gray-700 dark:text-gray-200">
                             {{ $date->format('l, d F Y') }}
+                            @if($isDayGray)<span class="ml-2 text-xs font-normal text-gray-400">{{ $date->isWeekend() ? 'Weekend' : 'Public Holiday' }}</span>@endif
                         </h3>
                     </div>
                     @php

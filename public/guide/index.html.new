@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A6-ERP User Guide</title>
+    <link rel="stylesheet" href="guide.css" />
+</head>
+<body>
+
+<nav id="toc">
+    <div class="toc-brand">
+        <span>Documentation</span>
+        <strong>A6-ERP User Guide</strong>
+    </div>
+    <ul>
+        <li><a href="modules/index.html"><span class="icon">🚀</span> Getting Started</a></li>
+        <li><a href="modules/dashboard.html"><span class="icon">📊</span> Dashboard</a></li>
+        <li class="nav-group"><span>Work</span></li>
+        <li><a href="modules/attendance.html"><span class="icon">📍</span> Attendance</a></li>
+        <li><a href="modules/announcements.html"><span class="icon">📢</span> Announcements</a></li>
+        <li><a href="modules/projects.html"><span class="icon">📁</span> Projects</a></li>
+        <li><a href="modules/tasks.html"><span class="icon">✅</span> Tasks</a></li>
+        <li><a href="modules/timesheet.html"><span class="icon">⏱️</span> Timesheet</a></li>
+        <li><a href="modules/calendar.html"><span class="icon">📅</span> Calendar</a></li>
+        <li class="nav-group"><span>People</span></li>
+        <li><a href="modules/teams.html"><span class="icon">👥</span> Teams</a></li>
+        <li><a href="modules/users.html"><span class="icon">👤</span> Users</a></li>
+        <li><a href="modules/recruitment.html"><span class="icon">🎯</span> Recruitment</a></li>
+        <li><a href="modules/skills.html"><span class="icon">🏷️</span> Skills</a></li>
+        <li class="nav-group"><span>Requests</span></li>
+        <li><a href="modules/leave-requests.html"><span class="icon">🏖️</span> Leave Requests</a></li>
+        <li><a href="modules/ot-requests.html"><span class="icon">🕐</span> OT Requests</a></li>
+        <li class="nav-group"><span>Admin</span></li>
+        <li><a href="modules/roles.html"><span class="icon">🔑</span> Roles &amp; Permissions</a></li>
+        <li class="nav-group"><span>Reference</span></li>
+        <li><a href="modules/notifications.html"><span class="icon">🔔</span> Notifications</a></li>
+        <li><a href="modules/permission-reference.html"><span class="icon">📋</span> Permission Reference</a></li>
+    </ul>
+</nav>
+
+<main id="content">
+
+    <div class="hero">
+        <h1>A6-ERP User Guide</h1>
+        <p>Everything you need to know to use the platform — from logging time to managing recruitment pipelines.</p>
+    </div>
+
+    <!-- Module overview grid -->
+    <div class="feature-grid">
+        <a href="modules/dashboard.html"         class="feature-card"><div class="fc-icon">📊</div><strong>Dashboard</strong><span>Your daily overview</span></a>
+        <a href="modules/attendance.html"        class="feature-card"><div class="fc-icon">📍</div><strong>Attendance</strong><span>Check in On-Site or WFH</span></a>
+        <a href="modules/announcements.html"     class="feature-card"><div class="fc-icon">📢</div><strong>Announcements</strong><span>Company-wide posts</span></a>
+        <a href="modules/projects.html"          class="feature-card"><div class="fc-icon">📁</div><strong>Projects</strong><span>Manage work &amp; files</span></a>
+        <a href="modules/tasks.html"             class="feature-card"><div class="fc-icon">✅</div><strong>Tasks</strong><span>Track individual work</span></a>
+        <a href="modules/timesheet.html"         class="feature-card"><div class="fc-icon">⏱️</div><strong>Timesheet</strong><span>Log &amp; review hours</span></a>
+        <a href="modules/calendar.html"          class="feature-card"><div class="fc-icon">📅</div><strong>Calendar</strong><span>Events, leaves &amp; OT</span></a>
+        <a href="modules/teams.html"             class="feature-card"><div class="fc-icon">👥</div><strong>Teams</strong><span>Organise people</span></a>
+        <a href="modules/users.html"             class="feature-card"><div class="fc-icon">👤</div><strong>Users</strong><span>Accounts &amp; profiles</span></a>
+        <a href="modules/recruitment.html"       class="feature-card"><div class="fc-icon">🎯</div><strong>Recruitment</strong><span>Manage hiring pipeline</span></a>
+        <a href="modules/skills.html"            class="feature-card"><div class="fc-icon">🏷️</div><strong>Skills</strong><span>Skills library</span></a>
+        <a href="modules/leave-requests.html"    class="feature-card"><div class="fc-icon">🏖️</div><strong>Leave</strong><span>Request time off</span></a>
+        <a href="modules/ot-requests.html"       class="feature-card"><div class="fc-icon">🕐</div><strong>Overtime</strong><span>Log extra hours</span></a>
+        <a href="modules/roles.html"             class="feature-card"><div class="fc-icon">🔑</div><strong>Roles</strong><span>Access control</span></a>
+        <a href="modules/notifications.html"     class="feature-card"><div class="fc-icon">🔔</div><strong>Notifications</strong><span>Alerts &amp; bell</span></a>
+        <a href="modules/permission-reference.html" class="feature-card"><div class="fc-icon">📋</div><strong>Permissions</strong><span>Full reference</span></a>
+    </div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <section id="getting-started">
+        <h2><span class="num">1</span> Getting Started</h2>
+
+        <img class="guide-img" src="/guide/images/01-login.png" alt="Login screen">
+
+        <h3>Logging In</h3>
+        <p>Navigate to the application URL and sign in with your <strong>email and password</strong>. All features require authentication — you will be redirected to the login page if you are not signed in.</p>
+
+        <h3>Access Control</h3>
+        <p>What you can see and do depends on the <strong>permissions assigned to your role</strong>. If you try to access a page you do not have permission for, you will see a <code>403 Forbidden</code> error.</p>
+
+        <div class="callout info">
+            <span class="callout-icon">ℹ️</span>
+            <div>Contact your administrator to request additional access. Permissions are managed through the <a href="roles.html">Roles</a> module.</div>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════ -->
+    <section id="navigation">
+        <h2><span class="num">2</span> Navigation</h2>
+
+        <img class="guide-img" src="/guide/images/02-layout.png" alt="App layout">
+
+        <h3>Top Bar</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Element</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Logo / App Name</strong></td><td>Click to go to the Dashboard</td></tr>
+                    <tr><td><strong>Hamburger icon</strong></td><td>Mobile only — toggles the sidebar</td></tr>
+                    <tr><td><strong>Dark Mode Toggle</strong></td><td>Sun/Moon icon — switches between light and dark theme (saved automatically)</td></tr>
+                    <tr><td><strong>Bell Icon</strong></td><td>Notifications with unread count badge; click to preview the latest 5 unread</td></tr>
+                    <tr><td><strong>Profile Menu</strong></td><td>Your name — dropdown with Profile settings and Log Out</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Left Sidebar</h3>
+        <p>On desktop the sidebar is always visible. On mobile it is hidden by default — tap the hamburger icon in the top-left to open it.</p>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Group</th><th>Links</th></tr></thead>
+                <tbody>
+                    <tr><td>—</td><td>Dashboard</td></tr>
+                    <tr><td><strong>Work</strong></td><td>Attendance, Announcements, Projects, Tasks, Timesheet, Calendar</td></tr>
+                    <tr><td><strong>People</strong></td><td>Teams, Users, Recruitment, Skills</td></tr>
+                    <tr><td><strong>Requests</strong></td><td>Leave Requests, OT Requests</td></tr>
+                    <tr><td><strong>Admin</strong></td><td>Roles, Settings</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="callout info">
+            <span class="callout-icon">ℹ️</span>
+            <div>Sidebar links are shown or hidden based on the permissions assigned to your role.</div>
+        </div>
+    </section>
+
+    <div class="page-nav">
+        <span class="spacer"></span>
+        <a href="dashboard.html">Dashboard →</a>
+    </div>
+
+</main>
+
+<script>
+(function () {
+    const page = location.pathname.split('/').pop() || 'index.html';
+    document.querySelectorAll('#toc a').forEach(a => {
+        if (a.getAttribute('href') === page) a.classList.add('active');
+    });
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('#toc a');
+    if (sections.length > 1) {
+        const obs = new IntersectionObserver(entries => {
+            entries.forEach(e => {
+                if (e.isIntersecting) {
+                    navLinks.forEach(a => a.classList.remove('active'));
+                    const a = document.querySelector(`#toc a[href="#${e.target.id}"]`);
+                    if (a) a.classList.add('active');
+                }
+            });
+        }, { rootMargin: '-20% 0px -70% 0px' });
+        sections.forEach(s => obs.observe(s));
+    }
+})();
+</script>
+
+</body>
+</html>

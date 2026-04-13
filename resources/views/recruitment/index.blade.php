@@ -43,10 +43,6 @@
                                         class="font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
                                         {{ $position->name }}
                                     </a>
-                                    @if($position->file_path)
-                                        <a href="{{ route('recruitment.jd.download', $position) }}"
-                                            class="ml-2 text-xs text-gray-400 hover:text-indigo-500" title="Download JD">📄</a>
-                                    @endif
                                     <span class="ml-1 text-xs font-medium px-1.5 py-0.5 rounded {{ $posStatusColor($position->status) }}">
                                         {{ ucfirst(str_replace('_', ' ', $position->status)) }}
                                     </span>
@@ -65,26 +61,26 @@
                                         @if($position->applicants_count === 0)
                                             <span class="text-gray-400">—</span>
                                         @else
-                                            <span class="text-xs font-medium px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400" title="Total">
-                                                {{ $position->applicants_count }}
-                                            </span>
+                                            <p class="text-xs font-medium px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400" title="Total">
+                                                Total: {{ $position->applicants_count }}
+                                            </p>
                                             @if($position->cv_screening_count)
-                                                <span class="text-xs font-medium px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 dark:bg-gray-700" title="CV Screening">CV: {{ $position->cv_screening_count }}</span>
+                                                <br><p class="text-xs font-medium px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 dark:bg-gray-700" title="CV Screening">New: {{ $position->cv_screening_count }}</p>
                                             @endif
                                             @if($position->interview_count)
-                                                <span class="text-xs font-medium px-1.5 py-0.5 rounded bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300" title="Approved for Interview">Int: {{ $position->interview_count }}</span>
+                                                <br><p class="text-xs font-medium px-1.5 py-0.5 rounded bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300" title="Approved for Interview">Interview: {{ $position->interview_count }}</p>
                                             @endif
                                             @if($position->approved_count)
-                                                <span class="text-xs font-medium px-1.5 py-0.5 rounded bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300" title="Approved">App: {{ $position->approved_count }}</span>
+                                                <br><p class="text-xs font-medium px-1.5 py-0.5 rounded bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300" title="Approved">Approved: {{ $position->approved_count }}</p>
                                             @endif
                                             @if($position->rejected_count)
-                                                <span class="text-xs font-medium px-1.5 py-0.5 rounded bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300" title="Rejected">Rej: {{ $position->rejected_count }}</span>
+                                                <br><p class="text-xs font-medium px-1.5 py-0.5 rounded bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300" title="Rejected">Rejected: {{ $position->rejected_count }}</p>
                                             @endif
                                             @if($position->offered_count)
-                                                <span class="text-xs font-medium px-1.5 py-0.5 rounded bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300" title="Offered">Off: {{ $position->offered_count }}</span>
+                                                <br><p class="text-xs font-medium px-1.5 py-0.5 rounded bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300" title="Offered">Offered: {{ $position->offered_count }}</p>
                                             @endif
                                             @if($position->hired_count)
-                                                <span class="text-xs font-medium px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-600 dark:bg-emerald-900 dark:text-emerald-300" title="Hired">Hired: {{ $position->hired_count }}</span>
+                                                <br><p class="text-xs font-medium px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-600 dark:bg-emerald-900 dark:text-emerald-300" title="Hired">Hired: {{ $position->hired_count }}</p>
                                             @endif
                                         @endif
                                     </div>

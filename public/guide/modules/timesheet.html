@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Timesheet — A6-ERP User Guide</title>
+    <link rel="stylesheet" href="guide.css" />
+</head>
+<body>
+<nav id="toc">
+    <div class="toc-brand"><span>Documentation</span><a href="index.html" class="toc-home">A6-ERP User Guide</a></div>
+    <ul>
+        <li><a href="index.html"><span class="icon">🚀</span> Getting Started</a></li>
+        <li><a href="dashboard.html"><span class="icon">📊</span> Dashboard</a></li>
+        <li class="nav-group"><span>Work</span></li>
+        <li><a href="attendance.html"><span class="icon">📍</span> Attendance</a></li>
+        <li><a href="announcements.html"><span class="icon">📢</span> Announcements</a></li>
+        <li><a href="projects.html"><span class="icon">📁</span> Projects</a></li>
+        <li><a href="tasks.html"><span class="icon">✅</span> Tasks</a></li>
+        <li><a href="timesheet.html"><span class="icon">⏱️</span> Timesheet</a></li>
+        <li><a href="calendar.html"><span class="icon">📅</span> Calendar</a></li>
+        <li class="nav-group"><span>People</span></li>
+        <li><a href="teams.html"><span class="icon">👥</span> Teams</a></li>
+        <li><a href="users.html"><span class="icon">👤</span> Users</a></li>
+        <li><a href="recruitment.html"><span class="icon">🎯</span> Recruitment</a></li>
+        <li><a href="skills.html"><span class="icon">🏷️</span> Skills</a></li>
+        <li class="nav-group"><span>Requests</span></li>
+        <li><a href="leave-requests.html"><span class="icon">🏖️</span> Leave Requests</a></li>
+        <li><a href="ot-requests.html"><span class="icon">🕐</span> OT Requests</a></li>
+        <li class="nav-group"><span>Admin</span></li>
+        <li><a href="roles.html"><span class="icon">🔑</span> Roles &amp; Permissions</a></li>
+        <li class="nav-group"><span>Reference</span></li>
+        <li><a href="notifications.html"><span class="icon">🔔</span> Notifications</a></li>
+        <li><a href="permission-reference.html"><span class="icon">📋</span> Permission Reference</a></li>
+    </ul>
+</nav>
+<main id="content">
+    <section id="timesheet">
+        <h2><span class="num">8</span> Timesheet</h2>
+        <p class="section-intro">Two views for tracking time — a filterable log list and a weekly grid.</p>
+
+        <h3>Log List — <code>/time-logs</code></h3>
+        <p>A table of all time entries. Available filters: User, Team, Date, Project, Task.</p>
+        <p>Each row shows: Date · User (if visible) · Context (Task / Project / Other) · Description · Time Spent formatted as <code>Xh Ym</code>.</p>
+
+        <img class="guide-img" src="/guide/07-1-timelog-list.png" alt="Time log list">
+
+        <h3>Logging Time</h3>
+        <p>Click <strong>Log Time</strong> on the time-log index, project detail, or task detail pages.</p>
+
+        <img class="guide-img" src="/guide/07-3-timelog-edit.png" alt="Log time form">
+
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Field</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Date</strong></td><td>Date worked (defaults to today)</td></tr>
+                    <tr><td><strong>Project</strong></td><td>Optional — link to a project</td></tr>
+                    <tr><td><strong>Task</strong></td><td>Optional — filtered to the selected project's tasks</td></tr>
+                    <tr><td><strong>Description</strong></td><td>What you worked on</td></tr>
+                    <tr><td><strong>Time Spent</strong></td><td>Decimal hours (e.g. <code>1.5</code> = 1h 30m). Min: 0.25 · Max: 24</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="callout tip">
+            <span class="callout-icon">⚡</span>
+            <div><strong>Quick-time buttons</strong> (30m, 1h, 2h, 4h, 8h) fill the time field instantly — no need to type.</div>
+        </div>
+
+        <h3>Weekly View — <code>/timesheets/weekly</code></h3>
+        <p>A grid showing the current week. Days are columns; tasks/projects/other are rows.</p>
+        <ul>
+            <li>Use <strong>Prev / Next</strong> to navigate weeks, or click <strong>This Week</strong> to return.</li>
+            <li><strong>Hover</strong> over any time cell to see the log description in a tooltip.</li>
+            <li>The <strong>Today</strong> column is highlighted.</li>
+            <li><strong>Day totals</strong> appear in the bottom row; the <strong>week total</strong> in the bottom-right.</li>
+            <li>Click a cell to view that log entry (or a filtered list if multiple entries exist that day).</li>
+        </ul>
+
+        <img class="guide-img" src="/guide/07-2-timelog-weekly.png" alt="Weekly timesheet">
+
+        <div class="callout info">
+            <span class="callout-icon">ℹ️</span>
+            <div>With team/all timesheet permissions, use the <strong>User</strong> or <strong>Team</strong> filter to view other users' weekly logs.</div>
+        </div>
+    </section>
+    <div class="page-nav">
+        <a href="tasks.html">← Tasks</a>
+        <a href="calendar.html">Calendar →</a>
+    </div>
+</main>
+<script>(function(){const p=location.pathname.split('/').pop()||'index.html';document.querySelectorAll('#toc a').forEach(a=>{if(a.getAttribute('href')===p)a.classList.add('active');});})();</script>
+</body>
+</html>

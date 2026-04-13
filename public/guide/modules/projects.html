@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Projects — A6-ERP User Guide</title>
+    <link rel="stylesheet" href="guide.css" />
+</head>
+<body>
+<nav id="toc">
+    <div class="toc-brand"><span>Documentation</span><a href="index.html" class="toc-home">A6-ERP User Guide</a></div>
+    <ul>
+        <li><a href="index.html"><span class="icon">🚀</span> Getting Started</a></li>
+        <li><a href="dashboard.html"><span class="icon">📊</span> Dashboard</a></li>
+        <li class="nav-group"><span>Work</span></li>
+        <li><a href="attendance.html"><span class="icon">📍</span> Attendance</a></li>
+        <li><a href="announcements.html"><span class="icon">📢</span> Announcements</a></li>
+        <li><a href="projects.html"><span class="icon">📁</span> Projects</a></li>
+        <li><a href="tasks.html"><span class="icon">✅</span> Tasks</a></li>
+        <li><a href="timesheet.html"><span class="icon">⏱️</span> Timesheet</a></li>
+        <li><a href="calendar.html"><span class="icon">📅</span> Calendar</a></li>
+        <li class="nav-group"><span>People</span></li>
+        <li><a href="teams.html"><span class="icon">👥</span> Teams</a></li>
+        <li><a href="users.html"><span class="icon">👤</span> Users</a></li>
+        <li><a href="recruitment.html"><span class="icon">🎯</span> Recruitment</a></li>
+        <li><a href="skills.html"><span class="icon">🏷️</span> Skills</a></li>
+        <li class="nav-group"><span>Requests</span></li>
+        <li><a href="leave-requests.html"><span class="icon">🏖️</span> Leave Requests</a></li>
+        <li><a href="ot-requests.html"><span class="icon">🕐</span> OT Requests</a></li>
+        <li class="nav-group"><span>Admin</span></li>
+        <li><a href="roles.html"><span class="icon">🔑</span> Roles &amp; Permissions</a></li>
+        <li class="nav-group"><span>Reference</span></li>
+        <li><a href="notifications.html"><span class="icon">🔔</span> Notifications</a></li>
+        <li><a href="permission-reference.html"><span class="icon">📋</span> Permission Reference</a></li>
+    </ul>
+</nav>
+<main id="content">
+    <section id="projects">
+        <h2><span class="num">6</span> Projects</h2>
+        <p class="section-intro">Track large bodies of work with assigned teams, members, files, and tasks.</p>
+
+        <h3>Project ID Format</h3>
+        <p>Every project has a unique identifier: <code>PJ-{number}</code> (e.g. <code>PJ-12</code>). This appears in list views and inside task/time-log references.</p>
+
+        <img class="guide-img" src="/guide/05-1-project-list.png" alt="Project list">
+
+        <h3>Index Page Columns</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Column</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>ID</strong></td><td>Clickable <code>PJ-{n}</code> link to the detail page</td></tr>
+                    <tr><td><strong>Name</strong></td><td>Project name</td></tr>
+                    <tr><td><strong>Status</strong></td><td><span class="badge badge-gray">Not Started</span> <span class="badge badge-blue">In Progress</span> <span class="badge badge-green">Done</span></td></tr>
+                    <tr><td><strong>Teams</strong></td><td>Assigned teams</td></tr>
+                    <tr><td><strong>Members</strong></td><td>Count of directly assigned users</td></tr>
+                    <tr><td><strong>Dates</strong></td><td>Start and expected end date</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Project Detail Page</h3>
+        <img class="guide-img" src="/guide/05-2-project-show.png" alt="Project detail">
+
+        <p><strong>Left Panel — Details</strong></p>
+        <ul>
+            <li>Status, description, start and end dates</li>
+            <li>Assigned teams and members</li>
+            <li><strong>Activity Log</strong> — full change history (who changed what and when)</li>
+        </ul>
+
+        <p><strong>Right Panel — Work</strong></p>
+        <ul>
+            <li><strong>File Explorer</strong> — manage files and folders</li>
+            <li><strong>Tasks</strong> — all tasks in this project with status and progress</li>
+            <li><strong>Log Time</strong> button — quick link to log time against this project</li>
+        </ul>
+
+        <h3>File Explorer</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Action</th><th>How</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Navigate</strong></td><td>Click a folder name; use the breadcrumb to go back up</td></tr>
+                    <tr><td><strong>Upload</strong></td><td>Click Upload or drag a file into the explorer</td></tr>
+                    <tr><td><strong>Create Folder</strong></td><td>Click the New Folder button</td></tr>
+                    <tr><td><strong>Rename</strong></td><td>Click the rename icon next to any file or folder</td></tr>
+                    <tr><td><strong>Download</strong></td><td>Click the download icon to save locally</td></tr>
+                    <tr><td><strong>Delete</strong></td><td>Click the delete icon — this cannot be undone</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="callout info">
+            <span class="callout-icon">🔑</span>
+            <div>Users with <code>Upload/Edit Own Files</code> can only upload and modify their own files.<br>
+            Users with <code>Upload/Edit All Files &amp; Folders</code> can modify everything regardless of who created it.</div>
+        </div>
+
+        <h3>Editing &amp; Deleting</h3>
+        <ul>
+            <li><strong>Create / Edit</strong> — requires <code>Create/Edit Projects</code> or <code>Edit Assigned Projects</code>.</li>
+            <li><strong>Delete</strong> — requires <code>Delete All Projects</code>.</li>
+        </ul>
+
+        <img class="guide-img" src="/guide/05-3-project-edit.png" alt="Project edit">
+    </section>
+    <div class="page-nav">
+        <a href="announcements.html">← Announcements</a>
+        <a href="tasks.html">Tasks →</a>
+    </div>
+</main>
+<script>(function(){const p=location.pathname.split('/').pop()||'index.html';document.querySelectorAll('#toc a').forEach(a=>{if(a.getAttribute('href')===p)a.classList.add('active');});})();</script>
+</body>
+</html>

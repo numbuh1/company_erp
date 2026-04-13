@@ -14,7 +14,7 @@
 {{-- Sidebar panel --}}
 <aside x-cloak
     :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full sm:translate-x-0'"
-    class="sm:sticky top-16 left-0 z-30 sm:z-auto
+    class="fixed sm:sticky top-16 left-0 z-30 sm:z-auto
            h-[calc(100vh-4rem)] w-56 shrink-0 flex flex-col
            bg-white dark:bg-gray-800
            border-r border-gray-200 dark:border-gray-700
@@ -91,7 +91,9 @@
         @endcan
         @can('module settings')
             <a href="{{ route('admin.settings.edit') }}" class="{{ $navLink('admin.settings.*') }}">Settings</a>
+            <a href="{{ route('admin.public-holidays.index') }}" class="{{ $navLink('admin.public-holidays.*') }}">Public Holidays</a>
         @endcan
+
 
     </nav>
 </aside>

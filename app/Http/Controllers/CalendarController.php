@@ -5,6 +5,7 @@ use App\Models\Event;
 use App\Models\EventLocation;
 use App\Models\LeaveRequest;
 use App\Models\OvertimeRequest;
+use App\Models\PublicHoliday;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -158,12 +159,14 @@ class CalendarController extends Controller
         if (!empty($filterLocations)) $filterParams['filter_location'] = $filterLocations;
 
         $locationOptions = EventLocation::orderBy('name')->pluck('name');
+        $holidayDates = PublicHoliday::getHolidayDates($calStart->copy()->startOfDay(), $calEnd->copy()->endOfDay());
 
         return view('calendar.index', compact(
             'view', 'date', 'events', 'leavesByDay', 'otsByDay',
             'calStart', 'calEnd', 'rangeStart', 'rangeEnd',
             'prevDate', 'nextDate',
-            'filterTypes', 'filterLocations', 'locationOptions', 'filterParams'
+            'filterTypes', 'filterLocations', 'locationOptions', 'filterParams',
+            'holidayDates'
         ));
     }
 }
