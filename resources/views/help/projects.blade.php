@@ -22,28 +22,34 @@
                 <tr><td><strong>ID</strong></td><td>Clickable <code>PJ-{n}</code> link to the detail page</td></tr>
                 <tr><td><strong>Name</strong></td><td>Project name</td></tr>
                 <tr><td><strong>Status</strong></td><td><span class="badge badge-gray">Not Started</span> <span class="badge badge-blue">In Progress</span> <span class="badge badge-green">Done</span></td></tr>
-                <tr><td><strong>Teams</strong></td><td>Assigned teams</td></tr>
+                <tr><td><strong>Teams</strong></td><td>Assigned teams — click a team name to see its members</td></tr>
                 <tr><td><strong>Members</strong></td><td>Count of directly assigned users</td></tr>
                 <tr><td><strong>Dates</strong></td><td>Start and expected end date</td></tr>
             </tbody>
         </table>
     </div>
 
+    <div class="callout tip">
+        <span class="callout-icon">👥</span>
+        <div>Click any <strong>team name</strong> in the Teams column to open a pop-up showing that team's members and their current attendance status. Leaders are highlighted with a badge.</div>
+    </div>
+
     <h3>Project Detail Page</h3>
 
     <img class="guide-img" src="/guide/images/05-2-project-show.png">
 
-    <p><strong>Left Panel — Details</strong></p>
+    <p><strong>Left Column</strong></p>
     <ul>
-        <li>Status, description, start and end dates</li>
-        <li>Assigned teams and members</li>
-        <li><strong>Activity Log</strong> — full change history (who changed what and when)</li>
+        <li><strong>Project Details</strong> — status, description, start and end dates, assigned teams and members</li>
+        <li>Click a team name to open the <strong>team member pop-up</strong> showing each member's status</li>
+        <li>Assigned members link directly to their user profile</li>
+        <li><strong>File Explorer</strong> — manage project files and folders (below project details)</li>
     </ul>
 
-    <p><strong>Right Panel — Work</strong></p>
+    <p><strong>Right Column</strong></p>
     <ul>
-        <li><strong>File Explorer</strong> — manage files and folders</li>
-        <li><strong>Tasks</strong> — all tasks in this project with status and progress</li>
+        <li><strong>Activity Log</strong> — full change history (who changed what and when)</li>
+        <li><strong>Tasks</strong> — all tasks in this project with status, progress bar, and due date</li>
         <li><strong>Log Time</strong> button — quick link to log time against this project</li>
     </ul>
 

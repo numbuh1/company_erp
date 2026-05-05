@@ -14,26 +14,37 @@ class LeaveRequestController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
 
         $query = LeaveRequest::with('user', 'approver');
 
-        // View team leaves
         if ($user->can('view all leaves')) {
-            // No condition
-        } else if ($user->can('view team leaves')) {
-            $teamUserIds = $user->teamMembers()->pluck('id');
-            $query->whereIn('user_id', $teamUserIds);
+            // no scope
+        } elseif ($user->can('view team leaves')) {
+            $query->whereIn('user_id', $user->teamMembers()->pluck('id'));
         } else {
-            // Only own requests
             $query->where('user_id', $user->id);
         }
 
-        $leaveRequests = $query->latest()->paginate(10);
+        if ($request->filled('date_from')) {
+            $query->whereDate('start_at', '>=', $request->input('date_from'));
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('start_at', '<=', $request->input('date_to'));
+        }
+        if ($request->filled('status') && $request->input('status') !== 'all') {
+            $query->where('status', $request->input('status'));
+        }
 
-        return view('leave_requests.index', compact('leaveRequests'));
+        $leaveRequests = $query->latest()->paginate(20)->withQueryString();
+
+        $dateFrom = $request->input('date_from', '');
+        $dateTo   = $request->input('date_to',   '');
+        $status   = $request->input('status',   'all');
+
+        return view('leave_requests.index', compact('leaveRequests', 'dateFrom', 'dateTo', 'status'));
     }
 
     /**

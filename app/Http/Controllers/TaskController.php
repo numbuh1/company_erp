@@ -75,7 +75,7 @@ class TaskController extends Controller
         $user = auth()->user();
         if (!$user->can('view all tasks') && !$this->_isAssigned($task, $user)) abort(403);
 
-        $task->load(['project', 'assignees']);
+        $task->load(['project', 'assignees', 'comments.user']);
 
         $activities = Activity::where('subject_type', Task::class)
             ->where('subject_id', $task->id)

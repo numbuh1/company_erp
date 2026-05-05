@@ -146,7 +146,6 @@
                 };
                 $today = now()->toDateString();
             @endphp
-            @include('partials.cal-colors')
 
             {{-- ── MONTH VIEW ───────────────────────────────────────── --}}
             @if($view === 'month')
@@ -154,69 +153,70 @@
                     <div class="grid grid-cols-7 border-b border-gray-200 dark:border-gray-700">
                         @foreach(['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] as $d)
                             <div class="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide text-center">{{ $d }}</div>
-                        @endforeac
+                        @endforeach
                     </div>
 
-                    @php $cursor = $calStart->copy(); @endphp
-                    @while($cursor->lte($calEnd))
-                        <div class="grid grid-cols-7 border-b border-gray-200 dark:border-gray-700 last:border-0">
-                            @for($d = 0; $d < 7; $d++)
-                                @php
-                                    $dk        = $cursor->toDateString();
-                                    $isToday   = $dk === $today;
-                                    $isInMonth = $cursor->month === $date->month;
-                                    $isWeekend = $cursor->isWeekend();
-                                    $isHoliday = in_array($dk, $holidayDates);
-                                    $dayEvs    = $events->get($dk, collect());
-                                    $dayLeaves = $leavesByDay->get($dk, collect());
-                                    $dayOts    = $otsByDay->get($dk, collect());
-                                    $allItems  = $dayEvs->count() + $dayLeaves->count() + $dayOts->count();
-                                    $shown     = 0;
-                                @endphp
-                                <div class="min-h-[90px] px-2 py-1.5 border-r border-gray-100 dark:border-gray-700 last:border-0
-                                    {{ !$isInMonth ? $calOutsideBg : ($isHoliday ? $calHolidayBg : ($isWeekend ? $calWeekendBg : '')) }}">
-                                    <a href="{{ route('calendar.index', array_merge(['view' => 'day', 'date' => $dk], $filterParams)) }}"
-                                        class="text-xs font-semibold mb-1 w-6 h-6 flex items-center justify-center rounded-full
-                                            {{ $isToday ? 'bg-indigo-600 text-white' : ($isInMonth ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' : 'text-gray-300 dark:text-gray-600') }}">
-                                        {{ $cursor->day }}
-                                    </a>
+                    <div class="grid grid-cols-7"
+                         x-data
+                         x-init="$nextTick(() => {
+                             const cells = Array.from($el.children);
+                             const maxH = Math.max(...cells.map(c => c.scrollHeight));
+                             cells.forEach(c => {
+                                 c.style.height = maxH + 'px';
+                                 c.style.overflowY = 'auto';
+                             });
+                         })">
+                        @php $cursor = $calStart->copy(); @endphp
+                        @while($cursor->lte($calEnd))
+                            @php
+                                $dk        = $cursor->toDateString();
+                                $isToday   = $dk === $today;
+                                $isInMonth = $cursor->month === $date->month;
+                                $isWeekend = $cursor->isWeekend();
+                                $isHoliday = in_array($dk, $holidayDates);
+                                $dayEvs       = $events->get($dk, collect());
+                                $dayLeaves    = $leavesByDay->get($dk, collect());
+                                $dayOts       = $otsByDay->get($dk, collect());
+                                $dayBirthdays = $birthdaysByDay->get($dk, collect());
+                            @endphp
+                            <div class="overflow-y-auto px-2 py-1.5 border-b border-r border-gray-100 dark:border-gray-700
+                                {{ !$isInMonth ? $calOutsideBg : ($isHoliday ? $calHolidayBg : ($isWeekend ? $calWeekendBg : '')) }}">
+                                <a href="{{ route('calendar.index', array_merge(['view' => 'day', 'date' => $dk], $filterParams)) }}"
+                                    class="text-xs font-semibold mb-1 w-6 h-6 flex items-center justify-center rounded-full
+                                        {{ $isToday ? 'bg-indigo-600 text-white' : ($isInMonth ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' : 'text-gray-300 dark:text-gray-600') }}">
+                                    {{ $cursor->day }}
+                                </a>
 
-                                    @foreach($dayEvs->take(3) as $ev)
-                                        @php $shown++; @endphp
-                                        <button type="button"
-                                            data-event-id="{{ $ev->id }}"
-                                            class="w-full text-left text-xs mb-0.5 px-1 py-0.5 rounded text-white {{ $typeColor($ev->event_type) }} hover:opacity-80 transition truncate block cursor-pointer">
-                                            {{ $ev->start_at->format('H:i') }} {{ $ev->name }}
-                                        </button>
-                                    @endforeach
+                                @foreach($dayEvs as $ev)
+                                    <button type="button"
+                                        data-event-id="{{ $ev->id }}"
+                                        class="w-full text-left text-xs mb-0.5 px-1 py-0.5 rounded text-white {{ $typeColor($ev->event_type) }} hover:opacity-80 transition truncate block cursor-pointer">
+                                        {{ $ev->start_at->format('H:i') }} {{ $ev->name }}
+                                    </button>
+                                @endforeach
 
-                                    @foreach($dayLeaves->take(max(0, 3 - $shown)) as $leave)
-                                        @php $shown++; @endphp
-                                        <div class="text-xs mb-0.5 px-1 py-0.5 rounded text-white bg-yellow-500 truncate"
-                                            title="{{ $leave->user?->name }} · Leave · {{ $leave->hours }}h">
-                                            {{ $leave->user?->name }} · Leave
-                                        </div>
-                                    @endforeach
+                                @foreach($dayLeaves as $leave)
+                                    <div class="text-xs mb-0.5 px-1 py-0.5 rounded text-white bg-yellow-500 break-words">
+                                        {{ $leave->user?->name }} · Leave · {{ $leave->hours }}h
+                                    </div>
+                                @endforeach
 
-                                    @foreach($dayOts->take(max(0, 3 - $shown)) as $ot)
-                                        @php $shown++; @endphp
-                                        <div class="text-xs mb-0.5 px-1 py-0.5 rounded text-white bg-orange-500 truncate"
-                                            title="{{ $ot->user?->name }} · OT · {{ $ot->hours }}h">
-                                            {{ $ot->user?->name }} · OT
-                                        </div>
-                                    @endforeach
+                                @foreach($dayOts as $ot)
+                                    <div class="text-xs mb-0.5 px-1 py-0.5 rounded text-white bg-orange-500 break-words">
+                                        {{ $ot->user?->name }} · OT · {{ $ot->hours }}h
+                                    </div>
+                                @endforeach
 
-                                    @if($allItems > 3)
-                                        <a href="{{ route('calendar.index', array_merge(['view' => 'day', 'date' => $dk], $filterParams)) }}"
-                                            class="text-xs text-gray-400 hover:underline">
-                                            +{{ $allItems - 3 }} more
-                                        </a>
-                                    @endif
-                                </div>
-                                @php $cursor->addDay(); @endphp
-                            @endfor
-                        </div>
-                    @endwhile
+                                @foreach($dayBirthdays as $bUser)
+                                    <div class="text-xs mb-0.5 px-1 py-0.5 rounded bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300 truncate"
+                                        title="{{ $bUser->name }}'s Birthday">
+                                        🎂 {{ $bUser->name }}
+                                    </div>
+                                @endforeach
+                            </div>
+                            @php $cursor->addDay(); @endphp
+                        @endwhile
+                    </div>
                 </div>
 
             {{-- ── WEEK VIEW ────────────────────────────────────────── --}}
@@ -226,13 +226,14 @@
                         @php $cursor = $calStart->copy(); @endphp
                         @for($d = 0; $d < 7; $d++)
                             @php
-                                $dk        = $cursor->toDateString();
-                                $isToday   = $dk === $today;
-                                $isWeekend = $cursor->isWeekend();
-                                $isHoliday = in_array($dk, $holidayDates);
-                                $dayEvs    = $events->get($dk, collect());
-                                $dayLeaves = $leavesByDay->get($dk, collect());
-                                $dayOts    = $otsByDay->get($dk, collect());
+                                $dk           = $cursor->toDateString();
+                                $isToday      = $dk === $today;
+                                $isWeekend    = $cursor->isWeekend();
+                                $isHoliday    = in_array($dk, $holidayDates);
+                                $dayEvs       = $events->get($dk, collect());
+                                $dayLeaves    = $leavesByDay->get($dk, collect());
+                                $dayOts       = $otsByDay->get($dk, collect());
+                                $dayBirthdays = $birthdaysByDay->get($dk, collect());
                             @endphp
                             <div class="flex flex-col {{ !$isToday && $isHoliday ? $calHolidayBg : (!$isToday && $isWeekend ? $calWeekendBg : '') }}">
                                 <div class="px-3 py-3 border-b border-gray-200 dark:border-gray-700 text-center">
@@ -265,6 +266,13 @@
                                             <div class="opacity-80">OT · {{ $ot->start_at->format('H:i') }}–{{ $ot->end_at->format('H:i') }}</div>
                                         </div>
                                     @endforeach
+
+                                    @foreach($dayBirthdays as $bUser)
+                                        <div class="text-xs px-1.5 py-1 rounded bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300">
+                                            <div class="font-medium break-words">🎂 {{ $bUser->name }}</div>
+                                            <div class="opacity-80">Birthday</div>
+                                        </div>
+                                    @endforeach
                                 </div>
                             </div>
                             @php $cursor->addDay(); @endphp
@@ -288,11 +296,12 @@
                         </h3>
                     </div>
                     @php
-                        $dayEvs    = $events->get($date->toDateString(), collect());
-                        $dayLeaves = $leavesByDay->get($date->toDateString(), collect());
-                        $dayOts    = $otsByDay->get($date->toDateString(), collect());
+                        $dayEvs       = $events->get($date->toDateString(), collect());
+                        $dayLeaves    = $leavesByDay->get($date->toDateString(), collect());
+                        $dayOts       = $otsByDay->get($date->toDateString(), collect());
+                        $dayBirthdays = $birthdaysByDay->get($date->toDateString(), collect());
                     @endphp
-                    @if($dayEvs->isEmpty() && $dayLeaves->isEmpty() && $dayOts->isEmpty())
+                    @if($dayEvs->isEmpty() && $dayLeaves->isEmpty() && $dayOts->isEmpty() && $dayBirthdays->isEmpty())
                         <div class="px-5 py-12 text-center text-sm text-gray-400">No events today.</div>
                     @else
                         {{-- Events --}}
@@ -368,6 +377,22 @@
                                     @if($ot->description)
                                         <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">{{ $ot->description }}</p>
                                     @endif
+                                </div>
+                            </div>
+                        @endforeach
+
+                        {{-- Birthdays --}}
+                        @foreach($dayBirthdays as $bUser)
+                            <div class="flex gap-4 px-5 py-4 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                                <div class="w-24 text-sm text-gray-500 dark:text-gray-400 shrink-0 pt-0.5">All day</div>
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="w-2 h-2 rounded-full bg-pink-400 shrink-0"></span>
+                                        <span class="font-medium text-gray-800 dark:text-gray-100">{{ $bUser->name }}</span>
+                                        <span class="text-xs px-1.5 py-0.5 rounded bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300">
+                                            🎂 Birthday
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         @endforeach

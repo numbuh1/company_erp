@@ -30,7 +30,9 @@ class UserController extends Controller
             'full_name' => 'nullable|string|max:255',
             'email' => 'required|email|unique:users',
             'password' => 'required|min:6',            
-            'roles' => 'array'
+            'birthday' => 'nullable|date',
+            'contract_expiry' => 'nullable|date',
+            'roles' => 'array',
         ]);
 
         $data['password'] = bcrypt($data['password']);
@@ -95,8 +97,14 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email,' . $user->id,
             'password' => 'nullable|min:6',
             'position' => 'nullable|string|max:255',
+            'birthday' => 'nullable|date',
+            'contract_expiry' => 'nullable|date',
             'roles' => 'array'
         ]);
+
+        if (!auth()->user()->can('edit all user')) {
+            unset($data['contract_expiry']);
+        }
 
         if (!empty($data['password'])) {
             $data['password'] = bcrypt($data['password']);

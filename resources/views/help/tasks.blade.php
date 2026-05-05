@@ -31,7 +31,7 @@
     </div>
 
     <h3>Task Detail Page</h3>
-    
+
     <img class="guide-img" src="/guide/images/06-2-task-show.png">
 
     <ul>
@@ -39,7 +39,7 @@
         <li>Linked project (if any)</li>
         <li>Description, progress bar</li>
         <li>Start, expected end, and actual end dates</li>
-        <li>Assignees list</li>
+        <li><strong>Assignees</strong> — each assignee is shown with their avatar and current attendance status; click their name to go to their profile</li>
         <li><strong>Activity Log</strong> — all changes</li>
         <li><strong>Edit</strong> and <strong>Log Time</strong> buttons <em>(permission-gated)</em></li>
     </ul>

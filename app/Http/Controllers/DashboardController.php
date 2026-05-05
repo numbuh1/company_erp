@@ -8,6 +8,8 @@ use App\Models\OvertimeRequest;
 use App\Models\Task;
 use App\Models\TimeLog;
 use App\Models\Event;
+use App\Models\PublicHoliday;
+use App\Models\User;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -139,6 +141,38 @@ class DashboardController extends Controller
             $pendingOTCount = OvertimeRequest::where('status', 'pending')->count();
         }
 
+        // ── Birthdays this month ───────────────────────────────────
+        $birthdayUsers = User::whereNotNull('birthday')
+            ->whereRaw('MONTH(birthday) = ?', [now()->month])
+            ->when(!$user->can('edit all user'), fn($q) => $q->where('id', $user->id))
+            ->orderByRaw('DAY(birthday)')
+            ->get(['id', 'name', 'birthday']);
+
+        $upcomingBirthdays = $birthdayUsers->map(function ($u) {
+            $thisYear = Carbon::create(now()->year, $u->birthday->month, $u->birthday->day);
+            return (object)[
+                'name'      => $u->name,
+                'date'      => $thisYear,
+                'day'       => $thisYear->day,
+                'is_today'  => $thisYear->isToday(),
+                'days_left' => (int) now()->startOfDay()->diffInDays($thisYear->copy()->startOfDay(), false),
+            ];
+        })->sortBy('days_left')->values();
+
+        // ── Contract expiries this month ──────────────────────────
+        $contractExpiryUsers = User::whereNotNull('contract_expiry')
+            ->whereMonth('contract_expiry', now()->month)
+            ->whereYear('contract_expiry', now()->year)
+            ->when(!$user->can('edit all user'), fn($q) => $q->where('id', $user->id))
+            ->orderByRaw('DAY(contract_expiry)')
+            ->get(['id', 'name', 'position', 'contract_expiry']);
+
+        // ── Public holidays this month ─────────────────────────────
+        $monthHolidays = PublicHoliday::getHolidaysForRange(
+            Carbon::now()->startOfMonth(),
+            Carbon::now()->endOfMonth()
+        );
+
         // ── Today & this week events ─────────────────────────────
         $todayEvents = collect();
         $weekEvents  = collect();
@@ -168,7 +202,9 @@ class DashboardController extends Controller
             'upcomingLeaves', 'deadlineTasks',
             'pendingLeavesCount', 'pendingOTCount',
             'attendanceStats',
-            'todayEvents', 'weekEvents'
+            'todayEvents', 'weekEvents',
+            'upcomingBirthdays', 'monthHolidays',
+            'contractExpiryUsers'
         ));
     }
 }

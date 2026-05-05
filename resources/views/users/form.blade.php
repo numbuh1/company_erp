@@ -18,91 +18,123 @@
                 @else
                 <div class="grid grid-cols-1 gap-6">
                 @endcan
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
-                        <!-- Profile Picture -->
-                        <div class="mb-6">
-                            <x-input-label value="Profile Picture" />
+                    <div class="space-y-6">
+                        {{-- Main Info Card --}}
+                        <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
+                            <!-- Profile Picture -->
+                            <div class="mb-6">
+                                <x-input-label value="Profile Picture" />
 
-                            <!-- Current picture -->
-                            <div class="mb-3">
-                                @if(isset($user) && $user->profile_picture)
-                                    <img id="currentPicture"
-                                        src="{{ asset('storage/profile_pictures/' . $user->profile_picture) }}"
-                                        class="w-24 h-24 rounded-full object-cover border-2 border-gray-300">
-                                @else
-                                    <div id="currentPicture" class="w-24 h-24 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-400 text-sm">
-                                        No photo
-                                    </div>
-                                @endif
+                                <!-- Current picture -->
+                                <div class="mb-3">
+                                    @if(isset($user) && $user->profile_picture)
+                                        <img id="currentPicture"
+                                            src="{{ asset('storage/profile_pictures/' . $user->profile_picture) }}"
+                                            class="w-24 h-24 rounded-full object-cover border-2 border-gray-300">
+                                    @else
+                                        <div id="currentPicture" class="w-24 h-24 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-400 text-sm">
+                                            No photo
+                                        </div>
+                                    @endif
+                                </div>
+
+                                <!-- File input -->
+                                <input type="file" id="profilePictureInput" accept="image/*"
+                                    class="text-sm text-gray-600 dark:text-gray-300">
+
+                                <!-- Hidden field submitted with form -->
+                                <input type="hidden" name="profile_picture_cropped" id="profilePictureCropped">
                             </div>
 
-                            <!-- File input -->
-                            <input type="file" id="profilePictureInput" accept="image/*"
-                                class="text-sm text-gray-600 dark:text-gray-300">
-
-                            <!-- Hidden field submitted with form -->
-                            <input type="hidden" name="profile_picture_cropped" id="profilePictureCropped">
-                        </div>
-
-                        <!-- Crop Modal -->
-                        <div id="cropModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
-                            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm">
-                                <h3 class="text-base font-semibold text-gray-800 dark:text-gray-100 mb-4">Crop Profile Picture</h3>
-                                <div id="cropElement"></div>
-                                <div class="flex justify-end gap-2 mt-4">
-                                    <button type="button" id="cropCancelBtn"
-                                        class="px-4 py-1.5 text-sm rounded border border-gray-300 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                                        Cancel
-                                    </button>
-                                    <button type="button" id="cropConfirmBtn"
-                                        class="px-4 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700">
-                                        Confirm
-                                    </button>
+                            <!-- Crop Modal -->
+                            <div id="cropModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+                                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm">
+                                    <h3 class="text-base font-semibold text-gray-800 dark:text-gray-100 mb-4">Crop Profile Picture</h3>
+                                    <div id="cropElement"></div>
+                                    <div class="flex justify-end gap-2 mt-4">
+                                        <button type="button" id="cropCancelBtn"
+                                            class="px-4 py-1.5 text-sm rounded border border-gray-300 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                            Cancel
+                                        </button>
+                                        <button type="button" id="cropConfirmBtn"
+                                            class="px-4 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700">
+                                            Confirm
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
+
+                            <!-- Name -->
+                            <div class="mb-4">
+                                <x-input-label value="Name" />
+                                <x-text-input name="name" class="w-full"
+                                    value="{{ old('name', $user->name ?? '') }}" />
+                            </div>
+
+                            <!-- Full Name -->
+                            <div class="mb-4">
+                                <x-input-label for="full_name" value="Full Name" />
+                                <x-text-input id="full_name" name="full_name" type="text" class="mt-1 block w-full"
+                                    value="{{ old('full_name', $user->full_name ?? '') }}"
+                                    placeholder="Legal full name (optional)" />
+                                <p class="text-xs text-gray-400 mt-1">Used for official documents. Leave blank to use Display Name.</p>
+                                @error('full_name')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                            </div>
+
+                            <!-- Position -->
+                            <div class="mb-4">
+                                <x-input-label value="Position" />
+                                <x-text-input name="position" class="w-full"
+                                    value="{{ old('position', $user->position ?? '') }}" />
+                            </div>
+
+                            <!-- Email -->
+                            <div class="mb-4">
+                                <x-input-label value="Email" />
+                                <x-text-input name="email" class="w-full"
+                                    value="{{ old('email', $user->email ?? '') }}" />
+                            </div>
                         </div>
 
+                        {{-- Private Info Card --}}
+                        @if(!isset($user) || auth()->id() === $user->id || auth()->user()->can('edit all user'))
+                        <div class="bg-white dark:bg-gray-800 p-6 rounded shadow border border-indigo-200 dark:border-indigo-700">
+                            <p class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide mb-4">
+                                Private Info
+                            </p>
 
+                            <!-- Birthday -->
+                            <div class="mb-4">
+                                <x-input-label value="Birthday" />
+                                <x-text-input type="date" name="birthday" class="w-full mt-1"
+                                    value="{{ old('birthday', isset($user) && $user->birthday ? $user->birthday->format('Y-m-d') : '') }}" />
+                                @error('birthday')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                            </div>
 
-                        <!-- Name -->
-                        <div class="mb-4">
-                            <x-input-label value="Name" />
-                            <x-text-input name="name" class="w-full"
-                                value="{{ old('name', $user->name ?? '') }}" />
+                            <!-- Contract Expiry -->
+                            <div class="mb-4">
+                                <x-input-label value="Contract Expiry" />
+                                @can('edit all user')
+                                    <x-text-input type="date" name="contract_expiry" class="w-full mt-1"
+                                        value="{{ old('contract_expiry', isset($user) && $user->contract_expiry ? $user->contract_expiry->format('Y-m-d') : '') }}" />
+                                    @error('contract_expiry')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                                @else
+                                    <p class="mt-1 text-sm text-gray-700 dark:text-gray-300">
+                                        {{ isset($user) && $user->contract_expiry ? $user->contract_expiry->format('d/m/Y') : '—' }}
+                                    </p>
+                                @endcan
+                            </div>
+
+                            <!-- Password -->
+                            <div class="mb-0">
+                                <x-input-label value="Password" />
+                                <x-text-input type="password" name="password" class="w-full" />
+                                @if(isset($user))
+                                    <small class="text-gray-400">Leave blank to keep current password</small>
+                                @endif
+                            </div>
                         </div>
-
-                        <!-- Full Name -->
-                        <div class="mb-4">
-                            <x-input-label for="full_name" value="Full Name" />
-                            <x-text-input id="full_name" name="full_name" type="text" class="mt-1 block w-full"
-                                value="{{ old('full_name', $user->full_name ?? '') }}"
-                                placeholder="Legal full name (optional)" />
-                            <p class="text-xs text-gray-400 mt-1">Used for official documents. Leave blank to use Display Name.</p>
-                            @error('full_name')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
-                        </div>
-
-                        <!-- Position -->
-                        <div class="mb-4">
-                            <x-input-label value="Position" />
-                            <x-text-input name="position" class="w-full"
-                                value="{{ old('position', $user->position ?? '') }}" />
-                        </div>
-
-                        <!-- Email -->
-                        <div class="mb-4">
-                            <x-input-label value="Email" />
-                            <x-text-input name="email" class="w-full"
-                                value="{{ old('email', $user->email ?? '') }}" />
-                        </div>
-
-                        <!-- Password -->
-                        <div class="mb-4">
-                            <x-input-label value="Password" />
-                            <x-text-input type="password" name="password" class="w-full" />
-                            @if(isset($user))
-                                <small class="text-gray-400">Leave blank to keep current password</small>
-                            @endif
-                        </div>
+                        @endif
                     </div>
 
                     <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
@@ -125,7 +157,6 @@
                                     </label>
                                     <p class="text-xs text-gray-400 mt-1">Uncheck to prevent this user from signing in.</p>
                                 </div>
-
 
                                 <!-- Roles -->
                                 <div class="mb-4">

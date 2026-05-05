@@ -1,13 +1,14 @@
 @php
     $filterParams = array_filter([
-        'user_id' => $selectedUserId,
-        'team_id' => $selectedTeamId,
+        'mode'    => $mode !== 'individual' ? $mode : null,
+        'user_id' => ($mode === 'individual' && $selectedUserId != auth()->id()) ? $selectedUserId : null,
+        'team_id' => ($mode === 'team') ? $selectedTeamId : null,
+        'group'   => $groupBy !== 'context' ? $groupBy : null,
     ]);
     $prevParams     = array_merge(['offset' => $offset - 1], $filterParams);
     $nextParams     = array_merge(['offset' => $offset + 1], $filterParams);
     $thisWeekParams = $filterParams;
 @endphp
-@include('partials.cal-colors')
 
 <x-app-layout>
     <x-slot name="header">
@@ -60,28 +61,51 @@
 
             {{-- User / Team filter --}}
             @if($filterUsers || $filterTeams)
-                <form method="GET" class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-4 flex flex-wrap gap-3 items-end">
+                <form method="GET"
+                      x-data="{ mode: '{{ $mode }}' }"
+                      class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-4 flex flex-wrap gap-3 items-end">
                     <input type="hidden" name="offset" value="{{ $offset }}">
+                    {{-- Preserve current group-by when Apply is clicked --}}
+                    <input type="hidden" name="group" value="{{ $groupBy }}">
 
-                    @if($filterUsers)
-                        <x-tom-select name="user_id" label="User" class="w-56">
-                            @foreach($filterUsers as $u)
+                    {{-- Left: Individual / Team --}}
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">View</label>
+                        <select name="mode" x-model="mode"
+                            class="border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
+                            <option value="individual">Individual</option>
+                            @if($filterTeams && $filterTeams->isNotEmpty())
+                                <option value="team">Team</option>
+                            @endif
+                        </select>
+                    </div>
+
+                    {{-- Right: individual list --}}
+                    <div x-show="mode === 'individual'">
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Member</label>
+                        <select name="user_id"
+                            class="border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
+                            @foreach($filterUsers ?? [] as $u)
                                 <option value="{{ $u->id }}" {{ $selectedUserId == $u->id ? 'selected' : '' }}>
                                     {{ $u->name }}
                                 </option>
                             @endforeach
-                        </x-tom-select>
-                    @endif
+                        </select>
+                    </div>
 
-                    @if($filterTeams)
-                        <x-tom-select name="team_id" label="Team" class="w-56">
-                            <option value="">— Individual —</option>
-                            @foreach($filterTeams as $team)
-                                <option value="{{ $team->id }}" {{ $selectedTeamId == $team->id ? 'selected' : '' }}>
-                                    {{ $team->name }}
-                                </option>
-                            @endforeach
-                        </x-tom-select>
+                    {{-- Right: team list --}}
+                    @if($filterTeams && $filterTeams->isNotEmpty())
+                        <div x-show="mode === 'team'">
+                            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Team</label>
+                            <select name="team_id"
+                                class="border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
+                                @foreach($filterTeams as $t)
+                                    <option value="{{ $t->id }}" {{ $selectedTeamId == $t->id ? 'selected' : '' }}>
+                                        {{ $t->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
                     @endif
 
                     <x-primary-button type="submit">Apply</x-primary-button>
@@ -89,15 +113,35 @@
                         <x-secondary-button type="button">Reset</x-secondary-button>
                     </a>
                 </form>
+            @endif
 
-
+            {{-- Group-by toggle (only visible when user can see multiple people) --}}
+            @if($filterUsers)
+                <div class="flex gap-0.5 bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-1 w-fit">
+                    <a href="{{ route('timesheets.weekly', array_merge($filterParams, ['offset' => $offset, 'group' => 'context'])) }}"
+                        class="px-3 py-1.5 text-sm rounded transition font-medium
+                            {{ $groupBy === 'context'
+                                ? 'bg-indigo-600 text-white'
+                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
+                        By Context
+                    </a>
+                    <a href="{{ route('timesheets.weekly', array_merge($filterParams, ['offset' => $offset, 'group' => 'user'])) }}"
+                        class="px-3 py-1.5 text-sm rounded transition font-medium
+                            {{ $groupBy === 'user'
+                                ? 'bg-indigo-600 text-white'
+                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
+                        By Individual
+                    </a>
+                </div>
             @endif
 
             <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-64">Context</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-64">
+                                {{ $groupBy === 'user' ? 'Member' : 'Context' }}
+                            </th>
                             <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase w-20">Total</th>
                             @foreach($days as $day)
                                 @php
@@ -157,9 +201,12 @@
                                                     $params = ['date' => $dayKey];
                                                     if ($row['type'] === 'task')        $params['task_id']    = $row['task_id'];
                                                     elseif ($row['type'] === 'project') $params['project_id'] = $row['project_id'];
+                                                    elseif ($row['type'] === 'user')    $params['user_id']    = $row['user_id'];
                                                     else                                $params['no_context'] = 1;
-                                                    if ($selectedTeamId)      $params['team_id'] = $selectedTeamId;
-                                                    elseif ($selectedUserId)  $params['user_id'] = $selectedUserId;
+                                                    if ($row['type'] !== 'user') {
+                                                        if ($selectedTeamId)     $params['team_id'] = $selectedTeamId;
+                                                        elseif ($selectedUserId) $params['user_id'] = $selectedUserId;
+                                                    }
                                                     $cellUrl = route('time-logs.index', $params);
                                                 }
                                             @endphp

@@ -1,5 +1,3 @@
-@include('partials.cal-colors')
-
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
@@ -32,23 +30,61 @@
                 </nav>
             </div>
 
-            {{-- Controls: user filter + month nav --}}
+            {{-- Controls: filter + month nav --}}
             @php
-                $navParams = ($selectedUserId !== auth()->id()) ? ['user_id' => $selectedUserId] : [];
+                $navParams = ['mode' => $mode];
+                if ($mode === 'team' && $selectedTeamId) {
+                    $navParams['team_id'] = $selectedTeamId;
+                } elseif ($selectedUserId !== auth()->id()) {
+                    $navParams['user_id'] = $selectedUserId;
+                }
             @endphp
             <div class="flex flex-wrap gap-3 items-center justify-between">
-                {{-- User dropdown (TomSelect, auto-submits on change) --}}
+
+                {{-- Filter form --}}
                 <div>
                     @if($filterUsers)
-                        <form method="GET" class="flex items-center gap-2">
+                        <form method="GET"
+                              x-data="{ mode: '{{ $mode }}' }"
+                              class="flex flex-wrap items-center gap-2">
                             <input type="hidden" name="month" value="{{ $monthStr }}">
-                            <x-tom-select name="user_id" :autosubmit="true" class="w-52">
-                                @foreach($filterUsers as $u)
-                                    <option value="{{ $u->id }}" {{ $selectedUserId == $u->id ? 'selected' : '' }}>
-                                        {{ $u->name }}
-                                    </option>
-                                @endforeach
-                            </x-tom-select>
+
+                            {{-- Left: Individual / Team --}}
+                            <select name="mode" x-model="mode"
+                                class="border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
+                                <option value="individual">Individual</option>
+                                @if($filterTeams)
+                                    <option value="team">Team</option>
+                                @endif
+                            </select>
+
+                            {{-- Right: individual list --}}
+                            <div x-show="mode === 'individual'">
+                                <select name="user_id"
+                                    class="border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
+                                    @foreach($filterUsers as $u)
+                                        <option value="{{ $u->id }}" {{ $selectedUserId == $u->id ? 'selected' : '' }}>
+                                            {{ $u->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            {{-- Right: team list --}}
+                            @if($filterTeams)
+                                <div x-show="mode === 'team'">
+                                    <select name="team_id"
+                                        class="border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
+                                        @foreach($filterTeams as $t)
+                                            <option value="{{ $t->id }}" {{ $selectedTeamId == $t->id ? 'selected' : '' }}>
+                                                {{ $t->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endif
+
+                            <x-primary-button type="submit">Apply</x-primary-button>
                         </form>
                     @else
                         <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -79,47 +115,70 @@
                 </div>
             </div>
 
-            {{-- User info card + monthly stats --}}
+            {{-- Info card + monthly stats --}}
             <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-5">
                 <div class="flex flex-wrap gap-4 items-center justify-between">
 
-                    {{-- Avatar + name + position + teams --}}
-                    <div class="flex items-center gap-3">
-                        {{-- Avatar --}}
-                        @if($selectedUser->profile_picture)
-                            <img src="{{ asset('storage/profile_pictures/' . $selectedUser->profile_picture) }}"
-                                class="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-gray-600 shrink-0">
-                        @else
-                            <div class="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold text-xl shrink-0">
-                                {{ strtoupper(mb_substr($selectedUser->name, 0, 1)) }}
+                    @if($mode === 'team' && $selectedTeam)
+                        {{-- Team info --}}
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold text-lg shrink-0">
+                                {{ strtoupper(mb_substr($selectedTeam->name, 0, 1)) }}
                             </div>
-                        @endif
-
-                        <div>
-                            <p class="font-semibold text-gray-800 dark:text-gray-200 leading-tight">
-                                {{ $selectedUser->name }}
-                            </p>
-                            @if($selectedUser->position)
-                                <p class="text-xs text-indigo-600 dark:text-indigo-400 mt-0.5">
-                                    {{ $selectedUser->position }}
+                            <div>
+                                <p class="font-semibold text-gray-800 dark:text-gray-200 leading-tight">
+                                    {{ $selectedTeam->name }}
                                 </p>
-                            @endif
-                            @if($selectedUser->teams->isNotEmpty())
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                    {{ $selectedTeam->users->count() }} member{{ $selectedTeam->users->count() === 1 ? '' : 's' }}
+                                </p>
                                 <div class="flex flex-wrap gap-1 mt-1.5">
-                                    @foreach($selectedUser->teams as $team)
-                                        <span class="text-xs px-2 py-0.5 rounded-full
-                                            bg-gray-100 dark:bg-gray-700
-                                            text-gray-600 dark:text-gray-300
-                                            border border-gray-200 dark:border-gray-600">
-                                            {{ $team->name }}
-                                        </span>
+                                    @foreach($selectedTeam->users->take(10) as $member)
+                                        <x-user-status :user="$member" :show-name="false" />
                                     @endforeach
+                                    @if($selectedTeam->users->count() > 10)
+                                        <span class="text-xs text-gray-400 self-center">+{{ $selectedTeam->users->count() - 10 }} more</span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    @else
+                        {{-- Individual user info --}}
+                        <div class="flex items-center gap-3">
+                            @if($selectedUser->profile_picture)
+                                <img src="{{ asset('storage/profile_pictures/' . $selectedUser->profile_picture) }}"
+                                    class="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-600 shrink-0">
+                            @else
+                                <div class="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold text-xl shrink-0">
+                                    {{ strtoupper(mb_substr($selectedUser->name, 0, 1)) }}
                                 </div>
                             @endif
+                            <div>
+                                <p class="font-semibold text-gray-800 dark:text-gray-200 leading-tight">
+                                    {{ $selectedUser->name }}
+                                </p>
+                                @if($selectedUser->position)
+                                    <p class="text-xs text-indigo-600 dark:text-indigo-400 mt-0.5">
+                                        {{ $selectedUser->position }}
+                                    </p>
+                                @endif
+                                @if($selectedUser->teams->isNotEmpty())
+                                    <div class="flex flex-wrap gap-1 mt-1.5">
+                                        @foreach($selectedUser->teams as $team)
+                                            <span class="text-xs px-2 py-0.5 rounded-full
+                                                bg-gray-100 dark:bg-gray-700
+                                                text-gray-600 dark:text-gray-300
+                                                border border-gray-200 dark:border-gray-600">
+                                                {{ $team->name }}
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
                         </div>
-                    </div>
+                    @endif
 
-                    {{-- Monthly stats --}}
+                    {{-- Monthly stats (same for both modes) --}}
                     <div class="flex gap-3">
                         <div class="text-center px-5 py-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                             <p class="text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wide mb-1">Work</p>
@@ -140,6 +199,7 @@
                             </p>
                         </div>
                     </div>
+
                 </div>
             </div>
 

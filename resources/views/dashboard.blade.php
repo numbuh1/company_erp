@@ -234,7 +234,90 @@
                         @endif
                     </div>
 
-                                        {{-- Today's & This Week's Events --}}
+                    {{-- Birthdays & Public Holidays this month --}}
+                    @if($upcomingBirthdays->isNotEmpty() || count($monthHolidays) > 0 || $contractExpiryUsers->isNotEmpty())
+                        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
+                            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-1">
+                                This Month
+                                <span class="font-normal normal-case text-gray-400">— {{ now()->format('F Y') }}</span>
+                            </h3>
+
+                            {{-- Birthdays --}}
+                            @if($upcomingBirthdays->isNotEmpty())
+                                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mt-3 mb-2">🎂 Birthdays</p>
+                                <div class="space-y-1.5">
+                                    @foreach($upcomingBirthdays as $b)
+                                        <div class="flex items-center justify-between text-sm border-l-2 border-pink-300 pl-3 py-0.5">
+                                            <div>
+                                                <span class="font-medium text-gray-800 dark:text-gray-200">{{ $b->name }}</span>
+                                                <span class="text-xs text-gray-400 ml-1.5">{{ $b->date->format('d M') }}</span>
+                                            </div>
+                                            <span class="text-xs shrink-0 ml-2
+                                                {{ $b->is_today ? 'text-pink-600 dark:text-pink-400 font-semibold'
+                                                    : ($b->days_left < 0 ? 'text-gray-300 dark:text-gray-600'
+                                                        : 'text-gray-400') }}">
+                                                {{ $b->is_today ? '🎉 Today!'
+                                                    : ($b->days_left < 0 ? 'Passed'
+                                                        : ($b->days_left === 1 ? 'Tomorrow'
+                                                            : 'in ' . $b->days_left . 'd')) }}
+                                            </span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            {{-- Public Holidays --}}
+                            @if(count($monthHolidays) > 0)
+                                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mt-4 mb-2">📅 Public Holidays</p>
+                                <div class="space-y-1.5">
+                                    @foreach($monthHolidays as $h)
+                                        <div class="flex items-center justify-between text-sm border-l-2 border-yellow-300 pl-3 py-0.5">
+                                            <span class="font-medium text-gray-800 dark:text-gray-200">{{ $h['name'] }}</span>
+                                            <span class="text-xs text-gray-400 shrink-0 ml-2">
+                                                @if($h['start']->toDateString() === $h['end']->toDateString())
+                                                    {{ $h['start']->format('d M') }}
+                                                @else
+                                                    {{ $h['start']->format('d') }}–{{ $h['end']->format('d M') }}
+                                                @endif
+                                            </span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+
+                        {{-- Contract Expiries --}}
+                        @if($contractExpiryUsers->isNotEmpty())
+                            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mt-4 mb-2">📋 Contract Expiries</p>
+                            <div class="space-y-1.5">
+                                @foreach($contractExpiryUsers as $cu)
+                                    @php
+                                        $daysLeft = (int) now()->startOfDay()->diffInDays($cu->contract_expiry->copy()->startOfDay(), false);
+                                    @endphp
+                                    <div class="flex items-center justify-between text-sm border-l-2 border-blue-300 pl-3 py-0.5">
+                                        <div>
+                                            <span class="font-medium text-gray-800 dark:text-gray-200">{{ $cu->name }}</span>
+                                            @if($cu->position)
+                                                <span class="text-xs text-gray-400 ml-1.5">{{ $cu->position }}</span>
+                                            @endif
+                                            <span class="text-xs text-gray-400 ml-1.5">{{ $cu->contract_expiry->format('d M') }}</span>
+                                        </div>
+                                        <span class="text-xs shrink-0 ml-2
+                                            {{ $daysLeft <= 0 ? 'text-red-500 font-semibold'
+                                                : ($daysLeft <= 7 ? 'text-orange-500 font-semibold'
+                                                    : ($daysLeft <= 30 ? 'text-yellow-600'
+                                                        : 'text-gray-400')) }}">
+                                            {{ $daysLeft <= 0 ? 'Expired'
+                                                : ($daysLeft === 1 ? 'Tomorrow'
+                                                    : 'in ' . $daysLeft . 'd') }}
+                                        </span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    @endif
+
+                    {{-- Today's & This Week's Events --}}
                     @if($todayEvents->isNotEmpty() || $weekEvents->isNotEmpty())
                         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
                             <div class="flex items-center justify-between mb-3">

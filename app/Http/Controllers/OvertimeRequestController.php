@@ -13,7 +13,7 @@ class OvertimeRequestController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $user  = auth()->user();
         $query = OvertimeRequest::with('user', 'approver');
@@ -26,8 +26,23 @@ class OvertimeRequestController extends Controller
             $query->where('user_id', $user->id);
         }
 
-        $otRequests = $query->latest()->paginate(10);
-        return view('overtime_requests.index', compact('otRequests'));
+        if ($request->filled('date_from')) {
+            $query->whereDate('start_at', '>=', $request->input('date_from'));
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('start_at', '<=', $request->input('date_to'));
+        }
+        if ($request->filled('status') && $request->input('status') !== 'all') {
+            $query->where('status', $request->input('status'));
+        }
+
+        $otRequests = $query->latest()->paginate(20)->withQueryString();
+
+        $dateFrom = $request->input('date_from', '');
+        $dateTo   = $request->input('date_to',   '');
+        $status   = $request->input('status',   'all');
+
+        return view('overtime_requests.index', compact('otRequests', 'dateFrom', 'dateTo', 'status'));
     }
 
     /**

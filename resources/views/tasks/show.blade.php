@@ -87,14 +87,29 @@
 
                 <div>
                     <x-input-label value="Assignees" />
-                    <div class="flex flex-wrap gap-1 mt-1">
+                    <div class="mt-2 space-y-1">
                         @forelse($task->assignees as $assignee)
-                            <span class="bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200 text-xs px-2 py-0.5 rounded">{{ $assignee->name }}</span>
+                            <a href="{{ route('users.show', $assignee) }}" class="flex items-center gap-2 hover:opacity-80 transition rounded px-1 py-0.5">
+                                <x-user-status :user="$assignee" />
+                            </a>
                         @empty
                             <span class="text-sm text-gray-400">None</span>
                         @endforelse
                     </div>
                 </div>
+            </div>
+
+            {{-- Comments --}}
+            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
+                <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-5">Comments
+                    @if($task->comments->isNotEmpty())
+                        <span class="ml-1.5 text-xs bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded-full font-normal">{{ $task->comments->count() }}</span>
+                    @endif
+                </h3>
+                @include('partials.comments', [
+                    'commentable'     => $task,
+                    'commentableType' => 'task',
+                ])
             </div>
 
             {{-- Activity Log --}}

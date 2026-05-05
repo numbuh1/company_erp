@@ -7,6 +7,7 @@
     'items',           // Collection<ProjectFile> — contents of current folder
     'currentFolder',   // ProjectFile|null — null means root
     'breadcrumb',      // array<ProjectFile> — ancestor folders root → current
+    'title'      => 'Files',
     'canUpload'   => true,
     'canManageAll' => false,  // true = can rename/delete anything (not just own uploads)
 ])
@@ -30,6 +31,10 @@
             this.showRename = true;
         }
     }">
+
+    @if($title)
+        <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">{{ $title }}</h3>
+    @endif
 
     {{-- ── Header ── --}}
     <div class="flex flex-wrap items-center justify-between gap-3 mb-4">

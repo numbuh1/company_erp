@@ -74,6 +74,9 @@
         <div class="pt-4 pb-1">
             <p class="px-3 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Requests</p>
         </div>
+        @canany(['module leaves', 'module ot'])
+            <a href="{{ route('requests.index') }}" class="{{ $navLink('requests.*') }}">All Requests</a>
+        @endcanany
         @can('module leaves')
             <a href="{{ route('leave-requests.index') }}" class="{{ $navLink('leave-requests.*') }}">Leave Requests</a>
         @endcan

@@ -34,6 +34,8 @@ class User extends Authenticatable
         'password',
         'leave_balance',
         'position',
+        'birthday',
+        'contract_expiry',
         'is_active',
         'wfh_without_approval',
     ];
@@ -50,6 +52,8 @@ class User extends Authenticatable
             'password'          => 'hashed',
             'is_active'         => 'boolean',
             'wfh_without_approval' => 'boolean',
+            'birthday'         => 'date',
+            'contract_expiry'  => 'date',
         ];
     }
 

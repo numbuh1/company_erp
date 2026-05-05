@@ -106,20 +106,64 @@
         </div>
     </div>
 
-    @push('scripts')
+        @push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            function setupSearch(inputId, itemClass) {
-                const input = document.getElementById(inputId);
-                input.addEventListener('input', () => {
-                    const term = input.value.toLowerCase();
-                    document.querySelectorAll('.' + itemClass).forEach(el => {
-                        el.style.display = el.textContent.toLowerCase().includes(term) ? '' : 'none';
+        var allUsers     = @json($users->map(fn($u) => ['id' => $u->id, 'name' => $u->name]));
+        var teamMembers  = @json($teamMembers);
+        var initialSelectedMembers = @json(array_map('intval', isset($project) ? $project->users->pluck('id')->toArray() : []));
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var teamsSelect   = document.getElementById('teams-select');
+            var membersSelect = document.getElementById('members-select');
+
+            function getTheme() {
+                return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+            }
+
+            function getSelectedTeamIds() {
+                return Array.from(teamsSelect.selectedOptions).map(function (o) { return parseInt(o.value); });
+            }
+
+            function rebuildMembers(selectedIds) {
+                var selectedTeams = getSelectedTeamIds();
+
+                var usersToShow;
+                if (selectedTeams.length > 0) {
+                    var allowed = new Set();
+                    selectedTeams.forEach(function (tid) {
+                        (teamMembers[tid] || []).forEach(function (uid) { allowed.add(uid); });
                     });
+                    usersToShow = allUsers.filter(function (u) { return allowed.has(u.id); });
+                } else {
+                    usersToShow = allUsers;
+                }
+
+                membersSelect.innerHTML = '';
+                usersToShow.forEach(function (u) {
+                    var opt         = document.createElement('option');
+                    opt.value       = u.id;
+                    opt.textContent = u.name;
+                    if (selectedIds.includes(u.id)) opt.selected = true;
+                    membersSelect.appendChild(opt);
                 });
             }
-            setupSearch('search-teams', 'team-item');
-            setupSearch('search-members', 'member-item');
+
+            // Runs BEFORE MultiSelect initialises — MultiSelect reads already-filtered options
+            rebuildMembers(initialSelectedMembers);
+
+            // Respond to team changes after MultiSelect is live
+            teamsSelect.addEventListener('change', function () {
+                var currentSelected = [];
+                if (membersSelect._multiSelect) {
+                    membersSelect._multiSelect.data.forEach(function (item) {
+                        if (item.selected) currentSelected.push(parseInt(item.value));
+                    });
+                    membersSelect._multiSelect.destroy();
+                }
+
+                rebuildMembers(currentSelected);
+                new MultiSelect(membersSelect, { theme: getTheme() });
+            });
         });
     </script>
     @endpush

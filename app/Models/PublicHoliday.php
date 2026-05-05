@@ -65,4 +65,45 @@ class PublicHoliday extends Model
 
         return array_values(array_unique($dates));
     }
+
+    /**
+     * Returns holidays in range as an array of ['name', 'start' (Carbon), 'end' (Carbon)].
+     * Used for display (e.g. dashboard), where you need names not just date strings.
+     */
+    public static function getHolidaysForRange(Carbon $rangeStart, Carbon $rangeEnd): array
+    {
+        $holidays = static::all();
+        $result   = [];
+
+        foreach ($holidays as $holiday) {
+            if ($holiday->repeats_annually) {
+                foreach (array_unique([$rangeStart->year, $rangeEnd->year]) as $year) {
+                    try {
+                        $start = Carbon::create($year, $holiday->start_date->month, $holiday->start_date->day);
+                        $end   = Carbon::create($year, $holiday->end_date->month,   $holiday->end_date->day);
+                        if ($end->lt($start)) $end->addYear();
+                    } catch (\Exception $e) {
+                        continue;
+                    }
+                    if ($end->lt($rangeStart) || $start->gt($rangeEnd)) continue;
+                    $result[] = [
+                        'name'  => $holiday->name,
+                        'start' => $start->copy()->max($rangeStart),
+                        'end'   => $end->copy()->min($rangeEnd),
+                    ];
+                }
+            } else {
+                if ($holiday->end_date->lt($rangeStart) || $holiday->start_date->gt($rangeEnd)) continue;
+                $result[] = [
+                    'name'  => $holiday->name,
+                    'start' => $holiday->start_date->copy()->max($rangeStart),
+                    'end'   => $holiday->end_date->copy()->min($rangeEnd),
+                ];
+            }
+        }
+
+        usort($result, fn($a, $b) => $a['start']->startOfDay() <=> $b['start']->startOfDay());
+        return $result;
+    }
+
 }

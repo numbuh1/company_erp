@@ -113,29 +113,55 @@
             </div>
         </div>
     </div>
-    @push('scripts')
+        @push('scripts')
     <script>
+        var allUsers       = @json($users->map(fn($u) => ['id' => $u->id, 'name' => $u->name]));
         var projectMembers = @json($projectMembers);
+        var initialSelected = @json(array_map('intval', old('assignees', isset($task) ? $task->assignees->pluck('id')->toArray() : [])));
 
         document.addEventListener('DOMContentLoaded', function () {
-            var projectSelect   = document.getElementById('project_id');
-            var assigneeSelect  = document.getElementById('assignees-select');
+            var projectSelect  = document.getElementById('project_id');
+            var assigneeSelect = document.getElementById('assignees-select');
 
-            function updateAssignees() {
-                var ms = assigneeSelect._multiSelect;
-                if (!ms) return;
-
-                var pid     = projectSelect.value;
-                var allowed = pid && projectMembers[pid] ? projectMembers[pid] : null;
-
-                ms.data.forEach(function (item) {
-                    item.disabled = allowed !== null && !allowed.includes(parseInt(item.value));
-                });
-                ms.refresh();
+            function getTheme() {
+                return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
             }
 
-            projectSelect.addEventListener('change', updateAssignees);
-            updateAssignees(); // run on page load
+            function rebuildAssignees(selectedIds) {
+                var pid     = projectSelect.value;
+                var allowed = (pid && projectMembers[pid]) ? projectMembers[pid] : null;
+
+                var usersToShow = allowed !== null
+                    ? allUsers.filter(function (u) { return allowed.includes(u.id); })
+                    : allUsers;
+
+                assigneeSelect.innerHTML = '';
+                usersToShow.forEach(function (u) {
+                    var opt       = document.createElement('option');
+                    opt.value     = u.id;
+                    opt.textContent = u.name;
+                    if (selectedIds.includes(u.id)) opt.selected = true;
+                    assigneeSelect.appendChild(opt);
+                });
+            }
+
+            // Runs BEFORE MultiSelect initialises — MultiSelect then reads our filtered options
+            rebuildAssignees(initialSelected);
+
+            // After MultiSelect is live, respond to project changes
+            projectSelect.addEventListener('change', function () {
+                // Capture currently checked values from MultiSelect data
+                var currentSelected = [];
+                if (assigneeSelect._multiSelect) {
+                    assigneeSelect._multiSelect.data.forEach(function (item) {
+                        if (item.selected) currentSelected.push(parseInt(item.value));
+                    });
+                    assigneeSelect._multiSelect.destroy();
+                }
+
+                rebuildAssignees(currentSelected);
+                new MultiSelect(assigneeSelect, { theme: getTheme() });
+            });
         });
     </script>
     @endpush

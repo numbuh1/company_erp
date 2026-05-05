@@ -26,6 +26,15 @@
 
     <br>
 
+    <h3>Month View — Cell Display</h3>
+    <ul>
+        <li><strong>All items</strong> are shown in each day cell — there is no "N more" limit.</li>
+        <li>All cells in the month grid are <strong>equal height</strong>, sized to fit the day with the most events.</li>
+        <li><strong>Holiday cells</strong> are highlighted in <strong>red</strong> to distinguish them from regular days.</li>
+        <li>Weekend columns are displayed with a subtle background tint.</li>
+        <li>Days outside the current month are shown in a lighter shade.</li>
+    </ul>
+
     <h3>Creating Events</h3>
     <p>User can create new event. The attendees will be notified of the event.</p>
 

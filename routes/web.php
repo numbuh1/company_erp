@@ -7,6 +7,7 @@ use App\Http\Controllers\TeamController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\LeaveRequestController;
 use App\Http\Controllers\OvertimeRequestController;
+use App\Http\Controllers\RequestController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\TaskController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\SkillController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\PublicHolidayController;
+use App\Http\Controllers\CommentController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -86,6 +88,11 @@ Route::middleware('auth')->group(function () {
     Route::post('overtime-requests/{overtimeRequest}/reject', [OvertimeRequestController::class, 'reject'])
         ->name('overtime-requests.reject');
 
+    // All Requests (combined)
+    Route::get('/requests',        [RequestController::class, 'index'])->name('requests.index');
+    Route::get('/requests/export', [RequestController::class, 'exportPage'])->name('requests.export');
+    Route::post('/requests/export', [RequestController::class, 'export'])->name('requests.export.download');
+
 
     Route::get('/projects/search', [ProjectController::class, 'search'])->name('projects.search');
     Route::get('/tasks/search', [TaskController::class, 'search'])->name('tasks.search');
@@ -103,6 +110,9 @@ Route::middleware('auth')->group(function () {
         ->name('projects.files.download');
 
     Route::resource('tasks', TaskController::class);
+
+    Route::post('/comments', [CommentController::class, 'store'])->name('comments.store');
+    Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
 
     Route::resource('time-logs', TimeLogController::class);
     Route::get('timesheets/weekly', [TimeLogController::class, 'weekly'])->name('timesheets.weekly');

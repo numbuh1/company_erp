@@ -6,6 +6,7 @@ use App\Models\EventLocation;
 use App\Models\LeaveRequest;
 use App\Models\OvertimeRequest;
 use App\Models\PublicHoliday;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -161,12 +162,33 @@ class CalendarController extends Controller
         $locationOptions = EventLocation::orderBy('name')->pluck('name');
         $holidayDates = PublicHoliday::getHolidayDates($calStart->copy()->startOfDay(), $calEnd->copy()->endOfDay());
 
+        // ── Birthdays ────────────────────────────────────────────────
+        $birthdayUsers = User::whereNotNull('birthday')
+            ->when(!$user->can('edit all user'), fn($q) => $q->where('id', $user->id))
+            ->get(['id', 'name', 'birthday']);
+
+        $birthdaysByDay = collect();
+        foreach ($birthdayUsers as $bu) {
+            foreach (array_unique([$calStart->year, $calEnd->year]) as $year) {
+                try {
+                    $bDate = Carbon::create($year, $bu->birthday->month, $bu->birthday->day);
+                } catch (\Exception $e) {
+                    continue; // e.g. Feb 29 in non-leap year
+                }
+                if ($bDate->between($calStart->copy()->startOfDay(), $calEnd->copy()->endOfDay())) {
+                    $dk = $bDate->toDateString();
+                    if (!$birthdaysByDay->has($dk)) $birthdaysByDay->put($dk, collect());
+                    $birthdaysByDay->get($dk)->push($bu);
+                }
+            }
+        }
+
         return view('calendar.index', compact(
             'view', 'date', 'events', 'leavesByDay', 'otsByDay',
             'calStart', 'calEnd', 'rangeStart', 'rangeEnd',
             'prevDate', 'nextDate',
             'filterTypes', 'filterLocations', 'locationOptions', 'filterParams',
-            'holidayDates'
+            'holidayDates', 'birthdaysByDay'
         ));
     }
 }

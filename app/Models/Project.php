@@ -47,6 +47,11 @@ class Project extends Model
         return $this->hasMany(Task::class);
     }
 
+    public function comments()
+    {
+        return $this->morphMany(Comment::class, 'commentable')->oldest();
+    }
+
 
     // Activity Logs
     public function getActivitylogOptions(): LogOptions

@@ -7,7 +7,7 @@
         <div class="bg-white dark:bg-gray-800 shadow-sm rounded p-6">
             <p><strong>User:</strong> {{ $leaveRequest->user->name }}</p>
             <p><strong>Type:</strong> {{ ucfirst($leaveRequest->type) }}</p>
-            <p><strong>Period:</strong> {{ $leaveRequest->start_at }} → {{ $leaveRequest->end_at }}</p>
+            <p><strong>Period:</strong> {{ $leaveRequest->start_at->format('D, d/m/Y H:i') }} → {{ $leaveRequest->end_at->format('D, d/m/Y H:i') }}</p>
             <p><strong>Hours:</strong> {{ $leaveRequest->hours }}</p>
             <p><strong>Description:</strong> {{ $leaveRequest->description }}</p>
             <p><strong>Status:</strong> {{ ucfirst($leaveRequest->status) }}</p>

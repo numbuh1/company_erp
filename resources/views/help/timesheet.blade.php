@@ -38,7 +38,7 @@
     </div>
 
     <h3>Weekly View — <code>/timesheets/weekly</code></h3>
-    <p>A grid showing the current week. Days are columns; tasks/projects/other are rows.</p>
+    <p>A grid showing the current week. Days are columns; rows depend on the selected grouping mode.</p>
     <ul>
         <li>Use <strong>Prev / Next</strong> to navigate weeks, or click <strong>This Week</strong> to return.</li>
         <li><strong>Hover</strong> over any time cell to see the log description in a tooltip.</li>
@@ -49,9 +49,27 @@
 
     <img class="guide-img" src="/guide/images/07-2-timelog-weekly.png">
 
+    <h3>Weekly View — Grouping Modes</h3>
+    <p>When viewing a team or all users, two grouping modes are available via the toggle above the table:</p>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Mode</th><th>Rows represent</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><strong>By Context</strong> <em>(default)</em></td>
+                    <td>Each task, project, or "Other" category — shows what was worked on across all team members</td>
+                </tr>
+                <tr>
+                    <td><strong>By Individual</strong></td>
+                    <td>Each team member — shows how many hours each person worked each day regardless of what they worked on</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
     <div class="callout info">
         <span class="callout-icon">ℹ️</span>
-        <div>With team/all timesheet permissions, use the <strong>User</strong> or <strong>Team</strong> filter to view other users' weekly logs.</div>
+        <div>With team/all timesheet permissions, use the <strong>User</strong> or <strong>Team</strong> filter to view other users' weekly logs. The grouping toggle only appears when viewing multiple users.</div>
     </div>
 </section>
 

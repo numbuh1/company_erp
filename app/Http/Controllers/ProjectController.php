@@ -29,9 +29,13 @@ class ProjectController extends Controller
     public function create()
     {
         if (!auth()->user()->can('edit projects')) abort(403);
+        $teams = Team::with('users')->orderBy('name')->get();
         return view('projects.form', [
-            'teams' => Team::all(),
-            'users' => User::all(),
+            'teams'       => $teams,
+            'users'       => User::orderBy('name')->get(),
+            'teamMembers' => $teams->mapWithKeys(fn($t) => [
+                $t->id => $t->users->pluck('id')->toArray()
+            ]),
         ]);
     }
 
@@ -68,7 +72,7 @@ class ProjectController extends Controller
         $user = auth()->user();
         if (!$user->can('view all projects') && !$this->_isAssigned($project, $user)) abort(403);
 
-        $project->load(['teams', 'users', 'tasks.assignees']);
+        $project->load(['teams.users', 'users', 'tasks.assignees', 'comments.user']);
 
         // File explorer: current folder
         $folderId     = $request->query('folder_id');
@@ -116,10 +120,14 @@ class ProjectController extends Controller
         }
 
         $project->load(['teams', 'users']);
+        $teams = Team::with('users')->orderBy('name')->get();
         return view('projects.form', [
-            'project' => $project,
-            'teams'   => Team::all(),
-            'users'   => User::all(),
+            'project'     => $project,
+            'teams'       => $teams,
+            'users'       => User::orderBy('name')->get(),
+            'teamMembers' => $teams->mapWithKeys(fn($t) => [
+                $t->id => $t->users->pluck('id')->toArray()
+            ]),
         ]);
     }
 

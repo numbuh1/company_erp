@@ -10,7 +10,16 @@
         </div>
     </x-slot>
 
-    <div class="py-12">
+    <div class="py-12" x-data="{
+        teamModal: false,
+        teamName: '',
+        activeTeamId: null,
+        openTeamModal(id, name) {
+            this.activeTeamId = id;
+            this.teamName = name;
+            this.teamModal = true;
+        }
+    }">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
             @if(session('success'))
@@ -55,7 +64,11 @@
                                 <td class="px-4 py-4">
                                     <div class="flex flex-wrap gap-1">
                                         @forelse($project->teams as $team)
-                                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded">{{ $team->name }}</span>
+                                            <button type="button"
+                                                @click="openTeamModal({{ $team->id }}, '{{ addslashes($team->name) }}')"
+                                                class="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 text-xs px-2 py-0.5 rounded hover:bg-blue-200 dark:hover:bg-blue-800 cursor-pointer transition">
+                                                {{ $team->name }}
+                                            </button>
                                         @empty
                                             <span class="text-gray-400 text-xs">—</span>
                                         @endforelse
@@ -119,5 +132,9 @@
                 <div class="p-4">{{ $projects->links() }}</div>
             </div>
         </div>
+
+        {{-- Team Members Modal --}}
+        @php $allTeams = $projects->getCollection()->flatMap(fn($p) => $p->teams)->unique('id'); @endphp
+        <x-team-modal :teams="$allTeams" />
     </div>
 </x-app-layout>
