@@ -25,6 +25,8 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
+        URL::forceRootUrl(config('app.url'));
+
         View::share([
             'calWeekendBg'       => 'bg-gray-200 dark:bg-gray-900/50',
             'calHolidayBg'        => 'bg-red-50 dark:bg-red-900/20',
