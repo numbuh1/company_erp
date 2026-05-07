@@ -37,7 +37,7 @@
                 ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium'
                 : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700');
 
-        $flyout = 'absolute left-full top-0 ml-1.5 z-50 w-56
+        $flyout = 'absolute left-full top-0 ml-14 z-50 w-56
                    bg-white dark:bg-gray-800 rounded-lg shadow-xl
                    border border-gray-200 dark:border-gray-700
                    py-1.5 overflow-hidden';
