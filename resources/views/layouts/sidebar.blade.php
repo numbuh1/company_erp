@@ -32,12 +32,12 @@
                 : 'text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-600 dark:hover:text-gray-300');
 
         $flyItem = fn(...$patterns) =>
-            'flex items-center gap-2.5 px-3 py-2 text-sm rounded-md transition-colors ' .
+            'flex items-center gap-2.5 px-3 py-2 text-sm rounded-md transition-colors whitespace-nowrap ' .
             (collect($patterns)->contains(fn($p) => request()->routeIs($p))
                 ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium'
                 : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700');
 
-        $flyout = 'absolute left-full top-0 ml-1.5 z-50 w-52
+        $flyout = 'absolute left-full top-0 ml-1.5 z-50 w-56
                    bg-white dark:bg-gray-800 rounded-lg shadow-xl
                    border border-gray-200 dark:border-gray-700
                    py-1.5 overflow-hidden';
