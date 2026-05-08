@@ -29,7 +29,7 @@
         @if(session('success'))
             <div class="p-3 bg-green-100 text-green-800 rounded">{{ session('success') }}</div>
         @endif
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+        <div class="max-w-7xl mx-auto space-y-6">
 
             {{-- Project Info --}}
             <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
