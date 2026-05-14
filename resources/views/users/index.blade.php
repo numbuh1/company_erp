@@ -3,158 +3,219 @@
         <div class="flex justify-between items-center">
             <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Users</h2>
             @can('create all user')
-                <a href="{{ route('users.create') }}">
-                    <x-primary-button>Create User</x-primary-button>
-                </a>
+                <a href="{{ route('users.create') }}"><x-primary-button>Create User</x-primary-button></a>
             @endcan
         </div>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+    <div x-data="{ tab: 'overall' }">
 
-            @if(session('success'))
-                <div class="mb-4 p-3 bg-green-100 text-green-800 rounded">
-                    {{ session('success') }}
-                </div>
-            @endif
-
-            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-hidden">
-                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-
-                    <thead class="bg-gray-50 dark:bg-gray-700">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Name</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Full Name</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Roles</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Teams</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-
-                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                        @forelse($users as $user)
-                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-
-                                <td class="px-6 py-4 text-sm font-medium">
-								    <div class="flex items-center gap-2 flex-wrap">
-								        <x-user-status :user="$user" />
-								        @if(!$user->is_active)
-								            <span class="text-xs font-medium px-2 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300">
-								                Inactive
-								            </span>
-								        @endif
-								    </div>
-								</td>
-
-								<td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
-                                    {{ $user->full_name ?? $user->name }}
-                                </td>
-
-                                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
-                                    {{ $user->email }}
-                                </td>
-
-                                <td class="px-6 py-4">
-                                    <div class="flex flex-wrap gap-1">
-                                        @forelse($user->roles as $role)
-                                            <span class="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-xs px-2 py-0.5 rounded">
-                                                {{ $role->name }}
-                                            </span>
-                                        @empty
-                                            <span class="text-xs text-gray-400">—</span>
-                                        @endforelse
-                                    </div>
-                                </td>
-
-                                <td class="px-6 py-4">
-                                    <div class="flex flex-wrap gap-1">
-                                        @forelse($user->teams as $team)
-                                            <span class="text-xs px-2 py-0.5 rounded
-                                                {{ $team->pivot->is_leader
-                                                    ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
-                                                    : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300' }}">
-                                                {{ $team->name }}{{ $team->pivot->is_leader ? ' ★' : '' }}
-                                            </span>
-                                        @empty
-                                            <span class="text-xs text-gray-400">—</span>
-                                        @endforelse
-                                    </div>
-                                </td>
-
-                                <td class="px-6 py-4 text-right">
-                                    <div class="inline-flex items-center gap-1">
-
-                                        {{-- View --}}
-                                        <a href="{{ route('users.show', $user) }}"
-                                           title="View"
-                                           class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-indigo-600 hover:border-indigo-400 bg-white dark:bg-gray-700 transition">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                            </svg>
-                                            <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">View</span>
-                                        </a>
-
-                                        {{-- Edit --}}
-                                        @if($user->id === auth()->user()->id)
-                                            <a href="{{ route('users.edit', $user) }}"
-                                               title="Edit"
-                                               class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-yellow-600 hover:border-yellow-400 bg-white dark:bg-gray-700 transition">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                                </svg>
-                                                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Edit</span>
-                                            </a>
-                                        @else
-                                            @canany(['edit team user', 'edit all user'])
-                                                <a href="{{ route('users.edit', $user) }}"
-                                                   title="Edit"
-                                                   class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-yellow-600 hover:border-yellow-400 bg-white dark:bg-gray-700 transition">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                                    </svg>
-                                                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Edit</span>
-                                                </a>
-                                            @endcanany
-                                        @endif
-
-                                        {{-- Delete --}}
-                                        @canany(['delete team user', 'delete all user'])
-                                            <form method="POST" action="{{ route('users.destroy', $user) }}" class="inline">
-                                                @csrf @method('DELETE')
-                                                <button type="submit"
-                                                        onclick="return confirm('Delete this user?')"
-                                                        title="Delete"
-                                                        class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-red-600 hover:border-red-400 bg-white dark:bg-gray-700 transition">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                    </svg>
-                                                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Delete</span>
-                                                </button>
-                                            </form>
-                                        @endcanany
-
-                                    </div>
-                                </td>
-
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="px-6 py-6 text-center text-gray-500">
-                                    No users found.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-
-                <div class="p-4">
-                    {{ $users->links() }}
-                </div>
+        @if(session('success'))
+            <div class="mx-4 mt-3 p-3 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-sm">
+                {{ session('success') }}
             </div>
+        @endif
 
+        {{-- Tab bar --}}
+        <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4">
+            <nav class="-mb-px flex">
+                @foreach([
+                    ['key' => 'overall',  'label' => 'Overall'],
+                    ['key' => 'team',     'label' => 'Team'],
+                    ['key' => 'salary',   'label' => 'Salary'],
+                    ['key' => 'leaves',   'label' => 'Leaves'],
+                    ['key' => 'personal', 'label' => 'Personal Info'],
+                ] as $t)
+                    <button type="button"
+                        @click="tab = '{{ $t['key'] }}'"
+                        :class="tab === '{{ $t['key'] }}'
+                            ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400'
+                            : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+                        class="px-4 py-2.5 text-sm font-medium border-b-2 transition whitespace-nowrap">
+                        {{ $t['label'] }}
+                    </button>
+                @endforeach
+            </nav>
         </div>
+
+        {{-- Scrollable table --}}
+        <div class="overflow-x-auto bg-white dark:bg-gray-800 shadow-sm">
+            <table class="min-w-full border-collapse text-sm">
+
+                <thead>
+                    <tr class="bg-gray-50 dark:bg-gray-700 border-b-2 border-gray-200 dark:border-gray-600">
+
+                        {{-- Frozen: Name --}}
+                        <th class="sticky left-0 z-20 bg-gray-50 dark:bg-gray-700
+                                   px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider
+                                   border-r border-gray-200 dark:border-gray-600 w-52 min-w-[13rem]">
+                            Name
+                        </th>
+
+                        {{-- Overall columns --}}
+                        <th x-show="tab === 'overall'"
+                            class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap min-w-[10rem]">
+                            Full Name
+                        </th>
+                        <th x-show="tab === 'overall'"
+                            class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap min-w-[14rem]">
+                            Email
+                        </th>
+                        <th x-show="tab === 'overall'"
+                            class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap min-w-[10rem]">
+                            Position
+                        </th>
+                        <th x-show="tab === 'overall'"
+                            class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap min-w-[12rem]">
+                            Roles
+                        </th>
+
+                        {{-- Team columns --}}
+                        <th x-show="tab === 'team'"
+                            class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap min-w-[16rem]">
+                            Teams
+                        </th>
+
+                        {{-- Salary columns (TBA) --}}
+                        <th x-show="tab === 'salary'"
+                            class="px-3 py-2 text-left text-xs font-medium text-gray-300 dark:text-gray-600 uppercase tracking-wider whitespace-nowrap min-w-[10rem] italic">
+                            Coming Soon
+                        </th>
+
+                        {{-- Leaves columns --}}
+                        <th x-show="tab === 'leaves'"
+                            class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap min-w-[8rem]">
+                            Leave Balance
+                        </th>
+
+                        {{-- Personal Info columns (TBA) --}}
+                        <th x-show="tab === 'personal'"
+                            class="px-3 py-2 text-left text-xs font-medium text-gray-300 dark:text-gray-600 uppercase tracking-wider whitespace-nowrap min-w-[10rem] italic">
+                            Coming Soon
+                        </th>
+
+                    </tr>
+                </thead>
+
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                    @forelse($users as $user)
+                        <tr class="group hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+
+                            {{-- Frozen: Name cell --}}
+                            <td class="sticky left-0 z-10
+                                       bg-white dark:bg-gray-800
+                                       group-hover:bg-gray-50 dark:group-hover:bg-gray-700/50
+                                       transition-colors
+                                       px-3 py-2 border-r border-gray-200 dark:border-gray-600
+                                       w-52 min-w-[13rem]">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <x-user-status :user="$user" :show-name="false" />
+                                    <div class="min-w-0 flex-1">
+                                        <a href="{{ route('users.show', $user) }}"
+                                           class="block truncate font-medium text-gray-900 dark:text-gray-100
+                                                  hover:text-indigo-600 dark:hover:text-indigo-400">
+                                            {{ $user->name }}
+                                        </a>
+                                        @if(!$user->is_active)
+                                            <span class="inline-block text-xs px-1.5 rounded
+                                                         bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300
+                                                         leading-5">
+                                                Inactive
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </td>
+
+                            {{-- Overall: Full Name --}}
+                            <td x-show="tab === 'overall'"
+                                class="px-3 py-2 text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                                {{ $user->full_name ?? '—' }}
+                            </td>
+
+                            {{-- Overall: Email --}}
+                            <td x-show="tab === 'overall'"
+                                class="px-3 py-2 text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                                {{ $user->email }}
+                            </td>
+
+                            {{-- Overall: Position --}}
+                            <td x-show="tab === 'overall'"
+                                class="px-3 py-2 text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                                {{ $user->position ?? '—' }}
+                            </td>
+
+                            {{-- Overall: Roles --}}
+                            <td x-show="tab === 'overall'" class="px-3 py-2">
+                                <div class="flex flex-wrap gap-1">
+                                    @forelse($user->roles as $role)
+                                        <span class="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200
+                                                     text-xs px-1.5 rounded leading-5 whitespace-nowrap">
+                                            {{ $role->name }}
+                                        </span>
+                                    @empty
+                                        <span class="text-gray-400">—</span>
+                                    @endforelse
+                                </div>
+                            </td>
+
+                            {{-- Team: Teams --}}
+                            <td x-show="tab === 'team'" class="px-3 py-2">
+                                <div class="flex flex-wrap gap-1">
+                                    @forelse($user->teams as $team)
+                                        <span class="text-xs px-1.5 rounded leading-5 whitespace-nowrap
+                                            {{ $team->pivot->is_leader
+                                                ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                                                : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300' }}">
+                                            {{ $team->name }}{{ $team->pivot->is_leader ? ' ★' : '' }}
+                                        </span>
+                                    @empty
+                                        <span class="text-gray-400">—</span>
+                                    @endforelse
+                                </div>
+                            </td>
+
+                            {{-- Salary: TBA --}}
+                            <td x-show="tab === 'salary'"
+                                class="px-3 py-2 text-gray-300 dark:text-gray-600 text-xs italic">
+                                —
+                            </td>
+
+                            {{-- Leaves: Leave Balance --}}
+                            <td x-show="tab === 'leaves'" class="px-3 py-2 whitespace-nowrap">
+                                @if($user->leave_balance !== null)
+                                    <span class="font-medium text-gray-700 dark:text-gray-300">
+                                        {{ $user->leave_balance }}
+                                    </span>
+                                    <span class="text-xs text-gray-400 ml-0.5">hrs</span>
+                                @else
+                                    <span class="text-gray-400">—</span>
+                                @endif
+                            </td>
+
+                            {{-- Personal Info: TBA --}}
+                            <td x-show="tab === 'personal'"
+                                class="px-3 py-2 text-gray-300 dark:text-gray-600 text-xs italic">
+                                —
+                            </td>
+
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="9" class="px-6 py-10 text-center text-gray-400 text-sm">
+                                No users found.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+
+            </table>
+        </div>
+
+        {{-- Pagination --}}
+        <div class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-4 py-3">
+            {{ $users->links() }}
+        </div>
+
     </div>
 </x-app-layout>
