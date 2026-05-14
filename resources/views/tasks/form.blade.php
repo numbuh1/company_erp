@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                {{ isset($task) ? 'Edit Task' : 'Create Task' }}
+                {{ isset($task) ? 'Chỉnh sửa Công việc' : 'Tạo Công việc' }}
             </h2>
             <a href="{{ route('tasks.index') }}"><x-secondary-button>Quay lại</x-secondary-button></a>
         </div>
@@ -17,7 +17,7 @@
 
                     {{-- Name --}}
                     <div class="mb-4">
-                        <x-input-label for="name" value="Name *" />
+                        <x-input-label for="name" value="Tên công việc *" />
                         <x-text-input id="name" name="name" type="text" class="mt-1 block w-full"
                             value="{{ old('name', $task->name ?? '') }}" required />
                         <x-input-error :messages="$errors->get('name')" class="mt-1" />
@@ -25,10 +25,10 @@
 
                     {{-- Project --}}
                     <div class="mb-4">
-                        <x-input-label for="project_id" value="Linked Project" />
+                        <x-input-label for="project_id" value="Dự án" />
                         <select id="project_id" name="project_id"
                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            <option value="">— None (standalone) —</option>
+                            <option value="">— Không có (công việc tự do) —</option>
                             @foreach($projects as $project)
                                 <option value="{{ $project->id }}"
                                     {{ old('project_id', $task->project_id ?? $default_project_id ?? '') == $project->id ? 'selected' : '' }}>
@@ -61,7 +61,7 @@
                         <x-input-label for="status" value="Trạng thái" />
                         <select id="status" name="status"
                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            @foreach(['Not Started', 'In Progress', 'Done'] as $s)
+                            @foreach(['Chưa bắt đầu', 'Đang tiến hành', 'Đã xong'] as $s)
                                 <option value="{{ $s }}" {{ old('status', $task->status ?? 'Not Started') === $s ? 'selected' : '' }}>{{ $s }}</option>
                             @endforeach
                         </select>
@@ -83,7 +83,7 @@
                             <x-input-error :messages="$errors->get('expected_end_date')" class="mt-1" />
                         </div>
                         <div>
-                            <x-input-label for="actual_end_date" value="Kết thúc thực tế" />
+                            <x-input-label for="actual_end_date" value="Ngày kết thúc" />
                             <x-text-input id="actual_end_date" name="actual_end_date" type="date" class="mt-1 block w-full"
                                 value="{{ old('actual_end_date', isset($task) ? $task->actual_end_date?->format('Y-m-d') : '') }}" />
                             <x-input-error :messages="$errors->get('actual_end_date')" class="mt-1" />

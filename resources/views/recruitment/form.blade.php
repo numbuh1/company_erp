@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ isset($recruitmentPosition) ? 'Edit Position' : 'New Position' }}
+            {{ isset($recruitmentPosition) ? 'Chỉnh sửa Vị trí' : 'Tạo Vị trí' }}
         </h2>
     </x-slot>
 
@@ -142,7 +142,7 @@
                             @if($skillOptions->isNotEmpty())
                                 <button type="button" onclick="openSkillModal()"
                                     class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">
-                                    Edit Skills
+                                    Chỉnh sửa Kĩ năng
                                 </button>
                             @endif
                         </div>
@@ -172,7 +172,7 @@
                     </div>
 
                     <div class="flex items-center gap-3">
-                        <x-primary-button>{{ isset($recruitmentPosition) ? 'Update' : 'Create' }}</x-primary-button>
+                        <x-primary-button>{{ isset($recruitmentPosition) ? 'Lưu' : 'Tạo' }}</x-primary-button>
                         <a href="{{ isset($recruitmentPosition) ? route('recruitment.show', $recruitmentPosition) : route('recruitment.index') }}">
                             <x-secondary-button type="button">Hủy</x-secondary-button>
                         </a>

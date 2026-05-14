@@ -79,13 +79,13 @@ class DashboardController extends Controller
 
         if ($user->can('view all user') || $user->can('edit all user')) {
             $scopedUserIds   = \App\Models\User::where('is_active', true)->pluck('id');
-            $attendanceLabel = 'Company';
+            $attendanceLabel = 'Toàn công ty';
         } elseif ($user->canAny(['view team user', 'edit team user'])) {
             $teamUserIds   = $user->teamMembers()->pluck('id')->toArray();
             $teamUserIds[] = $user->id;
             $scopedUserIds = \App\Models\User::whereIn('id', array_unique($teamUserIds))
                 ->where('is_active', true)->pluck('id');
-            $attendanceLabel = 'Your Team';
+            $attendanceLabel = 'Team của bạn';
         } else {
             $scopedUserIds   = null;
             $attendanceLabel = null;

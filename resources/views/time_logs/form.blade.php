@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                {{ isset($timeLog) ? 'Edit Time Log' : 'Log Time' }}
+                {{ isset($timeLog) ? 'Chỉnh sửa Ghi giờ' : 'Ghi giờ' }}
             </h2>
             <a href="{{ route('time-logs.index') }}"><x-secondary-button>Quay lại</x-secondary-button></a>
         </div>
@@ -83,7 +83,7 @@
 
                     <div class="flex justify-end gap-2">
                         <a href="{{ route('time-logs.index') }}"><x-secondary-button type="button">Hủy</x-secondary-button></a>
-                        <x-primary-button type="submit">{{ isset($timeLog) ? 'Update' : 'Log Time' }}</x-primary-button>
+                        <x-primary-button type="submit">{{ isset($timeLog) ? 'Lưu' : 'Ghi giờ' }}</x-primary-button>
                     </div>
                 </form>
             </div>

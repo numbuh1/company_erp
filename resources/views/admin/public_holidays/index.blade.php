@@ -34,7 +34,7 @@
                                     @if($holiday->repeats_annually)
                                         <span class="text-xs font-medium px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">Hàng năm</span>
                                     @else
-                                        <span class="text-xs text-gray-400">One-time</span>
+                                        <span class="text-xs text-gray-400">Một lần</span>
                                     @endif
                                 </td>
                                 <td class="px-4 py-3 text-right">

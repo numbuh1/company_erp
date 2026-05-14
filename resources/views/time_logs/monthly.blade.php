@@ -100,7 +100,7 @@
                         ← Prev
                     </a>
                     <span class="text-sm font-semibold text-gray-700 dark:text-gray-300 min-w-[110px] text-center">
-                        {{ $monthDate->format('F Y') }}
+                        {{ $monthDate->translatedFormat('F Y') }}
                     </span>
                     <a href="{{ route('timesheets.monthly', array_merge(['month' => $nextMonth], $navParams)) }}"
                         class="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition">

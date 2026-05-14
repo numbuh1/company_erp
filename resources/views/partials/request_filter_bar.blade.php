@@ -78,7 +78,7 @@ $lastMonth = [
             </button>
             @if($dateFrom || $dateTo || ($status !== 'all'))
                 <a href="{{ route($routeName) }}" class="ml-2 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                    Clear
+                    Bỏ lọc
                 </a>
             @endif
         </div>

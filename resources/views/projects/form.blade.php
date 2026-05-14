@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ isset($project) ? 'Edit Project' : 'Create Project' }}
+            {{ isset($project) ? 'Chỉnh sửa Dự án' : 'Tạo Dự án' }}
         </h2>
     </x-slot>
 
@@ -99,7 +99,7 @@
                     <a href="{{ isset($project) ? route('projects.show', $project) : route('projects.index') }}">
                         <x-secondary-button type="button">Hủy</x-secondary-button>
                     </a>
-                    <x-primary-button>{{ isset($project) ? 'Update' : 'Create' }}</x-primary-button>
+                    <x-primary-button>{{ isset($project) ? 'Lưu' : 'Tạo' }}</x-primary-button>
                 </div>
 
             </form>

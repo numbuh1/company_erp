@@ -238,7 +238,7 @@
                 <br>
                 <div class="flex justify-end space-x-2">
                     <x-primary-button>
-                        {{ isset($user) ? 'Update' : 'Create' }}
+                        {{ isset($user) ? 'Lưu' : 'Tạo' }}
                     </x-primary-button>
 
                     <a href="{{ route('users.index') }}">

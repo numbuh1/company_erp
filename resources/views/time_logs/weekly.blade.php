@@ -20,7 +20,7 @@
                     ← Prev
                 </a>
                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {{ $weekStart->format('d M') }} – {{ $weekEnd->format('d M Y') }}
+                    {{ $weekStart->translatedFormat('d M') }} – {{ $weekEnd->translatedFormat('d M Y') }}
                 </span>
                 <a href="{{ route('timesheets.weekly', $nextParams) }}"
                     class="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
@@ -28,7 +28,7 @@
                 </a>
                 @if($offset !== 0)
                     <a href="{{ route('timesheets.weekly', $thisWeekParams) }}"
-                        class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">This week</a>
+                        class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Tuần này</a>
                 @endif
                 <a href="{{ route('time-logs.create') }}"><x-primary-button>Ghi giờ</x-primary-button></a>
             </div>
@@ -140,7 +140,7 @@
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-64">
-                                {{ $groupBy === 'user' ? 'Member' : 'Context' }}
+                                {{ $groupBy === 'user' ? 'Nhân sự' : 'Công việc' }}
                             </th>
                             <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase w-20">Tổng</th>
                             @foreach($days as $day)
@@ -153,7 +153,7 @@
                                         ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950'
                                         : ($isHolidayDay ? $calHolidayHeaderCls
                                             : ($isWeekendDay ? $calWeekendHeaderCls : 'text-gray-500')) }}">
-                                    {{ $day->format('D') }}<br>
+                                    {{ $day->translatedFormat('D') }}<br>
                                     <span class="font-normal normal-case">{{ $day->format('d/m') }}</span>
                                 </th>
                             @endforeach

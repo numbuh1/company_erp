@@ -17,7 +17,7 @@
                 <a href="{{ $calUrl }}"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 bg-white dark:bg-gray-800 transition">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                    Calendar View
+                    Xem lịch
                 </a>
                 @endcan
                 <a href="{{ $exportUrl }}"
@@ -53,12 +53,12 @@
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ngày tạo</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Người dùng</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kỳ</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Giờ</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ngày</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Số giờ</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Loại</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mô tả</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lý do</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Approver</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Người dùng</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lý do từ chối</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Thao tác</th>
                         </tr>
@@ -69,8 +69,8 @@
                                 <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">{{ $ot->created_at->format('d/m/y H:i') }}</td>
                                 <td class="px-6 py-4"><x-user-status :user="$ot->user" /></td>
                                 <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
-                                    <div>{{ $ot->start_at->format('D, d/m/y H:i') }}</div>
-                                    <div class="text-xs text-gray-500">→ {{ $ot->end_at->format('D, d/m/y H:i') }}</div>
+                                    <div>{{ $ot->start_at->translatedFormat('D, d/m/y H:i') }}</div>
+                                    <div class="text-xs text-gray-500">→ {{ $ot->end_at->translatedFormat('D, d/m/y H:i') }}</div>
                                 </td>
                                 <td class="px-6 py-4 text-gray-700 dark:text-gray-300">{{ $ot->hours }}h</td>
                                 <td class="px-6 py-4">

@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ isset($recruitmentApplicant) ? 'Edit Applicant' : 'Add Applicant' }}
+            {{ isset($recruitmentApplicant) ? 'Chỉnh sửa Ứng viên' : 'Tạo Ứng viên' }}
             <span class="text-base font-normal text-gray-500 dark:text-gray-400 ml-2">— {{ $recruitmentPosition->name }}</span>
         </h2>
     </x-slot>
@@ -31,10 +31,10 @@
                         <x-input-label for="status" value="Status *" />
                         <select id="status" name="status"
                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
-                            @foreach(\App\Models\RecruitmentApplicant::$statuses as $s)
+                            @foreach(\App\Models\RecruitmentApplicant::$statuses as $s => $label)
                                 <option value="{{ $s }}"
                                     {{ old('status', $recruitmentApplicant->status ?? 'CV Screening') === $s ? 'selected' : '' }}>
-                                    {{ $s }}
+                                    {{ $label }}
                                 </option>
                             @endforeach
                         </select>
@@ -159,7 +159,7 @@
                                 @if($skillOptions->isNotEmpty())
                                     <button type="button" onclick="openSkillModal()"
                                         class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">
-                                        Edit Skills
+                                        Chỉnh sửa Kĩ năng
                                     </button>
                                 @endif
                             </div>
@@ -187,7 +187,7 @@
                     @endif
 
                     <div class="flex items-center gap-3 mt-6">
-                        <x-primary-button>{{ isset($recruitmentApplicant) ? 'Update' : 'Add Applicant' }}</x-primary-button>
+                        <x-primary-button>{{ isset($recruitmentApplicant) ? 'Lưu' : 'Thêm' }}</x-primary-button>
                         <a href="{{ route('recruitment.show', $recruitmentPosition) }}">
                             <x-secondary-button type="button">Hủy</x-secondary-button>
                         </a>

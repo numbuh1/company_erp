@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ isset($skill) ? 'Edit Skill' : 'New Skill' }}
+            {{ isset($skill) ? 'Chỉnh sửa Kĩ năng' : 'Tạo Kĩ năng' }}
         </h2>
     </x-slot>
 
@@ -36,7 +36,7 @@
                     </div>
 
                     <div class="flex items-center gap-3">
-                        <x-primary-button>{{ isset($skill) ? 'Update' : 'Create' }}</x-primary-button>
+                        <x-primary-button>{{ isset($skill) ? 'Lưu' : 'Tạo' }}</x-primary-button>
                         <a href="{{ route('skills.index') }}">
                             <x-secondary-button type="button">Hủy</x-secondary-button>
                         </a>

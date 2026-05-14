@@ -12,7 +12,7 @@
                 <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
                     {{ $recruitmentPosition->name }}
                     <span class="ml-1 text-xs font-medium px-1.5 py-0.5 rounded {{ $posStatusColor($recruitmentPosition->status) }}">
-                        {{ ['upcoming' => 'Sắp tới', 'in_progress' => 'Đang tuyển', 'done' => 'Đã đóng'][$recruitmentPosition->status] ?? ucfirst(str_replace('_', ' ', $recruitmentPosition->status)) }}
+                        {{ ['upcoming' => 'Sắp tuyển', 'in_progress' => 'Đang tuyển', 'done' => 'Đã tuyển'][$recruitmentPosition->status] ?? ucfirst(str_replace('_', ' ', $recruitmentPosition->status)) }}
                     </span>
                 </h2>
                 @if($recruitmentPosition->team)
@@ -23,7 +23,7 @@
                 @if($canEdit)
                     <a href="{{ route('recruitment.edit', $recruitmentPosition) }}"
                         class="inline-flex items-center gap-1 px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:text-yellow-600 hover:border-yellow-400 text-sm font-medium rounded-lg bg-white dark:bg-gray-700 transition">
-                        Edit Position
+                        Chỉnh sửa Vị trí
                     </a>
                 @endif
                 <a href="{{ route('recruitment.index') }}"
@@ -166,7 +166,7 @@
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
                                 </svg>
-                                List
+                                Danh sách
                             </button>
                             <button type="button"
                                 @click="recruitView = 'kanban'"
@@ -175,13 +175,13 @@
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
                                 </svg>
-                                Kanban
+                                Bảng Kanban
                             </button>
                         </div>
                         @if($canEdit)
                             <a href="{{ route('recruitment.applicants.create', $recruitmentPosition) }}"
                                 class="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition">
-                                + Add Applicant
+                                + Tạo Ứng Viên
                             </a>
                         @endif
                     </div>
@@ -191,15 +191,7 @@
                 <div x-show="recruitView === 'list'">
                     @forelse($recruitmentPosition->applicants as $applicant)
                         @php
-                            $statusColor = match($applicant->status) {
-                                'CV Screening'           => 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
-                                'Approved for Interview' => 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
-                                'Approved'               => 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
-                                'Rejected'               => 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
-                                'Offered'                => 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
-                                'Hired'                  => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300',
-                                default                  => 'bg-gray-100 text-gray-600',
-                            };
+                            $statusColor = \App\Models\RecruitmentApplicant::statusColor($applicant->status);
                             $assignedIds   = $recruitmentPosition->assignedUsers->pluck('id')->push(auth()->id())->unique()->values()->toJson();
                             $cvUrl         = $applicant->cv_path ? route('recruitment.applicants.cv.download', [$recruitmentPosition, $applicant]) : '';
                             $interviewName = $recruitmentPosition->name . ' Interview - ' . $applicant->name;
@@ -217,7 +209,7 @@
                                             class="font-semibold text-gray-800 dark:text-gray-100 hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline">
                                             {{ $applicant->name }}
                                         </a>
-                                        <span class="text-xs font-medium px-2 py-0.5 rounded {{ $statusColor }}">{{ $applicant->status }}</span>
+                                        <span class="text-xs font-medium px-2 py-0.5 rounded {{ $statusColor }}">{{ \App\Models\RecruitmentApplicant::statusLabel($applicant->status) }}</span>
                                         @if($applicant->evaluation > 0)
                                             <span class="text-amber-400 tracking-tight text-sm">
                                                 @for($i = 1; $i <= 3; $i++){{ $i <= $applicant->evaluation ? '★' : '☆' }}@endfor
@@ -365,14 +357,7 @@
                     <div class="overflow-x-auto pb-2">
                         <div class="flex gap-3" style="min-width: max-content;">
                             @php
-                                $kanbanCols = [
-                                    'CV Screening'           => ['header' => 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200',       'dot' => 'bg-gray-400'],
-                                    'Approved for Interview' => ['header' => 'bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-200',     'dot' => 'bg-blue-500'],
-                                    'Approved'               => ['header' => 'bg-green-100 text-green-700 dark:bg-green-900/60 dark:text-green-200', 'dot' => 'bg-green-500'],
-                                    'Rejected'               => ['header' => 'bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-200',         'dot' => 'bg-red-500'],
-                                    'Offered'                => ['header' => 'bg-purple-100 text-purple-700 dark:bg-purple-900/60 dark:text-purple-200', 'dot' => 'bg-purple-500'],
-                                    'Hired'                  => ['header' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-200', 'dot' => 'bg-emerald-500'],
-                                ];
+                                $kanbanCols = \App\Models\RecruitmentApplicant::kanbanCols();
                             @endphp
 
                             @foreach($kanbanCols as $status => $col)
@@ -387,7 +372,7 @@
                                     <div class="px-3 py-2.5 rounded-t-xl {{ $col['header'] }} flex items-center justify-between shrink-0">
                                         <div class="flex items-center gap-2">
                                             <span class="w-2 h-2 rounded-full {{ $col['dot'] }} shrink-0"></span>
-                                            <span class="text-xs font-semibold">{{ $status }}</span>
+                                            <span class="text-xs font-semibold">{{ \App\Models\RecruitmentApplicant::statusLabel($status) }}</span>
                                         </div>
                                         <span class="kanban-col-count text-xs font-medium opacity-60 tabular-nums">{{ $colApplicants->count() }}</span>
                                     </div>

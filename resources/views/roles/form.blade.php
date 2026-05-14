@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">
-            {{ isset($role) ? 'Edit Role' : 'Create Role' }}
+            {{ isset($role) ? 'Chỉnh sửa Vai trò' : 'Tạo Vai trò' }}
         </h2>
     </x-slot>
 
@@ -72,7 +72,7 @@
                 <!-- Actions -->
                 <div class="flex justify-end mt-6 space-x-2">
                     <x-primary-button>
-                        {{ isset($role) ? 'Update' : 'Create' }}
+                        {{ isset($role) ? 'Lưu' : 'Tạo' }}
                     </x-primary-button>
 
                     <a href="{{ route('roles.index') }}">

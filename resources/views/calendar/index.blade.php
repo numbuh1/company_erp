@@ -40,9 +40,9 @@
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
                 Lịch
                 <span class="text-base font-normal text-gray-500 dark:text-gray-400 ml-2">
-                    @if($view === 'month')   {{ $date->format('F Y') }}
-                    @elseif($view === 'week') {{ $calStart->format('d M') }} – {{ $calEnd->format('d M Y') }}
-                    @else                    {{ $date->format('d F Y') }}
+                    @if($view === 'month')   {{ $date->translatedFormat('F Y') }}
+                    @elseif($view === 'week') {{ $calStart->translatedFormat('d M') }} – {{ $calEnd->translatedFormat('d M Y') }}
+                    @else                    {{ $date->translatedFormat('d F Y') }}
                     @endif
                 </span>
             </h2>
@@ -237,7 +237,7 @@
                             @endphp
                             <div class="flex flex-col {{ !$isToday && $isHoliday ? $calHolidayBg : (!$isToday && $isWeekend ? $calWeekendBg : '') }}">
                                 <div class="px-3 py-3 border-b border-gray-200 dark:border-gray-700 text-center">
-                                    <p class="text-xs text-gray-400 uppercase">{{ $cursor->format('D') }}</p>
+                                    <p class="text-xs text-gray-400 uppercase">{{ $cursor->translatedFormat('D') }}</p>
                                     <p class="text-sm font-semibold mt-0.5 w-7 h-7 flex items-center justify-center rounded-full mx-auto
                                         {{ $isToday ? 'bg-indigo-600 text-white' : 'text-gray-700 dark:text-gray-200' }}">
                                         {{ $cursor->day }}
@@ -290,7 +290,7 @@
                     <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700
                         {{ $isDayHoliday ? $calHolidayBg : ($isDayWeekend ? $calWeekendBg : '') }}">
                         <h3 class="font-semibold text-gray-700 dark:text-gray-200">
-                            {{ $date->format('l, d F Y') }}
+                            {{ $date->translatedFormat('l, d F Y') }}
                             @if($isDayHoliday)<span class="ml-2 text-xs font-normal text-yellow-600 dark:text-yellow-400">Ngày lễ</span>@endif
                             @if($isDayWeekend && !$isDayHoliday)<span class="ml-2 text-xs font-normal text-gray-400">Cuối tuần</span>@endif
                         </h3>

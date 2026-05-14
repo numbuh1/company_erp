@@ -24,7 +24,7 @@
                                 {{ $announcement->title }}
                             </a>
                             <p class="text-xs text-gray-400 mt-1">
-                                By {{ $announcement->author?->name ?? 'System' }}
+                                Người đăng: {{ $announcement->author?->name ?? 'System' }}
                                 · {{ $announcement->created_at->format('d/m/Y H:i') }}
                             </p>
                             <div class="mt-2">

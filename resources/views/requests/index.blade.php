@@ -19,7 +19,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                     </svg>
-                    Calendar View
+                    Xem lịch
                 </a>
                 @endcan
                 <a href="{{ $exportUrl }}"
@@ -66,11 +66,11 @@
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Loại</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ngày tạo</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Người dùng</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kỳ</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Giờ</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ngày</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Số giờ</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phân loại</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Approver</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Người duyệt</th>
                             <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Thao tác</th>
                         </tr>
                     </thead>
@@ -118,8 +118,8 @@
                                     <x-user-status :user="$r->user" />
                                 </td>
                                 <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                                    <div>{{ $r->start_at->format('D, d/m/y H:i') }}</div>
-                                    <div class="text-xs text-gray-500">→ {{ $r->end_at->format('D, d/m/y H:i') }}</div>
+                                    <div>{{ $r->start_at->translatedFormat('D, d/m/y H:i') }}</div>
+                                    <div class="text-xs text-gray-500">→ {{ $r->end_at->translatedFormat('D, d/m/y H:i') }}</div>
                                 </td>
                                 <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{{ $r->hours }}h</td>
                                 <td class="px-4 py-3">
@@ -176,7 +176,7 @@
                         @empty
                             <tr>
                                 <td colspan="9" class="px-6 py-10 text-center text-gray-400">
-                                    No requests found for the selected period.
+                                    Không có yêu cầu nào trong khoảng thời gian được chọn.
                                 </td>
                             </tr>
                         @endforelse

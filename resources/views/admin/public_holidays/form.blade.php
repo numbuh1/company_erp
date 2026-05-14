@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ isset($publicHoliday) ? 'Edit Holiday' : 'Add Holiday' }}
+            {{ isset($publicHoliday) ? 'Chỉnh sửa Ngày lễ' : 'Tạo Ngày lễ' }}
         </h2>
     </x-slot>
 
@@ -53,13 +53,13 @@
                                 class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 shadow-sm"
                                 {{ old('repeats_annually', $publicHoliday->repeats_annually ?? false) ? 'checked' : '' }}>
                             <label for="repeats_annually" class="text-sm text-gray-700 dark:text-gray-300">
-                                Repeats annually (use month/day only, ignore year)
+                                Lặp lại hàng năm
                             </label>
                         </div>
                     </div>
 
                     <div class="flex gap-3 mt-6">
-                        <x-primary-button type="submit">{{ isset($publicHoliday) ? 'Update' : 'Add Holiday' }}</x-primary-button>
+                        <x-primary-button type="submit">{{ isset($publicHoliday) ? 'Lưu' : 'Thêm Ngày Nghỉ' }}</x-primary-button>
                         <a href="{{ route('admin.public-holidays.index') }}">
                             <x-secondary-button type="button">Hủy</x-secondary-button>
                         </a>

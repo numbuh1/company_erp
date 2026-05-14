@@ -11,7 +11,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ isset($announcement) ? 'Edit Announcement' : 'New Announcement' }}
+            {{ isset($announcement) ? 'Chỉnh sửa Thông báo' : 'Thông báo mới' }}
         </h2>
     </x-slot>
 
@@ -92,7 +92,7 @@
 
                     <div class="flex justify-end gap-2">
                         <x-primary-button type="submit">
-                            {{ isset($announcement) ? 'Update' : 'Publish' }}
+                            {{ isset($announcement) ? 'Lưu' : 'Đăng bài' }}
                         </x-primary-button>
                         <a href="{{ isset($announcement) ? route('announcements.show', $announcement) : route('announcements.index') }}">
                             <x-secondary-button type="button">Hủy</x-secondary-button>

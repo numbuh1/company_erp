@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ isset($team) ? 'Edit Team' : 'Create Team' }}
+            {{ isset($team) ? 'Chỉnh sửa Team' : 'Tạo Team' }}
         </h2>
     </x-slot>
 

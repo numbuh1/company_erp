@@ -2,7 +2,7 @@
     @php $readonly = $readonly ?? false; @endphp
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ $readonly ? 'OT Request Details' : (isset($ot) ? 'Edit OT Request' : 'Create OT Request') }}
+            {{ $readonly ? 'Yêu cầu Tăng ca' : (isset($ot) ? 'Chỉnh sửa Yêu cầu Tăng ca' : 'Tạo Yêu cầu Tăng ca') }}
         </h2>
     </x-slot>
 
@@ -71,14 +71,14 @@
 
                     {{-- Description --}}
                     <div class="mb-4">
-                        <x-input-label value="Mô tả" />
+                        <x-input-label value="Lý do" />
                         <textarea name="description" class="w-full border rounded p-2" @disabled($readonly)>{{ old('description', $ot->description ?? '') }}</textarea>
                     </div>
 
                     {{-- Buttons --}}
                     <div class="flex justify-end mt-6 space-x-2">
                         @if(!$readonly)
-                            <x-primary-button>{{ isset($ot) ? 'Update' : 'Create' }}</x-primary-button>
+                            <x-primary-button>{{ isset($ot) ? 'Lưu' : 'Tạo' }}</x-primary-button>
                         @endif
 
                         @if($readonly)
@@ -109,7 +109,7 @@
                         @endif
 
                         <a href="{{ route('overtime-requests.index') }}">
-                            <x-secondary-button>{{ $readonly ? 'Back' : 'Cancel' }}</x-secondary-button>
+                            <x-secondary-button>{{ $readonly ? 'Quay lại' : 'Bỏ' }}</x-secondary-button>
                         </a>
                     </div>
                 </form>

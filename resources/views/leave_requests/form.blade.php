@@ -2,7 +2,7 @@
     @php $readonly = $readonly ?? false; @endphp
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ $readonly ? 'Leave Request Details' : (isset($leave) ? 'Edit Leave Request' : 'Create Leave Request') }}
+            {{ $readonly ? 'Yêu cầu Nghỉ phép' : (isset($leave) ? 'Chỉnh sửa Yêu cầu Nghỉ phép' : 'Tạo Yêu cầu Nghỉ phép') }}
         </h2>
     </x-slot>
 
@@ -79,7 +79,7 @@
 
                     <!-- Description -->
                     <div class="mb-4">
-                        <x-input-label value="Mô tả" />
+                        <x-input-label value="Lý do" />
                         <textarea name="description" class="w-full border rounded p-2" @disabled($readonly)>{{ old('description', $leave->description ?? '') }}</textarea>
                     </div>
 
@@ -87,7 +87,7 @@
                     <div class="flex justify-end mt-6 space-x-2">
                         @if(!$readonly)
                             <x-primary-button>
-                                {{ isset($leave) ? 'Update' : 'Create' }}
+                                {{ isset($leave) ? 'Lưu' : 'Tạo' }}
                             </x-primary-button>
                         @endif
 
@@ -114,7 +114,7 @@
                         @endif
 
                         <a href="{{ route('leave-requests.index') }}">
-                            <x-secondary-button>{{ $readonly ? 'Back' : 'Cancel' }}</x-secondary-button>
+                            <x-secondary-button>{{ $readonly ? 'Quay lại' : 'Bỏ' }}</x-secondary-button>
                         </a>
                     </div>
 
