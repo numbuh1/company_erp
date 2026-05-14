@@ -23,7 +23,7 @@
                 <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4">
                     <p class="text-xs text-gray-500 uppercase font-medium">Số giờ phép còn lại</p>
                     <p class="mt-1 text-2xl font-bold text-gray-800 dark:text-gray-100">
-                        {{ rtrim(rtrim(number_format(auth()->user()->leave_balance ?? 0, 2), '0'), '.') }}h
+                        {{ rtrim(rtrim(number_format(auth()->user()->leave_balance ?? 0, 2), '0'), '.') }} giờ
                     </p>
                 </div>
                 <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4">
@@ -43,7 +43,7 @@
                 <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4">
                     <p class="text-xs text-gray-500 uppercase font-medium">Tăng ca tháng này</p>
                     <p class="mt-1 text-2xl font-bold text-green-600 dark:text-green-400">
-                        {{ rtrim(rtrim(number_format($monthOTHours, 2), '0'), '.') }}h
+                        {{ rtrim(rtrim(number_format($monthOTHours, 2), '0'), '.') }} giờ
                     </p>
                     <p class="text-xs text-gray-400">giờ OT được duyệt</p>
                 </div>

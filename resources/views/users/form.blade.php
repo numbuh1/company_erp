@@ -204,6 +204,55 @@
                                     <p class="text-xs text-gray-400 mt-1">Yêu cầu làm tại nhà sẽ tự động được duyệt cho người dùng này.</p>
                                 </div>
 
+                                <!-- Salary -->
+                                <div class="mb-4"
+                                    x-data="{
+                                        salary: '{{ old('salary', $user->salary ?? '') }}',
+                                        salaryType: '{{ old('salary_type', $user->salary_type ?? 'monthly') }}',
+                                        get hourlyRate() {
+                                            const s = parseFloat(this.salary);
+                                            if (!s || !this.salaryType) return null;
+                                            const m = { monthly: s/176, weekly: s/40, daily: s/8, hourly: s };
+                                            return m[this.salaryType] ?? null;
+                                        },
+                                        get monthlyRate() {
+                                            const s = parseFloat(this.salary);
+                                            if (!s || !this.salaryType) return null;
+                                            const m = { monthly: s, weekly: s*52/12, daily: s*22, hourly: s*176 };
+                                            return m[this.salaryType] ?? null;
+                                        },
+                                        fmt(n) {
+                                            if (n === null) return '—';
+                                            return new Intl.NumberFormat('vi-VN').format(Math.round(n));
+                                        }
+                                    }">
+                                    <x-input-label value="Lương" />
+                                    <div class="flex gap-2 mt-1">
+                                        <input type="number" name="salary" min="0" step="1"
+                                            x-model="salary"
+                                            placeholder="Nhập mức lương…"
+                                            class="flex-1 border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                                        <select name="salary_type"
+                                            x-model="salaryType"
+                                            class="border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                            <option value="monthly">Tháng</option>
+                                            <option value="weekly">Tuần</option>
+                                            <option value="daily">Ngày</option>
+                                            <option value="hourly">Giờ</option>
+                                        </select>
+                                    </div>
+                                    <div class="mt-2 grid grid-cols-2 gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                        <div class="bg-gray-50 dark:bg-gray-700 rounded px-2 py-1">
+                                            <span class="font-medium">Giờ: </span>
+                                            <span x-text="fmt(hourlyRate)"></span> ₫
+                                        </div>
+                                        <div class="bg-gray-50 dark:bg-gray-700 rounded px-2 py-1">
+                                            <span class="font-medium">Tháng: </span>
+                                            <span x-text="fmt(monthlyRate)"></span> ₫
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <!-- Leave Balance -->
                                 <div class="mb-4">
                                     <x-input-label value="Số giờ phép còn lại (giờ)" />

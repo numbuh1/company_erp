@@ -190,14 +190,22 @@
         const selTask    = '{{ $selTask ?? '' }}';
         const selProject = '{{ $selProject ?? '' }}';
 
-        // Task TomSelect
+        // Task TomSelect — on change, auto-select parent project
+        let projectTs;
         let taskTs = new TomSelect('#ot_task_id', {
             maxOptions: null,
             allowEmptyOption: true,
+            onChange: function (val) {
+                if (!val || !projectTs) return;
+                const task = allTasks.find(t => t.value === String(val));
+                if (task && task.projectId) {
+                    projectTs.setValue(task.projectId, true); // true = silent (no re-trigger)
+                }
+            },
         });
 
         // Project TomSelect — on change, rebuild task options
-        new TomSelect('#ot_project_id', {
+        projectTs = new TomSelect('#ot_project_id', {
             maxOptions: null,
             allowEmptyOption: true,
             onChange: function (val) {
@@ -209,6 +217,11 @@
                 taskTs.addOption({ value: '', text: '— Không có —' });
                 filtered.forEach(t => taskTs.addOption({ value: t.value, text: t.text }));
                 taskTs.refreshOptions(false);
+                // Re-select current task if it belongs to the new project filter
+                if (selTask) {
+                    const stillVisible = filtered.find(t => t.value === selTask);
+                    if (stillVisible) taskTs.setValue(selTask, true);
+                }
             },
         });
     });

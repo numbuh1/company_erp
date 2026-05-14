@@ -29,9 +29,11 @@ class UserController extends Controller
             'name' => 'required',
             'full_name' => 'nullable|string|max:255',
             'email' => 'required|email|unique:users',
-            'password' => 'required|min:6',            
+            'password' => 'required|min:6',
             'birthday' => 'nullable|date',
             'contract_expiry' => 'nullable|date',
+            'salary' => 'nullable|integer|min:0',
+            'salary_type' => 'nullable|in:monthly,weekly,daily,hourly',
             'roles' => 'array',
         ]);
 
@@ -42,7 +44,11 @@ class UserController extends Controller
         if (auth()->user()->can('edit all user')) {
             $user->syncRoles($request->roles ?? []);
             $user->supervisors()->sync($request->input('supervisors', []));
-            $user->update(['wfh_without_approval' => $request->boolean('wfh_without_approval')]);
+            $user->update([
+                'wfh_without_approval' => $request->boolean('wfh_without_approval'),
+                'salary'      => $request->input('salary') ?: null,
+                'salary_type' => $request->input('salary_type') ?: null,
+            ]);
         }
 
         if (auth()->user()->canAny(['edit team leaves balance', 'edit all leaves balance'])) {
@@ -99,6 +105,8 @@ class UserController extends Controller
             'position' => 'nullable|string|max:255',
             'birthday' => 'nullable|date',
             'contract_expiry' => 'nullable|date',
+            'salary' => 'nullable|integer|min:0',
+            'salary_type' => 'nullable|in:monthly,weekly,daily,hourly',
             'roles' => 'array'
         ]);
 
@@ -142,6 +150,8 @@ class UserController extends Controller
             $user->update([
                 'is_active'            => $request->boolean('is_active'),
                 'wfh_without_approval' => $request->boolean('wfh_without_approval'),
+                'salary'               => $request->input('salary') ?: null,
+                'salary_type'          => $request->input('salary_type') ?: null,
             ]);
         }
 

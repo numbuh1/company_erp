@@ -33,6 +33,8 @@ class User extends Authenticatable
         'email',
         'password',
         'leave_balance',
+        'salary',
+        'salary_type',
         'position',
         'birthday',
         'contract_expiry',
@@ -55,6 +57,44 @@ class User extends Authenticatable
             'birthday'         => 'date',
             'contract_expiry'  => 'date',
         ];
+    }
+
+    /**
+     * Computed hourly rate based on salary and salary_type.
+     * monthly → salary / (22 working days × 8 hours)
+     * weekly  → salary / 40 hours
+     * daily   → salary / 8 hours
+     * hourly  → salary directly
+     */
+    public function getHourlyRateAttribute(): ?float
+    {
+        if (!$this->salary || !$this->salary_type) return null;
+        return match ($this->salary_type) {
+            'monthly' => $this->salary / (22 * 8),
+            'weekly'  => $this->salary / 40,
+            'daily'   => $this->salary / 8,
+            'hourly'  => (float) $this->salary,
+            default   => null,
+        };
+    }
+
+    /**
+     * Estimated monthly rate based on salary and salary_type.
+     * monthly → salary directly
+     * weekly  → salary × 52 / 12
+     * daily   → salary × 22
+     * hourly  → salary × 22 × 8
+     */
+    public function getMonthlyRateAttribute(): ?float
+    {
+        if (!$this->salary || !$this->salary_type) return null;
+        return match ($this->salary_type) {
+            'monthly' => (float) $this->salary,
+            'weekly'  => $this->salary * 52 / 12,
+            'daily'   => $this->salary * 22,
+            'hourly'  => $this->salary * 22 * 8,
+            default   => null,
+        };
     }
 
     // Relationship
