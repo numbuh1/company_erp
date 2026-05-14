@@ -176,15 +176,18 @@
 
     @if(!$readonly)
     @push('scripts')
-    <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const allTasks = @json($tasks->map(fn($t) => [
+    @php
+        $taskJson = $tasks->map(fn($t) => [
             'value'     => (string) $t->id,
             'text'      => $t->name,
             'projectId' => $t->project_id ? (string) $t->project_id : '',
-        ]));
+        ])->values();
+    @endphp
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const allTasks = @json($taskJson);
 
-        const selTask = '{{ $selTask ?? '' }}';
+        const selTask    = '{{ $selTask ?? '' }}';
         const selProject = '{{ $selProject ?? '' }}';
 
         // Task TomSelect
