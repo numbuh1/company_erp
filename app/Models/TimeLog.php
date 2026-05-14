@@ -51,8 +51,8 @@ class TimeLog extends Model
     {
         $h = (int) floor($hours);
         $m = (int) round(($hours - $h) * 60);
-        if ($h > 0 && $m > 0) return "{$h}h {$m}m";
-        if ($h > 0) return "{$h}h";
-        return "{$m}m";
+        if ($h > 0 && $m > 0) return "{$h} giờ {$m} phút";
+        if ($h > 0) return "{$h} giờ";
+        return "{$m} phút";
     }
 }

@@ -45,8 +45,8 @@
         <span class="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{{ $user->name }}</span>
     </div>
 @else
-    {{-- Avatar only — name appears as tooltip on hover --}}
-    <div class="relative group inline-block shrink-0">
+    {{-- Avatar only --}}
+    <div class="relative inline-block shrink-0">
         <div class="relative w-8 h-8">
             @if($user->profile_picture)
                 <img src="{{ asset('storage/profile_pictures/' . $user->profile_picture) }}"
@@ -58,10 +58,5 @@
             @endif
             <span class="absolute bottom-0 left-0 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-gray-800 {{ $dotColor }}"></span>
         </div>
-        {{-- Name tooltip --}}
-        <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 text-xs bg-gray-800 dark:bg-gray-900 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none z-20 transition-opacity duration-150">
-            {{ $user->name }}
-            <span class="text-gray-400 ml-1">· {{ $statusLabel }}</span>
-        </span>
     </div>
 @endif

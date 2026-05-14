@@ -225,24 +225,6 @@
                         Tất cả yêu cầu
                     </a>
                     @endcanany
-                    @can('module leaves')
-                    <a href="{{ route('leave-requests.index') }}" class="{{ $flyItem('leave-requests.*') }}">
-                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                        </svg>
-                        Yêu cầu nghỉ phép
-                    </a>
-                    @endcan
-                    @can('module ot')
-                    <a href="{{ route('overtime-requests.index') }}" class="{{ $flyItem('overtime-requests.*') }}">
-                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        Yêu cầu tăng ca
-                    </a>
-                    @endcan
                 </div>
             </div>
         </div>
