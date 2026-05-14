@@ -71,7 +71,7 @@
                         <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">
                             {{ rtrim(rtrim(number_format($user->leave_balance ?? 0, 2), '0'), '.') }}h
                             <a href="{{ route('users.leave-balance-history', $user) }}"
-                                class="text-xs text-blue-500 ml-1">history</a>
+                                class="text-xs text-blue-500 ml-1">lịch sử</a>
                         </p>
                     </div>
                 </div>

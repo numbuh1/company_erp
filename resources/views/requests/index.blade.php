@@ -98,6 +98,10 @@
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ngày</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Số giờ</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phân loại</th>
+                    @if($type !== 'leave')
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dự án</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nhiệm vụ</th>
+                    @endif
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Người duyệt</th>
                     <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Thao tác</th>
@@ -159,6 +163,14 @@
                                 {{ ['annual' => 'Nghỉ phép năm', 'sick' => 'Nghỉ ốm', 'unpaid' => 'Nghỉ không lương'][$r->type] ?? $r->type }}
                             </span>
                         </td>
+                        @if($type !== 'leave')
+                        <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                            {{ $isLeave ? '—' : ($r->project?->name ?? '—') }}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                            {{ $isLeave ? '—' : ($r->task?->name ?? '—') }}
+                        </td>
+                        @endif
                         <td class="px-4 py-3">
                             <span class="inline-block text-xs px-2 py-1 rounded {{ $statusClass }}">
                                 {{ ['pending' => 'Đang chờ', 'approved' => 'Đã duyệt', 'rejected' => 'Đã từ chối'][$r->status] ?? ucfirst($r->status) }}
@@ -206,7 +218,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="{{ $type === 'all' ? 9 : 8 }}" class="px-6 py-10 text-center text-gray-400">
+                        <td colspan="{{ $type === 'all' ? 11 : ($type === 'leave' ? 8 : 10) }}" class="px-6 py-10 text-center text-gray-400">
                             Không có yêu cầu nào trong khoảng thời gian được chọn.
                         </td>
                     </tr>

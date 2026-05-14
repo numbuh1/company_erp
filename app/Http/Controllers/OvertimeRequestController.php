@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\OvertimeRequest;
+use App\Models\Project;
+use App\Models\Task;
 use App\Models\User;
 use App\Helper\Helper;
 use App\Helper\NotificationHelper;
@@ -16,7 +18,7 @@ class OvertimeRequestController extends Controller
     public function index(Request $request)
     {
         $user  = auth()->user();
-        $query = OvertimeRequest::with('user', 'approver');
+        $query = OvertimeRequest::with('user', 'approver', 'project', 'task');
 
         if ($user->can('view all ot')) {
             // no filter
@@ -62,7 +64,9 @@ class OvertimeRequestController extends Controller
         }
 
         $users = $query->get();
-        return view('overtime_requests.form', compact('users'));
+        ['projects' => $projects, 'tasks' => $tasks] = $this->_getProjectsAndTasksFor($user);
+
+        return view('overtime_requests.form', compact('users', 'projects', 'tasks'));
     }
 
     /**
@@ -76,6 +80,8 @@ class OvertimeRequestController extends Controller
             'hours'       => 'required|numeric|min:0',
             'type'        => 'required|string',
             'description' => 'nullable|string',
+            'project_id'  => 'nullable|exists:projects,id',
+            'task_id'     => 'nullable|exists:tasks,id',
         ]);
 
         $user = auth()->user();
@@ -83,8 +89,12 @@ class OvertimeRequestController extends Controller
             $request->merge(['user_id' => $user->id]);
         }
 
-        OvertimeRequest::create($request->all());
-        return redirect()->route('overtime-requests.index')->with('success', 'OT request created.');
+        OvertimeRequest::create($request->only([
+            'user_id', 'project_id', 'task_id',
+            'start_at', 'end_at', 'hours', 'type', 'description',
+        ]));
+
+        return redirect()->route('requests.index', ['type' => 'ot'])->with('success', 'Tạo yêu cầu tăng ca thành công.');
     }
 
     /**
@@ -93,11 +103,14 @@ class OvertimeRequestController extends Controller
     public function show(OvertimeRequest $overtimeRequest)
     {
         Helper::authorizeRequest('view all ot', 'view team ot', $overtimeRequest);
+        $overtimeRequest->load('project', 'task');
 
         return view('overtime_requests.form', [
             'ot'       => $overtimeRequest,
             'readonly' => true,
             'users'    => collect([$overtimeRequest->user]),
+            'projects' => collect(),
+            'tasks'    => collect(),
         ]);
     }
 
@@ -111,10 +124,15 @@ class OvertimeRequestController extends Controller
         }
 
         Helper::authorizeRequest('edit all ot', 'edit team ot', $overtimeRequest);
+        $overtimeRequest->load('user');
+
+        ['projects' => $projects, 'tasks' => $tasks] = $this->_getProjectsAndTasksFor($overtimeRequest->user);
 
         return view('overtime_requests.form', [
-            'ot'    => $overtimeRequest,
-            'users' => collect([$overtimeRequest->user]),
+            'ot'       => $overtimeRequest,
+            'users'    => collect([$overtimeRequest->user]),
+            'projects' => $projects,
+            'tasks'    => $tasks,
         ]);
     }
 
@@ -132,10 +150,13 @@ class OvertimeRequestController extends Controller
             'end_at'      => 'required|date|after:start_at',
             'hours'       => 'required|numeric|min:0',
             'description' => 'nullable|string',
+            'project_id'  => 'nullable|exists:projects,id',
+            'task_id'     => 'nullable|exists:tasks,id',
         ]);
 
         $overtimeRequest->update($data);
-        return redirect()->route('overtime-requests.index')->with('success', 'OT request updated.');
+
+        return redirect()->route('requests.index', ['type' => 'ot'])->with('success', 'Cập nhật yêu cầu tăng ca thành công.');
     }
 
     /**
@@ -159,7 +180,7 @@ class OvertimeRequestController extends Controller
     public function approve(OvertimeRequest $overtimeRequest)
     {
         $user = auth()->user();
-        Helper::authorizeRequest('approve all ot', 'approve team ot', $overtimeRequest);        
+        Helper::authorizeRequest('approve all ot', 'approve team ot', $overtimeRequest);
 
         $overtimeRequest->update([
             'status'        => 'approved',
@@ -178,7 +199,7 @@ class OvertimeRequestController extends Controller
     public function reject(Request $request, OvertimeRequest $overtimeRequest)
     {
         $user = auth()->user();
-        Helper::authorizeRequest('approve all ot', 'approve team ot', $overtimeRequest);        
+        Helper::authorizeRequest('approve all ot', 'approve team ot', $overtimeRequest);
 
         $data = $request->validate(['reject_reason' => 'required|string|max:500']);
 
@@ -193,20 +214,22 @@ class OvertimeRequestController extends Controller
         return back()->with('success', 'OT request rejected.');
     }
 
-    // public function authorize(string $all_permission, string $team_permission, $overtimeRequest) {
-    //     $user = auth()->user();
+    /**
+     * Return projects and tasks assigned to the given user.
+     */
+    private function _getProjectsAndTasksFor(User $user): array
+    {
+        $userId = $user->id;
 
-    //     if (!$user->can($all_permission)) {
-    //         if(!$user->can($team_permission)) {
-    //             return abort(403);
-    //         }
+        $projects = Project::where(function ($q) use ($userId) {
+            $q->whereHas('users', fn($q2) => $q2->where('users.id', $userId))
+              ->orWhereHas('teams', fn($q2) => $q2->whereHas('users', fn($q3) => $q3->where('users.id', $userId)));
+        })->orderBy('name')->get(['id', 'name']);
 
-    //         $check_leader = Helper::checkLeadOfTeamMate($overtimeRequest->user);
-    //         if(!$check_leader) {
-    //             return abort(403);
-    //         }
-    //     }
+        $tasks = Task::whereHas('assignees', fn($q) => $q->where('users.id', $userId))
+            ->orderBy('name')
+            ->get(['id', 'name', 'project_id']);
 
-    //     return true;
-    // }
+        return compact('projects', 'tasks');
+    }
 }

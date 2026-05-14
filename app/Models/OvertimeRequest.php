@@ -8,6 +8,8 @@ class OvertimeRequest extends Model
 {
     protected $fillable = [
         'user_id',
+        'project_id',
+        'task_id',
         'start_at',
         'end_at',
         'hours',
@@ -15,7 +17,7 @@ class OvertimeRequest extends Model
         'description',
         'status',
         'approved_by',
-        'reject_reason'
+        'reject_reason',
     ];
 
     protected $casts = [
@@ -23,13 +25,23 @@ class OvertimeRequest extends Model
         'end_at'   => 'datetime',
     ];
 
-    // Relationship
-    public function user()    {
+    public function user()
+    {
         return $this->belongsTo(User::class);
     }
-    
+
     public function approver()
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function project()
+    {
+        return $this->belongsTo(\App\Models\Project::class);
+    }
+
+    public function task()
+    {
+        return $this->belongsTo(\App\Models\Task::class);
     }
 }

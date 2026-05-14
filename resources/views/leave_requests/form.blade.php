@@ -113,7 +113,7 @@
                             @endcanany
                         @endif
 
-                        <a href="{{ route('leave-requests.index') }}">
+                        <a href="{{ route('requests.index', ['type' => 'leave']) }}">
                             <x-secondary-button>{{ $readonly ? 'Quay lại' : 'Bỏ' }}</x-secondary-button>
                         </a>
                     </div>

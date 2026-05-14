@@ -14,6 +14,14 @@
                     @csrf
                     @if(isset($ot)) @method('PUT') @endif
 
+                    @if($errors->any())
+                        <div class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded text-sm text-red-700 dark:text-red-300">
+                            <ul class="list-disc list-inside space-y-1">
+                                @foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach
+                            </ul>
+                        </div>
+                    @endif
+
                     {{-- User --}}
                     @if(isset($ot))
                         <div class="mb-4">
@@ -44,6 +52,47 @@
                             @endforeach
                         </select>
                     </div>
+
+                    {{-- Project & Task --}}
+                    @if($readonly)
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <x-input-label value="Dự án" />
+                                <p class="mt-1 text-sm text-gray-700 dark:text-gray-300 py-1">{{ isset($ot) ? ($ot->project?->name ?? '—') : '—' }}</p>
+                            </div>
+                            <div>
+                                <x-input-label value="Nhiệm vụ" />
+                                <p class="mt-1 text-sm text-gray-700 dark:text-gray-300 py-1">{{ isset($ot) ? ($ot->task?->name ?? '—') : '—' }}</p>
+                            </div>
+                        </div>
+                    @else
+                        @php
+                            $selProject = old('project_id', $ot->project_id ?? '');
+                            $selTask    = old('task_id',    $ot->task_id    ?? '');
+                        @endphp
+                        <div class="mb-4">
+                            <x-input-label for="ot_project_id" value="Dự án" />
+                            <select id="ot_project_id" name="project_id"
+                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
+                                <option value="">— Không có —</option>
+                                @foreach($projects as $p)
+                                    <option value="{{ $p->id }}" {{ $selProject == $p->id ? 'selected' : '' }}>{{ $p->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <x-input-label for="ot_task_id" value="Nhiệm vụ" />
+                            <select id="ot_task_id" name="task_id"
+                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
+                                <option value="">— Không có —</option>
+                                @foreach($tasks as $t)
+                                    <option value="{{ $t->id }}"
+                                        data-project="{{ $t->project_id ?? '' }}"
+                                        {{ $selTask == $t->id ? 'selected' : '' }}>{{ $t->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endif
 
                     {{-- Start --}}
                     <div class="mb-4">
@@ -108,7 +157,7 @@
                             @endcanany
                         @endif
 
-                        <a href="{{ route('overtime-requests.index') }}">
+                        <a href="{{ route('requests.index', ['type' => 'ot']) }}">
                             <x-secondary-button>{{ $readonly ? 'Quay lại' : 'Bỏ' }}</x-secondary-button>
                         </a>
                     </div>
@@ -124,4 +173,43 @@
     @push('scripts')
         @vite('resources/js/overtime_requests/form.js')
     @endpush
+
+    @if(!$readonly)
+    @push('scripts')
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const allTasks = @json($tasks->map(fn($t) => [
+            'value'     => (string) $t->id,
+            'text'      => $t->name,
+            'projectId' => $t->project_id ? (string) $t->project_id : '',
+        ]));
+
+        const selTask = '{{ $selTask ?? '' }}';
+        const selProject = '{{ $selProject ?? '' }}';
+
+        // Task TomSelect
+        let taskTs = new TomSelect('#ot_task_id', {
+            maxOptions: null,
+            allowEmptyOption: true,
+        });
+
+        // Project TomSelect — on change, rebuild task options
+        new TomSelect('#ot_project_id', {
+            maxOptions: null,
+            allowEmptyOption: true,
+            onChange: function (val) {
+                const filtered = val
+                    ? allTasks.filter(t => t.projectId === String(val))
+                    : allTasks;
+                taskTs.clear(true);
+                taskTs.clearOptions();
+                taskTs.addOption({ value: '', text: '— Không có —' });
+                filtered.forEach(t => taskTs.addOption({ value: t.value, text: t.text }));
+                taskTs.refreshOptions(false);
+            },
+        });
+    });
+    </script>
+    @endpush
+    @endif
 </x-app-layout>

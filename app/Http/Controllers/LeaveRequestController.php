@@ -113,7 +113,7 @@ class LeaveRequestController extends Controller
 
         LeaveRequest::create($request->all());
 
-        return redirect()->route('leave-requests.index');
+        return redirect()->route('requests.index', ['type' => 'leave']);
     }
 
     /**
@@ -192,7 +192,7 @@ class LeaveRequestController extends Controller
 
         $leaveRequest->update($data);
 
-        return redirect()->route('leave-requests.index')->with('success', 'Leave request updated.');
+        return redirect()->route('requests.index', ['type' => 'leave'])->with('success', 'Cập nhật yêu cầu nghỉ phép thành công.');
     }
 
     /**

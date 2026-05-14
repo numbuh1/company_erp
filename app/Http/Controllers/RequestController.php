@@ -37,7 +37,7 @@ class RequestController extends Controller
 
         // ── OT ─────────────────────────────────────────────────────
         if ($user->can('module ot') && in_array($type, ['all', 'ot'])) {
-            $q = OvertimeRequest::with('user', 'approver');
+            $q = OvertimeRequest::with('user', 'approver', 'project', 'task');
             $this->applyScope($q, 'ot', $user);
             $this->applyDateFilter($q, $dateFrom, $dateTo);
             $this->applyStatusFilter($q, $status);
