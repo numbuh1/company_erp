@@ -18,11 +18,11 @@
                                 <x-user-status :user="$user" />
                             </div>
                             @if($user->pivot->is_leader)
-                                <span class="shrink-0 text-xs bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300 px-1.5 py-0.5 rounded font-medium">{{ __('Leader') }}</span>
+                                <span class="shrink-0 text-xs bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300 px-1.5 py-0.5 rounded font-medium">Trưởng nhóm</span>
                             @endif
                         </a>
                     @empty
-                        <p class="text-sm text-gray-400 py-2">{{ __('No members in this team.') }}</p>
+                        <p class="text-sm text-gray-400 py-2">Nhóm này chưa có thành viên.</p>
                     @endforelse
                 </div>
             @endforeach

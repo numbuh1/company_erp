@@ -38,7 +38,7 @@
                     <div class="flex items-center gap-3">
                         <x-primary-button>{{ isset($skill) ? 'Update' : 'Create' }}</x-primary-button>
                         <a href="{{ route('skills.index') }}">
-                            <x-secondary-button type="button">{{ __('Cancel') }}</x-secondary-button>
+                            <x-secondary-button type="button">Hủy</x-secondary-button>
                         </a>
                     </div>
                 </form>

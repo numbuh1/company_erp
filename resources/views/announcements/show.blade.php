@@ -16,10 +16,10 @@
             <div class="flex gap-2">
                 @can('edit announcements')
                     <a href="{{ route('announcements.edit', $announcement) }}">
-                        <x-secondary-button>{{ __('Edit') }}</x-secondary-button>
+                        <x-secondary-button>Chỉnh sửa</x-secondary-button>
                     </a>
                 @endcan
-                <a href="{{ route('announcements.index') }}"><x-secondary-button>{{ __('Back') }}</x-secondary-button></a>
+                <a href="{{ route('announcements.index') }}"><x-secondary-button>Quay lại</x-secondary-button></a>
             </div>
         </div>
     </x-slot>
@@ -46,7 +46,7 @@
                         <form method="POST" action="{{ route('announcements.destroy', $announcement) }}">
                             @csrf @method('DELETE')
                             <button type="submit" onclick="return confirm('Delete this announcement?')"
-                                class="text-sm text-red-600 hover:underline">{{ __('Delete announcement') }}</button>
+                                class="text-sm text-red-600 hover:underline">Xóa thông báo</button>
                         </form>
                     </div>
                 @endcan

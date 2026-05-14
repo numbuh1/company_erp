@@ -13,7 +13,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">{{ __('Weekly Timesheet') }}</h2>
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Bảng giờ tuần</h2>
             <div class="flex items-center gap-3">
                 <a href="{{ route('timesheets.weekly', $prevParams) }}"
                     class="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
@@ -30,7 +30,7 @@
                     <a href="{{ route('timesheets.weekly', $thisWeekParams) }}"
                         class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">This week</a>
                 @endif
-                <a href="{{ route('time-logs.create') }}"><x-primary-button>{{ __('Log Time') }}</x-primary-button></a>
+                <a href="{{ route('time-logs.create') }}"><x-primary-button>Ghi giờ</x-primary-button></a>
             </div>
         </div>
     </x-slot>
@@ -44,17 +44,17 @@
                     <a href="{{ route('time-logs.index') }}"
                         class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
                             border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-                        {{ __('List View') }}
+                        Danh sách
                     </a>
                     <a href="{{ route('timesheets.weekly') }}"
                         class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
                             border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400">
-                        {{ __('Weekly View') }}
+                        Tuần
                     </a>
                     <a href="{{ route('timesheets.monthly') }}"
                         class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
                             border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-                        {{ __('Monthly View') }}
+                        Tháng
                     </a>
                 </nav>
             </div>
@@ -70,19 +70,19 @@
 
                     {{-- Left: Individual / Team --}}
                     <div>
-                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ __('View') }}</label>
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Xem</label>
                         <select name="mode" x-model="mode"
                             class="border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
-                            <option value="individual">{{ __('Individual') }}</option>
+                            <option value="individual">Cá nhân</option>
                             @if($filterTeams && $filterTeams->isNotEmpty())
-                                <option value="team">{{ __('Team') }}</option>
+                                <option value="team">Nhóm</option>
                             @endif
                         </select>
                     </div>
 
                     {{-- Right: individual list --}}
                     <div x-show="mode === 'individual'">
-                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ __('Member') }}</label>
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Thành viên</label>
                         <select name="user_id"
                             class="border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
                             @foreach($filterUsers ?? [] as $u)
@@ -96,7 +96,7 @@
                     {{-- Right: team list --}}
                     @if($filterTeams && $filterTeams->isNotEmpty())
                         <div x-show="mode === 'team'">
-                            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ __('Team') }}</label>
+                            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Nhóm</label>
                             <select name="team_id"
                                 class="border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
                                 @foreach($filterTeams as $t)
@@ -108,9 +108,9 @@
                         </div>
                     @endif
 
-                    <x-primary-button type="submit">{{ __('Apply') }}</x-primary-button>
+                    <x-primary-button type="submit">Áp dụng</x-primary-button>
                     <a href="{{ route('timesheets.weekly', ['offset' => $offset]) }}">
-                        <x-secondary-button type="button">{{ __('Reset') }}</x-secondary-button>
+                        <x-secondary-button type="button">Đặt lại</x-secondary-button>
                     </a>
                 </form>
             @endif
@@ -123,14 +123,14 @@
                             {{ $groupBy === 'context'
                                 ? 'bg-indigo-600 text-white'
                                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
-                        By Context
+                        Theo công việc
                     </a>
                     <a href="{{ route('timesheets.weekly', array_merge($filterParams, ['offset' => $offset, 'group' => 'user'])) }}"
                         class="px-3 py-1.5 text-sm rounded transition font-medium
                             {{ $groupBy === 'user'
                                 ? 'bg-indigo-600 text-white'
                                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
-                        By Individual
+                        Theo từng người
                     </a>
                 </div>
             @endif
@@ -142,7 +142,7 @@
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-64">
                                 {{ $groupBy === 'user' ? 'Member' : 'Context' }}
                             </th>
-                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase w-20">{{ __('Total') }}</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase w-20">Tổng</th>
                             @foreach($days as $day)
                                 @php
                                     $isHolidayDay = in_array($day->format('Y-m-d'), $holidayDates);
@@ -231,8 +231,8 @@
                         @empty
                             <tr>
                                 <td colspan="{{ 9 }}" class="px-6 py-10 text-center text-gray-400">
-                                    No time logged this week.
-                                    <a href="{{ route('time-logs.create') }}" class="text-indigo-600 hover:underline ml-1">{{ __('Log time →') }}</a>
+                                    Chưa có giờ làm việc nào trong tuần này.
+                                    <a href="{{ route('time-logs.create') }}" class="text-indigo-600 hover:underline ml-1">Chấm công →</a>
                                 </td>
                             </tr>
                         @endforelse
@@ -240,7 +240,7 @@
                     @if(count($rows) > 0)
                         <tfoot class="border-t-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <td class="px-4 py-3 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">{{ __('Total') }}</td>
+                                <td class="px-4 py-3 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Tổng</td>
                                 <td class="px-4 py-3 text-center">
                                     <span class="text-xs font-bold text-gray-800 dark:text-gray-200 bg-indigo-100 dark:bg-indigo-900 px-2 py-0.5 rounded">
                                         {{ \App\Models\TimeLog::formatTime($weekTotal) }}

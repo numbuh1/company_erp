@@ -18,7 +18,7 @@
 
                     <!-- Team Name -->
                     <div class="mb-6">
-                        <x-input-label for="name" value="{{ __('Team Name') }}" />
+                        <x-input-label for="name" value="Tên nhóm" />
                         <x-text-input 
                             id="name"
                             name="name"
@@ -59,11 +59,11 @@
 
                         <!-- LEFT: Unassigned -->
                         <div>
-                            <h3 class="font-bold mb-2 text-gray-800 dark:text-gray-200">{{ __('Unassigned Users') }}</h3>
+                            <h3 class="font-bold mb-2 text-gray-800 dark:text-gray-200">Người dùng chưa phân công</h3>
 
                             <input 
                                 type="text" 
-                                placeholder="{{ __('Search...') }}" 
+                                placeholder="Tìm kiếm..." 
                                 class="mb-2 w-full border rounded p-2"
                                 id="search-unassigned"
                             >
@@ -86,11 +86,11 @@
 
                         <!-- RIGHT: Assigned -->
                         <div>
-                            <h3 class="font-bold mb-2 text-gray-800 dark:text-gray-200">{{ __('Assigned Users') }}</h3>
+                            <h3 class="font-bold mb-2 text-gray-800 dark:text-gray-200">Người dùng được phân công</h3>
 
                             <input 
                                 type="text" 
-                                placeholder="{{ __('Search...') }}" 
+                                placeholder="Tìm kiếm..." 
                                 class="mb-2 w-full border rounded p-2"
                                 id="search-assigned"
                             >
@@ -114,7 +114,7 @@
                                                     value="{{ $item['model']->id }}"
                                                     {{ $item['is_leader'] ? 'checked' : '' }}
                                                 >
-                                                <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('Leader') }}</span>
+                                                <span class="text-sm text-gray-700 dark:text-gray-300">Trưởng nhóm</span>
                                             </label>
                                         </div>
 
@@ -131,7 +131,7 @@
                     <div class="flex justify-end mt-6 space-x-2">
                         <a href="{{ route('teams.index') }}">
                             <x-secondary-button>
-                                {{ __('Cancel') }}
+                                Hủy
                             </x-secondary-button>
                         </a>
 

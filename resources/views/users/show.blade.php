@@ -1,15 +1,15 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="text-xl font-semibold">{{ __('User Profile') }}</h2>
+            <h2 class="text-xl font-semibold">Hồ sơ người dùng</h2>
             <div class="flex gap-2">
                 @if(auth()->id() === $user->id || auth()->user()->canAny(['edit team user', 'edit all user']))
                     <a href="{{ route('users.edit', $user) }}">
-                        <x-primary-button>{{ __('Edit') }}</x-primary-button>
+                        <x-primary-button>Chỉnh sửa</x-primary-button>
                     </a>
                 @endif
                 <a href="{{ route('users.index') }}">
-                    <x-secondary-button>{{ __('Back') }}</x-secondary-button>
+                    <x-secondary-button>Quay lại</x-secondary-button>
                 </a>
             </div>
         </div>
@@ -20,7 +20,7 @@
 
             {{-- Basic Info --}}
             <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
-                <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">{{ __('Basic Information') }}</h3>
+                <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">Thông tin cơ bản</h3>
 
                 <div class="flex items-center gap-6 mb-6">
                     @if($user->profile_picture)
@@ -47,27 +47,27 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <x-input-label value="{{ __('Position') }}" />
+                        <x-input-label value="Chức vụ" />
                         <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">
                             {{ $user->position ?? '—' }}
                         </p>
                     </div>
 
                     <div>
-                        <x-input-label value="{{ __('Roles') }}" />
+                        <x-input-label value="Vai trò" />
                         <div class="flex flex-wrap gap-1 mt-1">
                             @forelse($user->roles as $role)
                                 <span class="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-xs px-2 py-1 rounded">
                                     {{ $role->name }}
                                 </span>
                             @empty
-                                <span class="text-sm text-gray-400">{{ __('No roles') }}</span>
+                                <span class="text-sm text-gray-400">Không có vai trò</span>
                             @endforelse
                         </div>
                     </div>
 
                     <div>
-                        <x-input-label value="{{ __('Leave Balance') }}" />
+                        <x-input-label value="Số giờ phép còn lại" />
                         <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">
                             {{ rtrim(rtrim(number_format($user->leave_balance ?? 0, 2), '0'), '.') }}h
                             <a href="{{ route('users.leave-balance-history', $user) }}"
@@ -79,20 +79,20 @@
 
             {{-- Leave Requests --}}
             <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
-                <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">{{ __('Leave Requests') }}</h3>
+                <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">Yêu cầu nghỉ phép</h3>
 
                 @if($leaveRequests->isEmpty())
-                    <p class="text-sm text-gray-400">{{ __('No pending or approved leave requests.') }}</p>
+                    <p class="text-sm text-gray-400">Không có yêu cầu nghỉ phép đang chờ hoặc đã duyệt.</p>
                 @else
                     <table class="min-w-full text-sm">
                         <thead class="bg-gray-100 dark:bg-gray-700">
                             <tr>
-                                <th class="px-3 py-2 text-left">{{ __('Type') }}</th>
-                                <th class="px-3 py-2 text-left">{{ __('Start') }}</th>
-                                <th class="px-3 py-2 text-left">{{ __('End') }}</th>
-                                <th class="px-3 py-2 text-left">{{ __('Hours') }}</th>
-                                <th class="px-3 py-2 text-left">{{ __('Status') }}</th>
-                                <th class="px-3 py-2 text-left">{{ __('Submitted') }}</th>
+                                <th class="px-3 py-2 text-left">Loại</th>
+                                <th class="px-3 py-2 text-left">Bắt đầu</th>
+                                <th class="px-3 py-2 text-left">Kết thúc</th>
+                                <th class="px-3 py-2 text-left">Giờ</th>
+                                <th class="px-3 py-2 text-left">Trạng thái</th>
+                                <th class="px-3 py-2 text-left">Đã gửi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -104,9 +104,9 @@
                                     <td class="px-3 py-2">{{ rtrim(rtrim(number_format($lr->hours, 2), '0'), '.') }}h</td>
                                     <td class="px-3 py-2">
                                         @if($lr->status === 'pending')
-                                            <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded">{{ __('Pending') }}</span>
+                                            <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded">Đang chờ</span>
                                         @elseif($lr->status === 'approved')
-                                            <span class="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded">{{ __('Approved') }}</span>
+                                            <span class="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded">Đã duyệt</span>
                                         @endif
                                     </td>
                                     <td class="px-3 py-2 text-gray-500">{{ $lr->created_at->format('d/m/y H:i') }}</td>
@@ -119,10 +119,10 @@
 
             {{-- Supervisors --}}
             <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
-                <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">{{ __('Supervisors') }}</h3>
+                <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">Người giám sát</h3>
 
                 @if($user->supervisors->isEmpty())
-                    <p class="text-sm text-gray-400">{{ __('No supervisors assigned.') }}</p>
+                    <p class="text-sm text-gray-400">Chưa có người giám sát.</p>
                 @else
                     <div class="space-y-2">
                         @foreach($user->supervisors as $supervisor)
@@ -152,10 +152,10 @@
 
             {{-- Teams --}}
             <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
-                <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">{{ __('Teams') }}</h3>
+                <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">Nhóm</h3>
 
                 @if($user->teams->isEmpty())
-                    <p class="text-sm text-gray-400">{{ __('Not a member of any team.') }}</p>
+                    <p class="text-sm text-gray-400">Chưa là thành viên của nhóm nào.</p>
                 @else
                     <div class="space-y-2">
                         @foreach($user->teams as $team)
@@ -165,11 +165,11 @@
                                 </span>
                                 @if($team->pivot->is_leader)
                                     <span class="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 text-xs px-2 py-0.5 rounded">
-                                        {{ __('Leader') }}
+                                        Trưởng nhóm
                                     </span>
                                 @else
                                     <span class="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 text-xs px-2 py-0.5 rounded">
-                                        {{ __('Member') }}
+                                        Thành viên
                                     </span>
                                 @endif
                             </div>

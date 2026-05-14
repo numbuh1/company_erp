@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            Attendance — {{ now()->format('l, d F Y') }}
+            Chấm công — {{ now()->locale('vi')->translatedFormat('l, d F Y') }}
         </h2>
     </x-slot>
 
@@ -19,7 +19,7 @@
             {{-- ── Personal Check-In Section ────────────────────────────── --}}
             <div x-data="{ showWfhModal: false, hours: 8, reason: '', submitting: false }">
                 <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-4">
-                    {{ __('My Attendance Today') }}
+                    Chấm công hôm nay
                 </h3>
 
                 @if($myOnLeaveToday && !$myAttendance)
@@ -27,8 +27,8 @@
                     <div class="flex items-center gap-3 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
                         <span class="text-2xl">🏖️</span>
                         <div>
-                            <p class="font-semibold text-yellow-800 dark:text-yellow-300">{{ __('You are on approved leave today.') }}</p>
-                            <p class="text-sm text-yellow-600 dark:text-yellow-400">{{ __('Check-in is not required.') }}</p>
+                            <p class="font-semibold text-yellow-800 dark:text-yellow-300">Bạn đã được duyệt nghỉ phép hôm nay.</p>
+                            <p class="text-sm text-yellow-600 dark:text-yellow-400">Không cần chấm công.</p>
                         </div>
                     </div>
 
@@ -62,15 +62,15 @@
                             <div class="mt-1">
                                 @if($isPending)
                                     <span class="text-xs font-medium px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
-                                        {{ __('Pending Approval') }}
+                                        Chờ phê duyệt
                                     </span>
                                 @elseif($isApproved)
                                     <span class="text-xs font-medium px-2 py-0.5 rounded bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                                        {{ __('Approved') }}
+                                        Đã duyệt
                                     </span>
                                 @elseif($isRejected)
                                     <span class="text-xs font-medium px-2 py-0.5 rounded bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
-                                        {{ __('Rejected') }}
+                                        Đã từ chối
                                     </span>
                                     @if($myAttendance->reject_reason)
                                         <span class="text-xs text-red-500 ml-1">— {{ $myAttendance->reject_reason }}</span>
@@ -85,7 +85,7 @@
 
                 @else
                     {{-- Not yet checked in --}}
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">{{ __('You have not checked in yet today. Select your work arrangement:') }}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Bạn chưa chấm công hôm nay. Chọn hình thức làm việc:</p>
 
                     @error('attendance')
                         <div class="mb-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg text-sm text-red-700 dark:text-red-300">
@@ -101,7 +101,7 @@
                             <button type="submit"
                                 class="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl shadow transition">
                                 <span class="text-xl">🏢</span>
-                                <span>{{ __('On Site') }}</span>
+                                <span>Tại văn phòng</span>
                             </button>
                         </form>
 
@@ -110,7 +110,7 @@
                         <button type="button" @click="showWfhModal = true"
                             class="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow transition">
                             <span class="text-xl">🏠</span>
-                            {{ __('Work from Home') }}
+                            Làm việc tại nhà
                         </button>
 
                         {{-- Geolocation error --}}
@@ -140,7 +140,7 @@
                             <input type="hidden" name="type" value="wfh">
 
                             <div class="mb-4">
-                                <x-input-label value="{{ __('Hours Working Today') }}" />
+                                <x-input-label value="Số giờ làm hôm nay" />
                                 <x-text-input type="number" name="hours" step="0.5" min="0.5" max="24"
                                     x-model="hours" class="w-full mt-1" />
                                 @error('hours')
@@ -149,10 +149,10 @@
                             </div>
 
                             <div class="mb-5">
-                                <x-input-label value="{{ __('Reason / Task for Today') }}" />
+                                <x-input-label value="Lý do / Nhiệm vụ hôm nay" />
                                 <textarea name="reason" rows="3" x-model="reason"
                                     class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                    placeholder="{{ __('Briefly describe what you will be working on...') }}"></textarea>
+                                    placeholder="Mô tả ngắn gọn công việc bạn sẽ làm..."></textarea>
                                 @error('reason')
                                     <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
                                 @enderror
@@ -161,12 +161,12 @@
                             <div class="flex justify-end gap-2">
                                 <button type="button" @click="showWfhModal = false"
                                     class="px-4 py-2 text-sm rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                                    {{ __('Cancel') }}
+                                    Hủy
                                 </button>
                                 <button type="submit" :disabled="submitting"
                                     class="px-4 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 text-white font-medium transition disabled:opacity-50">
-                                    <span x-show="!submitting">{{ __('Submit WFH Request') }}</span>
-                                    <span x-show="submitting" x-cloak>{{ __('Submitting…') }}</span>
+                                    <span x-show="!submitting">Gửi yêu cầu làm tại nhà</span>
+                                    <span x-show="submitting" x-cloak>Đang gửi…</span>
                                 </button>
                             </div>
                         </form>
@@ -183,12 +183,12 @@
 
                         @php
                             $cards = [
-                                ['key' => 'all',            'label' => 'All',          'icon' => '👥', 'color' => 'gray'],
+                                ['key' => 'all',            'label' => 'Tất cả',          'icon' => '👥', 'color' => 'gray'],
                                 ['key' => 'on_site',        'label' => 'On Site',      'icon' => '🏢', 'color' => 'green'],
                                 ['key' => 'wfh',            'label' => 'WFH',          'icon' => '🏠', 'color' => 'blue'],
-                                ['key' => 'on_leave',       'label' => 'On Leave',     'icon' => '🏖️', 'color' => 'yellow'],
-                                ['key' => 'wfh_pending',    'label' => 'WFH Pending',  'icon' => '⏳', 'color' => 'orange'],
-                                ['key' => 'not_checked_in', 'label' => 'Not Checked',  'icon' => '❓', 'color' => 'red'],
+                                ['key' => 'on_leave',       'label' => 'Nghỉ phép',     'icon' => '🏖️', 'color' => 'yellow'],
+                                ['key' => 'wfh_pending',    'label' => 'Chờ duyệt WFH',  'icon' => '⏳', 'color' => 'orange'],
+                                ['key' => 'not_checked_in', 'label' => 'Chưa chấm công',  'icon' => '❓', 'color' => 'red'],
                             ];
                             $colorBase = [
                                 'gray'   => ['card' => 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600',       'active' => 'ring-2 ring-gray-400',   'num' => 'text-gray-700 dark:text-gray-200'],
@@ -216,7 +216,7 @@
                     <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
                         <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                             <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
-                                {{ __('People') }}
+                                Nhân sự
                             </h3>
                             <span class="text-xs text-gray-400">
                                 <span x-text="
@@ -278,20 +278,20 @@
                                                     @csrf
                                                     <button type="submit"
                                                         class="text-xs px-2 py-0.5 rounded bg-green-600 hover:bg-green-700 text-white transition">
-                                                        {{ __('Approve') }}
+                                                        Phê duyệt
                                                     </button>
                                                 </form>
 
                                                 <div x-data="{ showReject: false, reason: '' }">
                                                     <button type="button" @click="showReject = !showReject"
                                                         class="text-xs px-2 py-0.5 rounded bg-red-600 hover:bg-red-700 text-white transition">
-                                                        {{ __('Reject') }}
+                                                        Từ chối
                                                     </button>
                                                     <div x-show="showReject" x-cloak
                                                          class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
                                                          @click.self="showReject = false">
                                                         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-sm mx-4">
-                                                            <h4 class="font-semibold text-gray-800 dark:text-gray-100 mb-3">{{ __('Reject WFH Request') }}</h4>
+                                                            <h4 class="font-semibold text-gray-800 dark:text-gray-100 mb-3">Từ chối yêu cầu làm tại nhà</h4>
                                                             <form :action="'/attendance/' + u.att_id + '/reject'" method="POST">
                                                                 @csrf
                                                                 <textarea name="reject_reason" rows="3" x-model="reason" required
@@ -300,11 +300,11 @@
                                                                 <div class="flex justify-end gap-2">
                                                                     <button type="button" @click="showReject = false"
                                                                         class="px-3 py-1.5 text-sm rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300">
-                                                                        {{ __('Cancel') }}
+                                                                        Hủy
                                                                     </button>
                                                                     <button type="submit"
                                                                         class="px-3 py-1.5 text-sm rounded bg-red-600 hover:bg-red-700 text-white">
-                                                                        {{ __('Confirm Reject') }}
+                                                                        Xác nhận từ chối
                                                                     </button>
                                                                 </div>
                                                             </form>

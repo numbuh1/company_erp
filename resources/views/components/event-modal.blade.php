@@ -6,7 +6,7 @@
 
         <!-- Header -->
         <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 class="font-semibold text-lg text-gray-800 dark:text-gray-100" id="event-modal-title">{{ __('New Event') }}</h3>
+            <h3 class="font-semibold text-lg text-gray-800 dark:text-gray-100" id="event-modal-title">Sự kiện mới</h3>
             <button type="button" onclick="closeEventModal()"
                 class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl leading-none">&times;</button>
         </div>
@@ -58,7 +58,7 @@
                         </select>
                     </div>
                     <div>
-                        <x-input-label for="event-location" value="{{ __('Location') }}" />
+                        <x-input-label for="event-location" value="Địa điểm" />
                         <select id="event-location" name="location"
                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
                         </select>
@@ -89,14 +89,14 @@
 
                 <!-- Description -->
                 <div class="mb-4">
-                    <x-input-label for="event-description" value="{{ __('Description') }}" />
+                    <x-input-label for="event-description" value="Mô tả" />
                     <textarea id="event-description" name="description" rows="3"
                         class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">{{ old('description') }}</textarea>
                 </div>
 
                 <!-- File -->
                 <div class="mb-2" id="event-file-section">
-                    <x-input-label for="event-file" value="{{ __('Attachment') }}" />
+                    <x-input-label for="event-file" value="Tệp đính kèm" />
                     <input id="event-file" name="file" type="file"
                         class="mt-1 block w-full text-sm text-gray-500 dark:text-gray-400
                                file:mr-4 file:py-1.5 file:px-3 file:rounded file:border-0
@@ -121,7 +121,7 @@
 
             <button type="button" onclick="closeEventModal()"
                 class="ml-auto px-4 py-2 text-sm text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                {{ __('Cancel') }}
+                Hủy
             </button>
             <button type="button" onclick="document.getElementById('event-modal-form').submit()"
                 class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition">

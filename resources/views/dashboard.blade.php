@@ -11,7 +11,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Dashboard') }}
+            Bảng điều khiển
         </h2>
     </x-slot>
 
@@ -21,27 +21,27 @@
             {{-- ── Stats Bar ─────────────────────────────────────────────── --}}
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4">
-                    <p class="text-xs text-gray-500 uppercase font-medium">{{ __('Leave Balance') }}</p>
+                    <p class="text-xs text-gray-500 uppercase font-medium">Số giờ phép còn lại</p>
                     <p class="mt-1 text-2xl font-bold text-gray-800 dark:text-gray-100">
                         {{ rtrim(rtrim(number_format(auth()->user()->leave_balance ?? 0, 2), '0'), '.') }}h
                     </p>
                 </div>
                 <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4">
-                    <p class="text-xs text-gray-500 uppercase font-medium">{{ __('This Week') }}</p>
+                    <p class="text-xs text-gray-500 uppercase font-medium">Tuần này</p>
                     <p class="mt-1 text-2xl font-bold text-indigo-600 dark:text-indigo-400">
                         {{ \App\Models\TimeLog::formatTime($weekTimeLogs) }}
                     </p>
                     <p class="text-xs text-gray-400">time logged</p>
                 </div>
                 <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4">
-                    <p class="text-xs text-gray-500 uppercase font-medium">{{ __('This Month') }}</p>
+                    <p class="text-xs text-gray-500 uppercase font-medium">Tháng này</p>
                     <p class="mt-1 text-2xl font-bold text-indigo-600 dark:text-indigo-400">
                         {{ \App\Models\TimeLog::formatTime($monthTimeLogs) }}
                     </p>
                     <p class="text-xs text-gray-400">time logged</p>
                 </div>
                 <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4">
-                    <p class="text-xs text-gray-500 uppercase font-medium">{{ __('OT This Month') }}</p>
+                    <p class="text-xs text-gray-500 uppercase font-medium">Tăng ca tháng này</p>
                     <p class="mt-1 text-2xl font-bold text-green-600 dark:text-green-400">
                         {{ rtrim(rtrim(number_format($monthOTHours, 2), '0'), '.') }}h
                     </p>
@@ -86,7 +86,7 @@
                                 </a>
                             </div>
                         @else
-                            <p class="text-sm text-gray-400">{{ __('No announcements yet.') }}</p>
+                            <p class="text-sm text-gray-400">Chưa có thông báo.</p>
                         @endif
                     </div>
 
@@ -136,21 +136,21 @@
                             <div class="grid grid-cols-2 gap-3 mb-4">
                                 <div class="text-center bg-gray-50 dark:bg-gray-700 rounded-lg py-3">
                                     <p class="text-2xl font-bold text-green-600 dark:text-green-400">{{ $attendanceStats['present'] }}</p>
-                                    <p class="text-xs text-gray-500 mt-0.5">{{ __('Present') }}</p>
+                                    <p class="text-xs text-gray-500 mt-0.5">Có mặt</p>
                                 </div>
                                 <!-- <div class="text-center bg-green-50 dark:bg-green-900/20 rounded-lg py-3">
                                     <p class="text-2xl font-bold text-gray-700 dark:text-gray-200">{{ $attendanceStats['total'] }}</p>
-                                    <p class="text-xs text-gray-500 mt-0.5">{{ __('Total') }}</p>
+                                    <p class="text-xs text-gray-500 mt-0.5">Tổng</p>
                                 </div> -->
                                 <div class="text-center bg-yellow-50 dark:bg-yellow-900/20 rounded-lg py-3">
                                     <p class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{{ $attendanceStats['on_leave'] }}</p>
-                                    <p class="text-xs text-gray-500 mt-0.5">{{ __('On Leave') }}</p>
+                                    <p class="text-xs text-gray-500 mt-0.5">Đang nghỉ phép</p>
                                 </div>
                             </div>
 
                             @if($attendanceStats['on_leave_users']->isNotEmpty())
                                 <div class="border-t border-gray-100 dark:border-gray-700 pt-3">
-                                    <p class="text-xs font-semibold text-gray-400 uppercase mb-2">{{ __('On leave today') }}</p>
+                                    <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Nghỉ phép hôm nay</p>
                                     <div class="flex flex-wrap gap-1.5">
                                         @foreach($attendanceStats['on_leave_users'] as $ou)
                                             <span class="inline-flex items-center gap-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 text-xs px-2 py-0.5 rounded">
@@ -179,7 +179,7 @@
                                         <span class="text-xl font-bold {{ $pendingLeavesCount > 0 ? 'text-yellow-600' : 'text-gray-400' }}">
                                             {{ $pendingLeavesCount }}
                                         </span>
-                                        <span class="text-gray-600 dark:text-gray-300">{{ __('Leave Requests Pending') }}</span>
+                                        <span class="text-gray-600 dark:text-gray-300">Yêu cầu nghỉ phép đang chờ</span>
                                     </a>
                                 @endif
                                 @if($pendingOTCount !== null)
@@ -188,7 +188,7 @@
                                         <span class="text-xl font-bold {{ $pendingOTCount > 0 ? 'text-orange-600' : 'text-gray-400' }}">
                                             {{ $pendingOTCount }}
                                         </span>
-                                        <span class="text-gray-600 dark:text-gray-300">{{ __('OT Requests Pending') }}</span>
+                                        <span class="text-gray-600 dark:text-gray-300">Yêu cầu tăng ca đang chờ</span>
                                     </a>
                                 @endif
                             </div>
@@ -202,7 +202,7 @@
                             <span class="font-normal text-gray-400 normal-case">(next 2 weeks)</span>
                         </h3>
                         @if($upcomingLeaves->isEmpty())
-                            <p class="text-sm text-gray-400">{{ __('No upcoming approved leaves.') }}</p>
+                            <p class="text-sm text-gray-400">Không có nghỉ phép đã duyệt sắp tới.</p>
                         @else
                             <div class="space-y-2">
                                 @foreach($upcomingLeaves as $leave)
@@ -238,7 +238,7 @@
                     @if($upcomingBirthdays->isNotEmpty() || count($monthHolidays) > 0 || $contractExpiryUsers->isNotEmpty())
                         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
                             <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-1">
-                                {{ __('This Month') }}
+                                Tháng này
                                 <span class="font-normal normal-case text-gray-400">— {{ now()->format('F Y') }}</span>
                             </h3>
 
@@ -331,7 +331,7 @@
                             </div>
 
                             @if($todayEvents->isNotEmpty())
-                                <p class="text-xs font-semibold text-gray-400 uppercase mb-2">{{ __('Today') }}</p>
+                                <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Hôm nay</p>
                                 <div class="space-y-2 mb-4">
                                     @foreach($todayEvents as $ev)
                                         @php
@@ -357,7 +357,7 @@
                             @endif
 
                             @if($weekEvents->isNotEmpty())
-                                <p class="text-xs font-semibold text-gray-400 uppercase mb-2">{{ __('Later this week') }}</p>
+                                <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Cuối tuần này</p>
                                 <div class="space-y-2">
                                     @foreach($weekEvents as $ev)
                                         @php
@@ -391,7 +391,7 @@
                             <span class="font-normal text-gray-400 normal-case">(due within 5 days)</span>
                         </h3>
                         @if($deadlineTasks->isEmpty())
-                            <p class="text-sm text-gray-400">{{ __('No urgent tasks.') }}</p>
+                            <p class="text-sm text-gray-400">Không có công việc khẩn cấp.</p>
                         @else
                             <div class="space-y-2">
                                 @foreach($deadlineTasks as $task)

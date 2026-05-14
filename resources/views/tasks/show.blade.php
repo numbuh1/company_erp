@@ -6,11 +6,11 @@
                 <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">{{ $task->name }}</h2>
             </div>
             <div class="flex gap-2">
-                <a href="{{ route('time-logs.create', ['task_id' => $task->id]) }}"><x-secondary-button>{{ __('Log Time') }}</x-secondary-button></a>
+                <a href="{{ route('time-logs.create', ['task_id' => $task->id]) }}"><x-secondary-button>Ghi giờ</x-secondary-button></a>
                 @canany(['edit tasks', 'edit assigned tasks'])
-                    <a href="{{ route('tasks.edit', $task) }}"><x-secondary-button>{{ __('Edit') }}</x-secondary-button></a>
+                    <a href="{{ route('tasks.edit', $task) }}"><x-secondary-button>Chỉnh sửa</x-secondary-button></a>
                 @endcanany
-                <a href="{{ route('tasks.index') }}"><x-secondary-button>{{ __('Back') }}</x-secondary-button></a>
+                <a href="{{ route('tasks.index') }}"><x-secondary-button>Quay lại</x-secondary-button></a>
             </div>
         </div>
     </x-slot>
@@ -24,7 +24,7 @@
 
             {{-- Task Details --}}
             <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
-                <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">{{ __('Task Details') }}</h3>
+                <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">Chi tiết nhiệm vụ</h3>
 
                 @php
                     $statusClass = match($task->status) {
@@ -35,7 +35,7 @@
                 @endphp
 
                 <div class="mb-4">
-                    <x-input-label value="{{ __('Status') }}" />
+                    <x-input-label value="Trạng thái" />
                     <div class="mt-1">
                         <span class="text-xs font-medium px-2 py-0.5 rounded {{ $statusClass }}">{{ $task->status }}</span>
                     </div>
@@ -54,12 +54,12 @@
                 </div>
 
                 <div class="mb-4">
-                    <x-input-label value="{{ __('Description') }}" />
+                    <x-input-label value="Mô tả" />
                     <p class="mt-1 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ $task->description ?? '—' }}</p>
                 </div>
 
                 <div class="mb-4">
-                    <x-input-label value="{{ __('Progress') }}" />
+                    <x-input-label value="Tiến độ" />
                     <div class="mt-2 flex items-center gap-3">
                         <div class="w-64 bg-gray-200 dark:bg-gray-600 rounded-full h-3">
                             <div class="bg-indigo-500 h-3 rounded-full transition-all" style="width: {{ $task->progress }}%"></div>
@@ -70,15 +70,15 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                     <div>
-                        <x-input-label value="{{ __('Start Date') }}" />
+                        <x-input-label value="Ngày bắt đầu" />
                         <p class="mt-1 text-sm text-gray-700 dark:text-gray-300">{{ $task->start_date?->format('d/m/Y') ?? '—' }}</p>
                     </div>
                     <div>
-                        <x-input-label value="{{ __('Expected End Date') }}" />
+                        <x-input-label value="Ngày kết thúc dự kiến" />
                         <p class="mt-1 text-sm text-gray-700 dark:text-gray-300">{{ $task->expected_end_date?->format('d/m/Y') ?? '—' }}</p>
                     </div>
                     <div>
-                        <x-input-label value="{{ __('Actual End Date') }}" />
+                        <x-input-label value="Ngày kết thúc thực tế" />
                         <p class="mt-1 text-sm {{ $task->actual_end_date ? 'text-green-600' : 'text-gray-400' }}">
                             {{ $task->actual_end_date?->format('d/m/Y') ?? '—' }}
                         </p>
@@ -86,14 +86,14 @@
                 </div>
 
                 <div>
-                    <x-input-label value="{{ __('Assignees') }}" />
+                    <x-input-label value="Người được phân công" />
                     <div class="mt-2 space-y-1">
                         @forelse($task->assignees as $assignee)
                             <a href="{{ route('users.show', $assignee) }}" class="flex items-center gap-2 hover:opacity-80 transition rounded px-1 py-0.5">
                                 <x-user-status :user="$assignee" />
                             </a>
                         @empty
-                            <span class="text-sm text-gray-400">{{ __('None') }}</span>
+                            <span class="text-sm text-gray-400">Không có</span>
                         @endforelse
                     </div>
                 </div>
@@ -114,10 +114,10 @@
 
             {{-- Activity Log --}}
             <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
-                <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">{{ __('Activity Log') }}</h3>
+                <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">Nhật ký hoạt động</h3>
 
                 @if($activities->isEmpty())
-                    <p class="text-sm text-gray-400">{{ __('No activity recorded.') }}</p>
+                    <p class="text-sm text-gray-400">Chưa có hoạt động nào.</p>
                 @else
                     <div class="space-y-3">
                         @foreach($activities as $activity)

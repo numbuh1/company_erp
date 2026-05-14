@@ -6,7 +6,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
                 </svg>
             </a>
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200">{{ __('Export Requests') }}</h2>
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200">Xuất yêu cầu</h2>
         </div>
     </x-slot>
 
@@ -15,7 +15,7 @@
             <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
 
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                    Configure the filters below and click <strong>{{ __('Export') }}</strong> to download an Excel file.
+                    Configure the filters below and click <strong>Xuất</strong> to download an Excel file.
                 </p>
 
                 <form method="POST" action="{{ route('requests.export.download') }}">
@@ -23,7 +23,7 @@
 
                     {{-- Date range --}}
                     <div class="mb-5">
-                        <x-input-label value="{{ __('Date Range') }}" />
+                        <x-input-label value="Khoảng thời gian" />
                         <div class="flex items-center gap-3 mt-1">
                             <input type="date" name="date_from" id="exp_date_from"
                                 value="{{ $dateFrom }}"
@@ -42,12 +42,12 @@
                             <button type="button"
                                 onclick="document.getElementById('exp_date_from').value='{{ $thisM['from'] }}'; document.getElementById('exp_date_to').value='{{ $thisM['to'] }}';"
                                 class="px-2.5 py-1 text-xs rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                                {{ __('This Month') }}
+                                Tháng này
                             </button>
                             <button type="button"
                                 onclick="document.getElementById('exp_date_from').value='{{ $lastM['from'] }}'; document.getElementById('exp_date_to').value='{{ $lastM['to'] }}';"
                                 class="px-2.5 py-1 text-xs rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                                {{ __('Last Month') }}
+                                Tháng trước
                             </button>
                             <button type="button"
                                 onclick="document.getElementById('exp_date_from').value=''; document.getElementById('exp_date_to').value='';"
@@ -61,7 +61,7 @@
 
                     {{-- Request type --}}
                     <div class="mb-5">
-                        <x-input-label value="{{ __('Request Type') }}" />
+                        <x-input-label value="Loại yêu cầu" />
                         <div class="flex gap-3 mt-2">
                             @foreach(['all' => 'All (Leave + OT)', 'leave' => 'Leave Only', 'ot' => 'OT Only'] as $val => $label)
                                 <label class="flex items-center gap-1.5 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
@@ -76,7 +76,7 @@
 
                     {{-- Status --}}
                     <div class="mb-6">
-                        <x-input-label value="{{ __('Status') }}" />
+                        <x-input-label value="Trạng thái" />
                         <div class="flex gap-3 mt-2 flex-wrap">
                             @foreach(['all' => 'All', 'pending' => 'Pending', 'approved' => 'Approved', 'rejected' => 'Rejected'] as $val => $label)
                                 <label class="flex items-center gap-1.5 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
@@ -97,7 +97,7 @@
                             Export Excel
                         </x-primary-button>
                         <a href="{{ route('requests.index') }}"
-                            class="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">{{ __('Cancel') }}</a>
+                            class="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">Hủy</a>
                     </div>
 
                 </form>
