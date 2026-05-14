@@ -171,14 +171,15 @@ class PermissionSeeder extends Seeder
 
         // USERS
         $user_permissions = [
-            'module user' => 'Enable',
+            'module user'    => 'Enable',
             'view team user' => 'View Team\'s User Profile',
             'edit team user' => 'Edit Team\'s User Profile',
             'delete team user' => 'Delete Team\'s User Profile',
-            'view all user' => 'View All User Profile',
+            'view all user'  => 'View All User Profile',
             'create all user' => 'Create All User Profile',
-            'edit all user' => 'Edit All User Profile',
+            'edit all user'  => 'Edit All User Profile',
             'delete all user' => 'Delete All User Profile',
+            'view salary'    => 'View Salary Information',
         ];
 
         foreach ($user_permissions as $name => $label) {

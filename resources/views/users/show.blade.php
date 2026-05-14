@@ -66,6 +66,24 @@
                         </div>
                     </div>
 
+                    @if($canViewSalary && ($user->salary || $user->salary_type))
+                    <div>
+                        <x-input-label value="Lương" />
+                        <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">
+                            @if($user->salary)
+                                {{ number_format($user->salary, 0, '.', ',') }} ₫
+                            @endif
+                            @if($user->salary_type)
+                                @php $typeLabel = ['monthly' => '/ Tháng', 'weekly' => '/ Tuần', 'daily' => '/ Ngày', 'hourly' => '/ Giờ'][$user->salary_type] ?? $user->salary_type; @endphp
+                                <span class="text-gray-500 dark:text-gray-400">{{ $typeLabel }}</span>
+                            @endif
+                        </p>
+                        @if($user->monthly_rate && $user->salary_type !== 'monthly')
+                            <p class="text-xs text-gray-400 mt-0.5">≈ {{ number_format($user->monthly_rate, 0, '.', ',') }} ₫/tháng</p>
+                        @endif
+                    </div>
+                    @endif
+
                     <div>
                         <x-input-label value="Số giờ phép còn lại" />
                         <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">

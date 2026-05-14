@@ -26,15 +26,20 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name' => 'required',
-            'full_name' => 'nullable|string|max:255',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:6',
-            'birthday' => 'nullable|date',
-            'contract_expiry' => 'nullable|date',
-            'salary' => 'nullable|integer|min:0',
-            'salary_type' => 'nullable|in:monthly,weekly,daily,hourly',
-            'roles' => 'array',
+            'name'                => 'required',
+            'full_name'           => 'nullable|string|max:255',
+            'email'               => 'required|email|unique:users',
+            'password'            => 'required|min:6|confirmed',
+            'birthday'            => 'nullable|date',
+            'contract_expiry'     => 'nullable|date',
+            'salary'              => 'nullable|integer|min:0',
+            'salary_type'         => 'nullable|in:monthly,weekly,daily,hourly',
+            'phone_number'        => 'nullable|string|max:30',
+            'citizen_id'          => 'nullable|string|max:30',
+            'home_address'        => 'nullable|string',
+            'tax_code'            => 'nullable|string|max:20',
+            'social_insurance_id' => 'nullable|string|max:20',
+            'roles'               => 'array',
         ]);
 
         $data['password'] = bcrypt($data['password']);
@@ -46,8 +51,13 @@ class UserController extends Controller
             $user->supervisors()->sync($request->input('supervisors', []));
             $user->update([
                 'wfh_without_approval' => $request->boolean('wfh_without_approval'),
-                'salary'      => $request->input('salary') ?: null,
-                'salary_type' => $request->input('salary_type') ?: null,
+                'salary'               => $request->input('salary') ?: null,
+                'salary_type'          => $request->input('salary_type') ?: null,
+                'phone_number'         => $request->input('phone_number'),
+                'citizen_id'           => $request->input('citizen_id'),
+                'home_address'         => $request->input('home_address'),
+                'tax_code'             => $request->input('tax_code'),
+                'social_insurance_id'  => $request->input('social_insurance_id'),
             ]);
         }
 
@@ -91,27 +101,36 @@ class UserController extends Controller
             ->orderByRaw("FIELD(status, 'pending', 'approved')")
             ->latest()
             ->get();
-        return view('users.show', compact('user', 'leaveRequests'));
+        $canViewSalary = auth()->user()->can('view salary') || auth()->user()->can('edit all user');
+        return view('users.show', compact('user', 'leaveRequests', 'canViewSalary'));
     }
 
 
     public function update(Request $request, User $user)
     {
         $data = $request->validate([
-            'name' => 'required',
-            'full_name' => 'nullable|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
-            'password' => 'nullable|min:6',
-            'position' => 'nullable|string|max:255',
-            'birthday' => 'nullable|date',
-            'contract_expiry' => 'nullable|date',
-            'salary' => 'nullable|integer|min:0',
-            'salary_type' => 'nullable|in:monthly,weekly,daily,hourly',
-            'roles' => 'array'
+            'name'                => 'required',
+            'full_name'           => 'nullable|string|max:255',
+            'email'               => 'required|email|unique:users,email,' . $user->id,
+            'password'            => 'nullable|min:6|confirmed',
+            'position'            => 'nullable|string|max:255',
+            'birthday'            => 'nullable|date',
+            'contract_expiry'     => 'nullable|date',
+            'salary'              => 'nullable|integer|min:0',
+            'salary_type'         => 'nullable|in:monthly,weekly,daily,hourly',
+            'phone_number'        => 'nullable|string|max:30',
+            'citizen_id'          => 'nullable|string|max:30',
+            'home_address'        => 'nullable|string',
+            'tax_code'            => 'nullable|string|max:20',
+            'social_insurance_id' => 'nullable|string|max:20',
+            'roles'               => 'array',
         ]);
 
+        // HR-only fields: strip from data when caller isn't an admin
         if (!auth()->user()->can('edit all user')) {
-            unset($data['contract_expiry']);
+            foreach (['contract_expiry','phone_number','citizen_id','home_address','tax_code','social_insurance_id','salary','salary_type'] as $f) {
+                unset($data[$f]);
+            }
         }
 
         if (!empty($data['password'])) {
@@ -152,6 +171,11 @@ class UserController extends Controller
                 'wfh_without_approval' => $request->boolean('wfh_without_approval'),
                 'salary'               => $request->input('salary') ?: null,
                 'salary_type'          => $request->input('salary_type') ?: null,
+                'phone_number'         => $request->input('phone_number'),
+                'citizen_id'           => $request->input('citizen_id'),
+                'home_address'         => $request->input('home_address'),
+                'tax_code'             => $request->input('tax_code'),
+                'social_insurance_id'  => $request->input('social_insurance_id'),
             ]);
         }
 

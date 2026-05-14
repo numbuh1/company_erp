@@ -196,7 +196,7 @@
                                             @if($row['total_ot'] > 0)
                                                 <div class="text-orange-500">+{{ $fmtHours($row['total_ot']) }}</div>
                                             @endif
-                                            @if($row['total_cost'] > 0)
+                                            @if($canViewSalary && $row['total_cost'] > 0)
                                                 <div class="text-gray-400 text-[10px]">{{ $fmtCost($row['total_cost']) }}</div>
                                             @endif
                                         </td>
@@ -216,7 +216,7 @@
                                                     <a href="{{ $url }}" class="block rounded hover:bg-indigo-100 dark:hover:bg-indigo-900/30 px-0.5 py-0.5 transition">
                                                         @if($cell['hours'] > 0)<div class="font-semibold text-gray-800 dark:text-gray-200">{{ $fmtHours($cell['hours']) }}</div>@endif
                                                         @if($cell['ot_hours'] > 0)<div class="text-orange-500">+{{ $fmtHours($cell['ot_hours']) }}</div>@endif
-                                                        @if($cell['cost'] > 0)<div class="text-gray-400 text-[10px]">{{ $fmtCost($cell['cost']) }}</div>@endif
+                                                        @if($canViewSalary && $cell['cost'] > 0)<div class="text-gray-400 text-[10px]">{{ $fmtCost($cell['cost']) }}</div>@endif
                                                     </a>
                                                 @endif
                                             </td>
@@ -237,7 +237,7 @@
                                     <td class="{{ $totC2 }}">
                                         <div class="text-gray-800 dark:text-gray-200">{{ $fmtHours($grandTotalHours) }}</div>
                                         @if($grandTotalOt > 0)<div class="text-orange-500">+{{ $fmtHours($grandTotalOt) }}</div>@endif
-                                        @if($grandTotalCost > 0)<div class="text-gray-400 text-[10px]">{{ $fmtCost($grandTotalCost) }}</div>@endif
+                                        @if($canViewSalary && $grandTotalCost > 0)<div class="text-gray-400 text-[10px]">{{ $fmtCost($grandTotalCost) }}</div>@endif
                                     </td>
                                     @foreach($days as $day)
                                         @php $dk = $day->format('Y-m-d'); $tot = $dayTotals[$dk] ?? ['hours'=>0,'ot_hours'=>0,'cost'=>0]; @endphp
@@ -245,7 +245,7 @@
                                             @if($tot['hours'] > 0 || $tot['ot_hours'] > 0)
                                                 <div class="text-gray-700 dark:text-gray-300">{{ $fmtHours($tot['hours']) }}</div>
                                                 @if($tot['ot_hours'] > 0)<div class="text-orange-500">+{{ $fmtHours($tot['ot_hours']) }}</div>@endif
-                                                @if($tot['cost'] > 0)<div class="text-gray-400 text-[10px]">{{ $fmtCost($tot['cost']) }}</div>@endif
+                                                @if($canViewSalary && $tot['cost'] > 0)<div class="text-gray-400 text-[10px]">{{ $fmtCost($tot['cost']) }}</div>@endif
                                             @endif
                                         </td>
                                     @endforeach
@@ -283,7 +283,7 @@
                                             @if($row['total_ot'] > 0)
                                                 <div class="text-orange-500">+{{ $fmtHours($row['total_ot']) }}</div>
                                             @endif
-                                            @if($row['total_cost'] > 0)
+                                            @if($canViewSalary && $row['total_cost'] > 0)
                                                 <div class="text-gray-400 text-[10px]">{{ $fmtCost($row['total_cost']) }}</div>
                                             @endif
                                         </td>
@@ -303,7 +303,7 @@
                                                     <a href="{{ $url }}" class="block rounded hover:bg-indigo-100 dark:hover:bg-indigo-900/30 px-0.5 py-0.5 transition">
                                                         @if($cell['hours'] > 0)<div class="font-semibold text-gray-800 dark:text-gray-200">{{ $fmtHours($cell['hours']) }}</div>@endif
                                                         @if($cell['ot_hours'] > 0)<div class="text-orange-500">+{{ $fmtHours($cell['ot_hours']) }}</div>@endif
-                                                        @if($cell['cost'] > 0)<div class="text-gray-400 text-[10px]">{{ $fmtCost($cell['cost']) }}</div>@endif
+                                                        @if($canViewSalary && $cell['cost'] > 0)<div class="text-gray-400 text-[10px]">{{ $fmtCost($cell['cost']) }}</div>@endif
                                                     </a>
                                                 @endif
                                             </td>
@@ -324,7 +324,7 @@
                                     <td class="{{ $totC2 }}">
                                         <div class="text-gray-800 dark:text-gray-200">{{ $fmtHours($grandTotalHours) }}</div>
                                         @if($grandTotalOt > 0)<div class="text-orange-500">+{{ $fmtHours($grandTotalOt) }}</div>@endif
-                                        @if($grandTotalCost > 0)<div class="text-gray-400 text-[10px]">{{ $fmtCost($grandTotalCost) }}</div>@endif
+                                        @if($canViewSalary && $grandTotalCost > 0)<div class="text-gray-400 text-[10px]">{{ $fmtCost($grandTotalCost) }}</div>@endif
                                     </td>
                                     @foreach($days as $day)
                                         @php $dk = $day->format('Y-m-d'); $tot = $dayTotals[$dk] ?? ['hours'=>0,'ot_hours'=>0,'cost'=>0]; @endphp
@@ -332,7 +332,7 @@
                                             @if($tot['hours'] > 0 || $tot['ot_hours'] > 0)
                                                 <div class="text-gray-700 dark:text-gray-300">{{ $fmtHours($tot['hours']) }}</div>
                                                 @if($tot['ot_hours'] > 0)<div class="text-orange-500">+{{ $fmtHours($tot['ot_hours']) }}</div>@endif
-                                                @if($tot['cost'] > 0)<div class="text-gray-400 text-[10px]">{{ $fmtCost($tot['cost']) }}</div>@endif
+                                                @if($canViewSalary && $tot['cost'] > 0)<div class="text-gray-400 text-[10px]">{{ $fmtCost($tot['cost']) }}</div>@endif
                                             @endif
                                         </td>
                                     @endforeach
@@ -355,7 +355,7 @@
                                 <div class="text-xs text-orange-500">trong đó OT: +{{ $fmtHours($grandTotalOt) }}</div>
                             @endif
                         </div>
-                        @if($grandTotalCost > 0)
+                        @if($canViewSalary && $grandTotalCost > 0)
                         <div>
                             <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Tổng chi phí</div>
                             <div class="text-lg font-bold text-gray-800 dark:text-gray-100">{{ number_format($grandTotalCost, 0, '.', ',') }} ₫</div>
@@ -369,7 +369,7 @@
                                 <div>Median: <span class="font-semibold">{{ $fmtHours($medianHours) }}</span></div>
                             </div>
                         </div>
-                        @if($grandTotalCost > 0)
+                        @if($canViewSalary && $grandTotalCost > 0)
                         <div>
                             <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Chi phí/ngày (ngày có log)</div>
                             <div class="text-sm text-gray-700 dark:text-gray-300 space-y-0.5">

@@ -675,7 +675,8 @@ class TimeLogController extends Controller
         $minCost     = $activeDayCosts ? min($activeDayCosts)  : 0;
         $medianCost  = $activeDayCosts ? $this->_median($activeDayCosts) : 0;
 
-        $holidayDates = PublicHoliday::getHolidayDates($monthStart->copy(), $monthEnd->copy());
+        $holidayDates  = PublicHoliday::getHolidayDates($monthStart->copy(), $monthEnd->copy());
+        $canViewSalary = $user->can('view salary') || $user->can('edit all user');
 
         return view('time_logs.project', compact(
             'projects', 'selectedProject', 'selectedProjectId',
@@ -685,7 +686,7 @@ class TimeLogController extends Controller
             'grandTotalHours', 'grandTotalOt', 'grandTotalCost',
             'maxHours', 'minHours', 'medianHours',
             'maxCost', 'minCost', 'medianCost',
-            'holidayDates'
+            'holidayDates', 'canViewSalary'
         ));
     }
 
