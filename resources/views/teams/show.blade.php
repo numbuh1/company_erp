@@ -8,12 +8,12 @@
             <div class="space-x-2">
                 @can('edit teams')
                     <a href="{{ route('teams.edit', $team) }}">
-                        <x-secondary-button>Edit</x-secondary-button>
+                        <x-secondary-button>{{ __('Edit') }}</x-secondary-button>
                     </a>
                 @endcan
 
                 <a href="{{ route('teams.index') }}">
-                    <x-secondary-button>Back</x-secondary-button>
+                    <x-secondary-button>{{ __('Back') }}</x-secondary-button>
                 </a>
             </div>
         </div>
@@ -39,7 +39,7 @@
                 <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg overflow-hidden">
                     <div class="px-6 py-4 border-b dark:border-gray-700">
                         <h3 class="text-md font-semibold text-gray-800 dark:text-gray-200">
-                            Leaders
+                            {{ __('Leaders') }}
                         </h3>
                     </div>
 
@@ -60,11 +60,11 @@
                                 </div>
 
                                 <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                                    Leader
+                                    {{ __('Leader') }}
                                 </span>
                             </div>
                         @empty
-                            <p class="text-gray-500 text-sm">No leaders assigned.</p>
+                            <p class="text-gray-500 text-sm">{{ __('No leaders assigned.') }}</p>
                         @endforelse
                     </div>
                 </div>
@@ -73,7 +73,7 @@
                 <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg overflow-hidden">
                     <div class="px-6 py-4 border-b dark:border-gray-700">
                         <h3 class="text-md font-semibold text-gray-800 dark:text-gray-200">
-                            Members
+                            {{ __('Members') }}
                         </h3>
                     </div>
 
@@ -94,11 +94,11 @@
                                 </div>
 
                                 <span class="text-gray-500 text-sm">
-                                    Member
+                                    {{ __('Member') }}
                                 </span>
                             </div>
                         @empty
-                            <p class="text-gray-500 text-sm">No members assigned.</p>
+                            <p class="text-gray-500 text-sm">{{ __('No members assigned.') }}</p>
                         @endforelse
                     </div>
                 </div>

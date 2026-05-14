@@ -52,12 +52,12 @@
 
                         <!-- CV Upload -->
                         <div class="mb-4">
-                            <x-input-label for="cv" value="CV File" />
+                            <x-input-label for="cv" value="{{ __('CV File') }}" />
                             @if(isset($recruitmentApplicant) && $recruitmentApplicant->cv_path)
                                 <div class="mt-1 mb-2 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                                     <span>📄 Current CV:</span>
                                     <a href="{{ route('recruitment.applicants.cv.download', [$recruitmentPosition, $recruitmentApplicant]) }}"
-                                        class="text-indigo-600 dark:text-indigo-400 hover:underline">Download</a>
+                                        class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ __('Download') }}</a>
                                 </div>
                             @endif
                             <input id="cv" name="cv" type="file"
@@ -70,16 +70,16 @@
 
                         <!-- Notes -->
                         <div class="mb-4">
-                            <x-input-label for="notes" value="Notes" />
+                            <x-input-label for="notes" value="{{ __('Notes') }}" />
                             <textarea id="notes" name="notes" rows="4"
                                 class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm"
-                                placeholder="Interview notes, feedback, observations…">{{ old('notes', $recruitmentApplicant->notes ?? '') }}</textarea>
+                                placeholder="{{ __('Interview notes, feedback, observations…') }}">{{ old('notes', $recruitmentApplicant->notes ?? '') }}</textarea>
                             @error('notes')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                         </div>
 
                         <!-- Evaluation -->
                         <div class="mb-4">
-                            <x-input-label value="Evaluation" />
+                            <x-input-label value="{{ __('Evaluation') }}" />
                             <div class="flex items-center gap-1 mt-2" id="star-rating">
                                 @for($i = 1; $i <= 3; $i++)
                                     <button type="button" data-star="{{ $i }}"
@@ -97,13 +97,13 @@
                         <!-- Contact -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
-                                <x-input-label for="email" value="Email" />
+                                <x-input-label for="email" value="{{ __('Email') }}" />
                                 <x-text-input id="email" name="email" type="email" class="mt-1 block w-full"
                                     value="{{ old('email', $recruitmentApplicant->email ?? '') }}" />
                                 @error('email')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                             </div>
                             <div>
-                                <x-input-label for="phone" value="Phone" />
+                                <x-input-label for="phone" value="{{ __('Phone') }}" />
                                 <x-text-input id="phone" name="phone" type="text" class="mt-1 block w-full"
                                     value="{{ old('phone', $recruitmentApplicant->phone ?? '') }}" />
                                 @error('phone')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
@@ -122,14 +122,14 @@
                         <!-- Salary & Availability -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
-                                <x-input-label for="salary_expectation" value="Salary Expectation" />
+                                <x-input-label for="salary_expectation" value="{{ __('Salary Expectation') }}" />
                                 <x-text-input id="salary_expectation" name="salary_expectation" type="number" min="0" step="100"
                                     class="mt-1 block w-full"
                                     value="{{ old('salary_expectation', $recruitmentApplicant->salary_expectation ?? '') }}" />
                                 @error('salary_expectation')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                             </div>
                             <div>
-                                <x-input-label for="available_date" value="Available From" />
+                                <x-input-label for="available_date" value="{{ __('Available From') }}" />
                                 <x-text-input id="available_date" name="available_date" type="date" class="mt-1 block w-full"
                                     value="{{ old('available_date', isset($recruitmentApplicant) ? $recruitmentApplicant->available_date?->format('Y-m-d') : '') }}" />
                                 @error('available_date')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
@@ -138,7 +138,7 @@
 
                         <!-- Referer -->
                         <div class="mb-4">
-                            <x-input-label for="referer_user_id" value="Referred By" />
+                            <x-input-label for="referer_user_id" value="{{ __('Referred By') }}" />
                             <select id="referer-select" name="referer_user_id"
                                 class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
                                 <option value="">— None —</option>
@@ -155,7 +155,7 @@
                         <!-- Skills -->
                         <div class="mb-4">
                             <div class="flex items-center justify-between mb-2">
-                                <x-input-label value="Skills" />
+                                <x-input-label value="{{ __('Skills') }}" />
                                 @if($skillOptions->isNotEmpty())
                                     <button type="button" onclick="openSkillModal()"
                                         class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">
@@ -173,7 +173,7 @@
 
                         <!-- Applicant Tags -->
                         <div class="mb-4">
-                            <x-input-label value="Tags" />
+                            <x-input-label value="{{ __('Tags') }}" />
                             <select name="tags[]" id="applicant-tags-select" multiple class="mt-1 block w-full">
                                 @foreach($tagOptions as $tag)
                                     <option value="{{ $tag->id }}"
@@ -189,7 +189,7 @@
                     <div class="flex items-center gap-3 mt-6">
                         <x-primary-button>{{ isset($recruitmentApplicant) ? 'Update' : 'Add Applicant' }}</x-primary-button>
                         <a href="{{ route('recruitment.show', $recruitmentPosition) }}">
-                            <x-secondary-button type="button">Cancel</x-secondary-button>
+                            <x-secondary-button type="button">{{ __('Cancel') }}</x-secondary-button>
                         </a>
                     </div>
                 </form>

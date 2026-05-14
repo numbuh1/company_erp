@@ -1,8 +1,8 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Timesheet</h2>
-            <a href="{{ route('time-logs.create') }}"><x-primary-button>Log Time</x-primary-button></a>
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">{{ __('Timesheet') }}</h2>
+            <a href="{{ route('time-logs.create') }}"><x-primary-button>{{ __('Log Time') }}</x-primary-button></a>
         </div>
     </x-slot>
 
@@ -15,17 +15,17 @@
                     <a href="{{ route('time-logs.index') }}"
                         class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
                             border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-                        List View
+                        {{ __('List View') }}
                     </a>
                     <a href="{{ route('timesheets.weekly') }}"
                         class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
                             border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-                        Weekly View
+                        {{ __('Weekly View') }}
                     </a>
                     <a href="{{ route('timesheets.monthly') }}"
                         class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
                             border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400">
-                        Monthly View
+                        {{ __('Monthly View') }}
                     </a>
                 </nav>
             </div>
@@ -52,9 +52,9 @@
                             {{-- Left: Individual / Team --}}
                             <select name="mode" x-model="mode"
                                 class="border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
-                                <option value="individual">Individual</option>
+                                <option value="individual">{{ __('Individual') }}</option>
                                 @if($filterTeams)
-                                    <option value="team">Team</option>
+                                    <option value="team">{{ __('Team') }}</option>
                                 @endif
                             </select>
 
@@ -84,7 +84,7 @@
                                 </div>
                             @endif
 
-                            <x-primary-button type="submit">Apply</x-primary-button>
+                            <x-primary-button type="submit">{{ __('Apply') }}</x-primary-button>
                         </form>
                     @else
                         <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -181,7 +181,7 @@
                     {{-- Monthly stats (same for both modes) --}}
                     <div class="flex gap-3">
                         <div class="text-center px-5 py-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                            <p class="text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wide mb-1">Work</p>
+                            <p class="text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wide mb-1">{{ __('Work') }}</p>
                             <p class="text-xl font-bold text-green-700 dark:text-green-300">
                                 {{ $totalWork > 0 ? \App\Models\TimeLog::formatTime($totalWork) : '—' }}
                             </p>
@@ -193,7 +193,7 @@
                             </p>
                         </div>
                         <div class="text-center px-5 py-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                            <p class="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide mb-1">Leave</p>
+                            <p class="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide mb-1">{{ __('Leave') }}</p>
                             <p class="text-xl font-bold text-red-700 dark:text-red-300">
                                 {{ $totalLeave > 0 ? \App\Models\TimeLog::formatTime($totalLeave) : '—' }}
                             </p>

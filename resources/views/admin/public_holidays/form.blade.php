@@ -24,7 +24,7 @@
 
                     <div class="space-y-4">
                         <div>
-                            <x-input-label value="Name" />
+                            <x-input-label value="{{ __('Name') }}" />
                             <x-text-input name="name" class="mt-1 block w-full"
                                 value="{{ old('name', $publicHoliday->name ?? '') }}"
                                 placeholder="e.g. New Year's Day" required />
@@ -33,14 +33,14 @@
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <x-input-label value="Start Date" />
+                                <x-input-label value="{{ __('Start Date') }}" />
                                 <x-text-input type="date" name="start_date" class="mt-1 block w-full"
                                     value="{{ old('start_date', isset($publicHoliday) ? $publicHoliday->start_date->format('Y-m-d') : '') }}"
                                     required />
                                 @error('start_date')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                             </div>
                             <div>
-                                <x-input-label value="End Date" />
+                                <x-input-label value="{{ __('End Date') }}" />
                                 <x-text-input type="date" name="end_date" class="mt-1 block w-full"
                                     value="{{ old('end_date', isset($publicHoliday) ? $publicHoliday->end_date->format('Y-m-d') : '') }}"
                                     required />
@@ -61,7 +61,7 @@
                     <div class="flex gap-3 mt-6">
                         <x-primary-button type="submit">{{ isset($publicHoliday) ? 'Update' : 'Add Holiday' }}</x-primary-button>
                         <a href="{{ route('admin.public-holidays.index') }}">
-                            <x-secondary-button type="button">Cancel</x-secondary-button>
+                            <x-secondary-button type="button">{{ __('Cancel') }}</x-secondary-button>
                         </a>
                     </div>
                 </form>

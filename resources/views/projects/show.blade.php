@@ -6,11 +6,11 @@
                 <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">{{ $project->name }}</h2>
             </div>
             <div class="flex gap-2">
-                <a href="{{ route('time-logs.create', ['project_id' => $project->id]) }}"><x-secondary-button>Log Time</x-secondary-button></a>
+                <a href="{{ route('time-logs.create', ['project_id' => $project->id]) }}"><x-secondary-button>{{ __('Log Time') }}</x-secondary-button></a>
                 @canany(['edit projects', 'edit assigned projects'])
-                    <a href="{{ route('projects.edit', $project) }}"><x-secondary-button>Edit</x-secondary-button></a>
+                    <a href="{{ route('projects.edit', $project) }}"><x-secondary-button>{{ __('Edit') }}</x-secondary-button></a>
                 @endcanany
-                <a href="{{ route('projects.index') }}"><x-secondary-button>Back</x-secondary-button></a>
+                <a href="{{ route('projects.index') }}"><x-secondary-button>{{ __('Back') }}</x-secondary-button></a>
             </div>
         </div>
     </x-slot>
@@ -33,7 +33,7 @@
 
             {{-- Project Info --}}
             <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
-                <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">Project Details</h3>
+                <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">{{ __('Project Details') }}</h3>
 
                 @php
                     $statusClass = match($project->status) {
@@ -44,20 +44,20 @@
                 @endphp
 
                 <div class="mb-4">
-                    <x-input-label value="Status" />
+                    <x-input-label value="{{ __('Status') }}" />
                     <div class="mt-1">
                         <span class="text-xs font-medium px-2 py-0.5 rounded {{ $statusClass }}">{{ $project->status }}</span>
                     </div>
                 </div>
 
                 <div class="mb-4">
-                    <x-input-label value="Description" />
+                    <x-input-label value="{{ __('Description') }}" />
                     <p class="mt-1 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ $project->description ?? '—' }}</p>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                     <div>
-                        <x-input-label value="Start" />
+                        <x-input-label value="{{ __('Start') }}" />
                         <p class="mt-1 text-sm text-gray-700 dark:text-gray-300">{{ $project->start_date?->format('d/m/Y') ?? '—' }}</p>
                     </div>
                     <div>
@@ -74,7 +74,7 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <x-input-label value="Assigned Teams" />
+                        <x-input-label value="{{ __('Assigned Teams') }}" />
                         <div class="flex flex-wrap gap-1 mt-1">
                             @forelse($project->teams as $team)
                                 <button type="button"
@@ -83,19 +83,19 @@
                                     {{ $team->name }}
                                 </button>
                             @empty
-                                <span class="text-sm text-gray-400">None</span>
+                                <span class="text-sm text-gray-400">{{ __('None') }}</span>
                             @endforelse
                         </div>
                     </div>
                     <div>
-                        <x-input-label value="Assigned Members" />
+                        <x-input-label value="{{ __('Assigned Members') }}" />
                         <div class="mt-2 space-y-1">
                             @forelse($project->users as $member)
                                 <a href="{{ route('users.show', $member) }}" class="flex items-center gap-2 hover:opacity-80 transition rounded px-1 py-0.5">
                                     <x-user-status :user="$member" />
                                 </a>
                             @empty
-                                <span class="text-sm text-gray-400">None</span>
+                                <span class="text-sm text-gray-400">{{ __('None') }}</span>
                             @endforelse
                         </div>
                     </div>
@@ -111,7 +111,7 @@
                             ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400'
                             : 'border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
                         class="px-5 py-3 text-sm font-medium -mb-px transition">
-                        Tasks
+                        {{ __('Tasks') }}
                     </button>
                     <button @click="activeTab = 'files'"
                         :class="activeTab === 'files'
@@ -135,23 +135,23 @@
                             ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400'
                             : 'border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
                         class="px-5 py-3 text-sm font-medium -mb-px transition">
-                        Activity Log
+                        {{ __('Activity Log') }}
                     </button>
                 </div>
 
                 {{-- Tasks Panel --}}
                 <div x-show="activeTab === 'tasks'" class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-b-lg sm:rounded-tr-lg p-6">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200">Tasks</h3>
+                        <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200">{{ __('Tasks') }}</h3>
                         @can('edit tasks')
                             <a href="{{ route('tasks.create', ['project_id' => $project->id]) }}">
-                                <x-secondary-button>Add Task</x-secondary-button>
+                                <x-secondary-button>{{ __('Add Task') }}</x-secondary-button>
                             </a>
                         @endcan
                     </div>
 
                     @if($project->tasks->isEmpty())
-                        <p class="text-sm text-gray-400">No tasks yet.</p>
+                        <p class="text-sm text-gray-400">{{ __('No tasks yet.') }}</p>
                     @else
                         <div class="space-y-2">
                             @foreach($project->tasks as $task)
@@ -213,7 +213,7 @@
 
                 {{-- Comments Panel --}}
                 <div x-show="activeTab === 'comments'" class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-b-lg sm:rounded-tr-lg p-6">
-                    <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-5">Comments</h3>
+                    <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-5">{{ __('Comments') }}</h3>
                     @include('partials.comments', [
                         'commentable'     => $project,
                         'commentableType' => 'project',
@@ -222,10 +222,10 @@
 
                 {{-- Activity Log Panel --}}
                 <div x-show="activeTab === 'activity'" class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-b-lg sm:rounded-tr-lg p-6">
-                    <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">Activity Log</h3>
+                    <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">{{ __('Activity Log') }}</h3>
 
                     @if($activities->isEmpty())
-                        <p class="text-sm text-gray-400">No activity recorded.</p>
+                        <p class="text-sm text-gray-400">{{ __('No activity recorded.') }}</p>
                     @else
                         <div class="space-y-3">
                             @foreach($activities as $activity)

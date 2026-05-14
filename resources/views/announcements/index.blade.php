@@ -1,9 +1,9 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Announcements</h2>
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">{{ __('Announcements') }}</h2>
             @can('edit announcements')
-                <a href="{{ route('announcements.create') }}"><x-primary-button>New Announcement</x-primary-button></a>
+                <a href="{{ route('announcements.create') }}"><x-primary-button>{{ __('New Announcement') }}</x-primary-button></a>
             @endcan
         </div>
     </x-slot>
@@ -44,7 +44,7 @@
                         <div class="flex gap-2 shrink-0">
                             @can('edit announcements')
                                 <a href="{{ route('announcements.edit', $announcement) }}">
-                                    <x-secondary-button>Edit</x-secondary-button>
+                                    <x-secondary-button>{{ __('Edit') }}</x-secondary-button>
                                 </a>
                             @endcan
                             @can('delete announcements')
@@ -52,7 +52,7 @@
                                     @csrf @method('DELETE')
                                     <button type="submit" onclick="return confirm('Delete this announcement?')"
                                         class="inline-flex items-center px-3 py-1.5 text-sm text-red-600 border border-red-300 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition">
-                                        Delete
+                                        {{ __('Delete') }}
                                     </button>
                                 </form>
                             @endcan
@@ -61,7 +61,7 @@
                 </div>
             @empty
                 <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6 text-center text-gray-500">
-                    No announcements yet.
+                    {{ __('No announcements yet.') }}
                 </div>
             @endforelse
 
