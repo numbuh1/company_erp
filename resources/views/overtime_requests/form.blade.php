@@ -61,7 +61,7 @@
                                 <p class="mt-1 text-sm text-gray-700 dark:text-gray-300 py-1">{{ isset($ot) ? ($ot->project?->name ?? '—') : '—' }}</p>
                             </div>
                             <div>
-                                <x-input-label value="Nhiệm vụ" />
+                                <x-input-label value="Công việc" />
                                 <p class="mt-1 text-sm text-gray-700 dark:text-gray-300 py-1">{{ isset($ot) ? ($ot->task?->name ?? '—') : '—' }}</p>
                             </div>
                         </div>
@@ -81,7 +81,7 @@
                             </select>
                         </div>
                         <div class="mb-4">
-                            <x-input-label for="ot_task_id" value="Nhiệm vụ" />
+                            <x-input-label for="ot_task_id" value="Công việc" />
                             <select id="ot_task_id" name="task_id"
                                 class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
                                 <option value="">— Không có —</option>

@@ -100,7 +100,7 @@
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phân loại</th>
                     @if($type !== 'leave')
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dự án</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nhiệm vụ</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Công việc</th>
                     @endif
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Người duyệt</th>

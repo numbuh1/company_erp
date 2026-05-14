@@ -39,7 +39,6 @@
             <form method="GET" action="{{ route('timesheets.project') }}"
                   class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-4 flex flex-wrap gap-3 items-end">
 
-                {{-- Project selector --}}
                 <div class="flex-1 min-w-48">
                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Dự án</label>
                     <select name="project_id" onchange="this.form.submit()"
@@ -53,7 +52,6 @@
                     </select>
                 </div>
 
-                {{-- Month nav --}}
                 <div class="flex items-end gap-2">
                     <a href="{{ route('timesheets.project', array_filter(['project_id' => $selectedProjectId, 'month' => $prevMonth])) }}"
                         class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 transition">
@@ -81,7 +79,6 @@
                 </div>
             @else
                 @php
-                    // Helper: format cost in compact form (e.g. 1,500,000 → 1.5M)
                     $fmtCost = function(?float $n) {
                         if (!$n) return null;
                         if ($n >= 1_000_000) return number_format($n / 1_000_000, 1) . 'M';
@@ -91,24 +88,47 @@
                     $fmtHours = function(float $h): string {
                         return $h > 0 ? number_format($h, 1) . 'h' : '';
                     };
-                    $dayKeys = $days->map(fn($d) => $d->format('Y-m-d'))->toArray();
+
+                    // Column widths (must match between th and td for sticky to align correctly)
+                    // Col 1 (label): 180px  Col 2 (total): 88px
+                    $col1W  = 'w-[180px] min-w-[180px] max-w-[180px]';
+                    $col2W  = 'w-[88px]  min-w-[88px]';
+                    $col1Bg = 'bg-white dark:bg-gray-800';
+                    $col1BgHead = 'bg-gray-50 dark:bg-gray-700';
+                    $col2Bg = 'bg-gray-50/95 dark:bg-gray-750';         // slightly tinted so it's visually distinct
+                    $col2BgHead = 'bg-gray-100 dark:bg-gray-700';
+                    $stickyDivider = 'shadow-[2px_0_0_0_rgba(0,0,0,0.07)] dark:shadow-[2px_0_0_0_rgba(0,0,0,0.25)]';
                 @endphp
 
-                {{-- ── Table 1: Tasks × Days ─────────────────────────────────── --}}
+                {{-- ── Table 1: Công việc × Days ────────────────────────────── --}}
                 <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-hidden">
                     <div class="px-4 pt-4 pb-1 flex items-center justify-between">
                         <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-                            Nhiệm vụ
+                            Công việc
                         </h3>
                         <span class="text-xs text-gray-400">{{ $monthDate->translatedFormat('F Y') }}</span>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-xs border-collapse">
+
+                    <div id="scroll-tasks" class="overflow-x-auto">
+                        <table class="text-xs border-collapse" style="table-layout: fixed; width: max-content; min-width: 100%;">
+                            <colgroup>
+                                <col style="width:180px">{{-- label --}}
+                                <col style="width:88px">{{-- total --}}
+                                @foreach($days as $__)
+                                    <col style="width:56px">
+                                @endforeach
+                            </colgroup>
                             <thead>
                                 <tr class="bg-gray-50 dark:bg-gray-700">
-                                    <th class="sticky left-0 z-10 bg-gray-50 dark:bg-gray-700 px-3 py-2 text-left font-medium text-gray-500 uppercase whitespace-nowrap min-w-40 border-r border-gray-200 dark:border-gray-600">
-                                        Nhiệm vụ
+                                    {{-- Col 1: Label --}}
+                                    <th class="sticky left-0 z-20 {{ $col1BgHead }} {{ $col1W }} px-3 py-2 text-left font-medium text-gray-500 uppercase whitespace-nowrap">
+                                        Công việc
                                     </th>
+                                    {{-- Col 2: Total (sticky at 180px) --}}
+                                    <th class="sticky left-[180px] z-20 {{ $col2BgHead }} {{ $col2W }} {{ $stickyDivider }} px-2 py-2 text-center font-medium text-gray-500 uppercase whitespace-nowrap border-r border-gray-200 dark:border-gray-600">
+                                        Tổng
+                                    </th>
+                                    {{-- Day columns --}}
                                     @foreach($days as $day)
                                         @php
                                             $dk      = $day->format('Y-m-d');
@@ -117,65 +137,30 @@
                                             $isToday = $day->isToday();
                                             $headCls = $isToday
                                                 ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-bold'
-                                                : ($isHol || $isWknd
-                                                    ? 'text-red-400 dark:text-red-400'
-                                                    : 'text-gray-500 dark:text-gray-400');
+                                                : ($isHol || $isWknd ? 'text-red-400' : 'text-gray-500 dark:text-gray-400');
                                         @endphp
-                                        <th class="px-1.5 py-2 text-center font-medium whitespace-nowrap {{ $headCls }} min-w-[52px]">
+                                        <th class="px-1 py-2 text-center font-medium whitespace-nowrap {{ $headCls }}">
                                             <div>{{ $day->format('d') }}</div>
-                                            <div class="text-gray-400 font-normal">{{ $day->translatedFormat('D') }}</div>
+                                            <div class="text-gray-400 dark:text-gray-500 font-normal text-[10px]">{{ $day->translatedFormat('D') }}</div>
                                         </th>
                                     @endforeach
-                                    <th class="px-3 py-2 text-right font-medium text-gray-500 uppercase whitespace-nowrap border-l border-gray-200 dark:border-gray-600">
-                                        Tổng
-                                    </th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                                 @forelse($taskRows as $key => $row)
-                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
-                                        <td class="sticky left-0 z-10 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 border-r border-gray-200 dark:border-gray-600 whitespace-nowrap max-w-48 truncate">
+                                    <tr class="hover:bg-indigo-50/40 dark:hover:bg-indigo-900/10 transition">
+                                        {{-- Col 1: Label --}}
+                                        <td class="sticky left-0 z-10 {{ $col1Bg }} {{ $col1W }} px-3 py-2 whitespace-nowrap overflow-hidden text-ellipsis" title="{{ $row['task']?->name ?? $row['label'] }}">
                                             @if($row['task'])
                                                 <a href="{{ route('tasks.show', $row['task_id']) }}"
-                                                    class="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
-                                                    TK-{{ $row['task_id'] }}
-                                                </a>
-                                                <span class="ml-1 text-gray-600 dark:text-gray-300">{{ $row['task']->name }}</span>
+                                                    class="font-mono text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">TK-{{ $row['task_id'] }}</a>
+                                                <span class="ml-1 text-gray-700 dark:text-gray-300 text-xs">{{ $row['task']->name }}</span>
                                             @else
-                                                <span class="text-gray-400 italic">{{ $row['label'] }}</span>
+                                                <span class="text-gray-400 italic text-xs">{{ $row['label'] }}</span>
                                             @endif
                                         </td>
-                                        @foreach($days as $day)
-                                            @php
-                                                $dk   = $day->format('Y-m-d');
-                                                $cell = $row['days'][$dk] ?? null;
-                                                $isHol  = in_array($dk, $holidayDates);
-                                                $isWknd = $day->isWeekend();
-                                                $bg     = $isHol || $isWknd ? 'bg-red-50/40 dark:bg-red-900/10' : '';
-                                                $cellUrl = route('time-logs.index', array_filter([
-                                                    'project_id' => $selectedProjectId,
-                                                    'task_id'    => $row['task_id'] ?: null,
-                                                    'date_from'  => $dk,
-                                                    'date_to'    => $dk,
-                                                ]));
-                                            @endphp
-                                            <td class="px-1.5 py-1.5 text-center align-top {{ $bg }}">
-                                                @if($cell && ($cell['hours'] > 0 || $cell['ot_hours'] > 0))
-                                                    <a href="{{ $cellUrl }}" class="block rounded hover:bg-indigo-50 dark:hover:bg-indigo-900/20 px-1 py-0.5 transition">
-                                                        @if($cell['hours'] > 0)
-                                                            <div class="font-semibold text-gray-800 dark:text-gray-200">{{ $fmtHours($cell['hours']) }}</div>
-                                                        @endif
-                                                        @if($cell['ot_hours'] > 0)
-                                                            <div class="text-orange-500 dark:text-orange-400">+{{ $fmtHours($cell['ot_hours']) }}</div>
-                                                        @endif
-                                                        @if($cell['cost'] > 0)
-                                                            <div class="text-gray-400 text-[10px]">{{ $fmtCost($cell['cost']) }}</div>
-                                                        @endif
-                                                    </a>
-                                                @endif
-                                            </td>
-                                        @endforeach
-                                        <td class="px-3 py-2 text-right border-l border-gray-200 dark:border-gray-600 whitespace-nowrap">
+                                        {{-- Col 2: Row Total --}}
+                                        <td class="sticky left-[180px] z-10 {{ $col2Bg }} {{ $col2W }} {{ $stickyDivider }} px-2 py-1.5 text-center border-r border-gray-200 dark:border-gray-600">
                                             @if($row['total_hours'] > 0)
                                                 <div class="font-semibold text-gray-800 dark:text-gray-200">{{ $fmtHours($row['total_hours']) }}</div>
                                             @endif
@@ -186,6 +171,37 @@
                                                 <div class="text-gray-400 text-[10px]">{{ $fmtCost($row['total_cost']) }}</div>
                                             @endif
                                         </td>
+                                        {{-- Day cells --}}
+                                        @foreach($days as $day)
+                                            @php
+                                                $dk   = $day->format('Y-m-d');
+                                                $cell = $row['days'][$dk] ?? null;
+                                                $isHol  = in_array($dk, $holidayDates);
+                                                $isWknd = $day->isWeekend();
+                                                $bg     = $isHol || $isWknd ? 'bg-red-50/50 dark:bg-red-900/10' : '';
+                                                $cellUrl = route('time-logs.index', array_filter([
+                                                    'project_id' => $selectedProjectId,
+                                                    'task_id'    => $row['task_id'] ?: null,
+                                                    'date_from'  => $dk,
+                                                    'date_to'    => $dk,
+                                                ]));
+                                            @endphp
+                                            <td class="px-1 py-1.5 text-center align-top {{ $bg }}">
+                                                @if($cell && ($cell['hours'] > 0 || $cell['ot_hours'] > 0))
+                                                    <a href="{{ $cellUrl }}" class="block rounded hover:bg-indigo-100 dark:hover:bg-indigo-900/30 px-0.5 py-0.5 transition">
+                                                        @if($cell['hours'] > 0)
+                                                            <div class="font-semibold text-gray-800 dark:text-gray-200">{{ $fmtHours($cell['hours']) }}</div>
+                                                        @endif
+                                                        @if($cell['ot_hours'] > 0)
+                                                            <div class="text-orange-500">+{{ $fmtHours($cell['ot_hours']) }}</div>
+                                                        @endif
+                                                        @if($cell['cost'] > 0)
+                                                            <div class="text-gray-400 text-[10px]">{{ $fmtCost($cell['cost']) }}</div>
+                                                        @endif
+                                                    </a>
+                                                @endif
+                                            </td>
+                                        @endforeach
                                     </tr>
                                 @empty
                                     <tr>
@@ -195,18 +211,27 @@
                                     </tr>
                                 @endforelse
 
-                                {{-- Column totals row --}}
+                                {{-- Totals row --}}
                                 @if(count($taskRows) > 0)
-                                <tr class="bg-gray-50 dark:bg-gray-700/60 font-semibold border-t-2 border-gray-300 dark:border-gray-500">
-                                    <td class="sticky left-0 z-10 bg-gray-50 dark:bg-gray-700 px-3 py-2 border-r border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 uppercase text-xs tracking-wide">
+                                <tr class="bg-gray-50 dark:bg-gray-700/60 border-t-2 border-gray-300 dark:border-gray-500 font-semibold">
+                                    <td class="sticky left-0 z-10 bg-gray-50 dark:bg-gray-700 {{ $col1W }} px-3 py-2 text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
                                         Tổng cộng
+                                    </td>
+                                    <td class="sticky left-[180px] z-10 bg-gray-100 dark:bg-gray-700 {{ $col2W }} {{ $stickyDivider }} px-2 py-1.5 text-center border-r border-gray-200 dark:border-gray-600">
+                                        <div class="text-gray-800 dark:text-gray-200">{{ $fmtHours($grandTotalHours) }}</div>
+                                        @if($grandTotalOt > 0)
+                                            <div class="text-orange-500">+{{ $fmtHours($grandTotalOt) }}</div>
+                                        @endif
+                                        @if($grandTotalCost > 0)
+                                            <div class="text-gray-400 text-[10px]">{{ $fmtCost($grandTotalCost) }}</div>
+                                        @endif
                                     </td>
                                     @foreach($days as $day)
                                         @php
                                             $dk  = $day->format('Y-m-d');
                                             $tot = $dayTotals[$dk] ?? ['hours' => 0, 'ot_hours' => 0, 'cost' => 0];
                                         @endphp
-                                        <td class="px-1.5 py-1.5 text-center">
+                                        <td class="px-1 py-1.5 text-center">
                                             @if($tot['hours'] > 0 || $tot['ot_hours'] > 0)
                                                 <div class="text-gray-700 dark:text-gray-300">{{ $fmtHours($tot['hours']) }}</div>
                                                 @if($tot['ot_hours'] > 0)
@@ -218,15 +243,6 @@
                                             @endif
                                         </td>
                                     @endforeach
-                                    <td class="px-3 py-2 text-right border-l border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                                        <div>{{ $fmtHours($grandTotalHours) }}</div>
-                                        @if($grandTotalOt > 0)
-                                            <div class="text-orange-500">+{{ $fmtHours($grandTotalOt) }}</div>
-                                        @endif
-                                        @if($grandTotalCost > 0)
-                                            <div class="text-gray-400 text-[10px]">{{ $fmtCost($grandTotalCost) }}</div>
-                                        @endif
-                                    </td>
                                 </tr>
                                 @endif
                             </tbody>
@@ -234,19 +250,30 @@
                     </div>
                 </div>
 
-                {{-- ── Table 2: Users × Days ─────────────────────────────────── --}}
+                {{-- ── Table 2: Thành viên × Days ───────────────────────────── --}}
                 <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-hidden">
                     <div class="px-4 pt-4 pb-1">
                         <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
                             Thành viên
                         </h3>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-xs border-collapse">
+
+                    <div id="scroll-users" class="overflow-x-auto">
+                        <table class="text-xs border-collapse" style="table-layout: fixed; width: max-content; min-width: 100%;">
+                            <colgroup>
+                                <col style="width:180px">{{-- label --}}
+                                <col style="width:88px">{{-- total --}}
+                                @foreach($days as $__)
+                                    <col style="width:56px">
+                                @endforeach
+                            </colgroup>
                             <thead>
                                 <tr class="bg-gray-50 dark:bg-gray-700">
-                                    <th class="sticky left-0 z-10 bg-gray-50 dark:bg-gray-700 px-3 py-2 text-left font-medium text-gray-500 uppercase whitespace-nowrap min-w-40 border-r border-gray-200 dark:border-gray-600">
+                                    <th class="sticky left-0 z-20 {{ $col1BgHead }} {{ $col1W }} px-3 py-2 text-left font-medium text-gray-500 uppercase whitespace-nowrap">
                                         Người dùng
+                                    </th>
+                                    <th class="sticky left-[180px] z-20 {{ $col2BgHead }} {{ $col2W }} {{ $stickyDivider }} px-2 py-2 text-center font-medium text-gray-500 uppercase whitespace-nowrap border-r border-gray-200 dark:border-gray-600">
+                                        Tổng
                                     </th>
                                     @foreach($days as $day)
                                         @php
@@ -256,64 +283,29 @@
                                             $isToday = $day->isToday();
                                             $headCls = $isToday
                                                 ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-bold'
-                                                : ($isHol || $isWknd
-                                                    ? 'text-red-400 dark:text-red-400'
-                                                    : 'text-gray-500 dark:text-gray-400');
+                                                : ($isHol || $isWknd ? 'text-red-400' : 'text-gray-500 dark:text-gray-400');
                                         @endphp
-                                        <th class="px-1.5 py-2 text-center font-medium whitespace-nowrap {{ $headCls }} min-w-[52px]">
+                                        <th class="px-1 py-2 text-center font-medium whitespace-nowrap {{ $headCls }}">
                                             <div>{{ $day->format('d') }}</div>
-                                            <div class="text-gray-400 font-normal">{{ $day->translatedFormat('D') }}</div>
+                                            <div class="text-gray-400 dark:text-gray-500 font-normal text-[10px]">{{ $day->translatedFormat('D') }}</div>
                                         </th>
                                     @endforeach
-                                    <th class="px-3 py-2 text-right font-medium text-gray-500 uppercase whitespace-nowrap border-l border-gray-200 dark:border-gray-600">
-                                        Tổng
-                                    </th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                                 @forelse($userRows as $key => $row)
-                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
-                                        <td class="sticky left-0 z-10 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 border-r border-gray-200 dark:border-gray-600 whitespace-nowrap">
+                                    <tr class="hover:bg-indigo-50/40 dark:hover:bg-indigo-900/10 transition">
+                                        <td class="sticky left-0 z-10 {{ $col1Bg }} {{ $col1W }} px-3 py-2 whitespace-nowrap overflow-hidden text-ellipsis">
                                             @if($row['user'])
                                                 <a href="{{ route('users.show', $row['user_id']) }}"
-                                                    class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
+                                                    class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium text-xs">
                                                     {{ $row['user']->name }}
                                                 </a>
                                             @else
-                                                <span class="text-gray-400">User #{{ $row['user_id'] }}</span>
+                                                <span class="text-gray-400 text-xs">#{{ $row['user_id'] }}</span>
                                             @endif
                                         </td>
-                                        @foreach($days as $day)
-                                            @php
-                                                $dk   = $day->format('Y-m-d');
-                                                $cell = $row['days'][$dk] ?? null;
-                                                $isHol  = in_array($dk, $holidayDates);
-                                                $isWknd = $day->isWeekend();
-                                                $bg     = $isHol || $isWknd ? 'bg-red-50/40 dark:bg-red-900/10' : '';
-                                                $cellUrl = route('time-logs.index', array_filter([
-                                                    'project_id' => $selectedProjectId,
-                                                    'user_id'    => $row['user_id'],
-                                                    'date_from'  => $dk,
-                                                    'date_to'    => $dk,
-                                                ]));
-                                            @endphp
-                                            <td class="px-1.5 py-1.5 text-center align-top {{ $bg }}">
-                                                @if($cell && ($cell['hours'] > 0 || $cell['ot_hours'] > 0))
-                                                    <a href="{{ $cellUrl }}" class="block rounded hover:bg-indigo-50 dark:hover:bg-indigo-900/20 px-1 py-0.5 transition">
-                                                        @if($cell['hours'] > 0)
-                                                            <div class="font-semibold text-gray-800 dark:text-gray-200">{{ $fmtHours($cell['hours']) }}</div>
-                                                        @endif
-                                                        @if($cell['ot_hours'] > 0)
-                                                            <div class="text-orange-500 dark:text-orange-400">+{{ $fmtHours($cell['ot_hours']) }}</div>
-                                                        @endif
-                                                        @if($cell['cost'] > 0)
-                                                            <div class="text-gray-400 text-[10px]">{{ $fmtCost($cell['cost']) }}</div>
-                                                        @endif
-                                                    </a>
-                                                @endif
-                                            </td>
-                                        @endforeach
-                                        <td class="px-3 py-2 text-right border-l border-gray-200 dark:border-gray-600 whitespace-nowrap">
+                                        <td class="sticky left-[180px] z-10 {{ $col2Bg }} {{ $col2W }} {{ $stickyDivider }} px-2 py-1.5 text-center border-r border-gray-200 dark:border-gray-600">
                                             @if($row['total_hours'] > 0)
                                                 <div class="font-semibold text-gray-800 dark:text-gray-200">{{ $fmtHours($row['total_hours']) }}</div>
                                             @endif
@@ -324,6 +316,36 @@
                                                 <div class="text-gray-400 text-[10px]">{{ $fmtCost($row['total_cost']) }}</div>
                                             @endif
                                         </td>
+                                        @foreach($days as $day)
+                                            @php
+                                                $dk   = $day->format('Y-m-d');
+                                                $cell = $row['days'][$dk] ?? null;
+                                                $isHol  = in_array($dk, $holidayDates);
+                                                $isWknd = $day->isWeekend();
+                                                $bg     = $isHol || $isWknd ? 'bg-red-50/50 dark:bg-red-900/10' : '';
+                                                $cellUrl = route('time-logs.index', array_filter([
+                                                    'project_id' => $selectedProjectId,
+                                                    'user_id'    => $row['user_id'],
+                                                    'date_from'  => $dk,
+                                                    'date_to'    => $dk,
+                                                ]));
+                                            @endphp
+                                            <td class="px-1 py-1.5 text-center align-top {{ $bg }}">
+                                                @if($cell && ($cell['hours'] > 0 || $cell['ot_hours'] > 0))
+                                                    <a href="{{ $cellUrl }}" class="block rounded hover:bg-indigo-100 dark:hover:bg-indigo-900/30 px-0.5 py-0.5 transition">
+                                                        @if($cell['hours'] > 0)
+                                                            <div class="font-semibold text-gray-800 dark:text-gray-200">{{ $fmtHours($cell['hours']) }}</div>
+                                                        @endif
+                                                        @if($cell['ot_hours'] > 0)
+                                                            <div class="text-orange-500">+{{ $fmtHours($cell['ot_hours']) }}</div>
+                                                        @endif
+                                                        @if($cell['cost'] > 0)
+                                                            <div class="text-gray-400 text-[10px]">{{ $fmtCost($cell['cost']) }}</div>
+                                                        @endif
+                                                    </a>
+                                                @endif
+                                            </td>
+                                        @endforeach
                                     </tr>
                                 @empty
                                     <tr>
@@ -333,18 +355,26 @@
                                     </tr>
                                 @endforelse
 
-                                {{-- Column totals --}}
                                 @if(count($userRows) > 0)
-                                <tr class="bg-gray-50 dark:bg-gray-700/60 font-semibold border-t-2 border-gray-300 dark:border-gray-500">
-                                    <td class="sticky left-0 z-10 bg-gray-50 dark:bg-gray-700 px-3 py-2 border-r border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 uppercase text-xs tracking-wide">
+                                <tr class="bg-gray-50 dark:bg-gray-700/60 border-t-2 border-gray-300 dark:border-gray-500 font-semibold">
+                                    <td class="sticky left-0 z-10 bg-gray-50 dark:bg-gray-700 {{ $col1W }} px-3 py-2 text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
                                         Tổng cộng
+                                    </td>
+                                    <td class="sticky left-[180px] z-10 bg-gray-100 dark:bg-gray-700 {{ $col2W }} {{ $stickyDivider }} px-2 py-1.5 text-center border-r border-gray-200 dark:border-gray-600">
+                                        <div class="text-gray-800 dark:text-gray-200">{{ $fmtHours($grandTotalHours) }}</div>
+                                        @if($grandTotalOt > 0)
+                                            <div class="text-orange-500">+{{ $fmtHours($grandTotalOt) }}</div>
+                                        @endif
+                                        @if($grandTotalCost > 0)
+                                            <div class="text-gray-400 text-[10px]">{{ $fmtCost($grandTotalCost) }}</div>
+                                        @endif
                                     </td>
                                     @foreach($days as $day)
                                         @php
                                             $dk  = $day->format('Y-m-d');
                                             $tot = $dayTotals[$dk] ?? ['hours' => 0, 'ot_hours' => 0, 'cost' => 0];
                                         @endphp
-                                        <td class="px-1.5 py-1.5 text-center">
+                                        <td class="px-1 py-1.5 text-center">
                                             @if($tot['hours'] > 0 || $tot['ot_hours'] > 0)
                                                 <div class="text-gray-700 dark:text-gray-300">{{ $fmtHours($tot['hours']) }}</div>
                                                 @if($tot['ot_hours'] > 0)
@@ -356,15 +386,6 @@
                                             @endif
                                         </td>
                                     @endforeach
-                                    <td class="px-3 py-2 text-right border-l border-gray-200 dark:border-gray-600 whitespace-nowrap">
-                                        <div class="text-gray-700 dark:text-gray-300">{{ $fmtHours($grandTotalHours) }}</div>
-                                        @if($grandTotalOt > 0)
-                                            <div class="text-orange-500">+{{ $fmtHours($grandTotalOt) }}</div>
-                                        @endif
-                                        @if($grandTotalCost > 0)
-                                            <div class="text-gray-400 text-[10px]">{{ $fmtCost($grandTotalCost) }}</div>
-                                        @endif
-                                    </td>
                                 </tr>
                                 @endif
                             </tbody>
@@ -412,7 +433,31 @@
                 @endif
 
             @endif
-
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const t1 = document.getElementById('scroll-tasks');
+        const t2 = document.getElementById('scroll-users');
+        if (!t1 || !t2) return;
+
+        let syncing = false;
+        t1.addEventListener('scroll', function () {
+            if (syncing) return;
+            syncing = true;
+            t2.scrollLeft = t1.scrollLeft;
+            requestAnimationFrame(function () { syncing = false; });
+        });
+        t2.addEventListener('scroll', function () {
+            if (syncing) return;
+            syncing = true;
+            t1.scrollLeft = t2.scrollLeft;
+            requestAnimationFrame(function () { syncing = false; });
+        });
+    });
+    </script>
+    @endpush
+
 </x-app-layout>

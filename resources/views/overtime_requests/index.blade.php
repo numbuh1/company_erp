@@ -57,7 +57,7 @@
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Số giờ</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Loại</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dự án</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nhiệm vụ</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Công việc</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lý do</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Người duyệt</th>
