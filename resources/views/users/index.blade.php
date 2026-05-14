@@ -1,9 +1,9 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">{{ __('Users') }}</h2>
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Users</h2>
             @can('create all user')
-                <a href="{{ route('users.create') }}"><x-primary-button>{{ __('Create User') }}</x-primary-button></a>
+                <a href="{{ route('users.create') }}"><x-primary-button>Create User</x-primary-button></a>
             @endcan
         </div>
     </x-slot>
@@ -49,31 +49,31 @@
                         <th class="sticky left-0 z-20 bg-gray-50 dark:bg-gray-700
                                    px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider
                                    border-r border-gray-200 dark:border-gray-600 w-52 min-w-[13rem]">
-                            {{ __('Name') }}
+                            Name
                         </th>
 
                         {{-- Overall columns --}}
                         <th x-show="tab === 'overall'"
                             class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap min-w-[10rem]">
-                            {{ __('Full Name') }}
+                            Full Name
                         </th>
                         <th x-show="tab === 'overall'"
                             class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap min-w-[14rem]">
-                            {{ __('Email') }}
+                            Email
                         </th>
                         <th x-show="tab === 'overall'"
                             class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap min-w-[10rem]">
-                            {{ __('Position') }}
+                            Position
                         </th>
                         <th x-show="tab === 'overall'"
                             class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap min-w-[12rem]">
-                            {{ __('Roles') }}
+                            Roles
                         </th>
 
                         {{-- Team columns --}}
                         <th x-show="tab === 'team'"
                             class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap min-w-[16rem]">
-                            {{ __('Teams') }}
+                            Teams
                         </th>
 
                         {{-- Salary columns (TBA) --}}
@@ -85,7 +85,7 @@
                         {{-- Leaves columns --}}
                         <th x-show="tab === 'leaves'"
                             class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap min-w-[8rem]">
-                            {{ __('Leave Balance') }}
+                            Leave Balance
                         </th>
 
                         {{-- Personal Info columns (TBA) --}}
@@ -120,7 +120,7 @@
                                             <span class="inline-block text-xs px-1.5 rounded
                                                          bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300
                                                          leading-5">
-                                                {{ __('Inactive') }}
+                                                Inactive
                                             </span>
                                         @endif
                                     </div>
@@ -187,7 +187,7 @@
                                     <span class="font-medium text-gray-700 dark:text-gray-300">
                                         {{ $user->leave_balance }}
                                     </span>
-                                    <span class="text-xs text-gray-400 ml-0.5">{{ __('hrs') }}</span>
+                                    <span class="text-xs text-gray-400 ml-0.5">hrs</span>
                                 @else
                                     <span class="text-gray-400">—</span>
                                 @endif

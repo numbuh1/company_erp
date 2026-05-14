@@ -12,7 +12,7 @@
                 <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
                     {{ $recruitmentPosition->name }}
                     <span class="ml-1 text-xs font-medium px-1.5 py-0.5 rounded {{ $posStatusColor($recruitmentPosition->status) }}">
-                        {{ __( ucfirst(str_replace('_', ' ', $recruitmentPosition->status)) ) }}
+                        {{ ucfirst(str_replace('_', ' ', $recruitmentPosition->status)) }}
                     </span>
                 </h2>
                 @if($recruitmentPosition->team)
@@ -55,7 +55,7 @@
 
                     @if($recruitmentPosition->description || $recruitmentPosition->file_path)
                         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
-                            <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ __('Job Description') }}</h3>
+                            <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Job Description</h3>
                             @if($recruitmentPosition->description)
                                 <div class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line leading-relaxed">
                                     {{ $recruitmentPosition->description }}
@@ -74,15 +74,15 @@
 
                     @if($recruitmentPosition->skills->isNotEmpty())
                         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
-                            <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ __('Required Skills') }}</h3>
+                            <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Required Skills</h3>
                             @foreach($recruitmentPosition->skills->groupBy('category') as $cat => $group)
                                 <div class="mb-3">
-                                    <p class="text-xs text-gray-400 dark:text-gray-500 mb-1.5">{{ __( ucfirst($cat) ) }}</p>
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 mb-1.5">{{ ucfirst($cat) }}</p>
                                     <div class="flex flex-wrap gap-1.5">
                                         @foreach($group as $skill)
                                             <span class="text-xs font-medium px-2 py-0.5 rounded-full {{ $levelColor($skill->pivot->level) }}">
                                                 {{ $skill->name }}
-                                                <span class="opacity-60">· {{ __( ucfirst($skill->pivot->level) ) }}</span>
+                                                <span class="opacity-60">· {{ ucfirst($skill->pivot->level) }}</span>
                                             </span>
                                         @endforeach
                                     </div>
@@ -96,7 +96,7 @@
                 <div class="space-y-4">
 
                     <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5 space-y-4">
-                        <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ __('Position Info') }}</h3>
+                        <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Position Info</h3>
 
                         @if($recruitmentPosition->search_start_date || $recruitmentPosition->search_end_date)
                             <div>
@@ -110,7 +110,7 @@
 
                         @if($recruitmentPosition->salary_min || $recruitmentPosition->salary_max)
                             <div>
-                                <p class="text-xs text-gray-400 mb-0.5">{{ __('Salary Range') }}</p>
+                                <p class="text-xs text-gray-400 mb-0.5">Salary Range</p>
                                 <p class="text-sm text-gray-700 dark:text-gray-300">
                                     {{ $recruitmentPosition->salary_min ? number_format($recruitmentPosition->salary_min) : '—' }}
                                     –
@@ -121,7 +121,7 @@
 
                         @if($recruitmentPosition->tags->isNotEmpty())
                             <div>
-                                <p class="text-xs text-gray-400 mb-1">{{ __('Tags') }}</p>
+                                <p class="text-xs text-gray-400 mb-1">Tags</p>
                                 <div class="flex flex-wrap gap-1">
                                     @foreach($recruitmentPosition->tags as $tag)
                                         <span class="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
@@ -134,12 +134,12 @@
                     </div>
 
                     <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
-                        <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ __('Assigned Users') }}</h3>
+                        <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Assigned Users</h3>
                         <div class="space-y-2">
                             @forelse($recruitmentPosition->assignedUsers as $u)
                                 <x-user-status :user="$u" />
                             @empty
-                                <p class="text-sm text-gray-400">{{ __('No users assigned.') }}</p>
+                                <p class="text-sm text-gray-400">No users assigned.</p>
                             @endforelse
                         </div>
                     </div>
@@ -153,7 +153,7 @@
                 {{-- Section Header --}}
                 <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700 gap-3 flex-wrap">
                     <h3 class="font-semibold text-gray-700 dark:text-gray-200">
-                        {{ __('Applicants') }}
+                        Applicants
                         <span class="ml-2 text-xs font-normal text-gray-400">({{ $recruitmentPosition->applicants->count() }})</span>
                     </h3>
                     <div class="flex items-center gap-2">
@@ -264,7 +264,7 @@
                                         <div class="flex flex-wrap gap-1 mb-2">
                                             @foreach($applicant->skills as $skill)
                                                 <span class="text-xs px-1.5 py-0.5 rounded-full {{ $levelColor($skill->pivot->level) }}">
-                                                    {{ $skill->name }} <span class="opacity-60">· {{ __( ucfirst($skill->pivot->level) ) }}</span>
+                                                    {{ $skill->name }} <span class="opacity-60">· {{ ucfirst($skill->pivot->level) }}</span>
                                                 </span>
                                             @endforeach
                                         </div>
@@ -293,13 +293,13 @@
                                 {{-- Right: Actions --}}
                                 <div class="flex items-center gap-2 shrink-0 pt-0.5">
 
-                                    <a href="{{ $applicantUrl }}" title="{{ __('View') }}"
+                                    <a href="{{ $applicantUrl }}" title="View"
                                         class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-indigo-600 hover:border-indigo-400 bg-white dark:bg-gray-700 transition">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                         </svg>
-                                        <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">{{ __('View') }}</span>
+                                        <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">View</span>
                                     </a>
 
                                     @if($applicant->cv_path)
@@ -308,7 +308,7 @@
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                                             </svg>
-                                            <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">{{ __('Download CV') }}</span>
+                                            <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Download CV</span>
                                         </a>
                                     @endif
 
@@ -324,19 +324,19 @@
                                             applicantUrl: @json($applicantUrl),
                                             applicantName: @json($applicant->name)
                                         })'
-                                        title="{{ __('Book Interview') }}"
+                                        title="Book Interview"
                                         class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-indigo-600 hover:border-indigo-400 bg-white dark:bg-gray-700 transition">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                                         </svg>
-                                        <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">{{ __('Book Interview') }}</span>
+                                        <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Book Interview</span>
                                     </button>
 
-                                    <a href="{{ route('recruitment.applicants.edit', [$recruitmentPosition, $applicant]) }}" title="{{ __('Edit') }}"
+                                    <a href="{{ route('recruitment.applicants.edit', [$recruitmentPosition, $applicant]) }}" title="Edit"
                                         class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-yellow-600 hover:border-yellow-400 bg-white dark:bg-gray-700 transition">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                                        <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">{{ __('Edit') }}</span>
+                                        <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Edit</span>
                                     </a>
 
                                     @if($canEdit)
@@ -344,10 +344,10 @@
                                             action="{{ route('recruitment.applicants.destroy', [$recruitmentPosition, $applicant]) }}"
                                             onsubmit="return confirm('Remove this applicant?')">
                                             @csrf @method('DELETE')
-                                            <button type="submit" title="{{ __('Delete') }}"
+                                            <button type="submit" title="Delete"
                                                 class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-red-600 hover:border-red-400 bg-white dark:bg-gray-700 transition">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">{{ __('Delete') }}</span>
+                                                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Delete</span>
                                             </button>
                                         </form>
                                     @endif
@@ -356,7 +356,7 @@
                             </div>
                         </div>
                     @empty
-                        <div class="px-5 py-10 text-center text-sm text-gray-400">{{ __('No applicants yet.') }}</div>
+                        <div class="px-5 py-10 text-center text-sm text-gray-400">No applicants yet.</div>
                     @endforelse
                 </div>
 

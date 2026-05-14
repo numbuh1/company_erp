@@ -14,16 +14,16 @@
 
                 {{-- Main Info --}}
                 <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
-                    <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">{{ __('Project Details') }}</h3>
+                    <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">Project Details</h3>
 
                     <div class="mb-4">
-                        <x-input-label value="{{ __('Name') }}" />
+                        <x-input-label value="Name" />
                         <x-text-input name="name" class="mt-1 block w-full"
                             value="{{ old('name', $project->name ?? '') }}" required />
                     </div>
 
                     <div class="mb-4">
-                        <x-input-label value="{{ __('Status') }}" />
+                        <x-input-label value="Status" />
                         <select name="status"
                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                             @foreach(['Not Started', 'In Progress', 'Done'] as $s)
@@ -33,24 +33,24 @@
                     </div>                    
 
                     <div class="mb-4">
-                        <x-input-label value="{{ __('Description') }}" />
+                        <x-input-label value="Description" />
                         <textarea name="description" rows="4"
                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">{{ old('description', $project->description ?? '') }}</textarea>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
-                            <x-input-label value="{{ __('Start Date') }}" />
+                            <x-input-label value="Start Date" />
                             <x-text-input type="date" name="start_date" class="mt-1 block w-full"
                                 value="{{ old('start_date', isset($project) ? $project->start_date?->format('Y-m-d') : '') }}" />
                         </div>
                         <div>
-                            <x-input-label value="{{ __('Expected End Date') }}" />
+                            <x-input-label value="Expected End Date" />
                             <x-text-input type="date" name="expected_end_date" class="mt-1 block w-full"
                                 value="{{ old('expected_end_date', isset($project) ? $project->expected_end_date?->format('Y-m-d') : '') }}" />
                         </div>
                         <div>
-                            <x-input-label value="{{ __('Actual End Date') }}" />
+                            <x-input-label value="Actual End Date" />
                             <x-text-input type="date" name="actual_end_date" class="mt-1 block w-full"
                                 value="{{ old('actual_end_date', isset($project) ? $project->actual_end_date?->format('Y-m-d') : '') }}" />
                         </div>
@@ -59,15 +59,15 @@
 
                 {{-- Team & Member Assignment --}}
                 <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
-                    <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">{{ __('Assignment') }}</h3>
+                    <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">Assignment</h3>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                         {{-- Teams --}}
                         <div>
-                            <x-input-label value="{{ __('Assigned Teams') }}" />
+                            <x-input-label value="Assigned Teams" />
                             <select name="teams[]" id="teams-select" data-multi-select
-                                    data-placeholder="{{ __('Select teams…') }}" class="mt-1 block w-full" multiple>
+                                    data-placeholder="Select teams…" class="mt-1 block w-full" multiple>
                                 @foreach($teams as $team)
                                     <option value="{{ $team->id }}"
                                         {{ collect(old('teams', isset($project) ? $project->teams->pluck('id')->toArray() : []))->contains($team->id) ? 'selected' : '' }}>
@@ -79,9 +79,9 @@
 
                         {{-- Members --}}
                         <div>
-                            <x-input-label value="{{ __('Assigned Members') }}" />
+                            <x-input-label value="Assigned Members" />
                             <select name="members[]" id="members-select" data-multi-select
-                                    data-placeholder="{{ __('Select members…') }}" class="mt-1 block w-full" multiple>
+                                    data-placeholder="Select members…" class="mt-1 block w-full" multiple>
                                 @foreach($users as $u)
                                     <option value="{{ $u->id }}"
                                         {{ collect(old('members', isset($project) ? $project->users->pluck('id')->toArray() : []))->contains($u->id) ? 'selected' : '' }}>
@@ -97,7 +97,7 @@
                 {{-- Buttons --}}
                 <div class="flex justify-end gap-2 mt-5 mb-10">
                     <a href="{{ isset($project) ? route('projects.show', $project) : route('projects.index') }}">
-                        <x-secondary-button type="button">{{ __('Cancel') }}</x-secondary-button>
+                        <x-secondary-button type="button">Cancel</x-secondary-button>
                     </a>
                     <x-primary-button>{{ isset($project) ? 'Update' : 'Create' }}</x-primary-button>
                 </div>

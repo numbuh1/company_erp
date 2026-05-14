@@ -36,10 +36,10 @@
 
                     <!-- Title -->
                     <div class="mb-5">
-                        <x-input-label value="{{ __('Title') }}" />
+                        <x-input-label value="Title" />
                         <x-text-input name="title" class="w-full mt-1"
                             value="{{ old('title', $announcement->title ?? '') }}"
-                            placeholder="{{ __('Announcement title...') }}" />
+                            placeholder="Announcement title..." />
                         @error('title')
                             <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
                         @enderror
@@ -53,22 +53,22 @@
                         $selectedTeams = old('teams', isset($announcement) ? $announcement->teams->pluck('id')->toArray() : []);
                     @endphp
                     <div class="mb-5" x-data="{ allCompany: {{ $isAllCompany ? 'true' : 'false' }} }">
-                        <x-input-label value="{{ __('Audience') }}" />
+                        <x-input-label value="Audience" />
 
                         <label class="inline-flex items-center gap-2 mt-2 cursor-pointer">
                             <input type="checkbox" name="all_company" value="1"
                                 x-model="allCompany"
                                 class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
-                            <span class="text-sm text-gray-700 dark:text-gray-300 font-medium">{{ __('All Company') }}</span>
+                            <span class="text-sm text-gray-700 dark:text-gray-300 font-medium">All Company</span>
                         </label>
 
                         <div x-show="!allCompany" x-cloak class="mt-3">
                             @if($teams->isEmpty())
-                                <p class="text-xs text-gray-400">{{ __('No teams exist yet.') }}</p>
+                                <p class="text-xs text-gray-400">No teams exist yet.</p>
                             @else
-                                <x-input-label value="{{ __('Visible to these teams only') }}" class="mb-1" />
+                                <x-input-label value="Visible to these teams only" class="mb-1" />
                                 <select name="teams[]" id="teams-select" data-multi-select
-                                        data-placeholder="{{ __('Select teams…') }}" class="w-full" multiple>
+                                        data-placeholder="Select teams…" class="w-full" multiple>
                                     @foreach($teams as $team)
                                         <option value="{{ $team->id }}"
                                             {{ in_array($team->id, $selectedTeams) ? 'selected' : '' }}>
@@ -82,7 +82,7 @@
 
                     <!-- Rich Text Content -->
                     <div class="mb-5">
-                        <x-input-label value="{{ __('Content') }}" class="mb-1" />
+                        <x-input-label value="Content" class="mb-1" />
                         <div id="editor-container" class="mt-1 bg-white"></div>
                         <input type="hidden" name="content" id="content-input">
                         @error('content')
@@ -95,7 +95,7 @@
                             {{ isset($announcement) ? 'Update' : 'Publish' }}
                         </x-primary-button>
                         <a href="{{ isset($announcement) ? route('announcements.show', $announcement) : route('announcements.index') }}">
-                            <x-secondary-button type="button">{{ __('Cancel') }}</x-secondary-button>
+                            <x-secondary-button type="button">Cancel</x-secondary-button>
                         </a>
                     </div>
                 </form>

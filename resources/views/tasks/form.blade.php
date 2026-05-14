@@ -4,7 +4,7 @@
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
                 {{ isset($task) ? 'Edit Task' : 'Create Task' }}
             </h2>
-            <a href="{{ route('tasks.index') }}"><x-secondary-button>{{ __('Back') }}</x-secondary-button></a>
+            <a href="{{ route('tasks.index') }}"><x-secondary-button>Back</x-secondary-button></a>
         </div>
     </x-slot>
 
@@ -41,7 +41,7 @@
 
                     {{-- Description --}}
                     <div class="mb-4">
-                        <x-input-label for="description" value="{{ __('Description') }}" />
+                        <x-input-label for="description" value="Description" />
                         <textarea id="description" name="description" rows="4"
                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('description', $task->description ?? '') }}</textarea>
                         <x-input-error :messages="$errors->get('description')" class="mt-1" />
@@ -49,7 +49,7 @@
 
                     {{-- Progress --}}
                     <div class="mb-4">
-                        <x-input-label for="progress" value="{{ __('Progress (%)') }}" />
+                        <x-input-label for="progress" value="Progress (%)" />
                         <x-text-input id="progress" name="progress" type="number" min="0" max="100"
                             class="mt-1 block w-full"
                             value="{{ old('progress', $task->progress ?? 0) }}" />
@@ -58,7 +58,7 @@
 
                     {{-- Status --}}
                     <div class="mb-4">
-                        <x-input-label for="status" value="{{ __('Status') }}" />
+                        <x-input-label for="status" value="Status" />
                         <select id="status" name="status"
                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                             @foreach(['Not Started', 'In Progress', 'Done'] as $s)
@@ -71,19 +71,19 @@
                     {{-- Dates --}}
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                         <div>
-                            <x-input-label for="start_date" value="{{ __('Start Date') }}" />
+                            <x-input-label for="start_date" value="Start Date" />
                             <x-text-input id="start_date" name="start_date" type="date" class="mt-1 block w-full"
                                 value="{{ old('start_date', isset($task) ? $task->start_date?->format('Y-m-d') : '') }}" />
                             <x-input-error :messages="$errors->get('start_date')" class="mt-1" />
                         </div>
                         <div>
-                            <x-input-label for="expected_end_date" value="{{ __('Expected End') }}" />
+                            <x-input-label for="expected_end_date" value="Expected End" />
                             <x-text-input id="expected_end_date" name="expected_end_date" type="date" class="mt-1 block w-full"
                                 value="{{ old('expected_end_date', isset($task) ? $task->expected_end_date?->format('Y-m-d') : '') }}" />
                             <x-input-error :messages="$errors->get('expected_end_date')" class="mt-1" />
                         </div>
                         <div>
-                            <x-input-label for="actual_end_date" value="{{ __('Actual End') }}" />
+                            <x-input-label for="actual_end_date" value="Actual End" />
                             <x-text-input id="actual_end_date" name="actual_end_date" type="date" class="mt-1 block w-full"
                                 value="{{ old('actual_end_date', isset($task) ? $task->actual_end_date?->format('Y-m-d') : '') }}" />
                             <x-input-error :messages="$errors->get('actual_end_date')" class="mt-1" />
@@ -92,9 +92,9 @@
 
                     {{-- Assignees --}}
                     <div class="mb-6">
-                        <x-input-label value="{{ __('Assignees') }}" />
+                        <x-input-label value="Assignees" />
                         <select name="assignees[]" id="assignees-select" data-multi-select
-                                data-placeholder="{{ __('Select assignees…') }}" class="mt-2 block w-full" multiple>
+                                data-placeholder="Select assignees…" class="mt-2 block w-full" multiple>
                             @foreach($users as $user)
                                 <option value="{{ $user->id }}"
                                     {{ in_array($user->id, old('assignees', isset($task) ? $task->assignees->pluck('id')->toArray() : [])) ? 'selected' : '' }}>
@@ -106,7 +106,7 @@
                     </div>
 
                     <div class="flex justify-end gap-2">
-                        <a href="{{ route('tasks.index') }}"><x-secondary-button type="button">{{ __('Cancel') }}</x-secondary-button></a>
+                        <a href="{{ route('tasks.index') }}"><x-secondary-button type="button">Cancel</x-secondary-button></a>
                         <x-primary-button type="submit">{{ isset($task) ? 'Update Task' : 'Create Task' }}</x-primary-button>
                     </div>
                 </form>

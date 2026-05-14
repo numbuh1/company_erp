@@ -20,14 +20,14 @@
                     <!-- User -->
                     @if(isset($leave))
                         <div class="mb-4">
-                            <x-input-label value="{{ __('User') }}" />
+                            <x-input-label value="User" />
                             <input type="text" value="{{ $leave->user->name }}" class="w-full border rounded p-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300" disabled>
                             <input type="hidden" name="user_id" value="{{ $leave->user_id }}">
                         </div>
                     @else
                         @can('edit team leaves')
                             <div class="mb-4">
-                                <x-input-label value="{{ __('User') }}" />
+                                <x-input-label value="User" />
                                 <select name="user_id" class="w-full border rounded p-2">
                                     @foreach($users as $user)
                                         <option value="{{ $user->id }}"
@@ -42,12 +42,12 @@
 
                     <!-- Type -->
                     <div class="mb-4">
-                        <x-input-label value="{{ __('Type') }}" />
+                        <x-input-label value="Type" />
                         <select name="type" class="w-full border rounded p-2" @disabled($readonly)>
                             @foreach(['annual', 'sick', 'unpaid'] as $type)
                                 <option value="{{ $type }}"
                                     @selected(old('type', $leave->type ?? '') == $type)>
-                                    {{ __( ucfirst($type) ) }}
+                                    {{ ucfirst($type) }}
                                 </option>
                             @endforeach
                         </select>
@@ -55,7 +55,7 @@
 
                     <!-- Start -->
                     <div class="mb-4">
-                        <x-input-label value="{{ __('Start Time') }}" />
+                        <x-input-label value="Start Time" />
                         <input type="datetime-local" name="start_at" id="start_at"
                             value="{{ old('start_at', isset($leave) ? $leave->start_at->format('Y-m-d\TH:i') : '') }}"
                             class="w-full border rounded p-2" @disabled($readonly)>
@@ -63,7 +63,7 @@
 
                     <!-- End -->
                     <div class="mb-4">
-                        <x-input-label value="{{ __('End Time') }}" />
+                        <x-input-label value="End Time" />
                         <input type="datetime-local" name="end_at" id="end_at"
                             value="{{ old('end_at', isset($leave) ? $leave->end_at->format('Y-m-d\TH:i') : '') }}"
                             class="w-full border rounded p-2" @disabled($readonly)>
@@ -71,7 +71,7 @@
 
                     <!-- Hours (auto) -->
                     <div class="mb-4">
-                        <x-input-label value="{{ __('Hours') }}" />
+                        <x-input-label value="Hours" />
                         <input type="number" step="0.5" id="hours" name="hours"
                             value="{{ old('hours', $leave->hours ?? '') }}"
                             class="w-full border rounded p-2" @disabled($readonly)>
@@ -79,7 +79,7 @@
 
                     <!-- Description -->
                     <div class="mb-4">
-                        <x-input-label value="{{ __('Description') }}" />
+                        <x-input-label value="Description" />
                         <textarea name="description" class="w-full border rounded p-2" @disabled($readonly)>{{ old('description', $leave->description ?? '') }}</textarea>
                     </div>
 
@@ -95,7 +95,7 @@
                             @canany(['edit team leaves', 'edit all leaves'])
                                 @if(!in_array($leave->status, ['approved', 'rejected']))
                                     <a href="{{ route('leave-requests.edit', $leave) }}">
-                                        <x-secondary-button>{{ __('Edit') }}</x-secondary-button>
+                                        <x-secondary-button>Edit</x-secondary-button>
                                     </a>
                                 @endif
                             @endcanany
@@ -104,10 +104,10 @@
                                 @if($leave->status === 'pending')
                                     <form method="POST" action="{{ route('leave-requests.approve', $leave) }}" class="inline">
                                         @csrf
-                                        <x-primary-button>{{ __('Approve') }}</x-primary-button>
+                                        <x-primary-button>Approve</x-primary-button>
                                     </form>
                                     <x-danger-button onclick="openRejectModal('{{ route('leave-requests.reject', $leave->id) }}')">
-                                        {{ __('Reject') }}
+                                        Reject
                                     </x-danger-button>
                                 @endif
                             @endcanany

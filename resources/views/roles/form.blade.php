@@ -14,7 +14,7 @@
 
                 <!-- Name -->
                 <div class="mb-4">
-                    <x-input-label value="{{ __('Role Name') }}" />
+                    <x-input-label value="Role Name" />
                     <x-text-input name="name" class="w-full mt-1"
                         value="{{ old('name', $role->name ?? '') }}" required />
                 </div>
@@ -39,7 +39,7 @@
                                     <!-- Select All -->
                                     <label class="flex items-center space-x-2 text-sm text-gray-500 cursor-pointer">
                                         <input type="checkbox" class="module-toggle">
-                                        <span>{{ __('Select All') }}</span>
+                                        <span>Select All</span>
                                     </label>
                                 </div>
 
@@ -76,7 +76,7 @@
                     </x-primary-button>
 
                     <a href="{{ route('roles.index') }}">
-                        <x-secondary-button>{{ __('Cancel') }}</x-secondary-button>
+                        <x-secondary-button>Cancel</x-secondary-button>
                     </a>
                 </div>
 

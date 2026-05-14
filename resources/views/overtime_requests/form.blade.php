@@ -17,7 +17,7 @@
                     {{-- User --}}
                     @if(isset($ot))
                         <div class="mb-4">
-                            <x-input-label value="{{ __('User') }}" />
+                            <x-input-label value="User" />
                             <input type="text" value="{{ $ot->user->name }}"
                                 class="w-full border rounded p-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300" disabled>
                             <input type="hidden" name="user_id" value="{{ $ot->user_id }}">
@@ -25,7 +25,7 @@
                     @else
                         @canany(['edit team ot', 'edit all ot'])
                             <div class="mb-4">
-                                <x-input-label value="{{ __('User') }}" />
+                                <x-input-label value="User" />
                                 <select name="user_id" class="w-full border rounded p-2">
                                     @foreach($users as $u)
                                         <option value="{{ $u->id }}" @selected(old('user_id') == $u->id)>{{ $u->name }}</option>
@@ -37,7 +37,7 @@
 
                     {{-- Type --}}
                     <div class="mb-4">
-                        <x-input-label value="{{ __('Type') }}" />
+                        <x-input-label value="Type" />
                         <select name="type" class="w-full border rounded p-2" @disabled($readonly)>
                             @foreach(['OT x1.5', 'OT x2', 'OT x3'] as $type)
                                 <option value="{{ $type }}" @selected(old('type', $ot->type ?? '') == $type)>{{ $type }}</option>
@@ -47,7 +47,7 @@
 
                     {{-- Start --}}
                     <div class="mb-4">
-                        <x-input-label value="{{ __('Start Time') }}" />
+                        <x-input-label value="Start Time" />
                         <input type="datetime-local" name="start_at" id="start_at"
                             value="{{ old('start_at', isset($ot) ? $ot->start_at->format('Y-m-d\TH:i') : '') }}"
                             class="w-full border rounded p-2" @disabled($readonly)>
@@ -55,7 +55,7 @@
 
                     {{-- End --}}
                     <div class="mb-4">
-                        <x-input-label value="{{ __('End Time') }}" />
+                        <x-input-label value="End Time" />
                         <input type="datetime-local" name="end_at" id="end_at"
                             value="{{ old('end_at', isset($ot) ? $ot->end_at->format('Y-m-d\TH:i') : '') }}"
                             class="w-full border rounded p-2" @disabled($readonly)>
@@ -63,7 +63,7 @@
 
                     {{-- Hours --}}
                     <div class="mb-4">
-                        <x-input-label value="{{ __('Hours') }}" />
+                        <x-input-label value="Hours" />
                         <input type="number" step="0.5" id="hours" name="hours"
                             value="{{ old('hours', $ot->hours ?? '') }}"
                             class="w-full border rounded p-2" @disabled($readonly)>
@@ -71,7 +71,7 @@
 
                     {{-- Description --}}
                     <div class="mb-4">
-                        <x-input-label value="{{ __('Description') }}" />
+                        <x-input-label value="Description" />
                         <textarea name="description" class="w-full border rounded p-2" @disabled($readonly)>{{ old('description', $ot->description ?? '') }}</textarea>
                     </div>
 
@@ -90,7 +90,7 @@
                                 @endphp
                                 @if($canEdit)
                                     <a href="{{ route('overtime-requests.edit', $ot) }}">
-                                        <x-secondary-button>{{ __('Edit') }}</x-secondary-button>
+                                        <x-secondary-button>Edit</x-secondary-button>
                                     </a>
                                 @endif
                             @endif
@@ -99,10 +99,10 @@
                                 @if($ot->status === 'pending')
                                     <form method="POST" action="{{ route('overtime-requests.approve', $ot) }}" class="inline">
                                         @csrf
-                                        <x-primary-button>{{ __('Approve') }}</x-primary-button>
+                                        <x-primary-button>Approve</x-primary-button>
                                     </form>
                                     <x-danger-button onclick="openRejectModal('{{ route('overtime-requests.reject', $ot->id) }}')">
-                                        {{ __('Reject') }}
+                                        Reject
                                     </x-danger-button>
                                 @endif
                             @endcanany

@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-wrap justify-between items-center gap-2">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">{{ __('OT Requests') }}</h2>
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">OT Requests</h2>
             <div class="flex items-center gap-2">
                 @php
                     $calDate   = $dateFrom ?: now()->format('Y-m-d');
@@ -23,10 +23,10 @@
                 <a href="{{ $exportUrl }}"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 bg-white dark:bg-gray-800 transition">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                    {{ __('Export') }}
+                    Export
                 </a>
                 <a href="{{ route('overtime-requests.create') }}">
-                    <x-primary-button>{{ __('Create OT Request') }}</x-primary-button>
+                    <x-primary-button>Create OT Request</x-primary-button>
                 </a>
             </div>
         </div>
@@ -51,16 +51,16 @@
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Created At') }}</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('User') }}</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Period') }}</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Hours') }}</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Type') }}</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Description') }}</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Status') }}</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created At</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Period</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hours</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Approver</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Reject Reason') }}</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{{ __('Actions') }}</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reject Reason</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -82,7 +82,7 @@
                                         @if($ot->status === 'approved') bg-green-100 text-green-800
                                         @elseif($ot->status === 'rejected') bg-red-100 text-red-800
                                         @else bg-yellow-100 text-yellow-800 @endif">
-                                        {{ __( ucfirst($ot->status) ) }}
+                                        {{ ucfirst($ot->status) }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-gray-700 dark:text-gray-300">{{ $ot->approver?->name ?? '-' }}</td>
@@ -95,18 +95,18 @@
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex items-center justify-end gap-2">
-                                        <a href="{{ route('overtime-requests.show', $ot) }}" title="{{ __('View') }}"
+                                        <a href="{{ route('overtime-requests.show', $ot) }}" title="View"
                                             class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-blue-600 hover:border-blue-400 bg-white dark:bg-gray-700 transition">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                            <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">{{ __('View') }}</span>
+                                            <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">View</span>
                                         </a>
                                         @if(!in_array($ot->status, ['approved', 'rejected']))
                                             @php $canEdit = auth()->user()->can('edit all ot') || auth()->user()->can('edit team ot') || (auth()->user()->can('edit own ot') && $ot->user_id === auth()->id()); @endphp
                                             @if($canEdit)
-                                                <a href="{{ route('overtime-requests.edit', $ot) }}" title="{{ __('Edit') }}"
+                                                <a href="{{ route('overtime-requests.edit', $ot) }}" title="Edit"
                                                     class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-yellow-600 hover:border-yellow-400 bg-white dark:bg-gray-700 transition">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                                                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">{{ __('Edit') }}</span>
+                                                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Edit</span>
                                                 </a>
                                             @endif
                                         @endif
@@ -114,16 +114,16 @@
                                             @if($ot->status === 'pending')
                                                 <form method="POST" action="{{ route('overtime-requests.approve', $ot) }}" class="inline">
                                                     @csrf
-                                                    <button type="submit" title="{{ __('Approve') }}"
+                                                    <button type="submit" title="Approve"
                                                         class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-green-600 hover:border-green-400 bg-white dark:bg-gray-700 transition">
                                                         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                                                        <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">{{ __('Approve') }}</span>
+                                                        <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Approve</span>
                                                     </button>
                                                 </form>
                                                 <button type="button" onclick="openRejectModal('{{ route('overtime-requests.reject', $ot->id) }}')"
                                                     class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-red-600 hover:border-red-400 bg-white dark:bg-gray-700 transition">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">{{ __('Reject') }}</span>
+                                                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Reject</span>
                                                 </button>
                                             @endif
                                         @endcanany
@@ -131,7 +131,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="10" class="px-6 py-10 text-center text-gray-400">{{ __('No OT requests found.') }}</td></tr>
+                            <tr><td colspan="10" class="px-6 py-10 text-center text-gray-400">No OT requests found.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

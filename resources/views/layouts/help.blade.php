@@ -761,27 +761,27 @@
     </a>
 
     <nav class="sidebar-nav">
-        <span class="sidebar-text">{{ __('Overview') }}</span>
+        <span class="sidebar-text">Overview</span>
         <a href="{{ route('help.index') }}" class="sidebar-link {{ request()->routeIs('help.index') ? 'active' : '' }}"><span class="icon">🏠</span> Home</a>
         <a href="{{ route('help.getting-started') }}" class="sidebar-link {{ request()->routeIs('help.getting-started') ? 'active' : '' }}"><span class="icon">🚀</span> Getting Started</a>
         <a href="{{ route('help.navigation') }}" class="sidebar-link {{ request()->routeIs('help.navigation') ? 'active' : '' }}"><span class="icon">🧭</span> Navigation</a>
-        <span class="sidebar-text">{{ __('Work') }}</span>
-        <a href="{{ route('help.dashboard') }}" class="sidebar-link {{ request()->routeIs('help.dashboard') ? 'active' : '' }}"><span class="icon">📊</span> {{ __('Dashboard') }}</a>
-        <a href="{{ route('help.announcements') }}" class="sidebar-link {{ request()->routeIs('help.announcements') ? 'active' : '' }}"><span class="icon">📢</span> {{ __('Announcements') }}</a>
-        <a href="{{ route('help.attendance') }}" class="sidebar-link {{ request()->routeIs('help.attendance') ? 'active' : '' }}"><span class="icon">🏢</span> {{ __('Attendance') }}</a>
-        <a href="{{ route('help.projects') }}" class="sidebar-link {{ request()->routeIs('help.projects') ? 'active' : '' }}"><span class="icon">📁</span> {{ __('Projects') }}</a>
-        <a href="{{ route('help.tasks') }}" class="sidebar-link {{ request()->routeIs('help.tasks') ? 'active' : '' }}"><span class="icon">✅</span> {{ __('Tasks') }}</a>
-        <a href="{{ route('help.timesheet') }}" class="sidebar-link {{ request()->routeIs('help.timesheet') ? 'active' : '' }}"><span class="icon">⏱️</span> {{ __('Timesheet') }}</a>
-        <a href="{{ route('help.leave-requests') }}" class="sidebar-link {{ request()->routeIs('help.leave-requests') ? 'active' : '' }}"><span class="icon">🏖️</span> {{ __('Leave Requests') }}</a>
-        <a href="{{ route('help.ot-requests') }}" class="sidebar-link {{ request()->routeIs('help.ot-requests') ? 'active' : '' }}"><span class="icon">🕐</span> {{ __('OT Requests') }}</a>
-        <a href="{{ route('help.calendar') }}" class="sidebar-link {{ request()->routeIs('help.calendar') ? 'active' : '' }}"><span class="icon">📅</span> {{ __('Calendar') }}</a>
-        <span class="sidebar-text">{{ __('Users') }}</span>
-        <a href="{{ route('help.teams') }}" class="sidebar-link {{ request()->routeIs('help.teams') ? 'active' : '' }}"><span class="icon">👥</span> {{ __('Teams') }}</a>
-        <a href="{{ route('help.users') }}" class="sidebar-link {{ request()->routeIs('help.users') ? 'active' : '' }}"><span class="icon">👤</span> {{ __('Users') }}</a>
+        <span class="sidebar-text">Work</span>
+        <a href="{{ route('help.dashboard') }}" class="sidebar-link {{ request()->routeIs('help.dashboard') ? 'active' : '' }}"><span class="icon">📊</span> Dashboard</a>
+        <a href="{{ route('help.announcements') }}" class="sidebar-link {{ request()->routeIs('help.announcements') ? 'active' : '' }}"><span class="icon">📢</span> Announcements</a>
+        <a href="{{ route('help.attendance') }}" class="sidebar-link {{ request()->routeIs('help.attendance') ? 'active' : '' }}"><span class="icon">🏢</span> Attendance</a>
+        <a href="{{ route('help.projects') }}" class="sidebar-link {{ request()->routeIs('help.projects') ? 'active' : '' }}"><span class="icon">📁</span> Projects</a>
+        <a href="{{ route('help.tasks') }}" class="sidebar-link {{ request()->routeIs('help.tasks') ? 'active' : '' }}"><span class="icon">✅</span> Tasks</a>
+        <a href="{{ route('help.timesheet') }}" class="sidebar-link {{ request()->routeIs('help.timesheet') ? 'active' : '' }}"><span class="icon">⏱️</span> Timesheet</a>
+        <a href="{{ route('help.leave-requests') }}" class="sidebar-link {{ request()->routeIs('help.leave-requests') ? 'active' : '' }}"><span class="icon">🏖️</span> Leave Requests</a>
+        <a href="{{ route('help.ot-requests') }}" class="sidebar-link {{ request()->routeIs('help.ot-requests') ? 'active' : '' }}"><span class="icon">🕐</span> OT Requests</a>
+        <a href="{{ route('help.calendar') }}" class="sidebar-link {{ request()->routeIs('help.calendar') ? 'active' : '' }}"><span class="icon">📅</span> Calendar</a>
+        <span class="sidebar-text">Users</span>
+        <a href="{{ route('help.teams') }}" class="sidebar-link {{ request()->routeIs('help.teams') ? 'active' : '' }}"><span class="icon">👥</span> Teams</a>
+        <a href="{{ route('help.users') }}" class="sidebar-link {{ request()->routeIs('help.users') ? 'active' : '' }}"><span class="icon">👤</span> Users</a>
         <a href="{{ route('help.roles') }}" class="sidebar-link {{ request()->routeIs('help.roles') ? 'active' : '' }}"><span class="icon">🔑</span> Roles &amp; Permissions</a>
-        <a href="{{ route('help.notifications') }}" class="sidebar-link {{ request()->routeIs('help.notifications') ? 'active' : '' }}"><span class="icon">🔔</span> {{ __('Notifications') }}</a>
-        <a href="{{ route('help.skills') }}" class="sidebar-link {{ request()->routeIs('help.skills') ? 'active' : '' }}"><span class="icon">📚</span> {{ __('Skills') }}</a>
-        <a href="{{ route('help.recruitment') }}" class="sidebar-link {{ request()->routeIs('help.recruitment') ? 'active' : '' }}"><span class="icon">🤝</span> {{ __('Recruitment') }}</a>
+        <a href="{{ route('help.notifications') }}" class="sidebar-link {{ request()->routeIs('help.notifications') ? 'active' : '' }}"><span class="icon">🔔</span> Notifications</a>
+        <a href="{{ route('help.skills') }}" class="sidebar-link {{ request()->routeIs('help.skills') ? 'active' : '' }}"><span class="icon">📚</span> Skills</a>
+        <a href="{{ route('help.recruitment') }}" class="sidebar-link {{ request()->routeIs('help.recruitment') ? 'active' : '' }}"><span class="icon">🤝</span> Recruitment</a>
     </nav>
 </aside>
 
