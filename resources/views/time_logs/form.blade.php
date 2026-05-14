@@ -4,7 +4,7 @@
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
                 {{ isset($timeLog) ? 'Edit Time Log' : 'Log Time' }}
             </h2>
-            <a href="{{ route('time-logs.index') }}"><x-secondary-button>Back</x-secondary-button></a>
+            <a href="{{ route('time-logs.index') }}"><x-secondary-button>{{ __('Back') }}</x-secondary-button></a>
         </div>
     </x-slot>
 
@@ -34,7 +34,7 @@
                     {{-- Project --}}
                     <div class="mb-4">
                         <x-input-label for="project_id" value="Linked Project" />
-                        <select id="project_id" name="project_id" placeholder="Search projects...">
+                        <select id="project_id" name="project_id" placeholder="{{ __('Search projects...') }}">
                             <option value="">— None —</option>
                             @if($initProject)
                                 <option value="{{ $initProject->id }}" selected>PJ-{{ $initProject->id }} {{ $initProject->name }}</option>
@@ -46,7 +46,7 @@
                     {{-- Task --}}
                     <div class="mb-4">
                         <x-input-label for="task_id" value="Linked Task" />
-                        <select id="task_id" name="task_id" placeholder="Search tasks...">
+                        <select id="task_id" name="task_id" placeholder="{{ __('Search tasks...') }}">
                             <option value="">— None —</option>
                             @if($initTask)
                                 <option value="{{ $initTask->id }}" selected>TK-{{ $initTask->id }} {{ $initTask->name }}</option>
@@ -57,10 +57,10 @@
 
                     {{-- Description --}}
                     <div class="mb-4">
-                        <x-input-label for="description" value="Description" />
+                        <x-input-label for="description" value="{{ __('Description') }}" />
                         <textarea id="description" name="description" rows="3"
                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                            placeholder="What did you work on?">{{ old('description', $timeLog->description ?? '') }}</textarea>
+                            placeholder="{{ __('What did you work on?') }}">{{ old('description', $timeLog->description ?? '') }}</textarea>
                         <x-input-error :messages="$errors->get('description')" class="mt-1" />
                     </div>
 
@@ -69,7 +69,7 @@
                         <x-input-label for="time_spent" value="Time Spent (hours) *" />
                         <x-text-input id="time_spent" name="time_spent" type="number" min="0.25" max="24" step="0.25"
                             class="mt-1 block w-full" x-model="time" required />
-                        <p class="mt-1 text-xs text-gray-500">Decimal hours: 0.5 = 30m, 1.5 = 1h 30m, etc.</p>
+                        <p class="mt-1 text-xs text-gray-500">{{ __('Decimal hours: 0.5 = 30m, 1.5 = 1h 30m, etc.') }}</p>
                         {{-- Quick buttons --}}
                         <div class="flex flex-wrap gap-1 mt-2">
                             @foreach([0.5 => '30m', 1 => '1h', 1.5 => '1h 30m', 2 => '2h', 2.5 => '2h 30m', 3 => '3h', 4 => '4h', 6 => '6h', 8 => '8h'] as $val => $label)
@@ -82,7 +82,7 @@
                     </div>
 
                     <div class="flex justify-end gap-2">
-                        <a href="{{ route('time-logs.index') }}"><x-secondary-button type="button">Cancel</x-secondary-button></a>
+                        <a href="{{ route('time-logs.index') }}"><x-secondary-button type="button">{{ __('Cancel') }}</x-secondary-button></a>
                         <x-primary-button type="submit">{{ isset($timeLog) ? 'Update' : 'Log Time' }}</x-primary-button>
                     </div>
                 </form>

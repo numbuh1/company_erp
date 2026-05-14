@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Settings</h2>
+        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">{{ __('Settings') }}</h2>
     </x-slot>
 
     <div class="py-8">
@@ -19,22 +19,22 @@
                         📍 Office Location
                     </h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
-                        Used to verify On-Site attendance.
+                        {{ __('Used to verify On-Site attendance.') }}
                     </p>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
-                            <x-input-label value="Office Name" />
+                            <x-input-label value="{{ __('Office Name') }}" />
                             <x-text-input name="office_name" class="w-full mt-1"
                                 value="{{ old('office_name', $settings['office_name']) }}"
-                                placeholder="e.g. Headquarters" />
+                                placeholder="{{ __('e.g. Headquarters') }}" />
                             @error('office_name')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         <div class="mb-4">
-                            <x-input-label value="Office Public IP(s)" />
+                            <x-input-label value="{{ __('Office Public IP(s)') }}" />
                             <x-text-input name="office_ips" class="w-full mt-1"
                                 value="{{ old('office_ips', $settings['office_ips']) }}"
                                 placeholder="e.g. 203.0.113.10, 203.0.113.11" />
@@ -48,7 +48,7 @@
                     </div> -->
 
                     <div class="flex justify-end">
-                        <x-primary-button>Save Settings</x-primary-button>
+                        <x-primary-button>{{ __('Save Settings') }}</x-primary-button>
                     </div>
                 </form>
             </div>

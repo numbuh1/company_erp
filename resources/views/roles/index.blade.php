@@ -2,12 +2,12 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                Roles
+                {{ __('Roles') }}
             </h2>
 
             @can('edit roles')
 			    <a href="{{ route('roles.create') }}">
-			        <x-primary-button>Create Role</x-primary-button>
+			        <x-primary-button>{{ __('Create Role') }}</x-primary-button>
 			    </a>
 			@endcan
         </div>
@@ -30,7 +30,7 @@
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                Role
+                                {{ __('Role') }}
                             </th>
 
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -38,7 +38,7 @@
                             </th>
 
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                                Actions
+                                {{ __('Actions') }}
                             </th>
                         </tr>
                     </thead>
@@ -86,7 +86,7 @@
 										    </div>
 										</div>
 									@empty
-									    <span class="text-gray-400">No modules</span>
+									    <span class="text-gray-400">{{ __('No modules') }}</span>
 									@endforelse
 								</td>
 
@@ -95,7 +95,7 @@
 
                                     @can('edit roles')
 									    <a href="{{ route('roles.edit', $role) }}">
-									        <x-secondary-button>Edit</x-secondary-button>
+									        <x-secondary-button>{{ __('Edit') }}</x-secondary-button>
 									    </a>
 									@endcan
 
@@ -104,7 +104,7 @@
 									        @csrf
 									        @method('DELETE')
 									        <x-danger-button onclick="return confirm('Delete this role?')">
-									            Delete
+									            {{ __('Delete') }}
 									        </x-danger-button>
 									    </form>
 									@endcan

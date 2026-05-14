@@ -38,7 +38,7 @@
     <x-slot name="header">
         <div class="flex items-center justify-between flex-wrap gap-3">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                Calendar
+                {{ __('Calendar') }}
                 <span class="text-base font-normal text-gray-500 dark:text-gray-400 ml-2">
                     @if($view === 'month')   {{ $date->format('F Y') }}
                     @elseif($view === 'week') {{ $calStart->format('d M') }} – {{ $calEnd->format('d M Y') }}
@@ -64,7 +64,7 @@
                 </a>
                 <a href="{{ route('calendar.index', array_merge(['view' => $view, 'date' => now()->toDateString()], $filterParams)) }}"
                     class="px-3 py-1.5 text-sm rounded-lg border bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-indigo-400 transition">
-                    Today
+                    {{ __('Today') }}
                 </a>
                 <a href="{{ route('calendar.index', array_merge(['view' => $view, 'date' => $nextDate], $filterParams)) }}"
                     class="px-3 py-1.5 text-sm rounded-lg border bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-indigo-400 transition">
@@ -95,7 +95,7 @@
                 <input type="hidden" name="date" value="{{ $date->toDateString() }}">
 
                 <div class="w-72">
-                    <x-input-label value="Event Types" />
+                    <x-input-label value="{{ __('Event Types') }}" />
                     <select id="filter-types" name="filter_types[]" multiple
                         class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
                         @foreach([
@@ -113,7 +113,7 @@
                 </div>
 
                 <div class="w-72">
-                    <x-input-label value="Location" />
+                    <x-input-label value="{{ __('Location') }}" />
                     <select id="filter-location" name="filter_location[]" multiple
                         class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
                         @foreach($locationOptions as $loc)
@@ -127,11 +127,11 @@
                 <div class="flex gap-2 pb-0.5">
                     <button type="submit"
                         class="px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition">
-                        Apply
+                        {{ __('Apply') }}
                     </button>
                     <a href="{{ route('calendar.index', ['view' => $view, 'date' => $date->toDateString()]) }}"
                         class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
-                        Reset
+                        {{ __('Reset') }}
                     </a>
                 </div>
             </form>
@@ -270,7 +270,7 @@
                                     @foreach($dayBirthdays as $bUser)
                                         <div class="text-xs px-1.5 py-1 rounded bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300">
                                             <div class="font-medium break-words">🎂 {{ $bUser->name }}</div>
-                                            <div class="opacity-80">Birthday</div>
+                                            <div class="opacity-80">{{ __('Birthday') }}</div>
                                         </div>
                                     @endforeach
                                 </div>
@@ -291,8 +291,8 @@
                         {{ $isDayHoliday ? $calHolidayBg : ($isDayWeekend ? $calWeekendBg : '') }}">
                         <h3 class="font-semibold text-gray-700 dark:text-gray-200">
                             {{ $date->format('l, d F Y') }}
-                            @if($isDayHoliday)<span class="ml-2 text-xs font-normal text-yellow-600 dark:text-yellow-400">Public Holiday</span>@endif
-                            @if($isDayWeekend && !$isDayHoliday)<span class="ml-2 text-xs font-normal text-gray-400">Weekend</span>@endif
+                            @if($isDayHoliday)<span class="ml-2 text-xs font-normal text-yellow-600 dark:text-yellow-400">{{ __('Public Holiday') }}</span>@endif
+                            @if($isDayWeekend && !$isDayHoliday)<span class="ml-2 text-xs font-normal text-gray-400">{{ __('Weekend') }}</span>@endif
                         </h3>
                     </div>
                     @php
@@ -302,7 +302,7 @@
                         $dayBirthdays = $birthdaysByDay->get($date->toDateString(), collect());
                     @endphp
                     @if($dayEvs->isEmpty() && $dayLeaves->isEmpty() && $dayOts->isEmpty() && $dayBirthdays->isEmpty())
-                        <div class="px-5 py-12 text-center text-sm text-gray-400">No events today.</div>
+                        <div class="px-5 py-12 text-center text-sm text-gray-400">{{ __('No events today.') }}</div>
                     @else
                         {{-- Events --}}
                         @foreach($dayEvs as $ev)
@@ -343,7 +343,7 @@
                         {{-- Leaves --}}
                         @foreach($dayLeaves as $leave)
                             <div class="flex gap-4 px-5 py-4 border-b border-gray-100 dark:border-gray-700 last:border-0">
-                                <div class="w-24 text-sm text-gray-500 dark:text-gray-400 shrink-0 pt-0.5">All day</div>
+                                <div class="w-24 text-sm text-gray-500 dark:text-gray-400 shrink-0 pt-0.5">{{ __('All day') }}</div>
                                 <div class="flex-1">
                                     <div class="flex items-center gap-2 flex-wrap">
                                         <span class="w-2 h-2 rounded-full bg-yellow-500 shrink-0"></span>
@@ -384,7 +384,7 @@
                         {{-- Birthdays --}}
                         @foreach($dayBirthdays as $bUser)
                             <div class="flex gap-4 px-5 py-4 border-b border-gray-100 dark:border-gray-700 last:border-0">
-                                <div class="w-24 text-sm text-gray-500 dark:text-gray-400 shrink-0 pt-0.5">All day</div>
+                                <div class="w-24 text-sm text-gray-500 dark:text-gray-400 shrink-0 pt-0.5">{{ __('All day') }}</div>
                                 <div class="flex-1">
                                     <div class="flex items-center gap-2 flex-wrap">
                                         <span class="w-2 h-2 rounded-full bg-pink-400 shrink-0"></span>

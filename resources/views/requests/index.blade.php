@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-wrap justify-between items-center gap-2">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200">All Requests</h2>
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200">{{ __('All Requests') }}</h2>
             <div class="flex items-center gap-2">
                 @php
                     $calDate   = $dateFrom ?: now()->format('Y-m-d');
@@ -27,7 +27,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                     </svg>
-                    Export
+                    {{ __('Export') }}
                 </a>
                 @can('module leaves')
                 <a href="{{ route('leave-requests.create') }}">
@@ -63,15 +63,15 @@
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created At</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Period</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hours</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sub-type</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Type') }}</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Created At') }}</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('User') }}</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Period') }}</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Hours') }}</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Sub-type') }}</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Status') }}</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Approver</th>
-                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{{ __('Actions') }}</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -125,12 +125,12 @@
                                 <td class="px-4 py-3">
                                     <span class="inline-block text-xs px-2 py-1 rounded
                                         {{ $isLeave ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800' }}">
-                                        {{ ucfirst($r->type) }}
+                                        {{ __( ucfirst($r->type) ) }}
                                     </span>
                                 </td>
                                 <td class="px-4 py-3">
                                     <span class="inline-block text-xs px-2 py-1 rounded {{ $statusClass }}">
-                                        {{ ucfirst($r->status) }}
+                                        {{ __( ucfirst($r->status) ) }}
                                     </span>
                                 </td>
                                 <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
@@ -139,18 +139,18 @@
                                 <td class="px-4 py-3 text-right">
                                     <div class="flex items-center justify-end gap-1.5">
                                         {{-- View --}}
-                                        <a href="{{ $showRoute }}" title="View"
+                                        <a href="{{ $showRoute }}" title="{{ __('View') }}"
                                             class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-blue-600 hover:border-blue-400 bg-white dark:bg-gray-700 transition">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                            <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">View</span>
+                                            <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">{{ __('View') }}</span>
                                         </a>
 
                                         {{-- Edit --}}
                                         @if($canEdit && !in_array($r->status, ['approved', 'rejected']))
-                                        <a href="{{ $editRoute }}" title="Edit"
+                                        <a href="{{ $editRoute }}" title="{{ __('Edit') }}"
                                             class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-yellow-600 hover:border-yellow-400 bg-white dark:bg-gray-700 transition">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                                            <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Edit</span>
+                                            <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">{{ __('Edit') }}</span>
                                         </a>
                                         @endif
 
@@ -158,16 +158,16 @@
                                         @if($canApprove && $r->status === 'pending')
                                         <form method="POST" action="{{ $approveRoute }}" class="inline">
                                             @csrf
-                                            <button type="submit" title="Approve"
+                                            <button type="submit" title="{{ __('Approve') }}"
                                                 class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-green-600 hover:border-green-400 bg-white dark:bg-gray-700 transition">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                                                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Approve</span>
+                                                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">{{ __('Approve') }}</span>
                                             </button>
                                         </form>
                                         <button type="button" onclick="openRejectModal('{{ $rejectRoute }}')"
                                             class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-red-600 hover:border-red-400 bg-white dark:bg-gray-700 transition">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                                            <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Reject</span>
+                                            <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">{{ __('Reject') }}</span>
                                         </button>
                                         @endif
                                     </div>
@@ -191,20 +191,20 @@
     {{-- Generic reject modal --}}
     <div id="rejectModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Reject Request</h3>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">{{ __('Reject Request') }}</h3>
             <form id="rejectForm" method="POST" action="">
                 @csrf
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Reason <span class="text-red-500">*</span>
+                        {{ __('Reason') }} <span class="text-red-500">*</span>
                     </label>
                     <textarea name="reject_reason" rows="4" required
                         class="w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm px-3 py-2 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500"
-                        placeholder="Enter rejection reason…"></textarea>
+                        placeholder="{{ __('Enter rejection reason…') }}"></textarea>
                 </div>
                 <div class="flex justify-end gap-2">
-                    <x-secondary-button type="button" onclick="closeRejectModal()">Cancel</x-secondary-button>
-                    <x-danger-button type="submit">Confirm Reject</x-danger-button>
+                    <x-secondary-button type="button" onclick="closeRejectModal()">{{ __('Cancel') }}</x-secondary-button>
+                    <x-danger-button type="submit">{{ __('Confirm Reject') }}</x-danger-button>
                 </div>
             </form>
         </div>

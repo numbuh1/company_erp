@@ -30,6 +30,13 @@ Route::get('/', function () {
         : redirect()->route('login');
 });
 
+Route::get('/locale/{locale}', function (string $locale) {
+    if (in_array($locale, ['en', 'vi'])) {
+        session(['locale' => $locale]);
+    }
+    return back();
+})->name('locale.switch');
+
 Route::prefix('help')->group(function () {
     Route::view('/', 'help.index')->name('help.index');
     Route::view('/getting-started', 'help.getting-started')->name('help.getting-started');

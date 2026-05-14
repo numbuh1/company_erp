@@ -14,7 +14,7 @@
 {{-- Sidebar panel --}}
 <aside x-cloak
     :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full sm:translate-x-0'"
-    class="fixed sm:sticky top-16 left-0 z-30 sm:z-auto
+    class="fixed sm:sticky top-16 left-0 z-30 sm:z-40
            h-[calc(100vh-4rem)] w-14 shrink-0 flex flex-col
            bg-white dark:bg-gray-800
            border-r border-gray-200 dark:border-gray-700
@@ -59,14 +59,14 @@
             <div x-show="open === 'dash'" x-cloak
                  @mouseenter="open = 'dash'" @mouseleave="open = null"
                  class="{{ $flyout }}">
-                <p class="{{ $flyHead }}">Dashboard</p>
+                <p class="{{ $flyHead }}">{{ __('Dashboard') }}</p>
                 <div class="px-1.5 space-y-0.5">
                     <a href="{{ route('dashboard') }}" class="{{ $flyItem('dashboard') }}">
                         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                         </svg>
-                        Dashboard
+                        {{ __('Dashboard') }}
                     </a>
                 </div>
             </div>
@@ -87,14 +87,14 @@
             <div x-show="open === 'work'" x-cloak
                  @mouseenter="open = 'work'" @mouseleave="open = null"
                  class="{{ $flyout }}">
-                <p class="{{ $flyHead }}">Work</p>
+                <p class="{{ $flyHead }}">{{ __('Work') }}</p>
                 <div class="px-1.5 space-y-0.5">
                     <a href="{{ route('attendance.index') }}" class="{{ $flyItem('attendance.*') }}">
                         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
-                        Attendance
+                        {{ __('Attendance') }}
                     </a>
                     @can('module announcements')
                     <a href="{{ route('announcements.index') }}" class="{{ $flyItem('announcements.*') }}">
@@ -102,7 +102,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
                         </svg>
-                        Announcements
+                        {{ __('Announcements') }}
                     </a>
                     @endcan
                     @can('module projects')
@@ -111,7 +111,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
                         </svg>
-                        Projects
+                        {{ __('Projects') }}
                     </a>
                     @endcan
                     @can('module tasks')
@@ -120,7 +120,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                         </svg>
-                        Tasks
+                        {{ __('Tasks') }}
                     </a>
                     @endcan
                     @can('module timesheet')
@@ -129,7 +129,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
                         </svg>
-                        Timesheet
+                        {{ __('Timesheet') }}
                     </a>
                     @endcan
                     @can('module calendar')
@@ -138,7 +138,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                         </svg>
-                        Calendar
+                        {{ __('Calendar') }}
                     </a>
                     @endcan
                 </div>
@@ -158,7 +158,7 @@
             <div x-show="open === 'people'" x-cloak
                  @mouseenter="open = 'people'" @mouseleave="open = null"
                  class="{{ $flyout }}">
-                <p class="{{ $flyHead }}">People</p>
+                <p class="{{ $flyHead }}">{{ __('People') }}</p>
                 <div class="px-1.5 space-y-0.5">
                     @can('module teams')
                     <a href="{{ route('teams.index') }}" class="{{ $flyItem('teams.*') }}">
@@ -166,7 +166,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                         </svg>
-                        Teams
+                        {{ __('Teams') }}
                     </a>
                     @endcan
                     @can('module user')
@@ -175,7 +175,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                         </svg>
-                        Users
+                        {{ __('Users') }}
                     </a>
                     @endcan
                     @can('module recruitment')
@@ -184,7 +184,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
                         </svg>
-                        Recruitment
+                        {{ __('Recruitment') }}
                     </a>
                     @endcan
                     @can('edit recruitment')
@@ -193,7 +193,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m1.636-6.364l.707.707M12 21v-1M6.343 17.657l-.707-.707M17.657 17.657l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/>
                         </svg>
-                        Skills
+                        {{ __('Skills') }}
                     </a>
                     @endcan
                 </div>
@@ -214,7 +214,7 @@
             <div x-show="open === 'requests'" x-cloak
                  @mouseenter="open = 'requests'" @mouseleave="open = null"
                  class="{{ $flyout }}">
-                <p class="{{ $flyHead }}">Requests</p>
+                <p class="{{ $flyHead }}">{{ __('Requests') }}</p>
                 <div class="px-1.5 space-y-0.5">
                     @canany(['module leaves', 'module ot'])
                     <a href="{{ route('requests.index') }}" class="{{ $flyItem('requests.*') }}">
@@ -222,7 +222,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/>
                         </svg>
-                        All Requests
+                        {{ __('All Requests') }}
                     </a>
                     @endcanany
                     @can('module leaves')
@@ -231,7 +231,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                         </svg>
-                        Leave Requests
+                        {{ __('Leave Requests') }}
                     </a>
                     @endcan
                     @can('module ot')
@@ -240,7 +240,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
-                        OT Requests
+                        {{ __('OT Requests') }}
                     </a>
                     @endcan
                 </div>
@@ -264,7 +264,7 @@
             <div x-show="open === 'admin'" x-cloak
                  @mouseenter="open = 'admin'" @mouseleave="open = null"
                  class="{{ $flyout }}">
-                <p class="{{ $flyHead }}">Admin</p>
+                <p class="{{ $flyHead }}">{{ __('Admin') }}</p>
                 <div class="px-1.5 space-y-0.5">
                     @can('module roles')
                     <a href="{{ route('roles.index') }}" class="{{ $flyItem('roles.*') }}">
@@ -272,7 +272,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                         </svg>
-                        Roles
+                        {{ __('Roles') }}
                     </a>
                     @endcan
                     @can('module settings')
@@ -283,14 +283,14 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                         </svg>
-                        Settings
+                        {{ __('Settings') }}
                     </a>
                     <a href="{{ route('admin.public-holidays.index') }}" class="{{ $flyItem('admin.public-holidays.*') }}">
                         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
                         </svg>
-                        Public Holidays
+                        {{ __('Public Holidays') }}
                     </a>
                     @endcan
                 </div>
