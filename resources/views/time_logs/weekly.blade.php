@@ -19,9 +19,16 @@
                     class="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
                     ← Prev
                 </a>
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {{ $weekStart->translatedFormat('d M') }} – {{ $weekEnd->translatedFormat('d M Y') }}
-                </span>
+                <form method="GET" action="{{ route('timesheets.weekly') }}" class="inline-flex items-center">
+                    @foreach($filterParams as $fpk => $fpv)
+                        <input type="hidden" name="{{ $fpk }}" value="{{ $fpv }}">
+                    @endforeach
+                    <input type="date" name="date"
+                           value="{{ $weekStart->format('Y-m-d') }}"
+                           onchange="this.form.submit()"
+                           title="{{ $weekStart->translatedFormat('d M') }} – {{ $weekEnd->translatedFormat('d M Y') }}"
+                           class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded text-sm px-2 py-1.5 cursor-pointer">
+                </form>
                 <a href="{{ route('timesheets.weekly', $nextParams) }}"
                     class="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
                     Next →

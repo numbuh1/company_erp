@@ -6,6 +6,7 @@ use App\Models\EventLocation;
 use App\Models\LeaveRequest;
 use App\Models\OvertimeRequest;
 use App\Models\PublicHoliday;
+use App\Models\Team;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -64,6 +65,25 @@ class CalendarController extends Controller
             $otUserIds = array_unique(array_merge([$userId], $teamIds));
         } else {
             $otUserIds = [$userId];
+        }
+
+        // ── Team filter ──────────────────────────────────────────────
+        $filterTeamId = (int) $request->input('filter_team');
+        if ($user->can('view teams')) {
+            $teamOptions = Team::orderBy('name')->get(['id', 'name']);
+        } elseif ($user->can('view own teams')) {
+            $teamOptions = $user->teams()->orderBy('teams.name')->get(['teams.id', 'teams.name']);
+        } else {
+            $teamOptions = collect();
+        }
+        if ($filterTeamId && $teamOptions->contains('id', $filterTeamId)) {
+            $teamMemberIds = Team::find($filterTeamId)?->users()->pluck('users.id')->toArray() ?? [];
+            $leaveUserIds = $leaveUserIds === null
+                ? $teamMemberIds
+                : array_values(array_intersect($leaveUserIds, $teamMemberIds));
+            $otUserIds = $otUserIds === null
+                ? $teamMemberIds
+                : array_values(array_intersect($otUserIds, $teamMemberIds));
         }
 
         // ── Events ──────────────────────────────────────────────────
@@ -156,8 +176,9 @@ class CalendarController extends Controller
         };
 
         $filterParams = [];
-        if (!empty($filterTypes))   $filterParams['filter_types']    = $filterTypes;
+        if (!empty($filterTypes))     $filterParams['filter_types']    = $filterTypes;
         if (!empty($filterLocations)) $filterParams['filter_location'] = $filterLocations;
+        if ($filterTeamId)            $filterParams['filter_team']     = $filterTeamId;
 
         $locationOptions = EventLocation::orderBy('name')->pluck('name');
         $holidayDates = PublicHoliday::getHolidayDates($calStart->copy()->startOfDay(), $calEnd->copy()->endOfDay());
@@ -188,7 +209,8 @@ class CalendarController extends Controller
             'calStart', 'calEnd', 'rangeStart', 'rangeEnd',
             'prevDate', 'nextDate',
             'filterTypes', 'filterLocations', 'locationOptions', 'filterParams',
-            'holidayDates', 'birthdaysByDay'
+            'holidayDates', 'birthdaysByDay',
+            'teamOptions', 'filterTeamId'
         ));
     }
 }

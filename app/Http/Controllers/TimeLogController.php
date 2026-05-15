@@ -181,7 +181,13 @@ class TimeLogController extends Controller
         $user        = auth()->user();
         $viewableIds = $this->_viewableUserIds($user);
 
-        $offset  = (int) $request->query('offset', 0);
+        if ($request->filled('date')) {
+            $jumpMonday = Carbon::parse($request->input('date'))->startOfWeek(Carbon::MONDAY);
+            $thisMonday = Carbon::now()->startOfWeek(Carbon::MONDAY);
+            $offset = (int) round(($jumpMonday->timestamp - $thisMonday->timestamp) / (7 * 86400));
+        } else {
+            $offset = (int) $request->query('offset', 0);
+        }
         $groupBy = $request->query('group', 'context'); // 'context' or 'user'
         $weekStart = Carbon::now()->startOfWeek(Carbon::MONDAY)->addWeeks($offset);
         $weekEnd   = $weekStart->copy()->endOfWeek(Carbon::SUNDAY);

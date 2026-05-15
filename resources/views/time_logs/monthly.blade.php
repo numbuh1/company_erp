@@ -104,9 +104,15 @@
                         class="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
                         ← Prev
                     </a>
-                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-300 min-w-[110px] text-center">
-                        {{ $monthDate->translatedFormat('F Y') }}
-                    </span>
+                    <form method="GET" action="{{ route('timesheets.monthly') }}" class="inline-flex">
+                        @foreach($navParams as $npk => $npv)
+                            <input type="hidden" name="{{ $npk }}" value="{{ $npv }}">
+                        @endforeach
+                        <input type="month" name="month"
+                               value="{{ $monthStr }}"
+                               onchange="this.form.submit()"
+                               class="text-sm font-semibold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded px-3 py-1.5 min-w-[130px] text-center cursor-pointer">
+                    </form>
                     <a href="{{ route('timesheets.monthly', array_merge(['month' => $nextMonth], $navParams)) }}"
                         class="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
                         Next →

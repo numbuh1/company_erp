@@ -71,6 +71,25 @@
                     Next ›
                 </a>
 
+                @if($view !== 'month')
+                <form method="GET" action="{{ route('calendar.index') }}" class="inline-flex">
+                    <input type="hidden" name="view" value="{{ $view }}">
+                    @foreach($filterParams as $fk => $fv)
+                        @if(is_array($fv))
+                            @foreach($fv as $fitem)
+                                <input type="hidden" name="{{ $fk }}[]" value="{{ $fitem }}">
+                            @endforeach
+                        @else
+                            <input type="hidden" name="{{ $fk }}" value="{{ $fv }}">
+                        @endif
+                    @endforeach
+                    <input type="date" name="date"
+                           value="{{ $view === 'week' ? $calStart->format('Y-m-d') : $date->format('Y-m-d') }}"
+                           onchange="this.form.submit()"
+                           class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-lg text-sm px-2 py-1.5 cursor-pointer">
+                </form>
+                @endif
+
                 @can('module calendar')
                     <button onclick="openEventModal()"
                         class="px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition">
@@ -123,6 +142,21 @@
                         @endforeach
                     </select>
                 </div>
+
+                @if($teamOptions->isNotEmpty())
+                <div class="w-48">
+                    <x-input-label value="Nhóm" />
+                    <select name="filter_team"
+                        class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
+                        <option value="">Tất cả nhóm</option>
+                        @foreach($teamOptions as $t)
+                            <option value="{{ $t->id }}" {{ $filterTeamId == $t->id ? 'selected' : '' }}>
+                                {{ $t->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                @endif
 
                 <div class="flex gap-2 pb-0.5">
                     <button type="submit"
