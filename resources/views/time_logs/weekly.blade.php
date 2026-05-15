@@ -14,7 +14,7 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Bảng giờ tuần</h2>
-            <a href="{{ route('time-logs.create') }}"><x-primary-button>Ghi giờ</x-primary-button></a>
+            <a href="{{ route('time-logs.create') }}"><x-primary-button>Chấm công</x-primary-button></a>
         </div>
     </x-slot>
 

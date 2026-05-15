@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                {{ isset($timeLog) ? 'Chỉnh sửa Ghi giờ' : 'Ghi giờ' }}
+                {{ isset($timeLog) ? 'Chỉnh sửa Chấm công' : 'Chấm công' }}
             </h2>
             <a href="{{ route('time-logs.index') }}"><x-secondary-button>Quay lại</x-secondary-button></a>
         </div>
@@ -18,7 +18,7 @@
 
                     {{-- Date --}}
                     <div class="mb-4">
-                        <x-input-label for="date" value="Date *" />
+                        <x-input-label for="date" value="Ngày *" />
                         <x-text-input id="date" name="date" type="date" class="mt-1 block w-full"
                             value="{{ old('date', isset($timeLog) ? $timeLog->date->format('Y-m-d') : now()->format('Y-m-d')) }}" required />
                         <x-input-error :messages="$errors->get('date')" class="mt-1" />
@@ -33,7 +33,7 @@
 
                     {{-- Project --}}
                     <div class="mb-4">
-                        <x-input-label for="project_id" value="Linked Project" />
+                        <x-input-label for="project_id" value="Dự án" />
                         <select id="project_id" name="project_id" placeholder="Tìm kiếm dự án...">
                             <option value="">— None —</option>
                             @if($initProject)
@@ -45,7 +45,7 @@
 
                     {{-- Task --}}
                     <div class="mb-4">
-                        <x-input-label for="task_id" value="Linked Task" />
+                        <x-input-label for="task_id" value="Công việc" />
                         <select id="task_id" name="task_id" placeholder="Tìm kiếm công việc...">
                             <option value="">— None —</option>
                             @if($initTask)
@@ -66,7 +66,7 @@
 
                     {{-- Time Spent --}}
                     <div class="mb-6">
-                        <x-input-label for="time_spent" value="Time Spent (hours) *" />
+                        <x-input-label for="time_spent" value="Số giờ *" />
                         <x-text-input id="time_spent" name="time_spent" type="number" min="0.25" max="24" step="0.25"
                             class="mt-1 block w-full" x-model="time" required />
                         <p class="mt-1 text-xs text-gray-500">Giờ thập phân: 0.5 = 30 phút, 1.5 = 1 giờ 30 phút,...</p>
@@ -83,7 +83,7 @@
 
                     <div class="flex justify-end gap-2">
                         <a href="{{ route('time-logs.index') }}"><x-secondary-button type="button">Hủy</x-secondary-button></a>
-                        <x-primary-button type="submit">{{ isset($timeLog) ? 'Lưu' : 'Ghi giờ' }}</x-primary-button>
+                        <x-primary-button type="submit">{{ isset($timeLog) ? 'Lưu' : 'Chấm công' }}</x-primary-button>
                     </div>
                 </form>
             </div>

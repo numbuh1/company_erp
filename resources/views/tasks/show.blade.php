@@ -6,7 +6,7 @@
                 <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">{{ $task->name }}</h2>
             </div>
             <div class="flex gap-2">
-                <a href="{{ route('time-logs.create', ['task_id' => $task->id]) }}"><x-secondary-button>Ghi giờ</x-secondary-button></a>
+                <a href="{{ route('time-logs.create', ['task_id' => $task->id]) }}"><x-secondary-button>Chấm công</x-secondary-button></a>
                 @canany(['edit tasks', 'edit assigned tasks'])
                     <a href="{{ route('tasks.edit', $task) }}"><x-secondary-button>Chỉnh sửa</x-secondary-button></a>
                 @endcanany

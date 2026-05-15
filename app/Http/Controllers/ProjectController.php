@@ -54,7 +54,7 @@ class ProjectController extends Controller
             'actual_end_date'   => 'nullable|date',
             'teams'             => 'nullable|array',
             'members'           => 'nullable|array',
-            'status'            => 'nullable|string|in:Not Started,In Progress,Done',
+            'status'            => 'nullable|string',
         ]);
 
         $project = Project::create($data);
@@ -149,7 +149,7 @@ class ProjectController extends Controller
             'actual_end_date'   => 'nullable|date',
             'teams'             => 'nullable|array',
             'members'           => 'nullable|array',
-            'status'            => 'nullable|string|in:Not Started,In Progress,Done',
+            'status'            => 'nullable|string',
         ]);
 
         $project->update($data);

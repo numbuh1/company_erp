@@ -58,7 +58,7 @@ class TaskController extends Controller
             'expected_end_date' => 'nullable|date',
             'actual_end_date'   => 'nullable|date',
             'assignees'         => 'nullable|array',
-            'status'            => 'nullable|string|in:Not Started,In Progress,Done',
+            'status'            => 'nullable|string',
         ]);
 
         $task = Task::create($data);
@@ -131,7 +131,7 @@ class TaskController extends Controller
             'expected_end_date' => 'nullable|date',
             'actual_end_date'   => 'nullable|date',
             'assignees'         => 'nullable|array',
-            'status'            => 'nullable|string|in:Not Started,In Progress,Done',
+            'status'            => 'nullable|string',
         ]);
 
         $task->update($data);
