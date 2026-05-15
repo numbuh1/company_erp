@@ -265,10 +265,18 @@
                         </div>
 
                         {{-- Salary --}}
+                        @php $sr = isset($user) ? $user->salaryRecord : null; @endphp
                         <div class="mb-4"
                             x-data="{
-                                salary: '{{ old('salary', $user->salary ?? '') }}',
-                                salaryType: '{{ old('salary_type', $user->salary_type ?? 'monthly') }}',
+                                salary:       '{{ old('salary', $user->salary ?? '') }}',
+                                salaryType:   '{{ old('salary_type', $user->salary_type ?? 'monthly') }}',
+                                allowAdj:     '{{ old('allowance_adjustment', $sr?->allowance_adjustment ?? '') }}',
+                                allowBonus:   '{{ old('allowance_bonus', $sr?->allowance_bonus ?? '') }}',
+                                allowExclTax: '{{ old('allowance_excl_tax', $sr?->allowance_excl_tax ?? '') }}',
+                                parking:      '{{ old('parking_fee', $sr?->parking_fee ?? '') }}',
+                                insurance:    '{{ old('insurance', $sr?->insurance ?? '') }}',
+                                pit:          '{{ old('personal_income_tax', $sr?->personal_income_tax ?? '') }}',
+                                otherDed:     '{{ old('other_deduction', $sr?->other_deduction ?? '') }}',
                                 get h() { const s = parseFloat(this.salary); if (!s) return null;
                                     return { monthly: s/160, weekly: s/40, daily: s/8, hourly: s }[this.salaryType] ?? null; },
                                 get d() { const s = parseFloat(this.salary); if (!s) return null;
@@ -277,10 +285,20 @@
                                     return { monthly: s/4, weekly: s, daily: s*5, hourly: s*40 }[this.salaryType] ?? null; },
                                 get m() { const s = parseFloat(this.salary); if (!s) return null;
                                     return { monthly: s, weekly: s*4, daily: s*20, hourly: s*160 }[this.salaryType] ?? null; },
+                                get totalAllowance() {
+                                    return (parseFloat(this.allowAdj)||0) + (parseFloat(this.allowBonus)||0) + (parseFloat(this.allowExclTax)||0);
+                                },
+                                get totalDeduction() {
+                                    return (parseFloat(this.parking)||0) + (parseFloat(this.insurance)||0) + (parseFloat(this.pit)||0) + (parseFloat(this.otherDed)||0);
+                                },
+                                get grossPay() { const s = parseFloat(this.salary); if (!s) return null; return s + this.totalAllowance; },
+                                get netPay()   { const g = this.grossPay; if (g === null) return null; return g - this.totalDeduction; },
                                 fmt(n) { if (n === null) return '—';
                                     return new Intl.NumberFormat('vi-VN').format(Math.round(n)); }
                             }">
-                            <x-input-label value="Lương" />
+
+                            {{-- Base salary --}}
+                            <x-input-label value="Lương cơ bản" />
                             <div class="flex gap-2 mt-1">
                                 <input type="number" name="salary" min="0" step="1" x-model="salary"
                                     placeholder="Nhập mức lương…"
@@ -311,6 +329,85 @@
                                     <div><span x-text="fmt(m)"></span> ₫</div>
                                 </div>
                             </div>
+
+                            {{-- Allowances --}}
+                            <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-5 mb-2">
+                                Phụ cấp
+                                <span class="ml-2 normal-case font-normal text-indigo-600 dark:text-indigo-400" x-show="totalAllowance !== 0">
+                                    Tổng: <span x-text="fmt(totalAllowance)"></span> ₫
+                                </span>
+                            </p>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div>
+                                    <x-input-label value="Điều chỉnh (±)" />
+                                    <input type="number" name="allowance_adjustment" step="1" x-model="allowAdj"
+                                        placeholder="0"
+                                        class="mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                                </div>
+                                <div>
+                                    <x-input-label value="Thưởng / Bonus" />
+                                    <input type="number" name="allowance_bonus" min="0" step="1" x-model="allowBonus"
+                                        placeholder="0"
+                                        class="mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                                </div>
+                                <div>
+                                    <x-input-label value="Phụ cấp miễn thuế" />
+                                    <input type="number" name="allowance_excl_tax" min="0" step="1" x-model="allowExclTax"
+                                        placeholder="0"
+                                        class="mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                                </div>
+                            </div>
+
+                            {{-- Deductions --}}
+                            <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-5 mb-2">
+                                Khấu trừ
+                                <span class="ml-2 normal-case font-normal text-red-500 dark:text-red-400" x-show="totalDeduction > 0">
+                                    Tổng: <span x-text="fmt(totalDeduction)"></span> ₫
+                                </span>
+                            </p>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                <div>
+                                    <x-input-label value="Phí gửi xe" />
+                                    <input type="number" name="parking_fee" min="0" step="1" x-model="parking"
+                                        placeholder="0"
+                                        class="mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                                </div>
+                                <div>
+                                    <x-input-label value="Bảo hiểm" />
+                                    <input type="number" name="insurance" min="0" step="1" x-model="insurance"
+                                        placeholder="0"
+                                        class="mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                                </div>
+                                <div>
+                                    <x-input-label value="Thuế TNCN" />
+                                    <input type="number" name="personal_income_tax" min="0" step="1" x-model="pit"
+                                        placeholder="0"
+                                        class="mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                                </div>
+                                <div>
+                                    <x-input-label value="Khấu trừ khác" />
+                                    <input type="number" name="other_deduction" min="0" step="1" x-model="otherDed"
+                                        placeholder="0"
+                                        class="mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                                </div>
+                            </div>
+
+                            {{-- Gross / Net summary --}}
+                            <div class="mt-4 grid grid-cols-2 gap-3" x-show="grossPay !== null">
+                                <div class="bg-indigo-50 dark:bg-indigo-900/30 rounded-lg px-4 py-3">
+                                    <p class="text-xs text-indigo-500 dark:text-indigo-400 mb-1">Tổng thu nhập (Gross)</p>
+                                    <p class="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+                                        <span x-text="fmt(grossPay)"></span> ₫
+                                    </p>
+                                </div>
+                                <div class="bg-green-50 dark:bg-green-900/30 rounded-lg px-4 py-3">
+                                    <p class="text-xs text-green-500 dark:text-green-400 mb-1">Thực lĩnh (Net)</p>
+                                    <p class="text-sm font-semibold text-green-700 dark:text-green-300">
+                                        <span x-text="fmt(netPay)"></span> ₫
+                                    </p>
+                                </div>
+                            </div>
+
                         </div>
 
                         {{-- Leave Balance --}}

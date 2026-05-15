@@ -117,7 +117,12 @@ class User extends Authenticatable
         };
     }
 
-    // Relationship
+    // Relationships
+    public function salaryRecord()
+    {
+        return $this->hasOne(Salary::class);
+    }
+
     public function teams()
     {
         return $this->belongsToMany(Team::class)

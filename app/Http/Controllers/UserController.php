@@ -12,7 +12,7 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users           = User::with(['roles', 'teams'])->paginate(20);
+        $users           = User::with(['roles', 'teams', 'salaryRecord'])->paginate(20);
         $canViewSalary   = auth()->user()->canAny(['view salary', 'edit all user']);
         $canViewPersonal = auth()->user()->canAny(['view all user personal info', 'edit all user']);
         return view('users.index', compact('users', 'canViewSalary', 'canViewPersonal'));
@@ -28,20 +28,28 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name'                => 'required',
-            'full_name'           => 'nullable|string|max:255',
-            'email'               => 'required|email|unique:users',
-            'password'            => 'required|min:6|confirmed',
-            'birthday'            => 'nullable|date',
-            'contract_expiry'     => 'nullable|date',
-            'salary'              => 'nullable|integer|min:0',
-            'salary_type'         => 'nullable|in:monthly,weekly,daily,hourly',
-            'phone_number'        => 'nullable|string|max:30',
-            'citizen_id'          => 'nullable|string|max:30',
-            'home_address'        => 'nullable|string',
-            'tax_code'            => 'nullable|string|max:20',
-            'social_insurance_id' => 'nullable|string|max:20',
-            'roles'               => 'array',
+            'name'                 => 'required',
+            'full_name'            => 'nullable|string|max:255',
+            'email'                => 'required|email|unique:users',
+            'password'             => 'required|min:6|confirmed',
+            'birthday'             => 'nullable|date',
+            'contract_expiry'      => 'nullable|date',
+            'salary'               => 'nullable|integer|min:0',
+            'salary_type'          => 'nullable|in:monthly,weekly,daily,hourly',
+            'phone_number'         => 'nullable|string|max:30',
+            'citizen_id'           => 'nullable|string|max:30',
+            'home_address'         => 'nullable|string',
+            'tax_code'             => 'nullable|string|max:20',
+            'social_insurance_id'  => 'nullable|string|max:20',
+            'roles'                => 'array',
+            // Salary table fields
+            'allowance_adjustment' => 'nullable|integer',
+            'allowance_bonus'      => 'nullable|integer|min:0',
+            'allowance_excl_tax'   => 'nullable|integer|min:0',
+            'parking_fee'          => 'nullable|integer|min:0',
+            'insurance'            => 'nullable|integer|min:0',
+            'personal_income_tax'  => 'nullable|integer|min:0',
+            'other_deduction'      => 'nullable|integer|min:0',
         ]);
 
         $data['password'] = bcrypt($data['password']);
@@ -60,6 +68,17 @@ class UserController extends Controller
                 'home_address'         => $request->input('home_address'),
                 'tax_code'             => $request->input('tax_code'),
                 'social_insurance_id'  => $request->input('social_insurance_id'),
+            ]);
+            $user->salaryRecord()->updateOrCreate([], [
+                'salary'               => $request->input('salary') ?: null,
+                'salary_type'          => $request->input('salary_type') ?: null,
+                'allowance_adjustment' => $request->input('allowance_adjustment') ?: null,
+                'allowance_bonus'      => $request->input('allowance_bonus') ?: null,
+                'allowance_excl_tax'   => $request->input('allowance_excl_tax') ?: null,
+                'parking_fee'          => $request->input('parking_fee') ?: null,
+                'insurance'            => $request->input('insurance') ?: null,
+                'personal_income_tax'  => $request->input('personal_income_tax') ?: null,
+                'other_deduction'      => $request->input('other_deduction') ?: null,
             ]);
         }
 
@@ -82,7 +101,7 @@ class UserController extends Controller
     {
         $roles             = Role::all();
         $supervisorOptions = User::where('id', '!=', $user->id)->orderBy('name')->get(['id', 'name', 'position']);
-        $user->load('supervisors');
+        $user->load(['supervisors', 'salaryRecord']);
         return view('users.form', compact('user', 'roles', 'supervisorOptions'));
     }
 
@@ -113,21 +132,29 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $data = $request->validate([
-            'name'                => 'required',
-            'full_name'           => 'nullable|string|max:255',
-            'email'               => 'required|email|unique:users,email,' . $user->id,
-            'password'            => 'nullable|min:6|confirmed',
-            'position'            => 'nullable|string|max:255',
-            'birthday'            => 'nullable|date',
-            'contract_expiry'     => 'nullable|date',
-            'salary'              => 'nullable|integer|min:0',
-            'salary_type'         => 'nullable|in:monthly,weekly,daily,hourly',
-            'phone_number'        => 'nullable|string|max:30',
-            'citizen_id'          => 'nullable|string|max:30',
-            'home_address'        => 'nullable|string',
-            'tax_code'            => 'nullable|string|max:20',
-            'social_insurance_id' => 'nullable|string|max:20',
-            'roles'               => 'array',
+            'name'                 => 'required',
+            'full_name'            => 'nullable|string|max:255',
+            'email'                => 'required|email|unique:users,email,' . $user->id,
+            'password'             => 'nullable|min:6|confirmed',
+            'position'             => 'nullable|string|max:255',
+            'birthday'             => 'nullable|date',
+            'contract_expiry'      => 'nullable|date',
+            'salary'               => 'nullable|integer|min:0',
+            'salary_type'          => 'nullable|in:monthly,weekly,daily,hourly',
+            'phone_number'         => 'nullable|string|max:30',
+            'citizen_id'           => 'nullable|string|max:30',
+            'home_address'         => 'nullable|string',
+            'tax_code'             => 'nullable|string|max:20',
+            'social_insurance_id'  => 'nullable|string|max:20',
+            'roles'                => 'array',
+            // Salary table fields
+            'allowance_adjustment' => 'nullable|integer',
+            'allowance_bonus'      => 'nullable|integer|min:0',
+            'allowance_excl_tax'   => 'nullable|integer|min:0',
+            'parking_fee'          => 'nullable|integer|min:0',
+            'insurance'            => 'nullable|integer|min:0',
+            'personal_income_tax'  => 'nullable|integer|min:0',
+            'other_deduction'      => 'nullable|integer|min:0',
         ]);
 
         // HR-only fields: strip from data when caller isn't an admin
@@ -180,6 +207,17 @@ class UserController extends Controller
                 'home_address'         => $request->input('home_address'),
                 'tax_code'             => $request->input('tax_code'),
                 'social_insurance_id'  => $request->input('social_insurance_id'),
+            ]);
+            $user->salaryRecord()->updateOrCreate([], [
+                'salary'               => $request->input('salary') ?: null,
+                'salary_type'          => $request->input('salary_type') ?: null,
+                'allowance_adjustment' => $request->input('allowance_adjustment') ?: null,
+                'allowance_bonus'      => $request->input('allowance_bonus') ?: null,
+                'allowance_excl_tax'   => $request->input('allowance_excl_tax') ?: null,
+                'parking_fee'          => $request->input('parking_fee') ?: null,
+                'insurance'            => $request->input('insurance') ?: null,
+                'personal_income_tax'  => $request->input('personal_income_tax') ?: null,
+                'other_deduction'      => $request->input('other_deduction') ?: null,
             ]);
         }
 

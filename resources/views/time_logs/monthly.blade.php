@@ -240,11 +240,21 @@
                                 $workHours  = $logsByDay[$dk]  ?? 0;
                                 $otHours    = $otByDay[$dk]    ?? 0;
                                 $leaveHours = $leaveByDay[$dk] ?? 0;
+                                $cellListUrl = route('time-logs.index', array_filter([
+                                    'date_from' => $dk,
+                                    'date_to'   => $dk,
+                                    'user_id'   => ($mode === 'individual') ? $selectedUserId : null,
+                                    'team_id'   => ($mode === 'team' && $selectedTeamId) ? $selectedTeamId : null,
+                                ]));
+                                $hasCellData = ($workHours > 0 || $otHours > 0 || $leaveHours > 0) && $isInMonth;
                             @endphp
-                            <div class="min-h-[88px] px-2 py-1.5 border-r border-gray-100 dark:border-gray-700 last:border-0
-                                {{ $isHoliday  ? $calHolidayBg
-                                    : ($isWeekend ? $calWeekendBg
-                                        : (!$isInMonth ? $calOutsideBg : '')) }}">
+                            <div x-data="{ cellUrl: {{ json_encode($hasCellData ? $cellListUrl : '') }} }"
+                                @click="if(cellUrl) window.location=cellUrl"
+                                class="min-h-[88px] px-2 py-1.5 border-r border-gray-100 dark:border-gray-700 last:border-0
+                                    {{ $hasCellData ? 'cursor-pointer hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition' : '' }}
+                                    {{ $isHoliday  ? $calHolidayBg
+                                        : ($isWeekend ? $calWeekendBg
+                                            : (!$isInMonth ? $calOutsideBg : '')) }}">
 
                                 {{-- Day number --}}
                                 <div class="text-xs font-semibold mb-1 w-6 h-6 flex items-center justify-center rounded-full
@@ -254,7 +264,7 @@
                                     {{ $cursor->day }}
                                 </div>
 
-                                {{-- Work hours (green) --}}
+                                {{-- Work hours (green) — non-interactive, cell click handles it --}}
                                 @if($workHours > 0)
                                     <div class="text-xs px-1.5 py-0.5 rounded font-medium mb-0.5 truncate
                                         bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400">
@@ -262,21 +272,40 @@
                                     </div>
                                 @endif
 
-                                {{-- OT hours (yellow) --}}
-                                @if($otHours > 0)
-                                    <div class="text-xs px-1.5 py-0.5 rounded font-medium mb-0.5 truncate
-                                        bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400">
-                                        OT {{ \App\Models\TimeLog::formatTime($otHours) }}
-                                    </div>
-                                @endif
+                                {{-- OT pills — each links to its own show page --}}
+                                @foreach($otsByDay[$dk] ?? [] as $ot)
+                                    <a href="{{ route('overtime-requests.show', $ot->id) }}"
+                                       @click.stop
+                                       x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false"
+                                       class="relative block text-xs px-1.5 py-0.5 rounded font-medium mb-0.5 truncate
+                                           bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400
+                                           hover:bg-yellow-200 dark:hover:bg-yellow-800/60 transition">
+                                        OT {{ \App\Models\TimeLog::formatTime($ot->hours) }}
+                                        @if($ot->description)
+                                            <div x-show="open" x-cloak
+                                                class="absolute z-50 bottom-full left-0 mb-1 bg-gray-900 text-white text-xs rounded px-2 py-1.5 shadow-xl pointer-events-none w-48 font-normal"
+                                                style="white-space: pre-wrap;">{{ $ot->description }}</div>
+                                        @endif
+                                    </a>
+                                @endforeach
 
-                                {{-- Leave hours (red) --}}
-                                @if($leaveHours > 0)
-                                    <div class="text-xs px-1.5 py-0.5 rounded font-medium truncate
-                                        bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400">
-                                        Leave {{ \App\Models\TimeLog::formatTime($leaveHours) }}
-                                    </div>
-                                @endif
+                                {{-- Leave pills — each links to its own show page --}}
+                                @foreach($leavesByDay[$dk] ?? [] as $leaveEntry)
+                                    @php $leave = $leaveEntry['model']; $lh = $leaveEntry['hours']; @endphp
+                                    <a href="{{ route('leave-requests.show', $leave->id) }}"
+                                       @click.stop
+                                       x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false"
+                                       class="relative block text-xs px-1.5 py-0.5 rounded font-medium mb-0.5 truncate
+                                           bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400
+                                           hover:bg-red-200 dark:hover:bg-red-800/60 transition">
+                                        Leave {{ \App\Models\TimeLog::formatTime($lh) }}
+                                        @if($leave->description)
+                                            <div x-show="open" x-cloak
+                                                class="absolute z-50 bottom-full left-0 mb-1 bg-gray-900 text-white text-xs rounded px-2 py-1.5 shadow-xl pointer-events-none w-48 font-normal"
+                                                style="white-space: pre-wrap;">{{ $leave->description }}</div>
+                                        @endif
+                                    </a>
+                                @endforeach
 
                             </div>
                             @php $cursor->addDay(); @endphp

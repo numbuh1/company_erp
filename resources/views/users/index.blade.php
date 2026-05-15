@@ -84,12 +84,21 @@
                         {{-- Salary columns --}}
                         @if($canViewSalary)
                         @php $thSal = "px-3 py-2 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap"; @endphp
-                        <th x-show="tab === 'salary'" class="{{ $thSal }} text-left min-w-[8rem]">Lương thực nhận</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} text-left min-w-[8rem]">Lương CB</th>
                         <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[5rem]">Chu kì</th>
                         <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[6rem]">/Giờ</th>
                         <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[6rem]">/Ngày</th>
                         <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[6rem]">/Tuần</th>
                         <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[7rem]">/Tháng</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[7rem]">Điều chỉnh</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[6rem]">Thưởng</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[7rem]">PC MT</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[6rem]">Gửi xe</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[6rem]">BH</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[6rem]">T.TNCN</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[7rem]">KT khác</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[8rem]">Gross</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[8rem]">Net</th>
                         @endif
 
                         {{-- Leaves columns --}}
@@ -195,7 +204,9 @@
                             @if($canViewSalary)
                             @php
                                 $typeLabel = ['monthly'=>'Tháng','weekly'=>'Tuần','daily'=>'Ngày','hourly'=>'Giờ'];
-                                $fmtN = fn(?float $n) => $n ? number_format($n, 0, '.', ',') : '—';
+                                $fmtN  = fn(?float $n) => $n ? number_format((int)$n, 0, '.', ',') : '—';
+                                $fmtSgn = fn(?int $n) => $n === null ? '—' : number_format($n, 0, '.', ',');
+                                $sr    = $user->salaryRecord;
                             @endphp
                             <td x-show="tab === 'salary'" class="px-3 py-2 whitespace-nowrap text-right tabular-nums text-gray-800 dark:text-gray-200 font-medium">
                                 @if($user->salary)
@@ -228,6 +239,37 @@
                             </td>
                             <td x-show="tab === 'salary'" class="px-3 py-2 whitespace-nowrap text-right tabular-nums text-xs text-gray-600 dark:text-gray-400">
                                 {{ $user->salary ? $fmtN($user->monthly_rate) . ' ₫' : '—' }}
+                            </td>
+                            {{-- New salary detail columns --}}
+                            @php
+                                $tdSal = "px-3 py-2 whitespace-nowrap text-right tabular-nums text-xs text-gray-600 dark:text-gray-400";
+                            @endphp
+                            <td x-show="tab === 'salary'" class="{{ $tdSal }} {{ ($sr?->allowance_adjustment < 0) ? 'text-red-500 dark:text-red-400' : '' }}">
+                                {{ $sr ? $fmtSgn($sr->allowance_adjustment) . ($sr->allowance_adjustment !== null ? ' ₫' : '') : '—' }}
+                            </td>
+                            <td x-show="tab === 'salary'" class="{{ $tdSal }}">
+                                {{ $sr ? $fmtN($sr->allowance_bonus) . ($sr->allowance_bonus ? ' ₫' : '') : '—' }}
+                            </td>
+                            <td x-show="tab === 'salary'" class="{{ $tdSal }}">
+                                {{ $sr ? $fmtN($sr->allowance_excl_tax) . ($sr->allowance_excl_tax ? ' ₫' : '') : '—' }}
+                            </td>
+                            <td x-show="tab === 'salary'" class="{{ $tdSal }}">
+                                {{ $sr ? $fmtN($sr->parking_fee) . ($sr->parking_fee ? ' ₫' : '') : '—' }}
+                            </td>
+                            <td x-show="tab === 'salary'" class="{{ $tdSal }}">
+                                {{ $sr ? $fmtN($sr->insurance) . ($sr->insurance ? ' ₫' : '') : '—' }}
+                            </td>
+                            <td x-show="tab === 'salary'" class="{{ $tdSal }}">
+                                {{ $sr ? $fmtN($sr->personal_income_tax) . ($sr->personal_income_tax ? ' ₫' : '') : '—' }}
+                            </td>
+                            <td x-show="tab === 'salary'" class="{{ $tdSal }}">
+                                {{ $sr ? $fmtN($sr->other_deduction) . ($sr->other_deduction ? ' ₫' : '') : '—' }}
+                            </td>
+                            <td x-show="tab === 'salary'" class="px-3 py-2 whitespace-nowrap text-right tabular-nums text-xs font-medium text-indigo-600 dark:text-indigo-400">
+                                {{ $sr?->gross_pay ? number_format($sr->gross_pay, 0, '.', ',') . ' ₫' : '—' }}
+                            </td>
+                            <td x-show="tab === 'salary'" class="px-3 py-2 whitespace-nowrap text-right tabular-nums text-xs font-medium text-green-600 dark:text-green-400">
+                                {{ $sr?->net_pay ? number_format($sr->net_pay, 0, '.', ',') . ' ₫' : '—' }}
                             </td>
                             @endif
 

@@ -210,20 +210,16 @@
                                             @php
                                                 $cellDescs = array_filter($cell['descriptions']);
                                                 $tooltip   = implode("\n", $cellDescs);
-                                                if (count($cell['logs']) === 1) {
-                                                    $cellUrl = route('time-logs.show', $cell['logs'][0]->id);
-                                                } else {
-                                                    $params = ['date' => $dayKey];
-                                                    if ($row['type'] === 'task')        $params['task_id']    = $row['task_id'];
-                                                    elseif ($row['type'] === 'project') $params['project_id'] = $row['project_id'];
-                                                    elseif ($row['type'] === 'user')    $params['user_id']    = $row['user_id'];
-                                                    else                                $params['no_context'] = 1;
-                                                    if ($row['type'] !== 'user') {
-                                                        if ($selectedTeamId)     $params['team_id'] = $selectedTeamId;
-                                                        elseif ($selectedUserId) $params['user_id'] = $selectedUserId;
-                                                    }
-                                                    $cellUrl = route('time-logs.index', $params);
+                                                $params = ['date_from' => $dayKey, 'date_to' => $dayKey];
+                                                if ($row['type'] === 'task')        $params['task_id']    = $row['task_id'];
+                                                elseif ($row['type'] === 'project') $params['project_id'] = $row['project_id'];
+                                                elseif ($row['type'] === 'user')    $params['user_id']    = $row['user_id'];
+                                                else                                $params['no_context'] = 1;
+                                                if ($row['type'] !== 'user') {
+                                                    if ($selectedTeamId)     $params['team_id'] = $selectedTeamId;
+                                                    elseif ($selectedUserId) $params['user_id'] = $selectedUserId;
                                                 }
+                                                $cellUrl = route('time-logs.index', $params);
                                             @endphp
                                             <div x-data="{ open: false }" class="relative inline-block"
                                                 @mouseenter="open = true" @mouseleave="open = false">

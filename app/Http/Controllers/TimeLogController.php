@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use App\Models\LeaveRequest;
 use App\Models\OvertimeRequest;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class TimeLogController extends Controller
 {
@@ -23,27 +24,60 @@ class TimeLogController extends Controller
         $user        = auth()->user();
         $viewableIds = $this->_viewableUserIds($user);
 
-        $query = TimeLog::with(['project', 'task', 'user']);
-
-        if ($viewableIds !== null) {
-            $query->whereIn('user_id', $viewableIds);
-        }
-
-        // Team filter (for those who can see team/all)
+        // Resolve effective user scope for both queries
+        $effectiveIds = $viewableIds; // null = all
         if ($request->filled('team_id') && ($user->can('view all timesheet') || $user->can('view team timesheet'))) {
-            $teamMemberIds = Team::find($request->team_id)?->users()->pluck('users.id') ?? collect();
-            $query->whereIn('user_id', $teamMemberIds);
+            $teamMembers  = Team::find($request->team_id)?->users()->pluck('users.id')->toArray() ?? [];
+            $effectiveIds = $viewableIds !== null ? array_values(array_intersect($teamMembers, $viewableIds)) : $teamMembers;
         } elseif ($request->filled('user_id') && ($viewableIds === null || count($viewableIds) > 1)) {
-            $query->where('user_id', $request->user_id);
+            $uid          = (int) $request->user_id;
+            $effectiveIds = ($viewableIds === null || in_array($uid, $viewableIds)) ? [$uid] : $viewableIds;
         }
 
-        if ($request->filled('date_from'))   $query->whereDate('date', '>=', $request->date_from);
-        if ($request->filled('date_to'))     $query->whereDate('date', '<=', $request->date_to);
-        if ($request->filled('project_id'))  $query->where('project_id', $request->project_id);
-        if ($request->filled('task_id'))     $query->where('task_id', $request->task_id);
-        if ($request->boolean('no_context')) $query->whereNull('project_id')->whereNull('task_id');
+        // ── Time logs ──
+        $logsQuery = TimeLog::with(['project', 'task', 'user']);
+        if ($effectiveIds !== null) $logsQuery->whereIn('user_id', $effectiveIds);
+        if ($request->filled('date_from'))   $logsQuery->whereDate('date', '>=', $request->date_from);
+        if ($request->filled('date_to'))     $logsQuery->whereDate('date', '<=', $request->date_to);
+        if ($request->filled('project_id'))  $logsQuery->where('project_id', $request->project_id);
+        if ($request->filled('task_id'))     $logsQuery->where('task_id', $request->task_id);
+        if ($request->boolean('no_context')) $logsQuery->whereNull('project_id')->whereNull('task_id');
 
-        $logs     = $query->orderByDesc('date')->orderByDesc('created_at')->paginate(20)->withQueryString();
+        // ── Approved OT (skip when task/no_context filter active) ──
+        $otItems = collect();
+        if (!$request->filled('task_id') && !$request->boolean('no_context')) {
+            $otQuery = OvertimeRequest::with(['user'])->where('status', 'approved');
+            if ($effectiveIds !== null) $otQuery->whereIn('user_id', $effectiveIds);
+            if ($request->filled('date_from')) $otQuery->whereDate('start_at', '>=', $request->date_from);
+            if ($request->filled('date_to'))   $otQuery->whereDate('start_at', '<=', $request->date_to);
+            if ($request->filled('project_id')) $otQuery->where('project_id', $request->project_id);
+            $otItems = $otQuery->get();
+        }
+
+        // ── Merge, sort, paginate ──
+        $allItems = collect();
+        foreach ($logsQuery->get() as $log) {
+            $allItems->push(['_type' => 'log', '_date' => $log->date->format('Y-m-d'), '_ts' => $log->created_at?->timestamp ?? 0, '_model' => $log]);
+        }
+        foreach ($otItems as $ot) {
+            $allItems->push(['_type' => 'ot', '_date' => Carbon::parse($ot->start_at)->format('Y-m-d'), '_ts' => $ot->created_at?->timestamp ?? 0, '_model' => $ot]);
+        }
+        $allItems = $allItems->sort(function ($a, $b) {
+            if ($a['_date'] !== $b['_date']) return strcmp($b['_date'], $a['_date']);
+            return $b['_ts'] <=> $a['_ts'];
+        })->values();
+
+        $perPage   = 20;
+        $page      = max(1, (int) $request->input('page', 1));
+        $logs      = new LengthAwarePaginator(
+            $allItems->slice(($page - 1) * $perPage, $perPage)->values(),
+            $allItems->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url()]
+        );
+        $logs->appends($request->except('page'));
+
         $projects = Project::orderBy('name')->get();
         $tasks    = Task::orderBy('name')->get();
 
@@ -417,13 +451,15 @@ class TimeLogController extends Controller
             ->where('end_at',   '>=', $monthStart)
             ->get();
 
-        $otByDay = [];
-        $totalOt = 0;
+        $otByDay  = [];
+        $otsByDay = [];
+        $totalOt  = 0;
         foreach ($otRequests as $ot) {
             $dk = Carbon::parse($ot->start_at)->toDateString();
             if ($dk >= $monthStart->toDateString() && $dk <= $monthEnd->toDateString()) {
-                $otByDay[$dk] = ($otByDay[$dk] ?? 0) + $ot->hours;
-                $totalOt     += $ot->hours;
+                $otByDay[$dk]  = ($otByDay[$dk] ?? 0) + $ot->hours;
+                $otsByDay[$dk][] = $ot;
+                $totalOt       += $ot->hours;
             }
         }
 
@@ -434,8 +470,9 @@ class TimeLogController extends Controller
             ->where('end_at',   '>=', $monthStart)
             ->get();
 
-        $leaveByDay = [];
-        $totalLeave = 0;
+        $leaveByDay  = [];
+        $leavesByDay = [];
+        $totalLeave  = 0;
         foreach ($leaveRequests as $leave) {
             $lStart      = Carbon::parse($leave->start_at)->startOfDay();
             $lEnd        = Carbon::parse($leave->end_at)->startOfDay();
@@ -445,9 +482,10 @@ class TimeLogController extends Controller
             $cursor   = $lStart->copy()->max($monthStart->copy()->startOfDay());
             $clampEnd = $lEnd->copy()->min($monthEnd->copy()->startOfDay());
             while ($cursor->lte($clampEnd)) {
-                $dk              = $cursor->toDateString();
-                $leaveByDay[$dk] = ($leaveByDay[$dk] ?? 0) + $hoursPerDay;
-                $totalLeave     += $hoursPerDay;
+                $dk                = $cursor->toDateString();
+                $leaveByDay[$dk]   = ($leaveByDay[$dk] ?? 0) + $hoursPerDay;
+                $leavesByDay[$dk][] = ['model' => $leave, 'hours' => $hoursPerDay];
+                $totalLeave       += $hoursPerDay;
                 $cursor->addDay();
             }
         }
@@ -458,7 +496,7 @@ class TimeLogController extends Controller
             'selectedUser', 'selectedTeam', 'selectedTeamId',
             'filterUsers', 'filterTeams', 'selectedUserId', 'mode',
             'monthDate', 'monthStart', 'monthEnd', 'calStart', 'calEnd',
-            'logsByDay', 'otByDay', 'leaveByDay',
+            'logsByDay', 'otByDay', 'leaveByDay', 'otsByDay', 'leavesByDay',
             'totalWork', 'totalOt', 'totalLeave',
             'holidayDates', 'prevMonth', 'nextMonth', 'monthStr'
         ));
@@ -536,19 +574,20 @@ class TimeLogController extends Controller
                 if (!isset($taskRowData[$taskKey])) {
                     $task = $log->task_id ? ($projectTasks->get($log->task_id) ?? $log->task) : null;
                     $taskRowData[$taskKey] = [
-                        'task'        => $task,
-                        'task_id'     => $log->task_id,
-                        'label'       => $log->task_id
+                        'task'           => $task,
+                        'task_id'        => $log->task_id,
+                        'label'          => $log->task_id
                             ? 'TK-' . $log->task_id . ($task ? ' · ' . $task->name : '')
                             : '(Không có nhiệm vụ)',
-                        'days'        => [],
-                        'total_hours' => 0,
-                        'total_ot'    => 0,
-                        'total_cost'  => 0,
+                        'days'           => [],
+                        'total_hours'    => 0,
+                        'total_ot'       => 0,
+                        'total_cost'     => 0,
+                        'total_ot_cost'  => 0,
                     ];
                 }
                 if (!isset($taskRowData[$taskKey]['days'][$dk])) {
-                    $taskRowData[$taskKey]['days'][$dk] = ['hours' => 0, 'ot_hours' => 0, 'cost' => 0];
+                    $taskRowData[$taskKey]['days'][$dk] = ['hours' => 0, 'ot_hours' => 0, 'cost' => 0, 'ot_cost' => 0];
                 }
                 $taskRowData[$taskKey]['days'][$dk]['hours'] += $log->time_spent;
                 $taskRowData[$taskKey]['days'][$dk]['cost']  += $cost;
@@ -568,24 +607,25 @@ class TimeLogController extends Controller
                 if (!isset($taskRowData[$taskKey])) {
                     $task = $ot->task_id ? $projectTasks->get($ot->task_id) : null;
                     $taskRowData[$taskKey] = [
-                        'task'        => $task,
-                        'task_id'     => $ot->task_id,
-                        'label'       => $ot->task_id
+                        'task'          => $task,
+                        'task_id'       => $ot->task_id,
+                        'label'         => $ot->task_id
                             ? 'TK-' . $ot->task_id . ($task ? ' · ' . $task->name : '')
                             : '(Không có nhiệm vụ)',
-                        'days'        => [],
-                        'total_hours' => 0,
-                        'total_ot'    => 0,
-                        'total_cost'  => 0,
+                        'days'          => [],
+                        'total_hours'   => 0,
+                        'total_ot'      => 0,
+                        'total_cost'    => 0,
+                        'total_ot_cost' => 0,
                     ];
                 }
                 if (!isset($taskRowData[$taskKey]['days'][$dk])) {
-                    $taskRowData[$taskKey]['days'][$dk] = ['hours' => 0, 'ot_hours' => 0, 'cost' => 0];
+                    $taskRowData[$taskKey]['days'][$dk] = ['hours' => 0, 'ot_hours' => 0, 'cost' => 0, 'ot_cost' => 0];
                 }
-                $taskRowData[$taskKey]['days'][$dk]['ot_hours'] += $ot->hours;
-                $taskRowData[$taskKey]['days'][$dk]['cost']     += $cost;
-                $taskRowData[$taskKey]['total_ot']              += $ot->hours;
-                $taskRowData[$taskKey]['total_cost']            += $cost;
+                $taskRowData[$taskKey]['days'][$dk]['ot_hours']  += $ot->hours;
+                $taskRowData[$taskKey]['days'][$dk]['ot_cost']   += $cost;
+                $taskRowData[$taskKey]['total_ot']               += $ot->hours;
+                $taskRowData[$taskKey]['total_ot_cost']          += $cost;
             }
             $taskRows = $taskRowData;
 
@@ -600,16 +640,17 @@ class TimeLogController extends Controller
 
                 if (!isset($userRowData[$userKey])) {
                     $userRowData[$userKey] = [
-                        'user'        => $userObj ?? $log->user,
-                        'user_id'     => $log->user_id,
-                        'days'        => [],
-                        'total_hours' => 0,
-                        'total_ot'    => 0,
-                        'total_cost'  => 0,
+                        'user'          => $userObj ?? $log->user,
+                        'user_id'       => $log->user_id,
+                        'days'          => [],
+                        'total_hours'   => 0,
+                        'total_ot'      => 0,
+                        'total_cost'    => 0,
+                        'total_ot_cost' => 0,
                     ];
                 }
                 if (!isset($userRowData[$userKey]['days'][$dk])) {
-                    $userRowData[$userKey]['days'][$dk] = ['hours' => 0, 'ot_hours' => 0, 'cost' => 0];
+                    $userRowData[$userKey]['days'][$dk] = ['hours' => 0, 'ot_hours' => 0, 'cost' => 0, 'ot_cost' => 0];
                 }
                 $userRowData[$userKey]['days'][$dk]['hours'] += $log->time_spent;
                 $userRowData[$userKey]['days'][$dk]['cost']  += $cost;
@@ -628,21 +669,22 @@ class TimeLogController extends Controller
 
                 if (!isset($userRowData[$userKey])) {
                     $userRowData[$userKey] = [
-                        'user'        => $userObj ?? $ot->user,
-                        'user_id'     => $ot->user_id,
-                        'days'        => [],
-                        'total_hours' => 0,
-                        'total_ot'    => 0,
-                        'total_cost'  => 0,
+                        'user'          => $userObj ?? $ot->user,
+                        'user_id'       => $ot->user_id,
+                        'days'          => [],
+                        'total_hours'   => 0,
+                        'total_ot'      => 0,
+                        'total_cost'    => 0,
+                        'total_ot_cost' => 0,
                     ];
                 }
                 if (!isset($userRowData[$userKey]['days'][$dk])) {
-                    $userRowData[$userKey]['days'][$dk] = ['hours' => 0, 'ot_hours' => 0, 'cost' => 0];
+                    $userRowData[$userKey]['days'][$dk] = ['hours' => 0, 'ot_hours' => 0, 'cost' => 0, 'ot_cost' => 0];
                 }
-                $userRowData[$userKey]['days'][$dk]['ot_hours'] += $ot->hours;
-                $userRowData[$userKey]['days'][$dk]['cost']     += $cost;
-                $userRowData[$userKey]['total_ot']              += $ot->hours;
-                $userRowData[$userKey]['total_cost']            += $cost;
+                $userRowData[$userKey]['days'][$dk]['ot_hours']  += $ot->hours;
+                $userRowData[$userKey]['days'][$dk]['ot_cost']   += $cost;
+                $userRowData[$userKey]['total_ot']               += $ot->hours;
+                $userRowData[$userKey]['total_ot_cost']          += $cost;
             }
 
             uasort($userRowData, fn($a, $b) => strcmp($a['user']?->name ?? '', $b['user']?->name ?? ''));
@@ -651,26 +693,28 @@ class TimeLogController extends Controller
             // Day totals (from user rows to avoid double-count)
             foreach ($days as $day) {
                 $dk              = $day->format('Y-m-d');
-                $dayTotals[$dk]  = ['hours' => 0, 'ot_hours' => 0, 'cost' => 0];
+                $dayTotals[$dk]  = ['hours' => 0, 'ot_hours' => 0, 'cost' => 0, 'ot_cost' => 0];
                 foreach ($userRows as $row) {
                     $dayTotals[$dk]['hours']    += $row['days'][$dk]['hours']    ?? 0;
                     $dayTotals[$dk]['ot_hours'] += $row['days'][$dk]['ot_hours'] ?? 0;
                     $dayTotals[$dk]['cost']     += $row['days'][$dk]['cost']     ?? 0;
+                    $dayTotals[$dk]['ot_cost']  += $row['days'][$dk]['ot_cost']  ?? 0;
                 }
             }
         }
 
         // Grand totals & daily stats
-        $grandTotalHours = (float) collect($dayTotals)->sum('hours');
-        $grandTotalOt    = (float) collect($dayTotals)->sum('ot_hours');
-        $grandTotalCost  = (float) collect($dayTotals)->sum('cost');
+        $grandTotalHours   = (float) collect($dayTotals)->sum('hours');
+        $grandTotalOt      = (float) collect($dayTotals)->sum('ot_hours');
+        $grandTotalCost    = (float) collect($dayTotals)->sum('cost');
+        $grandTotalOtCost  = (float) collect($dayTotals)->sum('ot_cost');
 
         $activeDayHours = array_values(array_filter(
             array_map(fn($d) => $d['hours'] + $d['ot_hours'], $dayTotals),
             fn($h) => $h > 0
         ));
         $activeDayCosts = array_values(array_filter(
-            array_map(fn($d) => $d['cost'], $dayTotals),
+            array_map(fn($d) => $d['cost'] + $d['ot_cost'], $dayTotals),
             fn($c) => $c > 0
         ));
 
@@ -689,7 +733,7 @@ class TimeLogController extends Controller
             'monthDate', 'monthStart', 'monthEnd', 'days',
             'prevMonth', 'nextMonth', 'monthStr',
             'taskRows', 'userRows', 'dayTotals',
-            'grandTotalHours', 'grandTotalOt', 'grandTotalCost',
+            'grandTotalHours', 'grandTotalOt', 'grandTotalCost', 'grandTotalOtCost',
             'maxHours', 'minHours', 'medianHours',
             'maxCost', 'minCost', 'medianCost',
             'holidayDates', 'canViewSalary'
