@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (!navigator.geolocation) {
-            showError('Geolocation is not supported by your browser. Please use WFH instead.');
+            showError('Trình duyệt không hỗ trợ định vị. Vui lòng chọn WFH hoặc liên hệ với HR/Admin.');
             return;
         }
 
@@ -60,14 +60,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     form.submit();
                 } else {
                     showError(
-                        'You are ' + dist.toFixed(1) + ' km from the office (limit: ' + officeRadius + ' km). ' +
-                        'Please use Work from Home instead.'
+                        'Bạn đang ở vị trí cách công ty ' + dist.toFixed(1) + ' km (khoảng cách tối đa: ' + officeRadius + ' km). ' +
+                        'Vui lòng chọn WFH hoặc liên hệ với HR/Admin.'
                     );
                 }
             },
             function (err) {
                 setLoading(false);
-                showError('Unable to get your location (' + err.message + '). Please use WFH or enable location access.');
+                showError('Không thể tìm vị trí của bạn (' + err.message + '). Vui lòng bật Định vị, chọn WFH hoặc liên hệ với HR/Admin.');
             },
             { timeout: 10000, maximumAge: 60000 }
         );
