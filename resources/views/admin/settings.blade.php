@@ -15,7 +15,7 @@
                     @csrf
                     @method('PUT')
 
-                    <!-- <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-1">
+                    <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-1">
                         📍 Office Location
                     </h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
@@ -45,7 +45,7 @@
                             </p>
                             @error('office_ips')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                         </div>
-                    </div> -->
+                    </div>
 
                     <div class="flex justify-end">
                         <x-primary-button>Lưu cài đặt</x-primary-button>
