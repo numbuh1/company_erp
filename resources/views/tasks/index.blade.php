@@ -1,10 +1,10 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Nhiệm vụ</h2>
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Công việc</h2>
             @can('edit tasks')
                 <a href="{{ route('tasks.create') }}">
-                    <x-primary-button>Tạo nhiệm vụ</x-primary-button>
+                    <x-primary-button>Tạo Công việc</x-primary-button>
                 </a>
             @endcan
         </div>
@@ -21,7 +21,7 @@
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nhiệm vụ</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Công việc</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tên</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dự án</th>
