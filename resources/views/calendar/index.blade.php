@@ -35,6 +35,7 @@
             const teamEl = document.getElementById('filter-team');
             if (teamEl) {
                 new TomSelect('#filter-team', {
+                    plugins: ['remove_button'],
                     maxOptions: null,
                     allowEmptyOption: true,
                     placeholder: 'Tất cả nhóm…',
@@ -153,7 +154,7 @@
                 </div>
 
                 @if($teamOptions->isNotEmpty())
-                <div class="w-48">
+                <div class="w-72">
                     <x-input-label value="Nhóm" />
                     <select id="filter-team" name="filter_team"
                         class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
