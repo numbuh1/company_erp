@@ -364,7 +364,7 @@
                             <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Tổng giờ</div>
                             <div class="text-lg font-bold text-gray-800 dark:text-gray-100">{{ $fmtHours($grandTotalHours + $grandTotalOt) }}</div>
                             @if($grandTotalOt > 0)
-                                <div class="text-xs text-orange-500">trong đó OT: +{{ $fmtHours($grandTotalOt) }}</div>
+                                <div class="text-xs text-orange-500">OT: {{ $fmtHours($grandTotalOt) }}</div>
                             @endif
                         </div>
                         @if($canViewSalary && ($grandTotalCost + $grandTotalOtCost) > 0)
@@ -372,28 +372,9 @@
                             <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Tổng chi phí</div>
                             <div class="text-lg font-bold text-gray-800 dark:text-gray-100">{{ number_format($grandTotalCost + $grandTotalOtCost, 0, '.', ',') }} ₫</div>
                             @if($grandTotalOtCost > 0)
-                                <div class="text-xs text-orange-500 mt-0.5">trong đó OT: +{{ number_format($grandTotalOtCost, 0, '.', ',') }} ₫</div>
+                                <div class="text-xs text-orange-500 mt-0.5">OT: {{ number_format($grandTotalOtCost, 0, '.', ',') }} ₫</div>
                             @endif
                         </div>
-                        @endif
-                        <div>
-                            <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Giờ/ngày (ngày có log)</div>
-                            <div class="text-sm text-gray-700 dark:text-gray-300 space-y-0.5">
-                                <div>Max: <span class="font-semibold">{{ $fmtHours($maxHours) }}</span></div>
-                                <div>Min: <span class="font-semibold">{{ $fmtHours($minHours) }}</span></div>
-                                <div>Median: <span class="font-semibold">{{ $fmtHours($medianHours) }}</span></div>
-                            </div>
-                        </div>
-                        @if($canViewSalary && $grandTotalCost > 0)
-                        <div>
-                            <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Chi phí/ngày (ngày có log)</div>
-                            <div class="text-sm text-gray-700 dark:text-gray-300 space-y-0.5">
-                                <div>Max: <span class="font-semibold">{{ $fmtCost($maxCost) }} ₫</span></div>
-                                <div>Min: <span class="font-semibold">{{ $fmtCost($minCost) }} ₫</span></div>
-                                <div>Median: <span class="font-semibold">{{ $fmtCost($medianCost) }} ₫</span></div>
-                            </div>
-                        </div>
-                        @endif
                     </div>
                 </div>
                 @endif
