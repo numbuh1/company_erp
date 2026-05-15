@@ -31,6 +31,15 @@
                 placeholder: 'All locations…',
                 create: false,
             });
+
+            const teamEl = document.getElementById('filter-team');
+            if (teamEl) {
+                new TomSelect('#filter-team', {
+                    maxOptions: null,
+                    allowEmptyOption: true,
+                    placeholder: 'Tất cả nhóm…',
+                });
+            }
         });
         </script>
     @endpush
@@ -146,7 +155,7 @@
                 @if($teamOptions->isNotEmpty())
                 <div class="w-48">
                     <x-input-label value="Nhóm" />
-                    <select name="filter_team"
+                    <select id="filter-team" name="filter_team"
                         class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
                         <option value="">Tất cả nhóm</option>
                         @foreach($teamOptions as $t)

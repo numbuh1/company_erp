@@ -14,31 +14,7 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Bảng giờ tuần</h2>
-            <div class="flex items-center gap-3">
-                <a href="{{ route('timesheets.weekly', $prevParams) }}"
-                    class="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
-                    ← Prev
-                </a>
-                <form method="GET" action="{{ route('timesheets.weekly') }}" class="inline-flex items-center">
-                    @foreach($filterParams as $fpk => $fpv)
-                        <input type="hidden" name="{{ $fpk }}" value="{{ $fpv }}">
-                    @endforeach
-                    <input type="date" name="date"
-                           value="{{ $weekStart->format('Y-m-d') }}"
-                           onchange="this.form.submit()"
-                           title="{{ $weekStart->translatedFormat('d M') }} – {{ $weekEnd->translatedFormat('d M Y') }}"
-                           class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded text-sm px-2 py-1.5 cursor-pointer">
-                </form>
-                <a href="{{ route('timesheets.weekly', $nextParams) }}"
-                    class="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
-                    Next →
-                </a>
-                @if($offset !== 0)
-                    <a href="{{ route('timesheets.weekly', $thisWeekParams) }}"
-                        class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Tuần này</a>
-                @endif
-                <a href="{{ route('time-logs.create') }}"><x-primary-button>Ghi giờ</x-primary-button></a>
-            </div>
+            <a href="{{ route('time-logs.create') }}"><x-primary-button>Ghi giờ</x-primary-button></a>
         </div>
     </x-slot>
 
@@ -71,16 +47,43 @@
                 </nav>
             </div>
 
-            {{-- User / Team filter --}}
-            @if($filterUsers || $filterTeams)
+            {{-- Combined: week nav + user/team filter --}}
+            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg px-4 py-3 flex flex-wrap gap-3 items-center justify-between">
+
+                {{-- Week navigation --}}
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('timesheets.weekly', $prevParams) }}"
+                        class="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
+                        ← Prev
+                    </a>
+                    <form method="GET" action="{{ route('timesheets.weekly') }}" class="inline-flex">
+                        @foreach($filterParams as $fpk => $fpv)
+                            <input type="hidden" name="{{ $fpk }}" value="{{ $fpv }}">
+                        @endforeach
+                        <input type="date" name="date"
+                               value="{{ $weekStart->format('Y-m-d') }}"
+                               onchange="this.form.submit()"
+                               title="{{ $weekStart->translatedFormat('d M') }} – {{ $weekEnd->translatedFormat('d M Y') }}"
+                               class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded text-sm px-2 py-1.5 cursor-pointer">
+                    </form>
+                    <a href="{{ route('timesheets.weekly', $nextParams) }}"
+                        class="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
+                        Next →
+                    </a>
+                    @if($offset !== 0)
+                        <a href="{{ route('timesheets.weekly', $thisWeekParams) }}"
+                            class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Tuần này</a>
+                    @endif
+                </div>
+
+                {{-- User / Team filter --}}
+                @if($filterUsers || $filterTeams)
                 <form method="GET"
                       x-data="{ mode: '{{ $mode }}' }"
-                      class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-4 flex flex-wrap gap-3 items-end">
+                      class="flex flex-wrap gap-2 items-end">
                     <input type="hidden" name="offset" value="{{ $offset }}">
-                    {{-- Preserve current group-by when Apply is clicked --}}
                     <input type="hidden" name="group" value="{{ $groupBy }}">
 
-                    {{-- Left: Individual / Team --}}
                     <div>
                         <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Xem</label>
                         <select name="mode" x-model="mode"
@@ -92,7 +95,6 @@
                         </select>
                     </div>
 
-                    {{-- Right: individual list --}}
                     <div x-show="mode === 'individual'">
                         <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Thành viên</label>
                         <select name="user_id"
@@ -105,7 +107,6 @@
                         </select>
                     </div>
 
-                    {{-- Right: team list --}}
                     @if($filterTeams && $filterTeams->isNotEmpty())
                         <div x-show="mode === 'team'">
                             <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Nhóm</label>
@@ -125,7 +126,9 @@
                         <x-secondary-button type="button">Đặt lại</x-secondary-button>
                     </a>
                 </form>
-            @endif
+                @endif
+
+            </div>
 
             {{-- Group-by toggle (only visible when user can see multiple people) --}}
             @if($filterUsers)
