@@ -46,7 +46,7 @@ class TimeLogController extends Controller
         // ── Approved OT (skip when task/no_context filter active) ──
         $otItems = collect();
         if (!$request->filled('task_id') && !$request->boolean('no_context')) {
-            $otQuery = OvertimeRequest::with(['user'])->where('status', 'approved');
+            $otQuery = OvertimeRequest::with(['user', 'task', 'project'])->where('status', 'approved');
             if ($effectiveIds !== null) $otQuery->whereIn('user_id', $effectiveIds);
             if ($request->filled('date_from')) $otQuery->whereDate('start_at', '>=', $request->date_from);
             if ($request->filled('date_to'))   $otQuery->whereDate('start_at', '<=', $request->date_to);

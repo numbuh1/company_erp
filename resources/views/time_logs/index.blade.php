@@ -147,10 +147,20 @@
                                 @endif
                                 <td class="px-4 py-3 text-sm">
                                     @if($isOt)
-                                        <span class="inline-flex items-center gap-1.5">
-                                            <span class="text-xs font-semibold px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400">OT</span>
-                                            <span class="text-gray-600 dark:text-gray-400">{{ $model->type }}</span>
-                                        </span>
+                                        <div class="flex flex-wrap items-center gap-1.5">
+                                            <span class="text-xs font-semibold px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400 shrink-0">OT</span>
+                                            @if($model->task)
+                                                <a href="{{ route('tasks.show', $model->task) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
+                                                    <span class="font-mono text-xs font-semibold">TK-{{ $model->task_id }}</span>
+                                                    <span class="ml-1">{{ $model->task->name }}</span>
+                                                </a>
+                                            @elseif($model->project)
+                                                <a href="{{ route('projects.show', $model->project) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
+                                                    <span class="font-mono text-xs font-semibold">PJ-{{ $model->project_id }}</span>
+                                                    <span class="ml-1">{{ $model->project->name }}</span>
+                                                </a>
+                                            @endif
+                                        </div>
                                     @else
                                         @if($model->task)
                                             <a href="{{ route('tasks.show', $model->task) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
@@ -171,7 +181,12 @@
                                     {{ $model->description ?? '—' }}
                                 </td>
                                 <td class="px-4 py-3 text-sm font-semibold whitespace-nowrap {{ $isOt ? 'text-orange-600 dark:text-orange-400' : 'text-gray-800 dark:text-gray-200' }}">
-                                    {{ $isOt ? \App\Models\TimeLog::formatTime($model->hours) : $model->formatted_time }}
+                                    @if($isOt)
+                                        {{ \App\Models\TimeLog::formatTime($model->hours) }}
+                                        <span class="ml-1 text-xs font-medium text-orange-500 dark:text-orange-400">{{ $model->type }}</span>
+                                    @else
+                                        {{ $model->formatted_time }}
+                                    @endif
                                 </td>
                                 <td class="px-4 py-3 text-right">
                                     <div class="flex items-center justify-end gap-2">
