@@ -196,6 +196,100 @@
                 @endif
             </div>
 
+            {{-- Salary Details --}}
+            @if($canViewSalary && $user->salary)
+            <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
+                <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">Lương</h3>
+                @php
+                    $typeLabel = ['monthly' => 'Tháng', 'weekly' => 'Tuần', 'daily' => 'Ngày', 'hourly' => 'Giờ'];
+                    $fmtMoney  = fn(?float $n) => $n !== null ? number_format($n, 0, '.', ',') . ' ₫' : '—';
+                @endphp
+                <div class="flex items-baseline gap-2 mb-4">
+                    <span class="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                        {{ number_format($user->salary, 0, '.', ',') }} ₫
+                    </span>
+                    <span class="text-sm text-gray-500 dark:text-gray-400">
+                        / {{ $typeLabel[$user->salary_type] ?? $user->salary_type }}
+                    </span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    @foreach([
+                        ['label' => 'Theo giờ',  'value' => $user->hourly_rate],
+                        ['label' => 'Theo ngày',  'value' => $user->daily_rate],
+                        ['label' => 'Theo tuần',  'value' => $user->weekly_rate],
+                        ['label' => 'Theo tháng', 'value' => $user->monthly_rate],
+                    ] as $rate)
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg px-4 py-3 text-center">
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ $rate['label'] }}</p>
+                        <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ $fmtMoney($rate['value']) }}</p>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
+            {{-- Personal Info --}}
+            @if($canViewPersonal)
+            <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
+                <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">Thông tin cá nhân</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                    @if($user->phone_number)
+                    <div>
+                        <x-input-label value="Số điện thoại" />
+                        <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">{{ $user->phone_number }}</p>
+                    </div>
+                    @endif
+
+                    @if($user->birthday)
+                    <div>
+                        <x-input-label value="Sinh nhật" />
+                        <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">{{ $user->birthday->format('d/m/Y') }}</p>
+                    </div>
+                    @endif
+
+                    @if($user->citizen_id)
+                    <div>
+                        <x-input-label value="Căn cước Công dân" />
+                        <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">{{ $user->citizen_id }}</p>
+                    </div>
+                    @endif
+
+                    @if($user->tax_code)
+                    <div>
+                        <x-input-label value="Mã số Thuế" />
+                        <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">{{ $user->tax_code }}</p>
+                    </div>
+                    @endif
+
+                    @if($user->social_insurance_id)
+                    <div>
+                        <x-input-label value="Mã BHXH" />
+                        <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">{{ $user->social_insurance_id }}</p>
+                    </div>
+                    @endif
+
+                    @if($user->contract_expiry)
+                    <div>
+                        <x-input-label value="Hết hạn hợp đồng" />
+                        <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">{{ $user->contract_expiry->format('d/m/Y') }}</p>
+                    </div>
+                    @endif
+
+                    @if($user->home_address)
+                    <div class="sm:col-span-2">
+                        <x-input-label value="Địa chỉ nhà" />
+                        <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">{{ $user->home_address }}</p>
+                    </div>
+                    @endif
+
+                </div>
+                @if(!$user->phone_number && !$user->birthday && !$user->citizen_id && !$user->tax_code && !$user->social_insurance_id && !$user->contract_expiry && !$user->home_address)
+                    <p class="text-sm text-gray-400">Chưa có thông tin cá nhân.</p>
+                @endif
+            </div>
+            @endif
+
         </div>
     </div>
 </x-app-layout>

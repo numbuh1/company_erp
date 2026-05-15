@@ -65,39 +65,54 @@ class User extends Authenticatable
     }
 
     /**
-     * Computed hourly rate based on salary and salary_type.
-     * monthly → salary / (22 working days × 8 hours)
-     * weekly  → salary / 40 hours
-     * daily   → salary / 8 hours
-     * hourly  → salary directly
+     * Salary rate conversion constants:
+     *   1 month = 4 weeks = 20 days = 160 hours
      */
+
     public function getHourlyRateAttribute(): ?float
     {
         if (!$this->salary || !$this->salary_type) return null;
         return match ($this->salary_type) {
-            'monthly' => $this->salary / (22 * 8),
-            'weekly'  => $this->salary / 40,
+            'monthly' => $this->salary / 160,   // ÷ (4w × 5d × 8h)
+            'weekly'  => $this->salary / 40,    // ÷ (5d × 8h)
             'daily'   => $this->salary / 8,
             'hourly'  => (float) $this->salary,
             default   => null,
         };
     }
 
-    /**
-     * Estimated monthly rate based on salary and salary_type.
-     * monthly → salary directly
-     * weekly  → salary × 52 / 12
-     * daily   → salary × 22
-     * hourly  → salary × 22 × 8
-     */
+    public function getDailyRateAttribute(): ?float
+    {
+        if (!$this->salary || !$this->salary_type) return null;
+        return match ($this->salary_type) {
+            'monthly' => $this->salary / 20,    // ÷ (4w × 5d)
+            'weekly'  => $this->salary / 5,
+            'daily'   => (float) $this->salary,
+            'hourly'  => $this->salary * 8,
+            default   => null,
+        };
+    }
+
+    public function getWeeklyRateAttribute(): ?float
+    {
+        if (!$this->salary || !$this->salary_type) return null;
+        return match ($this->salary_type) {
+            'monthly' => $this->salary / 4,
+            'weekly'  => (float) $this->salary,
+            'daily'   => $this->salary * 5,
+            'hourly'  => $this->salary * 40,
+            default   => null,
+        };
+    }
+
     public function getMonthlyRateAttribute(): ?float
     {
         if (!$this->salary || !$this->salary_type) return null;
         return match ($this->salary_type) {
             'monthly' => (float) $this->salary,
-            'weekly'  => $this->salary * 52 / 12,
-            'daily'   => $this->salary * 22,
-            'hourly'  => $this->salary * 22 * 8,
+            'weekly'  => $this->salary * 4,
+            'daily'   => $this->salary * 20,
+            'hourly'  => $this->salary * 160,
             default   => null,
         };
     }

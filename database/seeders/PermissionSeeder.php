@@ -179,7 +179,8 @@ class PermissionSeeder extends Seeder
             'create all user' => 'Create All User Profile',
             'edit all user'  => 'Edit All User Profile',
             'delete all user' => 'Delete All User Profile',
-            'view salary'    => 'View Salary Information',
+            'view salary'                 => 'View Salary Information',
+            'view all user personal info' => 'View All User Personal Info',
         ];
 
         foreach ($user_permissions as $name => $label) {

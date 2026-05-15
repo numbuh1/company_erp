@@ -89,64 +89,93 @@
                         </div>
                     </div>
 
-                    {{-- ── Private Info (HR-only) ───────────────────────────── --}}
-                    @can('edit all user')
+                    {{-- ── Private Info ────────────────────────────────────── --}}
+                    @php
+                        $canEditPersonal = auth()->user()->can('edit all user');
+                        $canSeePersonal  = $canEditPersonal
+                            || auth()->user()->can('view all user personal info')
+                            || (isset($user) && auth()->id() === $user->id);
+                    @endphp
+                    @if($canSeePersonal)
                     <div class="bg-white dark:bg-gray-800 p-6 rounded shadow border border-amber-200 dark:border-amber-700">
                         <p class="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide mb-4">
                             Thông tin riêng tư
+                            @if(!$canEditPersonal)
+                                <span class="ml-2 normal-case font-normal text-gray-400">(Chỉ xem)</span>
+                            @endif
                         </p>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <x-input-label value="Căn cước Công dân" />
-                                <x-text-input name="citizen_id" class="w-full mt-1"
-                                    value="{{ old('citizen_id', $user->citizen_id ?? '') }}" />
+                        @if($canEditPersonal)
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <x-input-label value="Căn cước Công dân" />
+                                    <x-text-input name="citizen_id" class="w-full mt-1"
+                                        value="{{ old('citizen_id', $user->citizen_id ?? '') }}" />
+                                </div>
+                                <div>
+                                    <x-input-label value="Sinh nhật" />
+                                    <x-text-input type="date" name="birthday" class="w-full mt-1"
+                                        value="{{ old('birthday', isset($user) && $user->birthday ? $user->birthday->format('Y-m-d') : '') }}" />
+                                    @error('birthday')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                                </div>
+                                <div>
+                                    <x-input-label value="Mã số Thuế" />
+                                    <x-text-input name="tax_code" class="w-full mt-1"
+                                        value="{{ old('tax_code', $user->tax_code ?? '') }}" />
+                                </div>
+                                <div>
+                                    <x-input-label value="Mã BHXH" />
+                                    <x-text-input name="social_insurance_id" class="w-full mt-1"
+                                        value="{{ old('social_insurance_id', $user->social_insurance_id ?? '') }}" />
+                                </div>
+                                <div class="sm:col-span-2">
+                                    <x-input-label value="Hết hạn hợp đồng" />
+                                    <x-text-input type="date" name="contract_expiry" class="w-full mt-1"
+                                        value="{{ old('contract_expiry', isset($user) && $user->contract_expiry ? $user->contract_expiry->format('Y-m-d') : '') }}" />
+                                    @error('contract_expiry')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                                </div>
                             </div>
-                            <div>
-                                <x-input-label value="Sinh nhật" />
-                                <x-text-input type="date" name="birthday" class="w-full mt-1"
-                                    value="{{ old('birthday', isset($user) && $user->birthday ? $user->birthday->format('Y-m-d') : '') }}" />
-                                @error('birthday')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                        @else
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                                <div><x-input-label value="Căn cước Công dân" /><p class="mt-1 text-gray-800 dark:text-gray-200">{{ isset($user) ? ($user->citizen_id ?: '—') : '—' }}</p></div>
+                                <div><x-input-label value="Sinh nhật" /><p class="mt-1 text-gray-800 dark:text-gray-200">{{ isset($user) && $user->birthday ? $user->birthday->format('d/m/Y') : '—' }}</p></div>
+                                <div><x-input-label value="Mã số Thuế" /><p class="mt-1 text-gray-800 dark:text-gray-200">{{ isset($user) ? ($user->tax_code ?: '—') : '—' }}</p></div>
+                                <div><x-input-label value="Mã BHXH" /><p class="mt-1 text-gray-800 dark:text-gray-200">{{ isset($user) ? ($user->social_insurance_id ?: '—') : '—' }}</p></div>
+                                <div class="sm:col-span-2"><x-input-label value="Hết hạn hợp đồng" /><p class="mt-1 text-gray-800 dark:text-gray-200">{{ isset($user) && $user->contract_expiry ? $user->contract_expiry->format('d/m/Y') : '—' }}</p></div>
                             </div>
-                            <div>
-                                <x-input-label value="Mã số Thuế" />
-                                <x-text-input name="tax_code" class="w-full mt-1"
-                                    value="{{ old('tax_code', $user->tax_code ?? '') }}" />
-                            </div>
-                            <div>
-                                <x-input-label value="Mã BHXH" />
-                                <x-text-input name="social_insurance_id" class="w-full mt-1"
-                                    value="{{ old('social_insurance_id', $user->social_insurance_id ?? '') }}" />
-                            </div>
-                            <div class="sm:col-span-2">
-                                <x-input-label value="Hết hạn hợp đồng" />
-                                <x-text-input type="date" name="contract_expiry" class="w-full mt-1"
-                                    value="{{ old('contract_expiry', isset($user) && $user->contract_expiry ? $user->contract_expiry->format('Y-m-d') : '') }}" />
-                                @error('contract_expiry')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
-                            </div>
-                        </div>
+                        @endif
                     </div>
-                    @endcan
+                    @endif
 
-                    {{-- ── Contact Info (HR-only) ───────────────────────────── --}}
-                    @can('edit all user')
+                    {{-- ── Contact Info ─────────────────────────────────────── --}}
+                    @if($canSeePersonal)
                     <div class="bg-white dark:bg-gray-800 p-6 rounded shadow border border-sky-200 dark:border-sky-700">
                         <p class="text-xs font-semibold text-sky-700 dark:text-sky-400 uppercase tracking-wide mb-4">
                             Thông tin liên hệ
+                            @if(!$canEditPersonal)
+                                <span class="ml-2 normal-case font-normal text-gray-400">(Chỉ xem)</span>
+                            @endif
                         </p>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <x-input-label value="Số điện thoại" />
-                                <x-text-input name="phone_number" type="tel" class="w-full mt-1"
-                                    value="{{ old('phone_number', $user->phone_number ?? '') }}" />
+                        @if($canEditPersonal)
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <x-input-label value="Số điện thoại" />
+                                    <x-text-input name="phone_number" type="tel" class="w-full mt-1"
+                                        value="{{ old('phone_number', $user->phone_number ?? '') }}" />
+                                </div>
+                                <div class="sm:col-span-2">
+                                    <x-input-label value="Địa chỉ nhà" />
+                                    <textarea name="home_address" rows="2"
+                                        class="w-full mt-1 border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">{{ old('home_address', $user->home_address ?? '') }}</textarea>
+                                </div>
                             </div>
-                            <div class="sm:col-span-2">
-                                <x-input-label value="Địa chỉ nhà" />
-                                <textarea name="home_address" rows="2"
-                                    class="w-full mt-1 border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">{{ old('home_address', $user->home_address ?? '') }}</textarea>
+                        @else
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                                <div><x-input-label value="Số điện thoại" /><p class="mt-1 text-gray-800 dark:text-gray-200">{{ isset($user) ? ($user->phone_number ?: '—') : '—' }}</p></div>
+                                <div class="sm:col-span-2"><x-input-label value="Địa chỉ nhà" /><p class="mt-1 text-gray-800 dark:text-gray-200">{{ isset($user) ? ($user->home_address ?: '—') : '—' }}</p></div>
                             </div>
-                        </div>
+                        @endif
                     </div>
-                    @endcan
+                    @endif
 
                     {{-- ── Settings (password) ─────────────────────────────── --}}
                     @if(!isset($user) || auth()->id() === $user->id || auth()->user()->can('edit all user'))
@@ -240,22 +269,16 @@
                             x-data="{
                                 salary: '{{ old('salary', $user->salary ?? '') }}',
                                 salaryType: '{{ old('salary_type', $user->salary_type ?? 'monthly') }}',
-                                get hourlyRate() {
-                                    const s = parseFloat(this.salary);
-                                    if (!s || !this.salaryType) return null;
-                                    const m = { monthly: s/176, weekly: s/40, daily: s/8, hourly: s };
-                                    return m[this.salaryType] ?? null;
-                                },
-                                get monthlyRate() {
-                                    const s = parseFloat(this.salary);
-                                    if (!s || !this.salaryType) return null;
-                                    const m = { monthly: s, weekly: s*52/12, daily: s*22, hourly: s*176 };
-                                    return m[this.salaryType] ?? null;
-                                },
-                                fmt(n) {
-                                    if (n === null) return '—';
-                                    return new Intl.NumberFormat('vi-VN').format(Math.round(n));
-                                }
+                                get h() { const s = parseFloat(this.salary); if (!s) return null;
+                                    return { monthly: s/160, weekly: s/40, daily: s/8, hourly: s }[this.salaryType] ?? null; },
+                                get d() { const s = parseFloat(this.salary); if (!s) return null;
+                                    return { monthly: s/20, weekly: s/5, daily: s, hourly: s*8 }[this.salaryType] ?? null; },
+                                get w() { const s = parseFloat(this.salary); if (!s) return null;
+                                    return { monthly: s/4, weekly: s, daily: s*5, hourly: s*40 }[this.salaryType] ?? null; },
+                                get m() { const s = parseFloat(this.salary); if (!s) return null;
+                                    return { monthly: s, weekly: s*4, daily: s*20, hourly: s*160 }[this.salaryType] ?? null; },
+                                fmt(n) { if (n === null) return '—';
+                                    return new Intl.NumberFormat('vi-VN').format(Math.round(n)); }
                             }">
                             <x-input-label value="Lương" />
                             <div class="flex gap-2 mt-1">
@@ -270,12 +293,22 @@
                                     <option value="hourly">Giờ</option>
                                 </select>
                             </div>
-                            <div class="mt-2 grid grid-cols-2 gap-2 text-xs text-gray-500 dark:text-gray-400">
-                                <div class="bg-gray-50 dark:bg-gray-700 rounded px-2 py-1">
-                                    <span class="font-medium">Giờ:</span> <span x-text="fmt(hourlyRate)"></span> ₫
+                            <div class="mt-2 grid grid-cols-4 gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded px-2 py-1 text-center">
+                                    <div class="font-medium mb-0.5">/ Giờ</div>
+                                    <div><span x-text="fmt(h)"></span> ₫</div>
                                 </div>
-                                <div class="bg-gray-50 dark:bg-gray-700 rounded px-2 py-1">
-                                    <span class="font-medium">Tháng:</span> <span x-text="fmt(monthlyRate)"></span> ₫
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded px-2 py-1 text-center">
+                                    <div class="font-medium mb-0.5">/ Ngày</div>
+                                    <div><span x-text="fmt(d)"></span> ₫</div>
+                                </div>
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded px-2 py-1 text-center">
+                                    <div class="font-medium mb-0.5">/ Tuần</div>
+                                    <div><span x-text="fmt(w)"></span> ₫</div>
+                                </div>
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded px-2 py-1 text-center">
+                                    <div class="font-medium mb-0.5">/ Tháng</div>
+                                    <div><span x-text="fmt(m)"></span> ₫</div>
                                 </div>
                             </div>
                         </div>

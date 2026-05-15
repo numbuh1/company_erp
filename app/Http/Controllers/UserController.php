@@ -12,8 +12,10 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::with(['roles', 'teams'])->paginate(20);
-        return view('users.index', compact('users'));
+        $users           = User::with(['roles', 'teams'])->paginate(20);
+        $canViewSalary   = auth()->user()->canAny(['view salary', 'edit all user']);
+        $canViewPersonal = auth()->user()->canAny(['view all user personal info', 'edit all user']);
+        return view('users.index', compact('users', 'canViewSalary', 'canViewPersonal'));
     }
 
     public function create()
@@ -101,8 +103,10 @@ class UserController extends Controller
             ->orderByRaw("FIELD(status, 'pending', 'approved')")
             ->latest()
             ->get();
-        $canViewSalary = auth()->user()->can('view salary') || auth()->user()->can('edit all user');
-        return view('users.show', compact('user', 'leaveRequests', 'canViewSalary'));
+        $isOwnProfile    = auth()->id() === $user->id;
+        $canViewSalary   = $isOwnProfile || auth()->user()->canAny(['view salary', 'edit all user']);
+        $canViewPersonal = $isOwnProfile || auth()->user()->canAny(['view all user personal info', 'edit all user']);
+        return view('users.show', compact('user', 'leaveRequests', 'canViewSalary', 'canViewPersonal'));
     }
 
 

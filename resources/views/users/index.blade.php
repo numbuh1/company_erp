@@ -19,13 +19,17 @@
         {{-- Tab bar --}}
         <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4">
             <nav class="-mb-px flex">
-                @foreach([
-                    ['key' => 'overall',  'label' => 'Overall'],
-                    ['key' => 'team',     'label' => 'Team'],
-                    ['key' => 'salary',   'label' => 'Salary'],
-                    ['key' => 'leaves',   'label' => 'Leaves'],
-                    ['key' => 'personal', 'label' => 'Personal Info'],
-                ] as $t)
+                @php
+                    $tabs = [
+                        ['key' => 'overall',  'label' => 'Overall',      'show' => true],
+                        ['key' => 'team',     'label' => 'Team',         'show' => true],
+                        ['key' => 'salary',   'label' => 'Salary',       'show' => $canViewSalary],
+                        ['key' => 'leaves',   'label' => 'Leaves',       'show' => true],
+                        ['key' => 'personal', 'label' => 'Personal Info','show' => $canViewPersonal],
+                    ];
+                @endphp
+                @foreach($tabs as $t)
+                    @if($t['show'])
                     <button type="button"
                         @click="tab = '{{ $t['key'] }}'"
                         :class="tab === '{{ $t['key'] }}'
@@ -34,6 +38,7 @@
                         class="px-4 py-2.5 text-sm font-medium border-b-2 transition whitespace-nowrap">
                         {{ $t['label'] }}
                     </button>
+                    @endif
                 @endforeach
             </nav>
         </div>
@@ -76,11 +81,16 @@
                             Nhóm
                         </th>
 
-                        {{-- Salary columns (TBA) --}}
-                        <th x-show="tab === 'salary'"
-                            class="px-3 py-2 text-left text-xs font-medium text-gray-300 dark:text-gray-600 uppercase tracking-wider whitespace-nowrap min-w-[10rem] italic">
-                            Coming Soon
-                        </th>
+                        {{-- Salary columns --}}
+                        @if($canViewSalary)
+                        @php $thSal = "px-3 py-2 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap"; @endphp
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} text-left min-w-[8rem]">Lương thực nhận</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[5rem]">Chu kì</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[6rem]">/Giờ</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[6rem]">/Ngày</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[6rem]">/Tuần</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[7rem]">/Tháng</th>
+                        @endif
 
                         {{-- Leaves columns --}}
                         <th x-show="tab === 'leaves'"
@@ -88,11 +98,17 @@
                             Số giờ phép còn lại
                         </th>
 
-                        {{-- Personal Info columns (TBA) --}}
-                        <th x-show="tab === 'personal'"
-                            class="px-3 py-2 text-left text-xs font-medium text-gray-300 dark:text-gray-600 uppercase tracking-wider whitespace-nowrap min-w-[10rem] italic">
-                            Coming Soon
-                        </th>
+                        {{-- Personal Info columns --}}
+                        @if($canViewPersonal)
+                        @php $thPer = "px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap"; @endphp
+                        <th x-show="tab === 'personal'" class="{{ $thPer }} min-w-[9rem]">Số điện thoại</th>
+                        <th x-show="tab === 'personal'" class="{{ $thPer }} min-w-[14rem]">Địa chỉ</th>
+                        <th x-show="tab === 'personal'" class="{{ $thPer }} min-w-[9rem]">CCCD</th>
+                        <th x-show="tab === 'personal'" class="{{ $thPer }} min-w-[7rem]">Sinh nhật</th>
+                        <th x-show="tab === 'personal'" class="{{ $thPer }} min-w-[7rem]">Mã số Thuế</th>
+                        <th x-show="tab === 'personal'" class="{{ $thPer }} min-w-[7rem]">Mã BHXH</th>
+                        <th x-show="tab === 'personal'" class="{{ $thPer }} min-w-[8rem]">Hết hạn HĐ</th>
+                        @endif
 
                     </tr>
                 </thead>
@@ -175,11 +191,45 @@
                                 </div>
                             </td>
 
-                            {{-- Salary: TBA --}}
-                            <td x-show="tab === 'salary'"
-                                class="px-3 py-2 text-gray-300 dark:text-gray-600 text-xs italic">
-                                —
+                            {{-- Salary columns --}}
+                            @if($canViewSalary)
+                            @php
+                                $typeLabel = ['monthly'=>'Tháng','weekly'=>'Tuần','daily'=>'Ngày','hourly'=>'Giờ'];
+                                $fmtN = fn(?float $n) => $n ? number_format($n, 0, '.', ',') : '—';
+                            @endphp
+                            <td x-show="tab === 'salary'" class="px-3 py-2 whitespace-nowrap text-right tabular-nums text-gray-800 dark:text-gray-200 font-medium">
+                                @if($user->salary)
+                                    {{ number_format($user->salary, 0, '.', ',') }} ₫
+                                @else
+                                    <span class="text-gray-400">—</span>
+                                @endif
                             </td>
+                            <td x-show="tab === 'salary'" class="px-3 py-2 whitespace-nowrap text-center">
+                                @if($user->salary_type)
+                                    <span class="text-xs font-medium px-1.5 py-0.5 rounded
+                                        {{ $user->salary_type === 'monthly' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300' :
+                                           ($user->salary_type === 'weekly'  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' :
+                                           ($user->salary_type === 'daily'   ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' :
+                                                                               'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300')) }}">
+                                        {{ $typeLabel[$user->salary_type] ?? $user->salary_type }}
+                                    </span>
+                                @else
+                                    <span class="text-gray-400">—</span>
+                                @endif
+                            </td>
+                            <td x-show="tab === 'salary'" class="px-3 py-2 whitespace-nowrap text-right tabular-nums text-xs text-gray-600 dark:text-gray-400">
+                                {{ $user->salary ? $fmtN($user->hourly_rate) . ' ₫' : '—' }}
+                            </td>
+                            <td x-show="tab === 'salary'" class="px-3 py-2 whitespace-nowrap text-right tabular-nums text-xs text-gray-600 dark:text-gray-400">
+                                {{ $user->salary ? $fmtN($user->daily_rate) . ' ₫' : '—' }}
+                            </td>
+                            <td x-show="tab === 'salary'" class="px-3 py-2 whitespace-nowrap text-right tabular-nums text-xs text-gray-600 dark:text-gray-400">
+                                {{ $user->salary ? $fmtN($user->weekly_rate) . ' ₫' : '—' }}
+                            </td>
+                            <td x-show="tab === 'salary'" class="px-3 py-2 whitespace-nowrap text-right tabular-nums text-xs text-gray-600 dark:text-gray-400">
+                                {{ $user->salary ? $fmtN($user->monthly_rate) . ' ₫' : '—' }}
+                            </td>
+                            @endif
 
                             {{-- Leaves: Leave Balance --}}
                             <td x-show="tab === 'leaves'" class="px-3 py-2 whitespace-nowrap">
@@ -193,16 +243,22 @@
                                 @endif
                             </td>
 
-                            {{-- Personal Info: TBA --}}
-                            <td x-show="tab === 'personal'"
-                                class="px-3 py-2 text-gray-300 dark:text-gray-600 text-xs italic">
-                                —
-                            </td>
+                            {{-- Personal Info columns --}}
+                            @if($canViewPersonal)
+                            @php $tdPer = "px-3 py-2 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap"; @endphp
+                            <td x-show="tab === 'personal'" class="{{ $tdPer }}">{{ $user->phone_number ?? '—' }}</td>
+                            <td x-show="tab === 'personal'" class="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 max-w-[14rem] truncate" title="{{ $user->home_address }}">{{ $user->home_address ?? '—' }}</td>
+                            <td x-show="tab === 'personal'" class="{{ $tdPer }}">{{ $user->citizen_id ?? '—' }}</td>
+                            <td x-show="tab === 'personal'" class="{{ $tdPer }}">{{ $user->birthday ? $user->birthday->format('d/m/Y') : '—' }}</td>
+                            <td x-show="tab === 'personal'" class="{{ $tdPer }}">{{ $user->tax_code ?? '—' }}</td>
+                            <td x-show="tab === 'personal'" class="{{ $tdPer }}">{{ $user->social_insurance_id ?? '—' }}</td>
+                            <td x-show="tab === 'personal'" class="{{ $tdPer }}">{{ $user->contract_expiry ? $user->contract_expiry->format('d/m/Y') : '—' }}</td>
+                            @endif
 
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="px-6 py-10 text-center text-gray-400 text-sm">
+                            <td colspan="20" class="px-6 py-10 text-center text-gray-400 text-sm">
                                 No users found.
                             </td>
                         </tr>
