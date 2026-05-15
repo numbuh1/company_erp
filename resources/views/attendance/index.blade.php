@@ -95,13 +95,16 @@
 
                     <div class="flex flex-wrap gap-3">
                         {{-- On Site button --}}
-                        <form method="POST" action="{{ route('attendance.store') }}">
+                        <form id="onSiteForm" method="POST" action="{{ route('attendance.store') }}">
                             @csrf
                             <input type="hidden" name="type" value="on_site">
-                            <button type="submit"
-                                class="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl shadow transition">
+                            <button type="button" id="onSiteBtn"
+                                data-lat="{{ $officeLat }}"
+                                data-lng="{{ $officeLng }}"
+                                data-radius="{{ $officeRadiusKm }}"
+                                class="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold rounded-xl shadow transition">
                                 <span class="text-xl">🏢</span>
-                                <span>Tại văn phòng</span>
+                                <span data-label>Tại văn phòng</span>
                             </button>
                         </form>
 

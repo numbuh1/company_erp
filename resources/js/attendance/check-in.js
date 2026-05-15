@@ -19,14 +19,17 @@ document.addEventListener('DOMContentLoaded', function () {
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
+    const labelEl      = btn.querySelector('[data-label]');
+    const originalLabel = labelEl ? labelEl.textContent : 'Tại văn phòng';
+
     function showError(msg) {
         errBox.textContent = msg;
         errBox.classList.remove('hidden');
     }
 
     function setLoading(loading) {
-        btn.disabled     = loading;
-        btn.querySelector('[data-label]').textContent = loading ? 'Checking location…' : 'On Site';
+        btn.disabled = loading;
+        if (labelEl) labelEl.textContent = loading ? 'Đang kiểm tra vị trí…' : originalLabel;
     }
 
     btn.addEventListener('click', function () {
