@@ -34,9 +34,13 @@
                         @canany(['edit team ot', 'edit all ot'])
                             <div class="mb-4">
                                 <x-input-label value="Người dùng" />
-                                <select name="user_id" class="w-full border rounded p-2">
+                                <select id="ot-user-select" name="user_id">
+                                    <option value="">— Chọn người dùng —</option>
                                     @foreach($users as $u)
-                                        <option value="{{ $u->id }}" @selected(old('user_id') == $u->id)>{{ $u->name }}</option>
+                                        <option value="{{ $u->id }}"
+                                            @selected(old('user_id', auth()->id()) == $u->id)>
+                                            {{ $u->name }}{{ $u->position ? ' · ' . $u->position : '' }}
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
@@ -185,6 +189,9 @@
     @endphp
     <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const userEl = document.getElementById('ot-user-select');
+        if (userEl) new TomSelect(userEl, { allowEmptyOption: true, maxOptions: 300 });
+
         const allTasks = @json($taskJson);
 
         const selTask    = '{{ $selTask ?? '' }}';

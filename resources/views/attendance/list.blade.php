@@ -92,6 +92,17 @@
                     </div>
                     @endif
 
+                    {{-- User --}}
+                    <div class="min-w-[180px]">
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Thành viên</label>
+                        <select id="user-filter-select" name="user_id">
+                            <option value="">— Tất cả —</option>
+                            @foreach($allUsers as $u)
+                            <option value="{{ $u->id }}" @selected($selectedUserId == $u->id)>{{ $u->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
                     <button type="submit"
                         class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md shadow-sm transition">
                         Lọc
@@ -104,15 +115,15 @@
                     $nextMonth = $month->copy()->addMonth()->format('Y-m');
                 @endphp
                 <div class="flex items-center gap-1">
-                    <a href="{{ route('attendance.list', array_filter(['month' => $prevMonth, 'team_id' => $selectedTeamId])) }}"
+                    <a href="{{ route('attendance.list', array_filter(['month' => $prevMonth, 'team_id' => $selectedTeamId, 'user_id' => $selectedUserId])) }}"
                        class="inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-indigo-600 hover:border-indigo-400 bg-white dark:bg-gray-700 transition">
                         ‹
                     </a>
-                    <a href="{{ route('attendance.list', array_filter(['month' => now()->format('Y-m'), 'team_id' => $selectedTeamId])) }}"
+                    <a href="{{ route('attendance.list', array_filter(['month' => now()->format('Y-m'), 'team_id' => $selectedTeamId, 'user_id' => $selectedUserId])) }}"
                        class="px-2 py-1 text-xs rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-indigo-400 hover:text-indigo-600 bg-white dark:bg-gray-700 transition">
                         Hôm nay
                     </a>
-                    <a href="{{ route('attendance.list', array_filter(['month' => $nextMonth, 'team_id' => $selectedTeamId])) }}"
+                    <a href="{{ route('attendance.list', array_filter(['month' => $nextMonth, 'team_id' => $selectedTeamId, 'user_id' => $selectedUserId])) }}"
                        class="inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-indigo-600 hover:border-indigo-400 bg-white dark:bg-gray-700 transition">
                         ›
                     </a>
@@ -535,6 +546,15 @@
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const filterEl = document.getElementById('user-filter-select');
+        if (filterEl) {
+            new TomSelect(filterEl, {
+                placeholder: '— Tất cả —',
+                allowEmptyOption: true,
+                maxOptions: 300,
+            });
+        }
+
         const el = document.getElementById('checkin-user-select');
         if (el) {
             window.fabTomSelect = new TomSelect(el, {

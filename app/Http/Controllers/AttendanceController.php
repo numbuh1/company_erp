@@ -115,7 +115,7 @@ class AttendanceController extends Controller
 
         // Block if already checked in
         if (Attendance::where('user_id', $user->id)->whereDate('date', $today)->exists()) {
-            return back()->with('error', 'You have already checked in today.');
+            return back()->with('error', 'Bạn đã check in ngày hôm nay.');
         }
 
         $type = $request->input('type');
@@ -148,7 +148,7 @@ class AttendanceController extends Controller
                 'created_by'     => $user->id,
             ]);
 
-            return back()->with('success', 'On-Site attendance recorded.');
+            return back()->with('success', 'Đã check in thành công.');
         }
 
         // WFH
@@ -185,10 +185,10 @@ class AttendanceController extends Controller
                     incomingUser: $user,
                 );
             }
-            return back()->with('success', 'WFH request submitted and pending approval.');
+            return back()->with('success', 'Yêu cầu WFH đã được gửi và chờ duyệt.');
         }
 
-        return back()->with('success', 'WFH attendance recorded.');
+        return back()->with('success', 'Đã check in WFH thành công.');
     }
 
     public function approve(Attendance $attendance)
@@ -203,13 +203,13 @@ class AttendanceController extends Controller
 
         NotificationHelper::send(
             receivingUser: $attendance->user,
-            title: 'WFH Approved',
-            description: 'Your WFH request for ' . $attendance->date->format('d/m/Y') . ' has been approved.',
+            title: 'WFH được duyệt',
+            description: 'Yêu cầu WFH ngày ' . $attendance->date->format('d/m/Y') . ' đã được duyệt.',
             url: route('attendance.index'),
             incomingUser: auth()->user(),
         );
 
-        return back()->with('success', 'WFH request approved.');
+        return back()->with('success', 'Yêu cầu WFH đã được duyệt.');
     }
 
     public function reject(Request $request, Attendance $attendance)
@@ -225,14 +225,14 @@ class AttendanceController extends Controller
 
         NotificationHelper::send(
             receivingUser: $attendance->user,
-            title: 'WFH Rejected',
-            description: 'Your WFH request for ' . $attendance->date->format('d/m/Y')
-                . ' was rejected. Reason: ' . $request->reject_reason,
+            title: 'WFH bị từ chối',
+            description: 'Yêu cầu WFH ngày ' . $attendance->date->format('d/m/Y')
+                . ' đã bị từ chối. Lý do: ' . $request->reject_reason,
             url: route('attendance.index'),
             incomingUser: auth()->user(),
         );
 
-        return back()->with('success', 'WFH request rejected.');
+        return back()->with('success', 'Yêu cầu WFH đã bị từ chối.');
     }
 
     public function checkOut(Request $request)
@@ -302,6 +302,7 @@ class AttendanceController extends Controller
             ->orderBy('name')->get();
 
         $selectedTeamId = $request->input('team_id');
+        $selectedUserId = $request->input('user_id');
 
         if ($selectedTeamId) {
             $memberIds = Team::findOrFail($selectedTeamId)
@@ -310,6 +311,10 @@ class AttendanceController extends Controller
                 ->pluck('users.id');
         } else {
             $memberIds = $scopedUserIds;
+        }
+
+        if ($selectedUserId && $memberIds->contains((int) $selectedUserId)) {
+            $memberIds = collect([(int) $selectedUserId]);
         }
 
         $members = User::whereIn('id', $memberIds)->orderBy('name')->get();
@@ -353,7 +358,7 @@ class AttendanceController extends Controller
         return view('attendance.list', compact(
             'members', 'attendances', 'leavesByDay', 'holidayDates',
             'month', 'monthEnd', 'daysInMonth', 'today',
-            'teams', 'selectedTeamId', 'monthStr',
+            'teams', 'selectedTeamId', 'selectedUserId', 'monthStr',
             'canCheckinForOther', 'allUsers'
         ));
     }

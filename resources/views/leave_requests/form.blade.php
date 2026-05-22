@@ -28,11 +28,12 @@
                         @can('edit team leaves')
                             <div class="mb-4">
                                 <x-input-label value="Người dùng" />
-                                <select name="user_id" class="w-full border rounded p-2">
+                                <select id="leave-user-select" name="user_id">
+                                    <option value="">— Chọn người dùng —</option>
                                     @foreach($users as $user)
                                         <option value="{{ $user->id }}"
-                                            @selected(old('user_id') == $user->id)>
-                                            {{ $user->name }}
+                                            @selected(old('user_id', auth()->id()) == $user->id)>
+                                            {{ $user->name }}{{ $user->position ? ' · ' . $user->position : '' }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -129,5 +130,11 @@
     @endif
     @push('scripts')
         @vite('resources/js/leave_requests/form.js')
+        <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const el = document.getElementById('leave-user-select');
+            if (el) new TomSelect(el, { allowEmptyOption: true, maxOptions: 300 });
+        });
+        </script>
     @endpush
 </x-app-layout>
