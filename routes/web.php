@@ -137,6 +137,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/attendance/checkout', [AttendanceController::class, 'checkOut'])->name('attendance.checkout');
     Route::post('/attendance/{attendance}/approve', [AttendanceController::class, 'approve'])->name('attendance.approve');
     Route::post('/attendance/{attendance}/reject', [AttendanceController::class, 'reject'])->name('attendance.reject');
+    Route::delete('/attendance/{attendance}', [AttendanceController::class, 'destroy'])->name('attendance.destroy');
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/mark-read', [NotificationController::class, 'mark-read'])->name('notifications.mark-read'); 

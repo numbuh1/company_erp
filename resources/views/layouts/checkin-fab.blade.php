@@ -75,8 +75,8 @@
             <input type="hidden" name="type" value="on_site">
             <button type="button" id="fab-onsite-btn"
                 data-lat="{{ $fabLat }}" data-lng="{{ $fabLng }}" data-radius="{{ $fabRadius }}"
-                class="flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700
-                       text-white font-semibold rounded-full shadow-lg transition-colors
+                class="flex items-center gap-2 px-6 py-2.5 bg-green-600 hover:bg-green-700
+                       text-white font-semibold rounded-full transition-colors
                        text-sm whitespace-nowrap disabled:opacity-60">
                 <span class="text-base leading-none">🏢</span>
                 <span data-label>On Site</span>
@@ -84,8 +84,8 @@
         </form>
 
         <button type="button" @click="showWfh = true; open = false"
-            class="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700
-                   text-white font-semibold rounded-full shadow-lg transition-colors text-sm whitespace-nowrap">
+            class="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700
+                   text-white font-semibold rounded-full transition-colors text-sm whitespace-nowrap">
             <span class="text-base leading-none">🏠</span>
             WFH
         </button>
@@ -93,14 +93,13 @@
         <div id="fab-geo-error"
              class="hidden max-w-[260px] text-xs text-red-700 dark:text-red-300
                     bg-white dark:bg-gray-800 border border-red-300 dark:border-red-700
-                    rounded-xl px-3 py-2 shadow-lg text-left"></div>
+                    rounded-xl px-3 py-2 text-left"></div>
     </div>
 
     {{-- Main FAB button — bg-indigo-600 is STATIC so always rendered --}}
     <button type="button" @click="open = !open"
-        class="flex items-center gap-2 pl-4 pr-5 py-3 bg-indigo-600 hover:bg-indigo-700
-               text-white font-bold rounded-full shadow-xl ring-2 ring-white/20
-               transition-colors duration-150">
+        class="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700
+               text-white font-bold rounded-full transition-colors duration-150">
         <svg class="w-5 h-5 transition-transform duration-200" :class="{ 'rotate-45': open }"
              fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
@@ -169,9 +168,8 @@
     @else
     {{-- ── CHECK-OUT MODE ──────────────────────────────── --}}
     <button type="button" @click="openCheckoutConfirm()"
-        class="flex items-center gap-2 pl-4 pr-5 py-3 bg-orange-500 hover:bg-orange-600
-               text-white font-bold rounded-full shadow-xl ring-2 ring-white/20
-               transition-colors duration-150">
+        class="flex items-center gap-2 px-6 py-3 bg-orange-500 hover:bg-orange-600
+               text-white font-bold rounded-full transition-colors duration-150">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                 d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>

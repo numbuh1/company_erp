@@ -14,6 +14,8 @@
         .dark .ts-dropdown .option:hover, .dark .ts-dropdown .option.active { background: #374151; }
         .att-cell .att-tooltip { opacity: 0; pointer-events: none; transition: opacity 0.15s; }
         .att-cell:hover .att-tooltip { opacity: 1; }
+        .att-cell .att-del { opacity: 0; transition: opacity 0.15s; }
+        .att-cell:hover .att-del { opacity: 1; }
     </style>
     @endpush
 
@@ -142,10 +144,10 @@
                     <span class="w-3 h-3 rounded bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700"></span>WFH chờ duyệt
                 </span>
                 <span class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 rounded bg-yellow-100 dark:bg-yellow-900/40 border border-yellow-300 dark:border-yellow-600"></span>Nghỉ phép cả ngày
+                    <span class="w-3 h-3 rounded bg-orange-100 dark:bg-orange-900/40 border border-orange-300 dark:border-orange-600"></span>Nghỉ phép cả ngày
                 </span>
                 <span class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 rounded bg-amber-100 dark:bg-amber-900/40 border border-amber-300 dark:border-amber-600"></span>Nghỉ phép nửa ngày
+                    <span class="w-3 h-3 rounded bg-yellow-100 dark:bg-yellow-900/40 border border-yellow-300 dark:border-yellow-600"></span>Nghỉ phép nửa ngày
                 </span>
                 <span class="flex items-center gap-1.5">
                     <span class="w-3 h-3 rounded bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-600"></span>Vắng mặt
@@ -249,8 +251,8 @@
                                         'on_site'       => 'bg-green-50 dark:bg-green-900/20',
                                         'wfh'           => 'bg-blue-50 dark:bg-blue-900/20',
                                         'pending'       => 'bg-blue-50/60 dark:bg-blue-900/10',
-                                        'leave'         => 'bg-yellow-50 dark:bg-yellow-900/20',
-                                        'partial_leave' => 'bg-amber-50 dark:bg-amber-900/20',
+                                        'leave'         => 'bg-orange-50 dark:bg-orange-900/20',
+                                        'partial_leave' => 'bg-yellow-50 dark:bg-yellow-900/20',
                                         'absent'        => 'bg-red-50 dark:bg-red-900/20',
                                         'off'           => 'bg-gray-50 dark:bg-gray-700/30',
                                         default         => 'bg-white dark:bg-gray-800',
@@ -283,7 +285,7 @@
                                     {{-- Hover tooltip --}}
                                     @if($att || $isPartialLeave)
                                     <div class="att-tooltip absolute bottom-full left-1/2 -translate-x-1/2 mb-1 z-30
-                                                bg-gray-800 dark:bg-gray-700 text-white text-[10px] rounded px-2 py-1 whitespace-nowrap shadow-lg">
+                                                bg-gray-800 dark:bg-gray-700 text-white text-xs rounded px-2 py-1.5 whitespace-nowrap shadow-lg">
                                         @if($checkInStr)
                                         <div>Vào: {{ $checkInStr }}</div>
                                         @endif
@@ -291,9 +293,23 @@
                                         <div>Ra: {{ $checkOutStr }}</div>
                                         @endif
                                         @if($isPartialLeave)
-                                        <div class="text-amber-300">Nghỉ½: {{ $leave->hours }}h</div>
+                                        <div class="text-yellow-300">Nghỉ½: {{ $leave->hours }}h</div>
                                         @endif
                                     </div>
+                                    @endif
+                                    {{-- HR delete button --}}
+                                    @if($canCheckinForOther && $att)
+                                    <form method="POST" action="{{ route('attendance.destroy', $att) }}"
+                                          class="att-del absolute top-0 right-0"
+                                          @click.stop
+                                          onsubmit="return confirm('Xóa chấm công ngày {{ $dk }} của {{ addslashes($memberRow->name) }}?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                                class="w-4 h-4 flex items-center justify-center text-red-500 hover:text-red-700 bg-white/80 dark:bg-gray-800/80 rounded-bl text-xs leading-none font-bold">
+                                            ×
+                                        </button>
+                                    </form>
                                     @endif
                                     {{-- Cell label --}}
                                     @if($state === 'on_site')
@@ -319,13 +335,13 @@
                                         </div>
                                     @elseif($state === 'partial_leave')
                                         <div class="flex flex-col items-center justify-center leading-tight">
-                                            <span class="text-amber-700 dark:text-amber-400 font-semibold text-[10px]">Nghỉ½</span>
+                                            <span class="text-yellow-700 dark:text-yellow-400 font-semibold text-[10px]">Nghỉ½</span>
                                             @if($leave->hours)
-                                            <span class="text-amber-600 dark:text-amber-500 text-[10px] opacity-80">{{ $leave->hours }}h</span>
+                                            <span class="text-yellow-600 dark:text-yellow-500 text-[10px] opacity-80">{{ $leave->hours }}h</span>
                                             @endif
                                         </div>
                                     @elseif($state === 'leave')
-                                        <span class="text-yellow-700 dark:text-yellow-400 font-semibold text-[10px]">Nghỉ</span>
+                                        <span class="text-orange-700 dark:text-orange-400 font-semibold text-[10px]">Nghỉ</span>
                                     @elseif($state === 'absent')
                                         <span class="text-red-400 dark:text-red-500 text-[11px] font-medium">–</span>
                                     @endif
@@ -373,11 +389,11 @@
                     WFH: <strong class="ml-1 text-gray-800 dark:text-gray-200">{{ $sumWfh }}</strong>
                 </span>
                 <span class="flex items-center gap-1.5">
-                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-yellow-400"></span>
+                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-orange-400"></span>
                     Nghỉ phép cả ngày: <strong class="ml-1 text-gray-800 dark:text-gray-200">{{ $sumLeave }}</strong>
                 </span>
                 <span class="flex items-center gap-1.5">
-                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-yellow-400"></span>
                     Nghỉ phép nửa ngày: <strong class="ml-1 text-gray-800 dark:text-gray-200">{{ $sumPartialLeave }}</strong>
                 </span>
                 <span class="flex items-center gap-1.5">

@@ -358,6 +358,13 @@ class AttendanceController extends Controller
         ));
     }
 
+    public function destroy(Attendance $attendance)
+    {
+        if (!auth()->user()->can('checkin for other user')) abort(403);
+        $attendance->delete();
+        return back()->with('success', 'Đã xóa dữ liệu chấm công thành công.');
+    }
+
     public function checkinForUser(Request $request)
     {
         if (!auth()->user()->can('checkin for other user')) abort(403);
