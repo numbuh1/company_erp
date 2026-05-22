@@ -12,6 +12,8 @@
         .dark .ts-wrapper .ts-control { background: #111827; border-color: #374151; color: #d1d5db; }
         .dark .ts-dropdown { background: #1f2937; border-color: #374151; color: #d1d5db; }
         .dark .ts-dropdown .option:hover, .dark .ts-dropdown .option.active { background: #374151; }
+        .att-cell .att-tooltip { opacity: 0; pointer-events: none; transition: opacity 0.15s; }
+        .att-cell:hover .att-tooltip { opacity: 1; }
     </style>
     @endpush
 
@@ -273,15 +275,14 @@
                                         }
                                     }
                                 @endphp
-                                <td class="relative group/cell border-b border-r {{ $borderCls }} {{ $bg }} px-0 py-0 h-10 text-center align-middle w-12 min-w-[3rem] {{ ($canCheckinForOther && $att) ? 'cursor-pointer hover:ring-1 hover:ring-inset hover:ring-indigo-400' : '' }}"
+                                <td class="att-cell relative border-b border-r {{ $borderCls }} {{ $bg }} px-0 py-0 h-10 text-center align-middle w-12 min-w-[3rem] {{ ($canCheckinForOther && $att) ? 'cursor-pointer hover:ring-1 hover:ring-inset hover:ring-indigo-400' : '' }}"
                                     @if($canCheckinForOther && $att)
                                     @click="openEdit({id: {{ $att->id }}, userId: {{ $att->user_id }}, type: '{{ $att->type }}', date: '{{ $dk }}', checkIn: '{{ $checkInStr ?? '' }}', checkOut: '{{ $att->check_out_time ? substr($att->check_out_time, 0, 5) : '' }}'})"
                                     @endif
                                     >
                                     {{-- Hover tooltip --}}
                                     @if($att || $isPartialLeave)
-                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 z-30 pointer-events-none
-                                                opacity-0 group-hover/cell:opacity-100 transition-opacity duration-150
+                                    <div class="att-tooltip absolute bottom-full left-1/2 -translate-x-1/2 mb-1 z-30
                                                 bg-gray-800 dark:bg-gray-700 text-white text-[10px] rounded px-2 py-1 whitespace-nowrap shadow-lg">
                                         @if($checkInStr)
                                         <div>Vào: {{ $checkInStr }}</div>
