@@ -17,7 +17,34 @@
             @endif
 
             {{-- ── Personal Check-In Section ────────────────────────────── --}}
-            <div x-data="{ showWfhModal: false, hours: 8, reason: '', submitting: false }">
+            <div x-data="{
+                showWfhModal: false, hours: 8, reason: '', submitting: false,
+                showCheckoutConfirm: false, coSubmitting: false, estimatedHours: '0.00',
+                checkInTime: '{{ $myAttendance?->check_in_time ? substr($myAttendance->check_in_time, 0, 5) : ($myAttendance?->created_at?->format('H:i') ?? '') }}',
+                lunchStart: '{{ $lunchBreakStart }}',
+                lunchEnd:   '{{ $lunchBreakEnd }}',
+                calcEstimate() {
+                    function toMins(s) {
+                        if (!s) return 0;
+                        var p = s.split(':');
+                        return parseInt(p[0]) * 60 + (parseInt(p[1]) || 0);
+                    }
+                    var now = new Date();
+                    var outMins = now.getHours() * 60 + now.getMinutes();
+                    var inMins  = toMins(this.checkInTime);
+                    var lsMin   = toMins(this.lunchStart);
+                    var leMin   = toMins(this.lunchEnd);
+                    var total   = Math.max(0, outMins - inMins);
+                    var olStart = Math.max(inMins, lsMin);
+                    var olEnd   = Math.min(outMins, leMin);
+                    var lunch   = Math.max(0, olEnd - olStart);
+                    return Math.max(0, (total - lunch) / 60).toFixed(2);
+                },
+                openCheckoutConfirm() {
+                    this.estimatedHours = this.calcEstimate();
+                    this.showCheckoutConfirm = true;
+                }
+            }">
                 <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-4">
                     Chấm công hôm nay
                 </h3>
@@ -102,17 +129,14 @@
 
                                 {{-- Check-out button --}}
                                 @if($isApproved && !$checkedOut)
-                                <form method="POST" action="{{ route('attendance.checkout') }}">
-                                    @csrf
-                                    <button type="submit"
-                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded-lg shadow-sm transition">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                                        </svg>
-                                        Check Out
-                                    </button>
-                                </form>
+                                <button type="button" @click="openCheckoutConfirm()"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded-lg shadow-sm transition">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                    </svg>
+                                    Check Out
+                                </button>
                                 @endif
                             </div>
                         </div>
@@ -157,6 +181,45 @@
                         </div>
                     </div>
                 @endif
+
+                {{-- Check-Out Confirmation Modal --}}
+                <div x-show="showCheckoutConfirm" x-cloak
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     @click.self="showCheckoutConfirm = false"
+                     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-sm mx-4 text-center">
+                        <h3 class="text-base font-semibold text-gray-800 dark:text-gray-100 mb-1">🚪 Xác nhận Check Out</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Giờ làm thực tế ước tính</p>
+                        <div class="text-4xl font-bold text-indigo-600 dark:text-indigo-400 mb-3"
+                             x-text="estimatedHours + 'h'"></div>
+                        <p class="text-xs text-gray-400 mb-5">
+                            Từ <span class="font-medium text-gray-600 dark:text-gray-300" x-text="checkInTime"></span>
+                            đến hiện tại, trừ nghỉ trưa
+                            <span class="font-medium text-gray-600 dark:text-gray-300" x-text="lunchStart + '–' + lunchEnd"></span>
+                        </p>
+                        <div class="flex justify-end gap-2">
+                            <button type="button" @click="showCheckoutConfirm = false"
+                                class="px-4 py-2 text-sm rounded border border-gray-300 dark:border-gray-600
+                                       text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                Hủy
+                            </button>
+                            <form method="POST" action="{{ route('attendance.checkout') }}" @submit="coSubmitting = true">
+                                @csrf
+                                <button type="submit" :disabled="coSubmitting"
+                                    class="px-4 py-2 text-sm rounded bg-orange-500 hover:bg-orange-600
+                                           text-white font-medium transition disabled:opacity-50">
+                                    <span x-show="!coSubmitting">Xác nhận Check Out</span>
+                                    <span x-show="coSubmitting" x-cloak>Đang xử lý…</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
 
                 {{-- WFH Modal --}}
                 <div x-show="showWfhModal" x-cloak

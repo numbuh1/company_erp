@@ -17,8 +17,34 @@
 
     <div class="py-6" x-data="{
         modalOpen: false,
-        openModal() { this.modalOpen = true; },
-        closeModal() { this.modalOpen = false; }
+        editId: null,
+        editUserId: '',
+        editType: 'on_site',
+        editDate: '{{ now()->toDateString() }}',
+        editCheckIn: '{{ now()->format('H:i') }}',
+        editCheckOut: '',
+        openModal() {
+            var n = new Date(), p = s => String(s).padStart(2, '0');
+            this.editId       = null;
+            this.editUserId   = '';
+            this.editType     = 'on_site';
+            this.editDate     = n.getFullYear() + '-' + p(n.getMonth()+1) + '-' + p(n.getDate());
+            this.editCheckIn  = p(n.getHours()) + ':' + p(n.getMinutes());
+            this.editCheckOut = '';
+            this.modalOpen    = true;
+            this.$nextTick(() => { if (window.fabTomSelect) window.fabTomSelect.clear(); });
+        },
+        openEdit(d) {
+            this.editId       = d.id;
+            this.editUserId   = String(d.userId);
+            this.editType     = d.type;
+            this.editDate     = d.date;
+            this.editCheckIn  = d.checkIn;
+            this.editCheckOut = d.checkOut;
+            this.modalOpen    = true;
+            this.$nextTick(() => { if (window.fabTomSelect) window.fabTomSelect.setValue(String(d.userId)); });
+        },
+        closeModal() { this.modalOpen = false; this.editId = null; }
     }" @keydown.escape.window="closeModal()">
 
         <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
@@ -231,7 +257,11 @@
                                             : ($att->created_at ? $att->created_at->format('H:i') : null);
                                     }
                                 @endphp
-                                <td class="border-b border-r {{ $borderCls }} {{ $bg }} px-0 py-0 h-10 text-center align-middle w-12 min-w-[3rem]">
+                                <td class="border-b border-r {{ $borderCls }} {{ $bg }} px-0 py-0 h-10 text-center align-middle w-12 min-w-[3rem] {{ ($canCheckinForOther && $att) ? 'cursor-pointer hover:ring-1 hover:ring-inset hover:ring-indigo-400' : '' }}"
+                                    @if($canCheckinForOther && $att)
+                                    @click="openEdit({id: {{ $att->id }}, userId: {{ $att->user_id }}, type: '{{ $att->type }}', date: '{{ $dk }}', checkIn: '{{ $timeStr ?? '' }}', checkOut: '{{ $att->check_out_time ? substr($att->check_out_time, 0, 5) : '' }}'})"
+                                    @endif
+                                    >
                                     @if($state === 'on_site')
                                         <div class="flex flex-col items-center justify-center leading-tight">
                                             <span class="text-green-700 dark:text-green-400 font-semibold text-[10px]">OS</span>
@@ -336,7 +366,8 @@
 
                 {{-- Modal header --}}
                 <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <h2 class="text-base font-semibold text-gray-900 dark:text-white">Thêm chấm công</h2>
+                    <h2 class="text-base font-semibold text-gray-900 dark:text-white"
+                        x-text="editId ? 'Sửa chấm công' : 'Thêm chấm công'">Thêm chấm công</h2>
                     <button type="button" @click="closeModal()"
                         class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -348,6 +379,8 @@
                 {{-- Modal form --}}
                 <form method="POST" action="{{ route('attendance.checkin-for-user') }}" class="px-5 py-4 space-y-4">
                     @csrf
+                    {{-- Hidden: attendance_id for edit mode --}}
+                    <input type="hidden" name="attendance_id" :value="editId ?? ''">
 
                     {{-- User --}}
                     <div>
@@ -370,19 +403,19 @@
                         </label>
                         <div class="flex gap-4">
                             <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="type" value="on_site" required
+                                <input type="radio" name="type" value="on_site" x-model="editType" required
                                        class="text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600">
                                 <span class="text-sm text-gray-700 dark:text-gray-300">On Site</span>
                             </label>
                             <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="type" value="wfh"
+                                <input type="radio" name="type" value="wfh" x-model="editType"
                                        class="text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600">
                                 <span class="text-sm text-gray-700 dark:text-gray-300">WFH</span>
                             </label>
                         </div>
                     </div>
 
-                    {{-- Date + Time --}}
+                    {{-- Date + Check-in time --}}
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label for="checkin-date"
@@ -390,7 +423,7 @@
                                 Ngày <span class="text-red-500">*</span>
                             </label>
                             <input type="date" id="checkin-date" name="date"
-                                   value="{{ now()->toDateString() }}" required
+                                   x-model="editDate" required
                                    class="block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 rounded-md shadow-sm text-sm px-3 py-1.5 focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
                         <div>
@@ -399,9 +432,21 @@
                                 Giờ vào <span class="text-red-500">*</span>
                             </label>
                             <input type="time" id="checkin-time" name="check_in_time"
-                                   value="{{ now()->format('H:i') }}" required
+                                   x-model="editCheckIn" required
                                    class="block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 rounded-md shadow-sm text-sm px-3 py-1.5 focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
+                    </div>
+
+                    {{-- Check-out time (optional) --}}
+                    <div>
+                        <label for="checkout-time"
+                               class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Giờ ra
+                            <span class="text-xs font-normal text-gray-400">(tùy chọn)</span>
+                        </label>
+                        <input type="time" id="checkout-time" name="check_out_time"
+                               x-model="editCheckOut"
+                               class="block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 rounded-md shadow-sm text-sm px-3 py-1.5 focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
 
                     {{-- Actions --}}
@@ -428,7 +473,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         const el = document.getElementById('checkin-user-select');
         if (el) {
-            new TomSelect(el, {
+            window.fabTomSelect = new TomSelect(el, {
                 placeholder: '— Chọn nhân viên —',
                 allowEmptyOption: true,
                 maxOptions: 200,

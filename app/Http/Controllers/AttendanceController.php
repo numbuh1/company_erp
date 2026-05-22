@@ -94,14 +94,17 @@ class AttendanceController extends Controller
             ];
         }
 
-        $officeLat      = AppSetting::get('office_latitude');
-        $officeLng      = AppSetting::get('office_longitude');
-        $officeRadiusKm = AppSetting::get('office_radius_km', 2);
+        $officeLat       = AppSetting::get('office_latitude');
+        $officeLng       = AppSetting::get('office_longitude');
+        $officeRadiusKm  = AppSetting::get('office_radius_km', 2);
+        $lunchBreakStart = AppSetting::get('lunch_break_start', '12:00');
+        $lunchBreakEnd   = AppSetting::get('lunch_break_end',   '13:00');
 
         return view('attendance.index', compact(
             'myAttendance', 'myOnLeaveToday',
             'attendanceUsers', 'counts', 'canSeeStats', 'today',
-            'officeLat', 'officeLng', 'officeRadiusKm'
+            'officeLat', 'officeLng', 'officeRadiusKm',
+            'lunchBreakStart', 'lunchBreakEnd'
         ));
     }
 
@@ -360,12 +363,32 @@ class AttendanceController extends Controller
         if (!auth()->user()->can('checkin for other user')) abort(403);
 
         $request->validate([
-            'user_id'       => 'required|exists:users,id',
-            'type'          => 'required|in:on_site,wfh',
-            'date'          => 'required|date',
-            'check_in_time' => 'required|date_format:H:i',
+            'user_id'        => 'required|exists:users,id',
+            'type'           => 'required|in:on_site,wfh',
+            'date'           => 'required|date',
+            'check_in_time'  => 'required|date_format:H:i',
+            'check_out_time' => 'nullable|date_format:H:i',
+            'attendance_id'  => 'nullable|exists:attendances,id',
         ]);
 
+        $checkOutVal = $request->filled('check_out_time')
+            ? $request->check_out_time . ':00'
+            : null;
+
+        // ── Update existing record ───────────────────────────────────────
+        if ($request->filled('attendance_id')) {
+            $attendance = Attendance::findOrFail($request->attendance_id);
+            $attendance->update([
+                'type'           => $request->type,
+                'date'           => $request->date,
+                'check_in_time'  => $request->check_in_time . ':00',
+                'check_out_time' => $checkOutVal,
+                'created_by'     => auth()->id(),
+            ]);
+            return back()->with('success', 'Đã cập nhật chấm công thành công.');
+        }
+
+        // ── Create new record ────────────────────────────────────────────
         if (Attendance::where('user_id', $request->user_id)
                       ->whereDate('date', $request->date)
                       ->exists()) {
@@ -373,15 +396,16 @@ class AttendanceController extends Controller
         }
 
         Attendance::create([
-            'user_id'       => $request->user_id,
-            'date'          => $request->date,
-            'type'          => $request->type,
-            'check_in_time' => $request->check_in_time . ':00',
-            'status'        => 'approved',
-            'hours'         => 8,
-            'approved_by'   => auth()->id(),
-            'approved_at'   => now(),
-            'created_by'    => auth()->id(),
+            'user_id'        => $request->user_id,
+            'date'           => $request->date,
+            'type'           => $request->type,
+            'check_in_time'  => $request->check_in_time . ':00',
+            'check_out_time' => $checkOutVal,
+            'status'         => 'approved',
+            'hours'          => 8,
+            'approved_by'    => auth()->id(),
+            'approved_at'    => now(),
+            'created_by'     => auth()->id(),
         ]);
 
         return back()->with('success', 'Đã ghi nhận chấm công thành công.');

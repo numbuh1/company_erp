@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Attendance extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'user_id',
         'date',
@@ -21,6 +25,15 @@ class Attendance extends Model
         'reject_reason',
         'created_by',
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->setDescriptionForEvent(fn(string $eventName) => "Attendance {$eventName}")
+            ->useLogName('attendance');
+    }
 
     protected function casts(): array
     {
