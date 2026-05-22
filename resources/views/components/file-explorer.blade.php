@@ -7,15 +7,23 @@
     'items',           // Collection<ProjectFile> — contents of current folder
     'currentFolder',   // ProjectFile|null — null means root
     'breadcrumb',      // array<ProjectFile> — ancestor folders root → current
-    'title'      => 'Files',
-    'canUpload'   => true,
+    'title'        => 'Files',
+    'canUpload'    => true,
     'canManageAll' => false,  // true = can rename/delete anything (not just own uploads)
+    'extraParams'  => [],     // extra query params preserved in all folder nav links (e.g. ['tab' => 'files'])
 ])
 
 @php
-    $showUrl        = route($routePrefix . '.show', $model);
-    $uploadUrl      = route($routePrefix . '.files.upload', $model);
+    $showUrl         = route($routePrefix . '.show', $model);
+    $uploadUrl       = route($routePrefix . '.files.upload', $model);
     $folderCreateUrl = route($routePrefix . '.folders.create', $model);
+
+    // Build a folder navigation URL, merging $extraParams with an optional folder_id
+    $folderUrl = function(?int $folderId = null) use ($showUrl, $extraParams): string {
+        $params = $extraParams;
+        if ($folderId !== null) $params['folder_id'] = $folderId;
+        return $params ? $showUrl . '?' . http_build_query($params) : $showUrl;
+    };
 @endphp
 
 <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6"
@@ -44,13 +52,13 @@
             <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
             </svg>
-            <a href="{{ $showUrl }}"
+            <a href="{{ $folderUrl() }}"
                 class="{{ !$currentFolder ? 'font-semibold text-gray-800 dark:text-gray-200' : 'text-blue-500 hover:underline' }}">
                 Root
             </a>
             @foreach($breadcrumb as $crumb)
                 <span class="text-gray-400">/</span>
-                <a href="{{ $showUrl }}?folder_id={{ $crumb->id }}"
+                <a href="{{ $folderUrl($crumb->id) }}"
                     class="{{ $loop->last ? 'font-semibold text-gray-800 dark:text-gray-200' : 'text-blue-500 hover:underline' }}">
                     {{ $crumb->display_name }}
                 </a>
@@ -92,9 +100,7 @@
                 @if($currentFolder)
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                         <td class="px-4 py-2" colspan="5">
-                            <a href="{{ $currentFolder->parent_id
-                                    ? $showUrl . '?folder_id=' . $currentFolder->parent_id
-                                    : $showUrl }}"
+                            <a href="{{ $folderUrl($currentFolder->parent_id ?: null) }}"
                                 class="flex items-center gap-2 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
                                 ..
@@ -116,7 +122,7 @@
                         {{-- Name --}}
                         <td class="px-4 py-2">
                             @if($item->is_folder)
-                                <a href="{{ $showUrl }}?folder_id={{ $item->id }}"
+                                <a href="{{ $folderUrl($item->id) }}"
                                     class="flex items-center gap-2 text-yellow-600 hover:text-yellow-700 font-medium">
                                     <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24">
                                         <path d="M10 4H2a2 2 0 00-2 2v12a2 2 0 002 2h20a2 2 0 002-2V8a2 2 0 00-2-2h-10L10 4z"/>

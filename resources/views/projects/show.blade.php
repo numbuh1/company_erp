@@ -227,6 +227,7 @@
                         :breadcrumb="$breadcrumb"
                         :can-upload="true"
                         :can-manage-all="$canManageAll"
+                        :extra-params="['tab' => 'files']"
                     />
                 </div>
 
