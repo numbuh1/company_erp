@@ -104,6 +104,32 @@
                         </div>
                     </div>
 
+                    {{-- ── Lunch Break ─────────────────────────────────────── --}}
+                    <div class="pt-5 border-t border-gray-200 dark:border-gray-600 mb-6">
+                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+                            🍱 Giờ nghỉ trưa
+                        </p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                            Khoảng thời gian nghỉ trưa sẽ được tự động trừ khi tính giờ làm thực tế lúc check-out.
+                        </p>
+                        <div class="grid grid-cols-2 gap-4 max-w-xs">
+                            <div>
+                                <x-input-label value="Bắt đầu nghỉ trưa" />
+                                <input type="time" name="lunch_break_start"
+                                    value="{{ old('lunch_break_start', $settings['lunch_break_start']) }}"
+                                    class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                @error('lunch_break_start')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                            </div>
+                            <div>
+                                <x-input-label value="Kết thúc nghỉ trưa" />
+                                <input type="time" name="lunch_break_end"
+                                    value="{{ old('lunch_break_end', $settings['lunch_break_end']) }}"
+                                    class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                @error('lunch_break_end')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="flex justify-end">
                         <x-primary-button>Lưu cài đặt</x-primary-button>
                     </div>

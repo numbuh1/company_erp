@@ -35,51 +35,86 @@
                 @elseif($myAttendance)
                     {{-- Already checked in --}}
                     @php
-                        $isOnSite  = $myAttendance->type === 'on_site';
-                        $isWfh     = $myAttendance->type === 'wfh';
-                        $isPending = $myAttendance->status === 'pending';
-                        $isApproved= $myAttendance->status === 'approved';
-                        $isRejected= $myAttendance->status === 'rejected';
+                        $isOnSite   = $myAttendance->type === 'on_site';
+                        $isWfh      = $myAttendance->type === 'wfh';
+                        $isPending  = $myAttendance->status === 'pending';
+                        $isApproved = $myAttendance->status === 'approved';
+                        $isRejected = $myAttendance->status === 'rejected';
+                        $checkedOut = (bool) $myAttendance->check_out_time;
+                        $checkInDisplay  = $myAttendance->check_in_time
+                            ? substr($myAttendance->check_in_time, 0, 5)
+                            : $myAttendance->created_at->format('H:i');
+                        $checkOutDisplay = $myAttendance->check_out_time
+                            ? substr($myAttendance->check_out_time, 0, 5)
+                            : null;
                     @endphp
-                    <div class="flex items-center gap-4 p-4 rounded-lg border
+                    <div class="flex items-start gap-4 p-4 rounded-lg border
                         {{ $isApproved && $isOnSite ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700' : '' }}
                         {{ $isApproved && $isWfh   ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700' : '' }}
                         {{ $isPending              ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-700' : '' }}
                         {{ $isRejected             ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700' : '' }}">
-                        <span class="text-3xl">
-                            {{ $isOnSite ? '🏢' : '🏠' }}
-                        </span>
+                        <span class="text-3xl mt-0.5">{{ $isOnSite ? '🏢' : '🏠' }}</span>
                         <div class="flex-1">
                             <p class="font-semibold text-gray-800 dark:text-gray-100">
                                 {{ $isOnSite ? 'On Site' : 'Working from Home' }}
                                 @if($myAttendance->hours)
-                                    <span class="text-sm font-normal text-gray-500 ml-1">({{ $myAttendance->hours }}h)</span>
+                                    <span class="text-sm font-normal text-gray-500 ml-1">({{ $myAttendance->hours }}h kế hoạch)</span>
                                 @endif
                             </p>
                             @if($myAttendance->reason)
                                 <p class="text-sm text-gray-500 dark:text-gray-400">{{ $myAttendance->reason }}</p>
                             @endif
-                            <div class="mt-1">
-                                @if($isPending)
-                                    <span class="text-xs font-medium px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
-                                        Chờ phê duyệt
-                                    </span>
-                                @elseif($isApproved)
-                                    <span class="text-xs font-medium px-2 py-0.5 rounded bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                                        Đã duyệt
-                                    </span>
-                                @elseif($isRejected)
-                                    <span class="text-xs font-medium px-2 py-0.5 rounded bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
-                                        Đã từ chối
-                                    </span>
-                                    @if($myAttendance->reject_reason)
-                                        <span class="text-xs text-red-500 ml-1">— {{ $myAttendance->reject_reason }}</span>
-                                    @endif
+
+                            {{-- Time display --}}
+                            <div class="flex flex-wrap items-center gap-3 mt-2 text-sm text-gray-600 dark:text-gray-400">
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                                    </svg>
+                                    Vào: <strong class="text-gray-800 dark:text-gray-200 ml-0.5">{{ $checkInDisplay }}</strong>
+                                </span>
+                                @if($checkOutDisplay)
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                    </svg>
+                                    Ra: <strong class="text-gray-800 dark:text-gray-200 ml-0.5">{{ $checkOutDisplay }}</strong>
+                                </span>
+                                @if($myAttendance->actual_work_hours !== null)
+                                <span class="font-semibold text-indigo-600 dark:text-indigo-400">
+                                    ✅ {{ $myAttendance->actual_work_hours }}h thực tế
+                                </span>
+                                @endif
                                 @endif
                             </div>
-                        </div>
-                        <div class="text-xs text-gray-400">
-                            {{ $myAttendance->created_at->format('H:i') }}
+
+                            <div class="mt-2 flex flex-wrap items-center gap-3">
+                                @if($isPending)
+                                    <span class="text-xs font-medium px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">Chờ phê duyệt</span>
+                                @elseif($isApproved)
+                                    <span class="text-xs font-medium px-2 py-0.5 rounded bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">Đã duyệt</span>
+                                @elseif($isRejected)
+                                    <span class="text-xs font-medium px-2 py-0.5 rounded bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">Đã từ chối</span>
+                                    @if($myAttendance->reject_reason)
+                                        <span class="text-xs text-red-500">— {{ $myAttendance->reject_reason }}</span>
+                                    @endif
+                                @endif
+
+                                {{-- Check-out button --}}
+                                @if($isApproved && !$checkedOut)
+                                <form method="POST" action="{{ route('attendance.checkout') }}">
+                                    @csrf
+                                    <button type="submit"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded-lg shadow-sm transition">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                        </svg>
+                                        Check Out
+                                    </button>
+                                </form>
+                                @endif
+                            </div>
                         </div>
                     </div>
 

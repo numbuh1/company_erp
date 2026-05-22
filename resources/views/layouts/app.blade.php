@@ -58,6 +58,8 @@
             </div>
         </div>
 
+        @include('layouts.checkin-fab')
+
         <script>
             function toggleDarkMode() {
                 const html = document.documentElement;

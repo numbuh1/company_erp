@@ -232,6 +232,49 @@ class AttendanceController extends Controller
         return back()->with('success', 'WFH request rejected.');
     }
 
+    public function checkOut(Request $request)
+    {
+        $user  = auth()->user();
+        $today = now()->toDateString();
+
+        $attendance = Attendance::where('user_id', $user->id)
+            ->whereDate('date', $today)
+            ->whereNull('check_out_time')
+            ->first();
+
+        if (!$attendance) {
+            return back()->with('error', 'Không tìm thấy dữ liệu chấm công hoặc bạn đã check-out rồi.');
+        }
+
+        if ($attendance->status !== 'approved') {
+            return back()->with('error', 'Không thể check-out khi WFH chưa được phê duyệt.');
+        }
+
+        $checkOutTime = now()->format('H:i:s');
+
+        // ── Calculate actual work hours ──────────────────────────────────
+        $lunchStart = AppSetting::get('lunch_break_start', '12:00');
+        $lunchEnd   = AppSetting::get('lunch_break_end',   '13:00');
+
+        $checkInMins  = $this->_timeToMinutes($attendance->check_in_time ?: $attendance->created_at->format('H:i:s'));
+        $checkOutMins = $this->_timeToMinutes($checkOutTime);
+        $lunchSMins   = $this->_timeToMinutes($lunchStart);
+        $lunchEMins   = $this->_timeToMinutes($lunchEnd);
+
+        $totalMins    = max(0, $checkOutMins - $checkInMins);
+        $overlapStart = max($checkInMins, $lunchSMins);
+        $overlapEnd   = min($checkOutMins, $lunchEMins);
+        $lunchMins    = max(0, $overlapEnd - $overlapStart);
+        $actualHours  = round(($totalMins - $lunchMins) / 60, 2);
+
+        $attendance->update([
+            'check_out_time'    => $checkOutTime,
+            'actual_work_hours' => max(0, $actualHours),
+        ]);
+
+        return back()->with('success', 'Đã check-out. Giờ làm thực tế: ' . max(0, $actualHours) . 'h');
+    }
+
     public function list(Request $request)
     {
         $user = auth()->user();
@@ -388,6 +431,13 @@ class AttendanceController extends Controller
         return User::whereIn('id', $ids->unique()->toArray())
             ->where('is_active', true)
             ->pluck('id');
+    }
+
+    /** Convert "HH:MM" or "HH:MM:SS" string to minutes from midnight. */
+    private function _timeToMinutes(string $timeStr): int
+    {
+        $parts = explode(':', $timeStr);
+        return (int) ($parts[0] ?? 0) * 60 + (int) ($parts[1] ?? 0);
     }
 
     /**
