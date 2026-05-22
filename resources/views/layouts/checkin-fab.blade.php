@@ -143,7 +143,7 @@
                         class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Lý do / Nhiệm vụ hôm nay</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Lý do / Công việc hôm nay</label>
                     <textarea name="reason" rows="3" x-model="reason"
                         class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500"
                         placeholder="Mô tả ngắn gọn công việc bạn sẽ làm..."></textarea>

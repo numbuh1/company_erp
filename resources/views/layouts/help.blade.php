@@ -770,7 +770,7 @@
         <a href="{{ route('help.announcements') }}" class="sidebar-link {{ request()->routeIs('help.announcements') ? 'active' : '' }}"><span class="icon">📢</span> Thông báo</a>
         <a href="{{ route('help.attendance') }}" class="sidebar-link {{ request()->routeIs('help.attendance') ? 'active' : '' }}"><span class="icon">🏢</span> Chấm công</a>
         <a href="{{ route('help.projects') }}" class="sidebar-link {{ request()->routeIs('help.projects') ? 'active' : '' }}"><span class="icon">📁</span> Dự án</a>
-        <a href="{{ route('help.tasks') }}" class="sidebar-link {{ request()->routeIs('help.tasks') ? 'active' : '' }}"><span class="icon">✅</span> Nhiệm vụ</a>
+        <a href="{{ route('help.tasks') }}" class="sidebar-link {{ request()->routeIs('help.tasks') ? 'active' : '' }}"><span class="icon">✅</span> Công việc</a>
         <a href="{{ route('help.timesheet') }}" class="sidebar-link {{ request()->routeIs('help.timesheet') ? 'active' : '' }}"><span class="icon">⏱️</span> Bảng chấm công</a>
         <a href="{{ route('help.leave-requests') }}" class="sidebar-link {{ request()->routeIs('help.leave-requests') ? 'active' : '' }}"><span class="icon">🏖️</span> Yêu cầu nghỉ phép</a>
         <a href="{{ route('help.ot-requests') }}" class="sidebar-link {{ request()->routeIs('help.ot-requests') ? 'active' : '' }}"><span class="icon">🕐</span> Yêu cầu tăng ca</a>

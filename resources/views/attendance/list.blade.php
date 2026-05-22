@@ -390,7 +390,7 @@
                     }
                 }
             @endphp
-            <div class="mt-4 flex flex-wrap gap-5 text-sm text-gray-600 dark:text-gray-400">
+            <!-- <div class="mt-4 flex flex-wrap gap-5 text-sm text-gray-600 dark:text-gray-400">
                 <span class="flex items-center gap-1.5">
                     <span class="inline-block w-2.5 h-2.5 rounded-full bg-green-400"></span>
                     On Site: <strong class="ml-1 text-gray-800 dark:text-gray-200">{{ $sumOnSite }}</strong>
@@ -411,7 +411,7 @@
                     <span class="inline-block w-2.5 h-2.5 rounded-full bg-red-400"></span>
                     Vắng mặt: <strong class="ml-1 text-gray-800 dark:text-gray-200">{{ $sumAbsent }}</strong>
                 </span>
-            </div>
+            </div> -->
             @endif
 
         </div>{{-- /max-w-full --}}

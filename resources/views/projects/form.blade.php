@@ -26,8 +26,8 @@
                         <x-input-label value="Trạng thái" />
                         <select name="status"
                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                            @foreach(['Not Started', 'In Progress', 'Done'] as $s)
-                                <option value="{{ $s }}" {{ old('status', $project->status ?? 'Not Started') === $s ? 'selected' : '' }}>{{ $s }}</option>
+                            @foreach(['Chưa bắt đầu', 'Đang tiến hành', 'Đã xong'] as $s)
+                                <option value="{{ $s }}" {{ old('status', $project->status ?? 'Chưa bắt đầu') === $s ? 'selected' : '' }}>{{ $s }}</option>
                             @endforeach
                         </select>
                     </div>                    

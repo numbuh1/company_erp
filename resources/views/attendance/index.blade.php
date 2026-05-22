@@ -280,7 +280,7 @@
                             </div>
 
                             <div class="mb-5">
-                                <x-input-label value="Lý do / Nhiệm vụ hôm nay" />
+                                <x-input-label value="Lý do / Công việc hôm nay" />
                                 <textarea name="reason" rows="3" x-model="reason"
                                     class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500"
                                     placeholder="Mô tả ngắn gọn công việc bạn sẽ làm..."></textarea>

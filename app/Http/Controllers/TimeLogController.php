@@ -578,7 +578,7 @@ class TimeLogController extends Controller
                         'task_id'        => $log->task_id,
                         'label'          => $log->task_id
                             ? 'TK-' . $log->task_id . ($task ? ' · ' . $task->name : '')
-                            : '(Không có nhiệm vụ)',
+                            : '(Không có công việc)',
                         'days'           => [],
                         'total_hours'    => 0,
                         'total_ot'       => 0,
@@ -611,7 +611,7 @@ class TimeLogController extends Controller
                         'task_id'       => $ot->task_id,
                         'label'         => $ot->task_id
                             ? 'TK-' . $ot->task_id . ($task ? ' · ' . $task->name : '')
-                            : '(Không có nhiệm vụ)',
+                            : '(Không có công việc)',
                         'days'          => [],
                         'total_hours'   => 0,
                         'total_ot'      => 0,

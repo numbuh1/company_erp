@@ -100,9 +100,9 @@
                     </select>
                 </div>
                 <div>
-                    <x-input-label value="Nhiệm vụ" />
+                    <x-input-label value="Công việc" />
                     <select name="task_id" class="mt-1 block border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
-                        <option value="">Tất cả nhiệm vụ</option>
+                        <option value="">Tất cả công việc</option>
                         @foreach($tasks as $task)
                             <option value="{{ $task->id }}" {{ request('task_id') == $task->id ? 'selected' : '' }}>
                                 TK-{{ $task->id }} {{ $task->name }}

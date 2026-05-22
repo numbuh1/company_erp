@@ -24,12 +24,12 @@
 
             {{-- Task Details --}}
             <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
-                <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">Chi tiết nhiệm vụ</h3>
+                <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">Chi tiết công việc</h3>
 
                 @php
                     $statusClass = match($task->status) {
-                        'In Progress' => 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
-                        'Done'        => 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+                        'Đang tiến hành' => 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+                        'Đã xong'        => 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
                         default       => 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
                     };
                 @endphp

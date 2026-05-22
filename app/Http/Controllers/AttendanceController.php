@@ -31,13 +31,13 @@ class AttendanceController extends Controller
             ->whereDate('end_at', '>=', $today)
             ->exists();
 
-        // ── Team / all-company stats (requires module attendance) ───
+        // ── Team / all-company stats ────────────────────────────────
         $attendanceUsers = collect();
         $counts          = [];
-        $canSeeStats     = $user->can('module attendance');
+        $scopedUserIds   = $this->_scopedUserIds($user);
+        $canSeeStats     = $scopedUserIds->count() > 1;
 
         if ($canSeeStats) {
-            $scopedUserIds = $this->_scopedUserIds($user);
 
             $todayAttendances = Attendance::whereDate('date', $today)
                 ->whereIn('user_id', $scopedUserIds)
@@ -282,8 +282,6 @@ class AttendanceController extends Controller
     {
         $user = auth()->user();
 
-        if (!$user->can('module attendance')) abort(403);
-
         // ── Month ────────────────────────────────────────────────────────
         $monthStr = $request->input('month', now()->format('Y-m'));
         try {
@@ -452,7 +450,9 @@ class AttendanceController extends Controller
     /**
      * Returns the IDs of users this viewer can see.
      * view all attendance → everyone active
-     * else               → team-mates + subordinates + self
+     * view all attendance → every active user
+     * team leader         → all members of led teams + self (active)
+     * else                → self only
      */
     private function _scopedUserIds(User $user): \Illuminate\Support\Collection
     {
@@ -460,13 +460,19 @@ class AttendanceController extends Controller
             return User::where('is_active', true)->pluck('id');
         }
 
-        $ids = collect([$user->id]);
-        $ids = $ids->merge($user->teamMembers()->pluck('id'));
-        $ids = $ids->merge($user->subordinates()->pluck('users.id'));
+        $leaderTeamIds = $user->teams()->wherePivot('is_leader', true)->pluck('teams.id');
 
-        return User::whereIn('id', $ids->unique()->toArray())
-            ->where('is_active', true)
-            ->pluck('id');
+        if ($leaderTeamIds->isNotEmpty()) {
+            $memberIds = DB::table('team_user')
+                ->whereIn('team_id', $leaderTeamIds)
+                ->pluck('user_id');
+
+            return User::whereIn('id', $memberIds->push($user->id)->unique())
+                ->where('is_active', true)
+                ->pluck('id');
+        }
+
+        return collect([$user->id]);
     }
 
     /** Convert "HH:MM" or "HH:MM:SS" string to minutes from midnight. */
