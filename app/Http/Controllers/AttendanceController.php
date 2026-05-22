@@ -5,8 +5,11 @@ namespace App\Http\Controllers;
 use App\Helper\NotificationHelper;
 use App\Models\Attendance;
 use App\Models\LeaveRequest;
+use App\Models\PublicHoliday;
+use App\Models\Team;
 use App\Models\User;
 use App\Models\AppSetting;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -131,13 +134,15 @@ class AttendanceController extends Controller
             }
 
             Attendance::create([
-                'user_id'     => $user->id,
-                'date'        => $today,
-                'type'        => 'on_site',
-                'status'      => 'approved',
-                'hours'       => 8,
-                'approved_by' => $user->id,
-                'approved_at' => now(),
+                'user_id'        => $user->id,
+                'date'           => $today,
+                'type'           => 'on_site',
+                'check_in_time'  => now()->format('H:i:s'),
+                'status'         => 'approved',
+                'hours'          => 8,
+                'approved_by'    => $user->id,
+                'approved_at'    => now(),
+                'created_by'     => $user->id,
             ]);
 
             return back()->with('success', 'On-Site attendance recorded.');
@@ -153,14 +158,16 @@ class AttendanceController extends Controller
         $autoApprove = $user->wfh_without_approval;
 
         $attendance = Attendance::create([
-            'user_id'     => $user->id,
-            'date'        => $today,
-            'type'        => 'wfh',
-            'status'      => $autoApprove ? 'approved' : 'pending',
-            'hours'       => $request->hours,
-            'reason'      => $request->reason,
-            'approved_by' => $autoApprove ? $user->id : null,
-            'approved_at' => $autoApprove ? now() : null,
+            'user_id'        => $user->id,
+            'date'           => $today,
+            'type'           => 'wfh',
+            'check_in_time'  => now()->format('H:i:s'),
+            'status'         => $autoApprove ? 'approved' : 'pending',
+            'hours'          => $request->hours,
+            'reason'         => $request->reason,
+            'approved_by'    => $autoApprove ? $user->id : null,
+            'approved_at'    => $autoApprove ? now() : null,
+            'created_by'     => $user->id,
         ]);
 
         if (!$autoApprove) {
@@ -223,6 +230,118 @@ class AttendanceController extends Controller
         );
 
         return back()->with('success', 'WFH request rejected.');
+    }
+
+    public function list(Request $request)
+    {
+        $user = auth()->user();
+
+        if (!$user->can('module attendance')) abort(403);
+
+        // ── Month ────────────────────────────────────────────────────────
+        $monthStr = $request->input('month', now()->format('Y-m'));
+        try {
+            $month = Carbon::createFromFormat('Y-m', $monthStr)->startOfMonth();
+        } catch (\Throwable) {
+            $month = now()->startOfMonth();
+            $monthStr = $month->format('Y-m');
+        }
+        $monthEnd = $month->copy()->endOfMonth();
+
+        // ── Scope users ──────────────────────────────────────────────────
+        $scopedUserIds = $this->_scopedUserIds($user);
+
+        // Teams available to this viewer
+        $teams = Team::whereHas('users', fn($q) => $q->whereIn('users.id', $scopedUserIds->toArray()))
+            ->orderBy('name')->get();
+
+        $selectedTeamId = $request->input('team_id');
+
+        if ($selectedTeamId) {
+            $memberIds = Team::findOrFail($selectedTeamId)
+                ->users()
+                ->whereIn('users.id', $scopedUserIds->toArray())
+                ->pluck('users.id');
+        } else {
+            $memberIds = $scopedUserIds;
+        }
+
+        $members = User::whereIn('id', $memberIds)->orderBy('name')->get();
+
+        // ── Attendances ──────────────────────────────────────────────────
+        // Key: "{user_id}_{Y-m-d}"
+        $attendances = Attendance::whereBetween('date', [$month->toDateString(), $monthEnd->toDateString()])
+            ->whereIn('user_id', $memberIds)
+            ->get()
+            ->keyBy(fn($a) => $a->user_id . '_' . $a->date->format('Y-m-d'));
+
+        // ── Approved leaves ──────────────────────────────────────────────
+        $leaveRows = LeaveRequest::where('status', 'approved')
+            ->whereIn('user_id', $memberIds)
+            ->where('start_at', '<=', $monthEnd->toDateTimeString())
+            ->where('end_at', '>=', $month->toDateTimeString())
+            ->get();
+
+        $leavesByDay = [];
+        foreach ($leaveRows as $leave) {
+            $cursor = Carbon::parse($leave->start_at)->startOfDay();
+            $end    = Carbon::parse($leave->end_at)->startOfDay();
+            while ($cursor->lte($end)) {
+                $dk = $cursor->format('Y-m-d');
+                if ($dk >= $month->toDateString() && $dk <= $monthEnd->toDateString()) {
+                    $leavesByDay[$leave->user_id . '_' . $dk] = $leave;
+                }
+                $cursor->addDay();
+            }
+        }
+
+        // ── Holidays ─────────────────────────────────────────────────────
+        $holidayDates = PublicHoliday::getHolidayDates($month, $monthEnd);
+
+        // ── Misc ─────────────────────────────────────────────────────────
+        $today                = now()->toDateString();
+        $daysInMonth          = (int) $month->daysInMonth;
+        $canCheckinForOther   = $user->can('checkin for other user');
+        $allUsers             = User::whereIn('id', $scopedUserIds)->orderBy('name')->get();
+
+        return view('attendance.list', compact(
+            'members', 'attendances', 'leavesByDay', 'holidayDates',
+            'month', 'monthEnd', 'daysInMonth', 'today',
+            'teams', 'selectedTeamId', 'monthStr',
+            'canCheckinForOther', 'allUsers'
+        ));
+    }
+
+    public function checkinForUser(Request $request)
+    {
+        if (!auth()->user()->can('checkin for other user')) abort(403);
+
+        $request->validate([
+            'user_id'       => 'required|exists:users,id',
+            'type'          => 'required|in:on_site,wfh',
+            'date'          => 'required|date',
+            'check_in_time' => 'required|date_format:H:i',
+        ]);
+
+        if (Attendance::where('user_id', $request->user_id)
+                      ->whereDate('date', $request->date)
+                      ->exists()) {
+            return back()->with('error', 'Người dùng này đã có dữ liệu chấm công trong ngày đó.');
+        }
+
+        Attendance::create([
+            'user_id'       => $request->user_id,
+            'date'          => $request->date,
+            'type'          => $request->type,
+            'check_in_time' => $request->check_in_time . ':00',
+            'status'        => 'approved',
+            'hours'         => 8,
+            'approved_by'   => auth()->id(),
+            'approved_at'   => now(),
+            'created_by'    => auth()->id(),
+        ]);
+
+        return back()->with('success', 'Đã ghi nhận chấm công thành công.');
     }
 
     // ── Private helpers ────────────────────────────────────────────────────

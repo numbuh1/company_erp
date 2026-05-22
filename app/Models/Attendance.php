@@ -10,12 +10,14 @@ class Attendance extends Model
         'user_id',
         'date',
         'type',
+        'check_in_time',
         'status',
         'hours',
         'reason',
         'approved_by',
         'approved_at',
         'reject_reason',
+        'created_by',
     ];
 
     protected function casts(): array
@@ -34,5 +36,10 @@ class Attendance extends Model
     public function approver()
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

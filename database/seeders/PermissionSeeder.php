@@ -265,9 +265,10 @@ class PermissionSeeder extends Seeder
         );
 
         $attendance_permissions = [
-            'module attendance'   => 'Enable',
-            'view all attendance' => 'View All Attendance',
-            'approve attendance'  => 'Approve WFH Requests',
+            'module attendance'       => 'Enable',
+            'view all attendance'     => 'View All Attendance',
+            'approve attendance'      => 'Approve WFH Requests',
+            'checkin for other user'  => 'Check-in For Other User',
         ];
 
         foreach ($attendance_permissions as $name => $label) {
