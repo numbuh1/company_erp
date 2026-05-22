@@ -193,10 +193,12 @@
         <div x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0 scale-95"
              x-transition:enter-end="opacity-100 scale-100"
-             class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm
+             class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md
                     border border-gray-200 dark:border-gray-700 overflow-hidden">
+
+            {{-- Header --}}
             <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-                <h3 class="font-semibold text-gray-800 dark:text-gray-100">🚪 Xác nhận Check Out</h3>
+                <h3 class="font-semibold text-gray-800 dark:text-gray-100">🚪 Check Out</h3>
                 <button type="button" @click="showCheckoutConfirm = false"
                     class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -204,31 +206,61 @@
                     </svg>
                 </button>
             </div>
-            <div class="px-5 py-5 space-y-3 text-center">
-                <p class="text-sm text-gray-500 dark:text-gray-400">Giờ làm thực tế ước tính</p>
-                <div class="text-4xl font-bold text-indigo-600 dark:text-indigo-400" x-text="estimatedHours + 'h'"></div>
-                <p class="text-xs text-gray-400">
-                    Từ <span class="font-medium text-gray-500 dark:text-gray-300" x-text="checkInTime"></span>
-                    đến hiện tại, trừ nghỉ trưa
-                    <span class="font-medium text-gray-500 dark:text-gray-300" x-text="lunchStart + '–' + lunchEnd"></span>
-                </p>
-            </div>
-            <div class="flex justify-end gap-2 px-5 pb-5">
-                <button type="button" @click="showCheckoutConfirm = false"
-                    class="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600
-                           text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                    Hủy
-                </button>
-                <form method="POST" action="{{ route('attendance.checkout') }}" @submit="coSubmitting = true">
-                    @csrf
+
+            {{-- Body + submit --}}
+            <form method="POST" action="{{ route('attendance.checkout') }}" @submit="coSubmitting = true"
+                  class="px-5 py-5 space-y-4">
+                @csrf
+
+                {{-- Check-in time (read-only row) --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Giờ vào</label>
+                    <div class="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-900
+                                border border-gray-200 dark:border-gray-700 rounded-md
+                                text-sm text-gray-800 dark:text-gray-200">
+                        <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span x-text="checkInTime"></span>
+                    </div>
+                </div>
+
+                {{-- Estimated hours --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Giờ làm thực tế ước tính
+                        <span class="text-xs font-normal text-gray-400 ml-1"
+                              x-text="'(trừ nghỉ trưa ' + lunchStart + '–' + lunchEnd + ')'"></span>
+                    </label>
+                    <div class="flex items-baseline gap-1.5 px-3 py-2.5
+                                bg-orange-50 dark:bg-orange-900/20
+                                border border-orange-200 dark:border-orange-700 rounded-md">
+                        <span class="text-2xl font-bold text-orange-600 dark:text-orange-400"
+                              x-text="estimatedHours"></span>
+                        <span class="text-sm font-medium text-orange-500 dark:text-orange-400">giờ</span>
+                    </div>
+                </div>
+
+                {{-- Footer --}}
+                <div class="flex justify-end gap-2 pt-1">
+                    <button type="button" @click="showCheckoutConfirm = false"
+                        class="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600
+                               text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                        Hủy
+                    </button>
                     <button type="submit" :disabled="coSubmitting"
-                        class="px-4 py-2 text-sm rounded-lg bg-orange-500 hover:bg-orange-600
-                               text-white font-medium transition disabled:opacity-50">
-                        <span x-show="!coSubmitting">Xác nhận</span>
+                        class="inline-flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg
+                               bg-orange-500 hover:bg-orange-600 text-white font-medium transition disabled:opacity-50">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                        <span x-show="!coSubmitting">Check Out</span>
                         <span x-show="coSubmitting" x-cloak>Đang xử lý…</span>
                     </button>
-                </form>
-            </div>
+                </div>
+            </form>
         </div>
     </div>
 
