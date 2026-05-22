@@ -148,7 +148,7 @@
                         @for ($d = 1; $d <= $daysInMonth; $d++)
                             @php
                                 $hdr  = $month->copy()->setDay($d);
-                                $dow  = $hdr->dayOfWeek; {{-- 0=Sun,6=Sat --}}
+                                $dow  = $hdr->dayOfWeek; // 0=Sun, 6=Sat
                                 $dk   = $hdr->toDateString();
                                 $isWe = $dow === 0 || $dow === 6;
                                 $isHo = in_array($dk, $holidayDates);
