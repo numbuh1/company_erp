@@ -140,7 +140,10 @@
                     <span class="w-3 h-3 rounded bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700"></span>WFH chờ duyệt
                 </span>
                 <span class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 rounded bg-yellow-100 dark:bg-yellow-900/40 border border-yellow-300 dark:border-yellow-600"></span>Nghỉ phép
+                    <span class="w-3 h-3 rounded bg-yellow-100 dark:bg-yellow-900/40 border border-yellow-300 dark:border-yellow-600"></span>Nghỉ phép cả ngày
+                </span>
+                <span class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded bg-amber-100 dark:bg-amber-900/40 border border-amber-300 dark:border-amber-600"></span>Nghỉ phép nửa ngày
                 </span>
                 <span class="flex items-center gap-1.5">
                     <span class="w-3 h-3 rounded bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-600"></span>Vắng mặt
@@ -188,9 +191,9 @@
                     {{-- Rows --}}
                     <tbody>
                         @foreach($members as $memberRow)
-                        <tr class="group">
+                        <tr class="group/row">
                             {{-- Sticky name cell --}}
-                            <td class="sticky left-0 z-10 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700/40
+                            <td class="sticky left-0 z-10 bg-white dark:bg-gray-800 group-hover/row:bg-gray-50 dark:group-hover/row:bg-gray-700/40
                                        border-b border-r border-gray-200 dark:border-gray-700 px-3 py-1.5 whitespace-nowrap">
                                 <div class="flex items-center gap-2">
                                     @if($memberRow->profile_picture)
@@ -203,7 +206,7 @@
                                         </span>
                                     </div>
                                     @endif
-                                    <span class="text-gray-800 dark:text-gray-200 font-medium text-xs leading-tight">{{ $memberRow->name }}</span>
+                                    <a href="{{ route('users.show', $memberRow) }}" class="text-gray-800 dark:text-gray-200 font-medium text-xs leading-tight hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline transition-colors">{{ $memberRow->name }}</a>
                                 </div>
                             </td>
 
@@ -222,10 +225,14 @@
                                     $att   = $attendances->get($cellKey);
                                     $leave = $leavesByDay[$cellKey] ?? null;
 
+                                    $isPartialLeave = $leave && $leave->hours !== null && $leave->hours < 8;
+
                                     if ($att && $att->status === 'approved') {
                                         $state = $att->type; // 'on_site' or 'wfh'
                                     } elseif ($att && $att->status === 'pending') {
                                         $state = 'pending';
+                                    } elseif ($isPartialLeave) {
+                                        $state = 'partial_leave';
                                     } elseif ($leave) {
                                         $state = 'leave';
                                     } elseif (!$isWe && !$isHo && $isPast) {
@@ -237,31 +244,57 @@
                                     }
 
                                     $bg = match($state) {
-                                        'on_site' => 'bg-green-50 dark:bg-green-900/20',
-                                        'wfh'     => 'bg-blue-50 dark:bg-blue-900/20',
-                                        'pending' => 'bg-blue-50/60 dark:bg-blue-900/10',
-                                        'leave'   => 'bg-yellow-50 dark:bg-yellow-900/20',
-                                        'absent'  => 'bg-red-50 dark:bg-red-900/20',
-                                        'off'     => 'bg-gray-50 dark:bg-gray-700/30',
-                                        default   => 'bg-white dark:bg-gray-800',
+                                        'on_site'       => 'bg-green-50 dark:bg-green-900/20',
+                                        'wfh'           => 'bg-blue-50 dark:bg-blue-900/20',
+                                        'pending'       => 'bg-blue-50/60 dark:bg-blue-900/10',
+                                        'leave'         => 'bg-yellow-50 dark:bg-yellow-900/20',
+                                        'partial_leave' => 'bg-amber-50 dark:bg-amber-900/20',
+                                        'absent'        => 'bg-red-50 dark:bg-red-900/20',
+                                        'off'           => 'bg-gray-50 dark:bg-gray-700/30',
+                                        default         => 'bg-white dark:bg-gray-800',
                                     };
 
                                     $borderCls = $isTd
                                         ? 'border-indigo-200 dark:border-indigo-700'
                                         : 'border-gray-200 dark:border-gray-700';
 
-                                    $timeStr = null;
+                                    $checkInStr  = null;
+                                    $checkOutStr = null;
+                                    $timeStr     = null;
                                     if ($att) {
-                                        $timeStr = $att->check_in_time
+                                        $checkInStr = $att->check_in_time
                                             ? substr($att->check_in_time, 0, 5)
                                             : ($att->created_at ? $att->created_at->format('H:i') : null);
+                                        $checkOutStr = $att->check_out_time ? substr($att->check_out_time, 0, 5) : null;
+                                        if ($att->check_out_time && $att->actual_work_hours !== null) {
+                                            $timeStr = $att->actual_work_hours . 'h';
+                                        } else {
+                                            $timeStr = $checkInStr;
+                                        }
                                     }
                                 @endphp
-                                <td class="border-b border-r {{ $borderCls }} {{ $bg }} px-0 py-0 h-10 text-center align-middle w-12 min-w-[3rem] {{ ($canCheckinForOther && $att) ? 'cursor-pointer hover:ring-1 hover:ring-inset hover:ring-indigo-400' : '' }}"
+                                <td class="relative group/cell border-b border-r {{ $borderCls }} {{ $bg }} px-0 py-0 h-10 text-center align-middle w-12 min-w-[3rem] {{ ($canCheckinForOther && $att) ? 'cursor-pointer hover:ring-1 hover:ring-inset hover:ring-indigo-400' : '' }}"
                                     @if($canCheckinForOther && $att)
-                                    @click="openEdit({id: {{ $att->id }}, userId: {{ $att->user_id }}, type: '{{ $att->type }}', date: '{{ $dk }}', checkIn: '{{ $timeStr ?? '' }}', checkOut: '{{ $att->check_out_time ? substr($att->check_out_time, 0, 5) : '' }}'})"
+                                    @click="openEdit({id: {{ $att->id }}, userId: {{ $att->user_id }}, type: '{{ $att->type }}', date: '{{ $dk }}', checkIn: '{{ $checkInStr ?? '' }}', checkOut: '{{ $att->check_out_time ? substr($att->check_out_time, 0, 5) : '' }}'})"
                                     @endif
                                     >
+                                    {{-- Hover tooltip --}}
+                                    @if($att || $isPartialLeave)
+                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 z-30 pointer-events-none
+                                                opacity-0 group-hover/cell:opacity-100 transition-opacity duration-150
+                                                bg-gray-800 dark:bg-gray-700 text-white text-[10px] rounded px-2 py-1 whitespace-nowrap shadow-lg">
+                                        @if($checkInStr)
+                                        <div>Vào: {{ $checkInStr }}</div>
+                                        @endif
+                                        @if($checkOutStr)
+                                        <div>Ra: {{ $checkOutStr }}</div>
+                                        @endif
+                                        @if($isPartialLeave)
+                                        <div class="text-amber-300">Nghỉ½: {{ $leave->hours }}h</div>
+                                        @endif
+                                    </div>
+                                    @endif
+                                    {{-- Cell label --}}
                                     @if($state === 'on_site')
                                         <div class="flex flex-col items-center justify-center leading-tight">
                                             <span class="text-green-700 dark:text-green-400 font-semibold text-[10px]">OS</span>
@@ -283,6 +316,13 @@
                                             <span class="text-blue-400 text-[10px] opacity-70">{{ $timeStr }}</span>
                                             @endif
                                         </div>
+                                    @elseif($state === 'partial_leave')
+                                        <div class="flex flex-col items-center justify-center leading-tight">
+                                            <span class="text-amber-700 dark:text-amber-400 font-semibold text-[10px]">Nghỉ½</span>
+                                            @if($leave->hours)
+                                            <span class="text-amber-600 dark:text-amber-500 text-[10px] opacity-80">{{ $leave->hours }}h</span>
+                                            @endif
+                                        </div>
                                     @elseif($state === 'leave')
                                         <span class="text-yellow-700 dark:text-yellow-400 font-semibold text-[10px]">Nghỉ</span>
                                     @elseif($state === 'absent')
@@ -299,7 +339,7 @@
 
             {{-- ── Month summary ────────────────────────────────────────────── --}}
             @php
-                $sumOnSite = 0; $sumWfh = 0; $sumLeave = 0; $sumAbsent = 0;
+                $sumOnSite = 0; $sumWfh = 0; $sumLeave = 0; $sumAbsent = 0; $sumPartialLeave = 0;
                 foreach ($members as $m) {
                     for ($d = 1; $d <= $daysInMonth; $d++) {
                         $cellDate = $month->copy()->setDay($d);
@@ -308,9 +348,12 @@
                         if ($dow === 0 || $dow === 6 || in_array($dk, $holidayDates)) continue;
                         $att = $attendances->get($m->id . '_' . $dk);
                         $lv  = $leavesByDay[$m->id . '_' . $dk] ?? null;
+                        $isPartialLv = $lv && $lv->hours !== null && $lv->hours < 8;
                         if ($att && $att->status === 'approved') {
                             if ($att->type === 'on_site') $sumOnSite++;
                             else $sumWfh++;
+                        } elseif ($isPartialLv) {
+                            $sumPartialLeave++;
                         } elseif ($lv) {
                             $sumLeave++;
                         } elseif ($dk < $today) {
@@ -330,7 +373,11 @@
                 </span>
                 <span class="flex items-center gap-1.5">
                     <span class="inline-block w-2.5 h-2.5 rounded-full bg-yellow-400"></span>
-                    Nghỉ phép: <strong class="ml-1 text-gray-800 dark:text-gray-200">{{ $sumLeave }}</strong>
+                    Nghỉ phép cả ngày: <strong class="ml-1 text-gray-800 dark:text-gray-200">{{ $sumLeave }}</strong>
+                </span>
+                <span class="flex items-center gap-1.5">
+                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                    Nghỉ phép nửa ngày: <strong class="ml-1 text-gray-800 dark:text-gray-200">{{ $sumPartialLeave }}</strong>
                 </span>
                 <span class="flex items-center gap-1.5">
                     <span class="inline-block w-2.5 h-2.5 rounded-full bg-red-400"></span>
