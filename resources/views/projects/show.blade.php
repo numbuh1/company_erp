@@ -24,6 +24,15 @@
             this.activeTeamId = id;
             this.teamName = name;
             this.teamModal = true;
+        },
+        init() {
+            this.$watch('activeTab', (tab) => {
+                if (tab !== 'timesheet') {
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete('tsmonth');
+                    window.history.replaceState({}, '', url.toString());
+                }
+            });
         }
     }">
         @if(session('success'))
