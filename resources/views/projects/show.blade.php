@@ -27,11 +27,12 @@
         },
         init() {
             this.$watch('activeTab', (tab) => {
+                const url = new URL(window.location.href);
+                url.searchParams.set('tab', tab);
                 if (tab !== 'timesheet') {
-                    const url = new URL(window.location.href);
                     url.searchParams.delete('tsmonth');
-                    window.history.replaceState({}, '', url.toString());
                 }
+                window.history.replaceState({}, '', url.toString());
             });
         }
     }">
@@ -313,16 +314,13 @@
 
                     {{-- Month nav --}}
                     <div class="px-4 pt-4 pb-2 flex items-center gap-2">
-                        <a href="{{ route('projects.show', ['project' => $project->id, 'tsmonth' => $tsPrevMonth]) }}#timesheet"
-                            @click="activeTab = 'timesheet'"
+                        <a href="{{ route('projects.show', ['project' => $project->id, 'tab' => 'timesheet', 'tsmonth' => $tsPrevMonth]) }}"
                             class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 transition">←</a>
                         <span class="text-sm font-medium text-gray-700 dark:text-gray-200">{{ $tsMonthDate->translatedFormat('F Y') }}</span>
-                        <a href="{{ route('projects.show', ['project' => $project->id, 'tsmonth' => $tsNextMonth]) }}#timesheet"
-                            @click="activeTab = 'timesheet'"
+                        <a href="{{ route('projects.show', ['project' => $project->id, 'tab' => 'timesheet', 'tsmonth' => $tsNextMonth]) }}"
                             class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 transition">→</a>
                         @if($tsMonthStr !== now()->format('Y-m'))
-                            <a href="{{ route('projects.show', $project) }}#timesheet"
-                                @click="activeTab = 'timesheet'"
+                            <a href="{{ route('projects.show', ['project' => $project->id, 'tab' => 'timesheet']) }}"
                                 class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline px-1">Tháng này</a>
                         @endif
                     </div>

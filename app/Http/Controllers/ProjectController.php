@@ -285,7 +285,7 @@ class ProjectController extends Controller
 
         $tsHolidayDates  = PublicHoliday::getHolidayDates($tsMonthStart->copy(), $tsMonthEnd->copy());
         $tsCanViewSalary = $user->can('view salary') || $user->can('edit all user');
-        $tsInitialTab    = $request->has('tsmonth') ? 'timesheet' : 'tasks';
+        $tsInitialTab    = $request->query('tab', $request->has('tsmonth') ? 'timesheet' : 'tasks');
 
         return view('projects.show', compact(
             'project', 'items', 'currentFolder', 'breadcrumb', 'activities', 'canUpload', 'canManageAll',
