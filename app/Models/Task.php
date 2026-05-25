@@ -16,6 +16,7 @@ class Task extends Model
         'name',
         'description',
         'progress',
+        'budget_hours',
         'start_date',
         'expected_end_date',
         'actual_end_date',
@@ -27,6 +28,7 @@ class Task extends Model
         'expected_end_date' => 'date',
         'actual_end_date'   => 'date',
         'progress'          => 'integer',
+        'budget_hours'      => 'float',
     ];
 
     // Relationship

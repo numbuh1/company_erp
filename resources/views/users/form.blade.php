@@ -81,6 +81,11 @@
                                     value="{{ old('position', $user->position ?? '') }}" />
                             </div>
                             <div>
+                                <x-input-label value="Cấp bậc" />
+                                <x-text-input name="grade" class="w-full mt-1"
+                                    value="{{ old('grade', $user->grade ?? '') }}" />
+                            </div>
+                            <div>
                                 <x-input-label value="Email" />
                                 <x-text-input name="email" type="email" class="w-full mt-1"
                                     value="{{ old('email', $user->email ?? '') }}" />

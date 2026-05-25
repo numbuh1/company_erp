@@ -65,14 +65,22 @@ class TaskController extends Controller
             $projects = collect();
         }
 
+        // Compute time spent per task from time_logs
+        $taskIds      = $tasks->pluck('id')->toArray();
+        $timeSpentMap = \App\Models\TimeLog::whereIn('task_id', $taskIds)
+            ->groupBy('task_id')
+            ->selectRaw('task_id, SUM(time_spent) as total')
+            ->pluck('total', 'task_id')
+            ->map(fn($v) => (float) $v);
+
         // Column preferences
         $savedCols = $user->preferences?->task_list_column_preferences;
         $colPrefs  = json_encode($savedCols ?? [
             'project' => true, 'status' => true, 'assignees' => true,
-            'progress' => true, 'start_date' => true, 'due_date' => true,
+            'budget' => true, 'start_date' => true, 'due_date' => true,
         ]);
 
-        return view('tasks.index', compact('tasks', 'users', 'projects', 'colPrefs'));
+        return view('tasks.index', compact('tasks', 'users', 'projects', 'colPrefs', 'timeSpentMap'));
     }
 
     /**
@@ -107,6 +115,7 @@ class TaskController extends Controller
             'name'              => 'required|string|max:255',
             'description'       => 'nullable|string',
             'progress'          => 'nullable|integer|min:0|max:100',
+            'budget_hours'      => 'nullable|numeric|min:0',
             'start_date'        => 'nullable|date',
             'expected_end_date' => 'nullable|date',
             'actual_end_date'   => 'nullable|date',
@@ -180,6 +189,7 @@ class TaskController extends Controller
             'name'              => 'required|string|max:255',
             'description'       => 'nullable|string',
             'progress'          => 'nullable|integer|min:0|max:100',
+            'budget_hours'      => 'nullable|numeric|min:0',
             'start_date'        => 'nullable|date',
             'expected_end_date' => 'nullable|date',
             'actual_end_date'   => 'nullable|date',

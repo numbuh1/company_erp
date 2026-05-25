@@ -47,13 +47,14 @@
                         <x-input-error :messages="$errors->get('description')" class="mt-1" />
                     </div>
 
-                    {{-- Progress --}}
+                    {{-- Budget Hours --}}
                     <div class="mb-4">
-                        <x-input-label for="progress" value="Tiến độ (%)" />
-                        <x-text-input id="progress" name="progress" type="number" min="0" max="100"
+                        <x-input-label for="budget_hours" value="Budget Time (giờ)" />
+                        <x-text-input id="budget_hours" name="budget_hours" type="number" min="0" step="0.25"
                             class="mt-1 block w-full"
-                            value="{{ old('progress', $task->progress ?? 0) }}" />
-                        <x-input-error :messages="$errors->get('progress')" class="mt-1" />
+                            value="{{ old('budget_hours', $task->budget_hours ?? '') }}"
+                            placeholder="Thời gian dự kiến…" />
+                        <x-input-error :messages="$errors->get('budget_hours')" class="mt-1" />
                     </div>
 
                     {{-- Status --}}

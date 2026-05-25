@@ -134,7 +134,7 @@
                                 <input type="checkbox" x-model="cols.assignees"  @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Người phân công
                             </label>
                             <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400">
-                                <input type="checkbox" x-model="cols.progress"   @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Tiến độ
+                                <input type="checkbox" x-model="cols.budget"     @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Budget Time
                             </label>
                             <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400">
                                 <input type="checkbox" x-model="cols.start_date" @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Bắt đầu
@@ -158,7 +158,7 @@
                                 <th :class="{ 'hidden': !cols.project }"    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Dự án</th>
                                 <th :class="{ 'hidden': !cols.status }"     class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Trạng thái</th>
                                 <th :class="{ 'hidden': !cols.assignees }"  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Người phân công</th>
-                                <th :class="{ 'hidden': !cols.progress }"   class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Tiến độ</th>
+                                <th :class="{ 'hidden': !cols.budget }"    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Budget Time</th>
                                 <th :class="{ 'hidden': !cols.start_date }" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Bắt đầu</th>
                                 <th :class="{ 'hidden': !cols.due_date }"   class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">End (EST)</th>
                                 <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Thao tác</th>
@@ -231,13 +231,25 @@
                                         </div>
                                     </td>
 
-                                    {{-- Progress --}}
-                                    <td :class="{ 'hidden': !cols.progress }" class="px-4 py-3">
-                                        <div class="flex items-center gap-2 min-w-[90px]">
-                                            <div class="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                                                <div class="bg-indigo-500 h-2 rounded-full" style="width: {{ $task->progress }}%"></div>
-                                            </div>
-                                            <span class="text-xs text-gray-500 w-7 text-right">{{ $task->progress }}%</span>
+                                    {{-- Budget / Time Spent --}}
+                                    <td :class="{ 'hidden': !cols.budget }" class="px-4 py-3">
+                                        @php
+                                            $budgetH = $task->budget_hours;
+                                            $spentH  = $timeSpentMap[$task->id] ?? 0;
+                                            $percent = $budgetH > 0 ? round($spentH / $budgetH * 100) : null;
+                                            $isOver  = $budgetH > 0 && $spentH > $budgetH;
+                                        @endphp
+                                        <div class="flex items-center gap-2 min-w-[120px]">
+                                            @if($budgetH)
+                                                <div class="flex-1 bg-white dark:bg-gray-900 rounded h-2 border border-gray-300 dark:border-gray-600 overflow-hidden">
+                                                    <div class="{{ $isOver ? 'bg-red-500' : 'bg-gray-800 dark:bg-gray-100' }} h-2" style="width: {{ min($percent, 100) }}%"></div>
+                                                </div>
+                                                <span class="text-xs {{ $isOver ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-500' }} w-8 text-right shrink-0">{{ $percent }}%</span>
+                                            @elseif($spentH > 0)
+                                                <span class="text-xs text-gray-500">{{ number_format($spentH, 1) }}h</span>
+                                            @else
+                                                <span class="text-xs text-gray-400">—</span>
+                                            @endif
                                         </div>
                                     </td>
 

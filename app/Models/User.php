@@ -36,6 +36,7 @@ class User extends Authenticatable
         'salary',
         'salary_type',
         'position',
+        'grade',
         'phone_number',
         'citizen_id',
         'home_address',

@@ -36,8 +36,8 @@
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nhóm</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thành viên khác</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bắt đầu</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bắt đầu</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">End (EST)</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Budget Time</th>
                             <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Thao tác</th>
                         </tr>
                     </thead>
@@ -92,8 +92,27 @@
                                     </div>
                                 </td>
                                 <td class="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">{{ $project->start_date?->format('d/m/Y') ?? '—' }}</td>
-                                <td class="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">{{ $project->start_date?->format('d/m/Y') ?? '—' }}</td>
                                 <td class="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">{{ $project->expected_end_date?->format('d/m/Y') ?? '—' }}</td>
+                                <td class="px-4 py-4">
+                                    @php
+                                        $pSpent  = $projectTimeSpentMap[$project->id] ?? 0;
+                                        $pBudget = $project->budget_hours;
+                                        $pPct    = $pBudget > 0 ? round($pSpent / $pBudget * 100) : null;
+                                        $pOver   = $pBudget > 0 && $pSpent > $pBudget;
+                                    @endphp
+                                    @if($pBudget)
+                                        <div class="flex items-center gap-2 min-w-[120px]">
+                                            <div class="flex-1 bg-white dark:bg-gray-900 rounded h-2 border border-gray-300 dark:border-gray-600 overflow-hidden">
+                                                <div class="{{ $pOver ? 'bg-red-500' : 'bg-gray-800 dark:bg-gray-100' }} h-2" style="width: {{ min($pPct, 100) }}%"></div>
+                                            </div>
+                                            <span class="text-xs {{ $pOver ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-500' }} w-8 text-right shrink-0">{{ $pPct }}%</span>
+                                        </div>
+                                    @elseif($pSpent > 0)
+                                        <span class="text-xs text-gray-500">{{ number_format($pSpent, 1) }}h</span>
+                                    @else
+                                        <span class="text-xs text-gray-400">—</span>
+                                    @endif
+                                </td>
                                 <td class="px-4 py-4 text-right">
                                     <div class="flex items-center justify-end gap-2">
                                         <a href="{{ route('projects.show', $project) }}" title="Xem"

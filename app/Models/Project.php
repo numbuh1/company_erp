@@ -18,6 +18,7 @@ class Project extends Model
         'expected_end_date',
         'actual_end_date',
         'status',
+        'budget_hours',
     ];
 
     protected $casts = [

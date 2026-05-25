@@ -89,10 +89,11 @@ class OvertimeRequestController extends Controller
             $request->merge(['user_id' => $user->id]);
         }
 
-        OvertimeRequest::create($request->only([
+        $otRequest = OvertimeRequest::create($request->only([
             'user_id', 'project_id', 'task_id',
             'start_at', 'end_at', 'hours', 'type', 'description',
         ]));
+        NotificationHelper::sendNewRequestNotification($otRequest, 'ot');
 
         return redirect()->route('requests.index', ['type' => 'ot'])->with('success', 'Tạo yêu cầu tăng ca thành công.');
     }

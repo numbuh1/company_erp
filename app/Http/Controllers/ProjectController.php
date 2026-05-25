@@ -25,7 +25,16 @@ class ProjectController extends Controller
         $query = Project::with(['teams.users', 'users']);
         $this->_scopeQuery($query, $user);
         $projects = $query->latest()->paginate(10);
-        return view('projects.index', compact('projects'));
+
+        // Compute time spent per project from time_logs
+        $projIds            = $projects->pluck('id')->toArray();
+        $projectTimeSpentMap = TimeLog::whereIn('project_id', $projIds)
+            ->groupBy('project_id')
+            ->selectRaw('project_id, SUM(time_spent) as total')
+            ->pluck('total', 'project_id')
+            ->map(fn($v) => (float) $v);
+
+        return view('projects.index', compact('projects', 'projectTimeSpentMap'));
     }
 
     /**
@@ -60,6 +69,7 @@ class ProjectController extends Controller
             'teams'             => 'nullable|array',
             'members'           => 'nullable|array',
             'status'            => 'nullable|string',
+            'budget_hours'      => 'nullable|numeric|min:0',
         ]);
 
         $project = Project::create($data);
@@ -136,6 +146,23 @@ class ProjectController extends Controller
             default   => $taskQuery->orderBy('id', 'asc'),
         };
         $projectTasks = $taskQuery->get();
+
+        // Compute time spent per task
+        $ptaskIds        = $projectTasks->pluck('id')->toArray();
+        $taskTimeSpentMap = TimeLog::whereIn('task_id', $ptaskIds)
+            ->groupBy('task_id')
+            ->selectRaw('task_id, SUM(time_spent) as total')
+            ->pluck('total', 'task_id')
+            ->map(fn($v) => (float) $v);
+
+        // Project-level budget stats
+        $projectTotalSpent = (float) TimeLog::where('project_id', $project->id)->sum('time_spent');
+        $projectTotalOt    = (float) OvertimeRequest::where('project_id', $project->id)
+            ->where('status', 'approved')
+            ->sum('hours');
+        $projectRemaining  = $project->budget_hours !== null
+            ? $project->budget_hours - $projectTotalSpent - $projectTotalOt
+            : null;
 
         // Users who are assigned to any task in this project (for the filter dropdown)
         $taskAssignees = User::whereIn('id', function ($q) use ($project) {
@@ -328,12 +355,13 @@ class ProjectController extends Controller
         $savedTaskCols = $user->preferences?->project_task_column_preferences;
         $taskColPrefs  = json_encode($savedTaskCols ?? [
             'status' => true, 'assignees' => true,
-            'progress' => true, 'start_date' => true, 'due_date' => true,
+            'budget' => true, 'start_date' => true, 'due_date' => true,
         ]);
 
         return view('projects.show', compact(
             'project', 'items', 'currentFolder', 'breadcrumb', 'activities', 'canUpload', 'canManageAll',
             'projectTasks', 'taskAssignees', 'taskSearch', 'taskAssigneeId', 'taskSort',
+            'taskTimeSpentMap', 'projectTotalSpent', 'projectTotalOt', 'projectRemaining',
             'tsMonthStr', 'tsMonthDate', 'tsDays', 'tsPrevMonth', 'tsNextMonth',
             'tsTaskRows', 'tsUserRows', 'tsDayTotals',
             'tsGrandTotalHours', 'tsGrandTotalOt', 'tsGrandTotalCost', 'tsGrandTotalOtCost',
@@ -384,6 +412,7 @@ class ProjectController extends Controller
             'teams'             => 'nullable|array',
             'members'           => 'nullable|array',
             'status'            => 'nullable|string',
+            'budget_hours'      => 'nullable|numeric|min:0',
         ]);
 
         $project->update($data);

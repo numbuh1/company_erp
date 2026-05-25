@@ -111,7 +111,8 @@ class LeaveRequestController extends Controller
             $request->merge(['user_id' => $user->id]);
         }
 
-        LeaveRequest::create($request->all());
+        $leaveRequest = LeaveRequest::create($request->all());
+        NotificationHelper::sendNewRequestNotification($leaveRequest, 'leave');
 
         return redirect()->route('requests.index', ['type' => 'leave']);
     }

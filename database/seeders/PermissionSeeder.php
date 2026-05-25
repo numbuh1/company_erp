@@ -113,6 +113,7 @@ class PermissionSeeder extends Seeder
             'delete all leaves' => 'Delete All Leaves',
             'approve all leaves' => 'Approve All Leaves',
             'edit all leaves balance' => 'Edit All Leaves Balance',
+            'receive all leave notifications' => 'Receive all Leave Request Notifications',
         ];
 
         foreach ($leave_permissions as $name => $label) {
@@ -139,6 +140,7 @@ class PermissionSeeder extends Seeder
             'edit all ot' => 'Create/Edit All OT Requests',
             'delete all ot' => 'Delete All OT Requests',
             'approve all ot' => 'Approve All OT Requests',
+            'receive all ot notifications' => 'Receive all OT Request Notifications',
         ];
 
         foreach ($ot_permissions as $name => $label) {

@@ -98,6 +98,44 @@
                     </div>
                 </div>
 
+                {{-- Budget & Time Stats --}}
+                @if($project->budget_hours !== null)
+                @php
+                    $totalUsed    = $projectTotalSpent + $projectTotalOt;
+                    $budgetPct    = $project->budget_hours > 0 ? round($totalUsed / $project->budget_hours * 100) : 0;
+                    $isOverBudget = $totalUsed > $project->budget_hours;
+                @endphp
+                <div class="mb-4 p-4 bg-gray-50 dark:bg-gray-700/40 rounded-lg border border-gray-200 dark:border-gray-600">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Budget & Time</span>
+                        <span class="text-xs font-semibold {{ $isOverBudget ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-300' }}">{{ $budgetPct }}%</span>
+                    </div>
+                    <div class="bg-white dark:bg-gray-900 rounded h-2 border border-gray-300 dark:border-gray-600 overflow-hidden mb-3">
+                        <div class="{{ $isOverBudget ? 'bg-red-500' : 'bg-gray-800 dark:bg-gray-100' }} h-2" style="width: {{ min($budgetPct, 100) }}%"></div>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                        <div>
+                            <p class="text-gray-400 dark:text-gray-500 mb-0.5">Budget</p>
+                            <p class="font-semibold text-gray-700 dark:text-gray-200">{{ number_format($project->budget_hours, 1) }}h</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-400 dark:text-gray-500 mb-0.5">Normal</p>
+                            <p class="font-semibold text-gray-700 dark:text-gray-200">{{ number_format($projectTotalSpent, 1) }}h</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-400 dark:text-gray-500 mb-0.5">OT</p>
+                            <p class="font-semibold text-gray-700 dark:text-gray-200">{{ number_format($projectTotalOt, 1) }}h</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-400 dark:text-gray-500 mb-0.5">Còn lại</p>
+                            <p class="font-semibold {{ $projectRemaining < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400' }}">
+                                {{ number_format($projectRemaining, 1) }}h
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <x-input-label value="Nhóm được phân công" />
@@ -260,7 +298,7 @@
                                         <input type="checkbox" x-model="cols.assignees"  @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Người phân công
                                     </label>
                                     <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400">
-                                        <input type="checkbox" x-model="cols.progress"   @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Tiến độ
+                                        <input type="checkbox" x-model="cols.budget"     @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Budget Time
                                     </label>
                                     <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400">
                                         <input type="checkbox" x-model="cols.start_date" @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Bắt đầu
@@ -287,7 +325,7 @@
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Tên</th>
                                     <th :class="{ 'hidden': !cols.status }"     class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Trạng thái</th>
                                     <th :class="{ 'hidden': !cols.assignees }"  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Người phân công</th>
-                                    <th :class="{ 'hidden': !cols.progress }"   class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Tiến độ</th>
+                                    <th :class="{ 'hidden': !cols.budget }"    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Budget Time</th>
                                     <th :class="{ 'hidden': !cols.start_date }" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Bắt đầu</th>
                                     <th :class="{ 'hidden': !cols.due_date }"   class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">End (EST)</th>
                                     <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Thao tác</th>
@@ -347,13 +385,25 @@
                                             </div>
                                         </td>
 
-                                        {{-- Progress --}}
-                                        <td :class="{ 'hidden': !cols.progress }" class="px-4 py-3">
-                                            <div class="flex items-center gap-2 min-w-[90px]">
-                                                <div class="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                                                    <div class="bg-indigo-500 h-2 rounded-full" style="width: {{ $task->progress }}%"></div>
-                                                </div>
-                                                <span class="text-xs text-gray-500 w-7 text-right">{{ $task->progress }}%</span>
+                                        {{-- Budget / Time Spent --}}
+                                        <td :class="{ 'hidden': !cols.budget }" class="px-4 py-3">
+                                            @php
+                                                $tBudgetH = $task->budget_hours;
+                                                $tSpentH  = $taskTimeSpentMap[$task->id] ?? 0;
+                                                $tPct     = $tBudgetH > 0 ? round($tSpentH / $tBudgetH * 100) : null;
+                                                $tOver    = $tBudgetH > 0 && $tSpentH > $tBudgetH;
+                                            @endphp
+                                            <div class="flex items-center gap-2 min-w-[120px]">
+                                                @if($tBudgetH)
+                                                    <div class="flex-1 bg-white dark:bg-gray-900 rounded h-2 border border-gray-300 dark:border-gray-600 overflow-hidden">
+                                                        <div class="{{ $tOver ? 'bg-red-500' : 'bg-gray-800 dark:bg-gray-100' }} h-2" style="width: {{ min($tPct, 100) }}%"></div>
+                                                    </div>
+                                                    <span class="text-xs {{ $tOver ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-500' }} w-8 text-right shrink-0">{{ $tPct }}%</span>
+                                                @elseif($tSpentH > 0)
+                                                    <span class="text-xs text-gray-500">{{ number_format($tSpentH, 1) }}h</span>
+                                                @else
+                                                    <span class="text-xs text-gray-400">—</span>
+                                                @endif
                                             </div>
                                         </td>
 

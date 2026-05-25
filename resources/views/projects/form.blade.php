@@ -38,6 +38,13 @@
                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">{{ old('description', $project->description ?? '') }}</textarea>
                     </div>
 
+                    <div class="mb-4">
+                        <x-input-label value="Budget Time (giờ)" />
+                        <x-text-input type="number" name="budget_hours" min="0" step="0.25" class="mt-1 block w-full sm:max-w-xs"
+                            value="{{ old('budget_hours', $project->budget_hours ?? '') }}"
+                            placeholder="Thời gian dự kiến…" />
+                    </div>
+
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <x-input-label value="Ngày bắt đầu" />
