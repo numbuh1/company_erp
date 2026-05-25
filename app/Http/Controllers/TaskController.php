@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\OvertimeRequest;
+use App\Models\PublicHoliday;
 use App\Models\Task;
+use App\Models\TimeLog;
 use App\Models\Project;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Spatie\Activitylog\Models\Activity;
 
@@ -132,7 +136,7 @@ class TaskController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Task $task)
+    public function show(Request $request, Task $task)
     {
         $user = auth()->user();
         if (!$user->can('view all tasks') && !$this->_isAssigned($task, $user)) abort(403);
@@ -145,7 +149,124 @@ class TaskController extends Controller
             ->latest()
             ->get();
 
-        return view('tasks.show', compact('task', 'activities'));
+        // ── Budget / time stats ───────────────────────────────────────────────
+        $taskTotalSpent = (float) TimeLog::where('task_id', $task->id)->sum('time_spent');
+        $taskTotalOt    = (float) OvertimeRequest::where('task_id', $task->id)
+            ->where('status', 'approved')
+            ->sum('hours');
+        $taskRemaining  = $task->budget_hours !== null
+            ? $task->budget_hours - $taskTotalSpent - $taskTotalOt
+            : null;
+
+        // ── Timesheet tab ─────────────────────────────────────────────────────
+        $tsMonthStr   = $request->query('tsmonth', now()->format('Y-m'));
+        $tsMonthDate  = Carbon::parse($tsMonthStr . '-01');
+        $tsMonthStart = $tsMonthDate->copy()->startOfMonth();
+        $tsMonthEnd   = $tsMonthDate->copy()->endOfMonth();
+        $tsPrevMonth  = $tsMonthDate->copy()->subMonth()->format('Y-m');
+        $tsNextMonth  = $tsMonthDate->copy()->addMonth()->format('Y-m');
+
+        $tsDays = collect();
+        for ($d = $tsMonthStart->copy(); $d->lte($tsMonthEnd); $d->addDay()) {
+            $tsDays->push($d->copy());
+        }
+
+        $tsTimeLogs = TimeLog::where('task_id', $task->id)
+            ->whereBetween('date', [$tsMonthStart->toDateString(), $tsMonthEnd->toDateString()])
+            ->with('user')
+            ->get();
+
+        $tsOtRequests = OvertimeRequest::where('task_id', $task->id)
+            ->where('status', 'approved')
+            ->whereDate('start_at', '>=', $tsMonthStart->toDateString())
+            ->whereDate('start_at', '<=', $tsMonthEnd->toDateString())
+            ->with('user')
+            ->get();
+
+        $tsUserIds = $tsTimeLogs->pluck('user_id')
+            ->merge($tsOtRequests->pluck('user_id'))
+            ->unique()->values()->toArray();
+        $tsUsers = User::whereIn('id', $tsUserIds)->orderBy('name')->get()->keyBy('id');
+
+        $tsUserRows = [];
+        foreach ($tsTimeLogs as $log) {
+            $key     = 'user_' . $log->user_id;
+            $dk      = $log->date->format('Y-m-d');
+            $userObj = $tsUsers->get($log->user_id);
+            $cost    = (float) ($userObj?->hourly_rate ?? 0) * $log->time_spent;
+
+            if (!isset($tsUserRows[$key])) {
+                $tsUserRows[$key] = [
+                    'user' => $userObj ?? $log->user, 'user_id' => $log->user_id,
+                    'days' => [], 'total_hours' => 0, 'total_ot' => 0,
+                    'total_cost' => 0, 'total_ot_cost' => 0,
+                ];
+            }
+            if (!isset($tsUserRows[$key]['days'][$dk])) {
+                $tsUserRows[$key]['days'][$dk] = ['hours' => 0, 'ot_hours' => 0, 'cost' => 0, 'ot_cost' => 0];
+            }
+            $tsUserRows[$key]['days'][$dk]['hours'] += $log->time_spent;
+            $tsUserRows[$key]['days'][$dk]['cost']  += $cost;
+            $tsUserRows[$key]['total_hours']        += $log->time_spent;
+            $tsUserRows[$key]['total_cost']         += $cost;
+        }
+
+        foreach ($tsOtRequests as $ot) {
+            $key        = 'user_' . $ot->user_id;
+            $dk         = Carbon::parse($ot->start_at)->format('Y-m-d');
+            $multiplier = match ($ot->type) {
+                'OT x1.5' => 1.5, 'OT x2' => 2.0, 'OT x3' => 3.0, default => 1.0,
+            };
+            $userObj = $tsUsers->get($ot->user_id);
+            $cost    = (float) ($userObj?->hourly_rate ?? 0) * $ot->hours * $multiplier;
+
+            if (!isset($tsUserRows[$key])) {
+                $tsUserRows[$key] = [
+                    'user' => $userObj ?? $ot->user, 'user_id' => $ot->user_id,
+                    'days' => [], 'total_hours' => 0, 'total_ot' => 0,
+                    'total_cost' => 0, 'total_ot_cost' => 0,
+                ];
+            }
+            if (!isset($tsUserRows[$key]['days'][$dk])) {
+                $tsUserRows[$key]['days'][$dk] = ['hours' => 0, 'ot_hours' => 0, 'cost' => 0, 'ot_cost' => 0];
+            }
+            $tsUserRows[$key]['days'][$dk]['ot_hours']  += $ot->hours;
+            $tsUserRows[$key]['days'][$dk]['ot_cost']   += $cost;
+            $tsUserRows[$key]['total_ot']               += $ot->hours;
+            $tsUserRows[$key]['total_ot_cost']          += $cost;
+        }
+
+        uasort($tsUserRows, fn($a, $b) => strcmp($a['user']?->name ?? '', $b['user']?->name ?? ''));
+
+        $tsDayTotals = [];
+        foreach ($tsDays as $day) {
+            $dk = $day->format('Y-m-d');
+            $tsDayTotals[$dk] = ['hours' => 0, 'ot_hours' => 0, 'cost' => 0, 'ot_cost' => 0];
+            foreach ($tsUserRows as $row) {
+                $tsDayTotals[$dk]['hours']    += $row['days'][$dk]['hours']    ?? 0;
+                $tsDayTotals[$dk]['ot_hours'] += $row['days'][$dk]['ot_hours'] ?? 0;
+                $tsDayTotals[$dk]['cost']     += $row['days'][$dk]['cost']     ?? 0;
+                $tsDayTotals[$dk]['ot_cost']  += $row['days'][$dk]['ot_cost']  ?? 0;
+            }
+        }
+
+        $tsGrandTotalHours  = (float) collect($tsDayTotals)->sum('hours');
+        $tsGrandTotalOt     = (float) collect($tsDayTotals)->sum('ot_hours');
+        $tsGrandTotalCost   = (float) collect($tsDayTotals)->sum('cost');
+        $tsGrandTotalOtCost = (float) collect($tsDayTotals)->sum('ot_cost');
+
+        $tsHolidayDates  = PublicHoliday::getHolidayDates($tsMonthStart->copy(), $tsMonthEnd->copy());
+        $tsCanViewSalary = $user->can('view salary') || $user->can('edit all user');
+        $tsInitialTab    = $request->query('tab', $request->has('tsmonth') ? 'timesheet' : 'comments');
+
+        return view('tasks.show', compact(
+            'task', 'activities',
+            'taskTotalSpent', 'taskTotalOt', 'taskRemaining',
+            'tsMonthStr', 'tsMonthDate', 'tsDays', 'tsPrevMonth', 'tsNextMonth',
+            'tsUserRows', 'tsDayTotals',
+            'tsGrandTotalHours', 'tsGrandTotalOt', 'tsGrandTotalCost', 'tsGrandTotalOtCost',
+            'tsHolidayDates', 'tsCanViewSalary', 'tsInitialTab'
+        ));
     }
 
     /**
