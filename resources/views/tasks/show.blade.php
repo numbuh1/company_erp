@@ -21,7 +21,10 @@
             this.$watch('activeTab', (tab) => {
                 const url = new URL(window.location.href);
                 url.searchParams.set('tab', tab);
-                if (tab !== 'timesheet') url.searchParams.delete('tsmonth');
+                if (tab !== 'timesheet') {
+                    url.searchParams.delete('ts_from');
+                    url.searchParams.delete('ts_to');
+                }
                 window.history.replaceState({}, '', url.toString());
             });
         }
@@ -253,17 +256,41 @@
                         $totC2 = "sticky left-[180px] z-10 {$bgTot} w-[88px] min-w-[88px] {$edge} px-2 py-1.5 text-center font-semibold border-r border-gray-200 dark:border-gray-600";
                     @endphp
 
-                    {{-- Month nav --}}
-                    <div class="px-4 pt-4 pb-2 flex items-center gap-2">
-                        <a href="{{ route('tasks.show', ['task' => $task->id, 'tab' => 'timesheet', 'tsmonth' => $tsPrevMonth]) }}"
-                            class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 transition">←</a>
-                        <span class="text-sm font-medium text-gray-700 dark:text-gray-200">{{ $tsMonthDate->translatedFormat('F Y') }}</span>
-                        <a href="{{ route('tasks.show', ['task' => $task->id, 'tab' => 'timesheet', 'tsmonth' => $tsNextMonth]) }}"
-                            class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 transition">→</a>
-                        @if($tsMonthStr !== now()->format('Y-m'))
-                            <a href="{{ route('tasks.show', ['task' => $task->id, 'tab' => 'timesheet']) }}"
-                                class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline px-1">Tháng này</a>
-                        @endif
+                    {{-- Date range picker --}}
+                    <div class="px-4 pt-4 pb-2">
+                        <form method="GET" action="{{ route('tasks.show', $task) }}"
+                              class="flex flex-wrap items-end gap-x-3 gap-y-2">
+                            <input type="hidden" name="tab" value="timesheet">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Từ ngày</label>
+                                <input type="date" name="ts_from" value="{{ $tsFromStr }}"
+                                    class="border border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded text-sm px-2 py-1.5">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Đến ngày</label>
+                                <input type="date" name="ts_to" value="{{ $tsToStr }}"
+                                    class="border border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded text-sm px-2 py-1.5">
+                            </div>
+                            <div class="self-end">
+                                <button type="submit"
+                                    class="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 transition">Áp dụng</button>
+                            </div>
+                            <div class="self-end flex items-center gap-2 flex-wrap">
+                                @php
+                                    $tsPresetThis = ['tab'=>'timesheet','ts_from'=>now()->startOfMonth()->format('Y-m-d'),'ts_to'=>now()->endOfMonth()->format('Y-m-d')];
+                                    $tsPresetLast = ['tab'=>'timesheet','ts_from'=>now()->subMonthNoOverflow()->startOfMonth()->format('Y-m-d'),'ts_to'=>now()->subMonthNoOverflow()->endOfMonth()->format('Y-m-d')];
+                                    $tsPreset30   = ['tab'=>'timesheet','ts_from'=>now()->subDays(29)->format('Y-m-d'),'ts_to'=>now()->format('Y-m-d')];
+                                    $tsPreset7    = ['tab'=>'timesheet','ts_from'=>now()->subDays(6)->format('Y-m-d'),'ts_to'=>now()->format('Y-m-d')];
+                                @endphp
+                                <a href="{{ route('tasks.show', array_merge(['task' => $task->id], $tsPresetThis)) }}" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">Tháng này</a>
+                                <span class="text-gray-300 dark:text-gray-600">|</span>
+                                <a href="{{ route('tasks.show', array_merge(['task' => $task->id], $tsPresetLast)) }}" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">Tháng trước</a>
+                                <span class="text-gray-300 dark:text-gray-600">|</span>
+                                <a href="{{ route('tasks.show', array_merge(['task' => $task->id], $tsPreset30)) }}" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">30 ngày</a>
+                                <span class="text-gray-300 dark:text-gray-600">|</span>
+                                <a href="{{ route('tasks.show', array_merge(['task' => $task->id], $tsPreset7)) }}" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">7 ngày</a>
+                            </div>
+                        </form>
                     </div>
 
                     <div class="overflow-x-auto">

@@ -175,15 +175,23 @@ class ProjectController extends Controller
         })->orderBy('name')->get();
 
         // ── Timesheet tab data ────────────────────────────────────────────────
-        $tsMonthStr  = $request->query('tsmonth', now()->format('Y-m'));
-        $tsMonthDate = Carbon::parse($tsMonthStr . '-01');
-        $tsMonthStart = $tsMonthDate->copy()->startOfMonth();
-        $tsMonthEnd   = $tsMonthDate->copy()->endOfMonth();
-        $tsPrevMonth  = $tsMonthDate->copy()->subMonth()->format('Y-m');
-        $tsNextMonth  = $tsMonthDate->copy()->addMonth()->format('Y-m');
+        // Completed project → auto-range to last 30 days of recorded activity
+        $isCompletedProject = in_array($project->status, ['Đã xong', 'Done']);
+        $lastProjLogDate    = TimeLog::where('project_id', $project->id)->max('date');
+        if (!$request->has('ts_from') && $isCompletedProject && $lastProjLogDate) {
+            $tsRangeEnd   = Carbon::parse($lastProjLogDate);
+            $tsRangeStart = $tsRangeEnd->copy()->subDays(30);
+        } else {
+            $tsRangeStart = Carbon::parse($request->query('ts_from', now()->startOfMonth()->toDateString()));
+            $tsRangeEnd   = Carbon::parse($request->query('ts_to',   now()->endOfMonth()->toDateString()));
+        }
+        if ($tsRangeStart->gt($tsRangeEnd)) $tsRangeEnd = $tsRangeStart->copy()->addDays(30);
+        if ($tsRangeStart->diffInDays($tsRangeEnd) > 365) $tsRangeEnd = $tsRangeStart->copy()->addDays(365);
+        $tsFromStr = $tsRangeStart->toDateString();
+        $tsToStr   = $tsRangeEnd->toDateString();
 
         $tsDays = collect();
-        for ($d = $tsMonthStart->copy(); $d->lte($tsMonthEnd); $d->addDay()) {
+        for ($d = $tsRangeStart->copy(); $d->lte($tsRangeEnd); $d->addDay()) {
             $tsDays->push($d->copy());
         }
 
@@ -211,17 +219,17 @@ class ProjectController extends Controller
         $tsProjectUsers = User::whereIn('id', $allProjectUserIds)->orderBy('name')->get()->keyBy('id');
         $tsProjectTasks = Task::where('project_id', $project->id)->orderBy('name')->get()->keyBy('id');
 
-        // Time logs for this project in the selected month
+        // Time logs for this project in the selected range
         $tsTimeLogs = TimeLog::where('project_id', $project->id)
-            ->whereBetween('date', [$tsMonthStart->toDateString(), $tsMonthEnd->toDateString()])
+            ->whereBetween('date', [$tsFromStr, $tsToStr])
             ->with(['user', 'task'])
             ->get();
 
-        // Approved OT for this project in the selected month
+        // Approved OT for this project in the selected range
         $tsOtRequests = OvertimeRequest::where('project_id', $project->id)
             ->where('status', 'approved')
-            ->whereDate('start_at', '>=', $tsMonthStart->toDateString())
-            ->whereDate('start_at', '<=', $tsMonthEnd->toDateString())
+            ->whereDate('start_at', '>=', $tsFromStr)
+            ->whereDate('start_at', '<=', $tsToStr)
             ->with('user')
             ->get();
 
@@ -347,9 +355,9 @@ class ProjectController extends Controller
         $tsGrandTotalCost   = (float) collect($tsDayTotals)->sum('cost');
         $tsGrandTotalOtCost = (float) collect($tsDayTotals)->sum('ot_cost');
 
-        $tsHolidayDates  = PublicHoliday::getHolidayDates($tsMonthStart->copy(), $tsMonthEnd->copy());
+        $tsHolidayDates  = PublicHoliday::getHolidayDates($tsRangeStart->copy(), $tsRangeEnd->copy());
         $tsCanViewSalary = $user->can('view salary') || $user->can('edit all user');
-        $tsInitialTab    = $request->query('tab', $request->has('tsmonth') ? 'timesheet' : 'tasks');
+        $tsInitialTab    = $request->query('tab', ($request->has('ts_from') || $request->has('ts_to')) ? 'timesheet' : 'tasks');
 
         // Column preferences for project tasks tab
         $savedTaskCols = $user->preferences?->project_task_column_preferences;
@@ -362,7 +370,7 @@ class ProjectController extends Controller
             'project', 'items', 'currentFolder', 'breadcrumb', 'activities', 'canUpload', 'canManageAll',
             'projectTasks', 'taskAssignees', 'taskSearch', 'taskAssigneeId', 'taskSort',
             'taskTimeSpentMap', 'projectTotalSpent', 'projectTotalOt', 'projectRemaining',
-            'tsMonthStr', 'tsMonthDate', 'tsDays', 'tsPrevMonth', 'tsNextMonth',
+            'tsFromStr', 'tsToStr', 'tsDays',
             'tsTaskRows', 'tsUserRows', 'tsDayTotals',
             'tsGrandTotalHours', 'tsGrandTotalOt', 'tsGrandTotalCost', 'tsGrandTotalOtCost',
             'tsHolidayDates', 'tsCanViewSalary', 'tsInitialTab',

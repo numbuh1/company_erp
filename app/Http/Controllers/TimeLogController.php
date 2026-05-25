@@ -215,16 +215,28 @@ class TimeLogController extends Controller
         $user        = auth()->user();
         $viewableIds = $this->_viewableUserIds($user);
 
-        if ($request->filled('date')) {
+        $groupBy = $request->query('group', 'context'); // 'context' or 'user'
+        $tsFrom  = $request->query('ts_from');
+        $tsTo    = $request->query('ts_to');
+
+        if ($tsFrom) {
+            // Custom date range mode
+            $weekStart = Carbon::parse($tsFrom)->startOfDay();
+            $weekEnd   = $tsTo ? Carbon::parse($tsTo)->startOfDay() : $weekStart->copy()->addDays(6);
+            if ($weekStart->gt($weekEnd)) $weekEnd = $weekStart->copy()->addDays(6);
+            if ($weekStart->diffInDays($weekEnd) > 365) $weekEnd = $weekStart->copy()->addDays(365);
+            $offset = 0;
+        } elseif ($request->filled('date')) {
             $jumpMonday = Carbon::parse($request->input('date'))->startOfWeek(Carbon::MONDAY);
             $thisMonday = Carbon::now()->startOfWeek(Carbon::MONDAY);
-            $offset = (int) round(($jumpMonday->timestamp - $thisMonday->timestamp) / (7 * 86400));
+            $offset     = (int) round(($jumpMonday->timestamp - $thisMonday->timestamp) / (7 * 86400));
+            $weekStart  = Carbon::now()->startOfWeek(Carbon::MONDAY)->addWeeks($offset);
+            $weekEnd    = $weekStart->copy()->endOfWeek(Carbon::SUNDAY);
         } else {
-            $offset = (int) $request->query('offset', 0);
+            $offset    = (int) $request->query('offset', 0);
+            $weekStart = Carbon::now()->startOfWeek(Carbon::MONDAY)->addWeeks($offset);
+            $weekEnd   = $weekStart->copy()->endOfWeek(Carbon::SUNDAY);
         }
-        $groupBy = $request->query('group', 'context'); // 'context' or 'user'
-        $weekStart = Carbon::now()->startOfWeek(Carbon::MONDAY)->addWeeks($offset);
-        $weekEnd   = $weekStart->copy()->endOfWeek(Carbon::SUNDAY);
 
         $days = collect();
         for ($d = $weekStart->copy(); $d->lte($weekEnd); $d->addDay()) {
@@ -363,7 +375,7 @@ class TimeLogController extends Controller
         return view('time_logs.weekly', compact(
             'days', 'rows', 'weekStart', 'weekEnd', 'offset', 'dayTotals', 'weekTotal',
             'filterUsers', 'filterTeams', 'selectedUserId', 'selectedTeamId',
-            'holidayDates', 'groupBy', 'mode'
+            'holidayDates', 'groupBy', 'mode', 'tsFrom', 'tsTo'
         ));
     }
 

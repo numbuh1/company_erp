@@ -1,13 +1,17 @@
 @php
-    $filterParams = array_filter([
+    $noRangeParams = array_filter([
         'mode'    => $mode !== 'individual' ? $mode : null,
         'user_id' => ($mode === 'individual' && $selectedUserId != auth()->id()) ? $selectedUserId : null,
         'team_id' => ($mode === 'team') ? $selectedTeamId : null,
         'group'   => $groupBy !== 'context' ? $groupBy : null,
     ]);
-    $prevParams     = array_merge(['offset' => $offset - 1], $filterParams);
-    $nextParams     = array_merge(['offset' => $offset + 1], $filterParams);
-    $thisWeekParams = $filterParams;
+    $filterParams = array_merge($noRangeParams, array_filter([
+        'ts_from' => $tsFrom ?: null,
+        'ts_to'   => $tsTo   ?: null,
+    ]));
+    $prevParams     = array_merge(['offset' => $offset - 1], $noRangeParams);
+    $nextParams     = array_merge(['offset' => $offset + 1], $noRangeParams);
+    $thisWeekParams = $noRangeParams;
 @endphp
 
 <x-app-layout>
@@ -50,31 +54,66 @@
             {{-- Combined: week nav + user/team filter --}}
             <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg px-4 py-3 flex flex-wrap gap-3 items-center justify-between">
 
-                {{-- Week navigation --}}
-                <div class="flex items-center gap-2">
-                    <a href="{{ route('timesheets.weekly', $prevParams) }}"
-                        class="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
-                        ← Prev
-                    </a>
-                    <form method="GET" action="{{ route('timesheets.weekly') }}" class="inline-flex">
-                        @foreach($filterParams as $fpk => $fpv)
-                            <input type="hidden" name="{{ $fpk }}" value="{{ $fpv }}">
-                        @endforeach
-                        <input type="date" name="date"
-                               value="{{ $weekStart->format('Y-m-d') }}"
-                               onchange="this.form.submit()"
-                               title="{{ $weekStart->translatedFormat('d M') }} – {{ $weekEnd->translatedFormat('d M Y') }}"
-                               class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded text-sm px-2 py-1.5 cursor-pointer">
-                    </form>
-                    <a href="{{ route('timesheets.weekly', $nextParams) }}"
-                        class="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
-                        Next →
-                    </a>
-                    @if($offset !== 0)
+                {{-- Week / custom-range navigation --}}
+                <div class="flex items-center gap-2 flex-wrap">
+                    @if(!$tsFrom)
+                        <a href="{{ route('timesheets.weekly', $prevParams) }}"
+                            class="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
+                            ← Prev
+                        </a>
+                        <form method="GET" action="{{ route('timesheets.weekly') }}" class="inline-flex">
+                            @foreach($noRangeParams as $fpk => $fpv)
+                                <input type="hidden" name="{{ $fpk }}" value="{{ $fpv }}">
+                            @endforeach
+                            <input type="date" name="date"
+                                   value="{{ $weekStart->format('Y-m-d') }}"
+                                   onchange="this.form.submit()"
+                                   title="{{ $weekStart->translatedFormat('d M') }} – {{ $weekEnd->translatedFormat('d M Y') }}"
+                                   class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded text-sm px-2 py-1.5 cursor-pointer">
+                        </form>
+                        <a href="{{ route('timesheets.weekly', $nextParams) }}"
+                            class="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
+                            Next →
+                        </a>
+                        @if($offset !== 0)
+                            <a href="{{ route('timesheets.weekly', $thisWeekParams) }}"
+                                class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Tuần này</a>
+                        @endif
+                    @else
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                            {{ \Carbon\Carbon::parse($tsFrom)->format('d/m/Y') }}
+                            –
+                            {{ \Carbon\Carbon::parse($tsTo ?? $tsFrom)->format('d/m/Y') }}
+                            <span class="text-xs text-gray-400 font-normal ml-1">
+                                ({{ \Carbon\Carbon::parse($tsFrom)->diffInDays(\Carbon\Carbon::parse($tsTo ?? $tsFrom)) + 1 }} ngày)
+                            </span>
+                        </span>
                         <a href="{{ route('timesheets.weekly', $thisWeekParams) }}"
-                            class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Tuần này</a>
+                            class="text-sm text-red-500 dark:text-red-400 hover:underline ml-1">× Xóa</a>
                     @endif
                 </div>
+
+                {{-- Custom date range form --}}
+                <form method="GET" action="{{ route('timesheets.weekly') }}" class="flex flex-wrap gap-2 items-end">
+                    @foreach($noRangeParams as $k => $v)
+                        <input type="hidden" name="{{ $k }}" value="{{ $v }}">
+                    @endforeach
+                    <input type="hidden" name="offset" value="{{ $offset }}">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Từ ngày</label>
+                        <input type="date" name="ts_from" value="{{ $tsFrom ?? '' }}"
+                            class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded text-sm px-2 py-1.5 cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Đến ngày</label>
+                        <input type="date" name="ts_to" value="{{ $tsTo ?? '' }}"
+                            class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded text-sm px-2 py-1.5 cursor-pointer">
+                    </div>
+                    <div class="self-end">
+                        <button type="submit"
+                            class="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 transition">Áp dụng</button>
+                    </div>
+                </form>
 
                 {{-- User / Team filter --}}
                 @if($filterUsers || $filterTeams)
@@ -83,6 +122,8 @@
                       class="flex flex-wrap gap-2 items-end">
                     <input type="hidden" name="offset" value="{{ $offset }}">
                     <input type="hidden" name="group" value="{{ $groupBy }}">
+                    @if($tsFrom)<input type="hidden" name="ts_from" value="{{ $tsFrom }}">@endif
+                    @if($tsTo)<input type="hidden" name="ts_to" value="{{ $tsTo }}">@endif
 
                     <div>
                         <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Xem</label>
@@ -122,7 +163,7 @@
                     @endif
 
                     <x-primary-button type="submit">Áp dụng</x-primary-button>
-                    <a href="{{ route('timesheets.weekly', ['offset' => $offset]) }}">
+                    <a href="{{ route('timesheets.weekly', array_filter(['offset' => $offset, 'ts_from' => $tsFrom ?: null, 'ts_to' => $tsTo ?: null])) }}">
                         <x-secondary-button type="button">Đặt lại</x-secondary-button>
                     </a>
                 </form>
