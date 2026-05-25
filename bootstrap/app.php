@@ -16,5 +16,22 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Fix "intended URL" redirect for subdirectory deployments.
+        // The web server strips the /company-erp prefix before PHP sees the request,
+        // so $request->fullUrl() returns the wrong URL. We rebuild it from APP_URL + path.
+        $exceptions->renderable(function (
+            \Illuminate\Auth\AuthenticationException $e,
+            \Illuminate\Http\Request $request
+        ) {
+            if (!$request->expectsJson()) {
+                $base     = rtrim(config('app.url'), '/');
+                $path     = $request->getPathInfo();           // e.g. /tasks
+                $qs       = $request->getQueryString();
+                $intended = $base . $path . ($qs ? '?' . $qs : '');
+
+                session(['url.intended' => $intended]);
+
+                return redirect($e->redirectTo() ?? route('login'));
+            }
+        });
     })->create();
