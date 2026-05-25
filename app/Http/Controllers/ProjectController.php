@@ -77,7 +77,7 @@ class ProjectController extends Controller
         $user = auth()->user();
         if (!$user->can('view all projects') && !$this->_isAssigned($project, $user)) abort(403);
 
-        $project->load(['teams.users', 'users', 'tasks.assignees', 'comments.user']);
+        $project->load(['teams.users', 'users', 'comments.user']);
 
         // File explorer: current folder
         $folderId     = $request->query('folder_id');
@@ -109,6 +109,37 @@ class ProjectController extends Controller
 
         $canUpload    = $user->can('edit all project files') || $user->can('edit own project files');
         $canManageAll = $user->can('edit all project files');
+
+        // ── Task tab filters ──────────────────────────────────────────────────
+        $taskSearch     = trim($request->input('search', ''));
+        $taskAssigneeId = $request->input('assignee_id', '');
+        $taskSort       = $request->input('sort', 'id_asc');
+
+        $taskQuery = $project->tasks()->with('assignees');
+
+        if ($taskSearch) {
+            $taskQuery->where(function ($q) use ($taskSearch) {
+                $q->where('name', 'like', "%{$taskSearch}%");
+                $numId = (int) preg_replace('/[^0-9]/', '', $taskSearch);
+                if ($numId > 0) {
+                    $q->orWhere('id', $numId);
+                }
+            });
+        }
+        if ($taskAssigneeId) {
+            $taskQuery->whereHas('assignees', fn ($q) => $q->where('users.id', (int) $taskAssigneeId));
+        }
+        match ($taskSort) {
+            'id_desc' => $taskQuery->orderBy('id', 'desc'),
+            'due_asc' => $taskQuery->orderBy('expected_end_date', 'asc'),
+            'due_desc'=> $taskQuery->orderBy('expected_end_date', 'desc'),
+            default   => $taskQuery->orderBy('id', 'asc'),
+        };
+        $projectTasks = $taskQuery->get();
+
+        // Users who are assigned to any task in this project (for the filter dropdown)
+        $taskAssignees = User::whereHas('tasks', fn ($q) => $q->where('project_id', $project->id))
+            ->orderBy('name')->get();
 
         // ── Timesheet tab data ────────────────────────────────────────────────
         $tsMonthStr  = $request->query('tsmonth', now()->format('Y-m'));
@@ -289,6 +320,7 @@ class ProjectController extends Controller
 
         return view('projects.show', compact(
             'project', 'items', 'currentFolder', 'breadcrumb', 'activities', 'canUpload', 'canManageAll',
+            'projectTasks', 'taskAssignees', 'taskSearch', 'taskAssigneeId', 'taskSort',
             'tsMonthStr', 'tsMonthDate', 'tsDays', 'tsPrevMonth', 'tsNextMonth',
             'tsTaskRows', 'tsUserRows', 'tsDayTotals',
             'tsGrandTotalHours', 'tsGrandTotalOt', 'tsGrandTotalCost', 'tsGrandTotalOtCost',

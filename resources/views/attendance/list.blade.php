@@ -16,6 +16,8 @@
         .att-cell:hover .att-tooltip { opacity: 1; }
         .att-cell .att-del { opacity: 0; transition: opacity 0.15s; }
         .att-cell:hover .att-del { opacity: 1; }
+        .att-row .att-row-del { opacity: 0; transition: opacity 0.15s; }
+        .att-row:hover .att-row-del { opacity: 1; }
     </style>
     @endpush
 
@@ -146,13 +148,22 @@
             {{-- ── Legend ───────────────────────────────────────────────────── --}}
             <div class="flex flex-wrap gap-4 mb-4 text-xs text-gray-600 dark:text-gray-400">
                 <span class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 rounded bg-green-200 dark:bg-green-800 border border-green-400 dark:border-green-600"></span>On Site
+                    <span class="w-3 h-3 rounded bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-600"></span>On Site
                 </span>
                 <span class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 rounded bg-blue-200 dark:bg-blue-800 border border-blue-400 dark:border-blue-600"></span>WFH
+                    <span class="w-3 h-3 rounded bg-emerald-200 dark:bg-emerald-800/40 border border-emerald-500 dark:border-emerald-600"></span>WFH
                 </span>
                 <span class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 rounded bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700"></span>WFH chờ duyệt
+                    <span class="w-3 h-3 rounded bg-blue-100 dark:bg-blue-900/30 border border-blue-400 dark:border-blue-600"></span>Chưa check out
+                </span>
+                <span class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded bg-sky-50 dark:bg-sky-900/10 border border-sky-300 dark:border-sky-700"></span>WFH chờ duyệt
+                </span>
+                <span class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded bg-purple-100 dark:bg-purple-900/30 border border-purple-400 dark:border-purple-600"></span>Nhiều lần (xong)
+                </span>
+                <span class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded bg-orange-200 dark:bg-orange-800/30 border border-orange-400 dark:border-orange-600"></span>Nhiều lần (chưa xong)
                 </span>
                 <span class="flex items-center gap-1.5">
                     <span class="w-3 h-3 rounded bg-orange-100 dark:bg-orange-900/40 border border-orange-300 dark:border-orange-600"></span>Nghỉ phép cả ngày
@@ -237,15 +248,30 @@
                                     $isTd     = $dk === $today;
                                     $cellKey  = $memberRow->id . '_' . $dk;
 
-                                    $att   = $attendances->get($cellKey);
-                                    $leave = $leavesByDay[$cellKey] ?? null;
+                                    $attList  = ($attendances->get($cellKey) ?? collect())
+                                                    ->filter(fn($a) => $a->status !== 'rejected')
+                                                    ->values();
+                                    $attCount = $attList->count();
+                                    $leave    = $leavesByDay[$cellKey] ?? null;
 
                                     $isPartialLeave = $leave && $leave->hours !== null && $leave->hours < 8;
 
-                                    if ($att && $att->status === 'approved') {
-                                        $state = $att->type; // 'on_site' or 'wfh'
-                                    } elseif ($att && $att->status === 'pending') {
-                                        $state = 'pending';
+                                    // Determine state
+                                    $att = null;
+                                    if ($attCount >= 1) {
+                                        if ($attCount === 1) {
+                                            $att = $attList->first();
+                                            if ($att->status === 'approved') {
+                                                $state = $att->check_out_time ? $att->type : 'checked_in';
+                                            } elseif ($att->status === 'pending') {
+                                                $state = 'pending';
+                                            } else {
+                                                $state = 'future';
+                                            }
+                                        } else {
+                                            $anyNotOut = $attList->contains(fn($a) => $a->status === 'approved' && !$a->check_out_time);
+                                            $state = $anyNotOut ? 'multi_in_progress' : 'multi_done';
+                                        }
                                     } elseif ($isPartialLeave) {
                                         $state = 'partial_leave';
                                     } elseif ($leave) {
@@ -259,20 +285,24 @@
                                     }
 
                                     $bg = match($state) {
-                                        'on_site'       => 'bg-green-50 dark:bg-green-900/20',
-                                        'wfh'           => 'bg-blue-50 dark:bg-blue-900/20',
-                                        'pending'       => 'bg-blue-50/60 dark:bg-blue-900/10',
-                                        'leave'         => 'bg-orange-50 dark:bg-orange-900/20',
-                                        'partial_leave' => 'bg-yellow-50 dark:bg-yellow-900/20',
-                                        'absent'        => 'bg-red-50 dark:bg-red-900/20',
-                                        'off'           => 'bg-gray-50 dark:bg-gray-700/30',
-                                        default         => 'bg-white dark:bg-gray-800',
+                                        'on_site'           => 'bg-green-100 dark:bg-green-900/30',
+                                        'wfh'               => 'bg-emerald-200 dark:bg-emerald-800/40',
+                                        'checked_in'        => 'bg-blue-100 dark:bg-blue-900/30',
+                                        'pending'           => 'bg-sky-50 dark:bg-sky-900/10',
+                                        'leave'             => 'bg-orange-100 dark:bg-orange-900/20',
+                                        'partial_leave'     => 'bg-yellow-100 dark:bg-yellow-900/20',
+                                        'absent'            => 'bg-red-50 dark:bg-red-900/20',
+                                        'off'               => 'bg-gray-50 dark:bg-gray-700/30',
+                                        'multi_done'        => 'bg-purple-100 dark:bg-purple-900/30',
+                                        'multi_in_progress' => 'bg-orange-200 dark:bg-orange-800/30',
+                                        default             => 'bg-white dark:bg-gray-800',
                                     };
 
                                     $borderCls = $isTd
                                         ? 'border-indigo-200 dark:border-indigo-700'
                                         : 'border-gray-200 dark:border-gray-700';
 
+                                    // Single-att time strings
                                     $checkInStr  = null;
                                     $checkOutStr = null;
                                     $timeStr     = null;
@@ -281,82 +311,148 @@
                                             ? substr($att->check_in_time, 0, 5)
                                             : ($att->created_at ? $att->created_at->format('H:i') : null);
                                         $checkOutStr = $att->check_out_time ? substr($att->check_out_time, 0, 5) : null;
-                                        if ($att->check_out_time && $att->actual_work_hours !== null) {
-                                            $timeStr = $att->actual_work_hours . 'h';
-                                        } else {
-                                            $timeStr = $checkInStr;
-                                        }
+                                        $timeStr = ($att->check_out_time && $att->actual_work_hours !== null)
+                                            ? $att->actual_work_hours . 'h'
+                                            : $checkInStr;
                                     }
                                 @endphp
-                                <td class="att-cell relative border-b border-r {{ $borderCls }} {{ $bg }} px-0 py-0 h-10 text-center align-middle w-12 min-w-[3rem] {{ ($canCheckinForOther && $att) ? 'cursor-pointer hover:ring-1 hover:ring-inset hover:ring-indigo-400' : '' }}"
-                                    @if($canCheckinForOther && $att)
-                                    @click="openEdit({id: {{ $att->id }}, userId: {{ $att->user_id }}, type: '{{ $att->type }}', date: '{{ $dk }}', checkIn: '{{ $checkInStr ?? '' }}', checkOut: '{{ $att->check_out_time ? substr($att->check_out_time, 0, 5) : '' }}'})"
+                                <td class="att-cell relative border-b border-r {{ $borderCls }} {{ $bg }} px-0 py-0 {{ $attCount > 1 ? 'h-auto align-top' : 'h-10 align-middle' }} text-center w-12 min-w-[3rem]
+                                           {{ ($canCheckinForOther && $attCount === 1) ? 'cursor-pointer hover:ring-1 hover:ring-inset hover:ring-indigo-400' : '' }}"
+                                    @if($canCheckinForOther && $attCount === 1)
+                                    @click="openEdit({id: {{ $att->id }}, userId: {{ $att->user_id }}, type: '{{ $att->type }}', date: '{{ $dk }}', checkIn: '{{ $checkInStr ?? '' }}', checkOut: '{{ $checkOutStr ?? '' }}'})"
                                     @endif
                                     >
-                                    {{-- Hover tooltip --}}
-                                    @if($att || $isPartialLeave)
+
+                                    {{-- ── Hover tooltip ──────────────────────── --}}
+                                    @if($attCount > 0 || $isPartialLeave)
                                     <div class="att-tooltip absolute bottom-full left-1/2 -translate-x-1/2 mb-1 z-30
-                                                bg-gray-800 dark:bg-gray-700 text-white text-xs rounded px-2 py-1.5 whitespace-nowrap shadow-lg">
-                                        @if($checkInStr)
-                                        <div>Vào: {{ $checkInStr }}</div>
-                                        @endif
-                                        @if($checkOutStr)
-                                        <div>Ra: {{ $checkOutStr }}</div>
+                                                bg-gray-800 dark:bg-gray-700 text-white text-xs rounded px-2 py-1.5 whitespace-nowrap shadow-lg min-w-max">
+                                        @if($attCount === 1)
+                                            @if($checkInStr)<div>Vào: {{ $checkInStr }}</div>@endif
+                                            @if($checkOutStr)<div>Ra: {{ $checkOutStr }}</div>@endif
+                                        @elseif($attCount > 1)
+                                            @foreach($attList as $ttIdx => $ttRec)
+                                                @if($ttIdx > 0)<div class="border-t border-gray-600 my-0.5"></div>@endif
+                                                @php
+                                                    $ttIn  = $ttRec->check_in_time  ? substr($ttRec->check_in_time,  0, 5) : null;
+                                                    $ttOut = $ttRec->check_out_time ? substr($ttRec->check_out_time, 0, 5) : null;
+                                                    $ttLbl = $ttRec->type === 'wfh' ? 'WFH' : 'OS';
+                                                    $ttCls = $ttRec->type === 'wfh' ? 'text-emerald-300' : 'text-green-300';
+                                                @endphp
+                                                <div class="text-[10px] font-semibold {{ $ttCls }}">{{ $ttLbl }}</div>
+                                                @if($ttIn)<div>Vào: {{ $ttIn }}</div>@endif
+                                                @if($ttOut)<div>Ra: {{ $ttOut }}</div>@endif
+                                            @endforeach
                                         @endif
                                         @if($isPartialLeave)
                                         <div class="text-yellow-300">Nghỉ½: {{ $leave->hours }}h</div>
                                         @endif
                                     </div>
                                     @endif
-                                    {{-- HR delete button --}}
-                                    @if($canCheckinForOther && $att)
-                                    <form method="POST" action="{{ route('attendance.destroy', $att) }}"
-                                          class="att-del absolute top-0 right-0"
-                                          @click.stop
-                                          onsubmit="return confirm('Xóa chấm công ngày {{ $dk }} của {{ addslashes($memberRow->name) }}?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                                class="w-4 h-4 flex items-center justify-center text-red-500 hover:text-red-700 bg-white/80 dark:bg-gray-800/80 rounded-bl text-xs leading-none font-bold">
-                                            ×
-                                        </button>
-                                    </form>
+
+                                    {{-- ── Single attendance ──────────────────── --}}
+                                    @if($attCount === 1)
+                                        {{-- Delete button --}}
+                                        @if($canCheckinForOther)
+                                        <form method="POST" action="{{ route('attendance.destroy', $att) }}"
+                                              class="att-del absolute top-0 right-0"
+                                              @click.stop
+                                              onsubmit="return confirm('Xóa chấm công ngày {{ $dk }} của {{ addslashes($memberRow->name) }}?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit"
+                                                    class="w-4 h-4 flex items-center justify-center text-red-500 hover:text-red-700 bg-white/80 dark:bg-gray-800/80 rounded-bl text-xs leading-none font-bold">
+                                                ×
+                                            </button>
+                                        </form>
+                                        @endif
+                                        {{-- Label --}}
+                                        @if($state === 'on_site')
+                                            <div class="flex flex-col items-center justify-center leading-tight">
+                                                <span class="text-green-700 dark:text-green-400 font-semibold text-[10px]">OS</span>
+                                                @if($timeStr)<span class="text-green-600 dark:text-green-500 text-[10px] opacity-80">{{ $timeStr }}</span>@endif
+                                            </div>
+                                        @elseif($state === 'wfh')
+                                            <div class="flex flex-col items-center justify-center leading-tight">
+                                                <span class="text-emerald-700 dark:text-emerald-400 font-semibold text-[10px]">WFH</span>
+                                                @if($timeStr)<span class="text-emerald-600 dark:text-emerald-500 text-[10px] opacity-80">{{ $timeStr }}</span>@endif
+                                            </div>
+                                        @elseif($state === 'checked_in')
+                                            <div class="flex flex-col items-center justify-center leading-tight">
+                                                <span class="text-blue-600 dark:text-blue-400 font-semibold text-[10px]">{{ $att->type === 'wfh' ? 'WFH' : 'OS' }}</span>
+                                                @if($timeStr)<span class="text-blue-500 dark:text-blue-400 text-[10px] opacity-80">{{ $timeStr }}</span>@endif
+                                            </div>
+                                        @elseif($state === 'pending')
+                                            <div class="flex flex-col items-center justify-center leading-tight">
+                                                <span class="text-sky-500 dark:text-sky-400 font-semibold text-[10px]">WFH?</span>
+                                                @if($timeStr)<span class="text-sky-400 text-[10px] opacity-70">{{ $timeStr }}</span>@endif
+                                            </div>
+                                        @endif
+
+                                    {{-- ── Multiple attendances ────────────────── --}}
+                                    @elseif($attCount > 1)
+                                        @php $multiTotalH = $attList->sum('actual_work_hours'); @endphp
+                                        @foreach($attList as $atRec)
+                                            @php
+                                                $atIn    = $atRec->check_in_time  ? substr($atRec->check_in_time,  0, 5) : null;
+                                                $atOut   = $atRec->check_out_time ? substr($atRec->check_out_time, 0, 5) : null;
+                                                $atLbl   = $atRec->type === 'wfh' ? 'WFH' : 'OS';
+                                                $atNotOut= $atRec->status === 'approved' && !$atRec->check_out_time;
+                                                $atTxt   = $atNotOut
+                                                    ? 'text-orange-700 dark:text-orange-400'
+                                                    : ($atRec->type === 'wfh'
+                                                        ? 'text-emerald-700 dark:text-emerald-400'
+                                                        : 'text-purple-700 dark:text-purple-400');
+                                            @endphp
+                                            <div class="att-row relative flex items-center justify-center py-0.5
+                                                        {{ !$loop->last ? 'border-b border-purple-200 dark:border-purple-800' : '' }}"
+                                                 @if($canCheckinForOther)
+                                                 @click.stop="openEdit({id: {{ $atRec->id }}, userId: {{ $atRec->user_id }}, type: '{{ $atRec->type }}', date: '{{ $dk }}', checkIn: '{{ $atIn ?? '' }}', checkOut: '{{ $atOut ?? '' }}'})"
+                                                 @endif>
+                                                <div class="flex flex-col items-center leading-none">
+                                                    <span class="{{ $atTxt }} font-semibold text-[10px]">{{ $atLbl }}</span>
+                                                    @if($atOut)
+                                                        <span class="{{ $atTxt }} text-[9px] opacity-70">{{ $atRec->actual_work_hours ?? '' }}h</span>
+                                                    @elseif($atIn)
+                                                        <span class="{{ $atTxt }} text-[9px] opacity-70">{{ $atIn }}</span>
+                                                    @endif
+                                                </div>
+                                                @if($canCheckinForOther)
+                                                <form method="POST" action="{{ route('attendance.destroy', $atRec) }}"
+                                                      class="att-row-del absolute top-0 right-0"
+                                                      @click.stop
+                                                      onsubmit="return confirm('Xóa chấm công {{ $atLbl }} ngày {{ $dk }} của {{ addslashes($memberRow->name) }}?')">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit"
+                                                            class="w-3.5 h-3.5 flex items-center justify-center text-red-500 hover:text-red-700 bg-white/80 dark:bg-gray-800/80 rounded-bl text-[10px] leading-none font-bold">
+                                                        ×
+                                                    </button>
+                                                </form>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                        @if($state === 'multi_done' && $multiTotalH > 0)
+                                        <div class="text-[9px] text-purple-600 dark:text-purple-400 text-center pb-0.5 border-t border-purple-200 dark:border-purple-800">
+                                            {{ $multiTotalH }}h
+                                        </div>
+                                        @endif
+
+                                    {{-- ── Leave / absent / off ────────────────── --}}
+                                    @else
+                                        @if($state === 'partial_leave')
+                                            <div class="flex flex-col items-center justify-center leading-tight">
+                                                <span class="text-yellow-700 dark:text-yellow-400 font-semibold text-[10px]">Nghỉ½</span>
+                                                @if($leave->hours)<span class="text-yellow-600 dark:text-yellow-500 text-[10px] opacity-80">{{ $leave->hours }}h</span>@endif
+                                            </div>
+                                        @elseif($state === 'leave')
+                                            <span class="text-orange-700 dark:text-orange-400 font-semibold text-[10px]">Nghỉ</span>
+                                        @elseif($state === 'absent')
+                                            <span class="text-red-400 dark:text-red-500 text-[11px] font-medium">–</span>
+                                        @endif
+                                        {{-- off / future: empty --}}
                                     @endif
-                                    {{-- Cell label --}}
-                                    @if($state === 'on_site')
-                                        <div class="flex flex-col items-center justify-center leading-tight">
-                                            <span class="text-green-700 dark:text-green-400 font-semibold text-[10px]">OS</span>
-                                            @if($timeStr)
-                                            <span class="text-green-600 dark:text-green-500 text-[10px] opacity-80">{{ $timeStr }}</span>
-                                            @endif
-                                        </div>
-                                    @elseif($state === 'wfh')
-                                        <div class="flex flex-col items-center justify-center leading-tight">
-                                            <span class="text-blue-700 dark:text-blue-400 font-semibold text-[10px]">WFH</span>
-                                            @if($timeStr)
-                                            <span class="text-blue-600 dark:text-blue-400 text-[10px] opacity-80">{{ $timeStr }}</span>
-                                            @endif
-                                        </div>
-                                    @elseif($state === 'pending')
-                                        <div class="flex flex-col items-center justify-center leading-tight">
-                                            <span class="text-blue-400 dark:text-blue-500 font-semibold text-[10px]">WFH?</span>
-                                            @if($timeStr)
-                                            <span class="text-blue-400 text-[10px] opacity-70">{{ $timeStr }}</span>
-                                            @endif
-                                        </div>
-                                    @elseif($state === 'partial_leave')
-                                        <div class="flex flex-col items-center justify-center leading-tight">
-                                            <span class="text-yellow-700 dark:text-yellow-400 font-semibold text-[10px]">Nghỉ½</span>
-                                            @if($leave->hours)
-                                            <span class="text-yellow-600 dark:text-yellow-500 text-[10px] opacity-80">{{ $leave->hours }}h</span>
-                                            @endif
-                                        </div>
-                                    @elseif($state === 'leave')
-                                        <span class="text-orange-700 dark:text-orange-400 font-semibold text-[10px]">Nghỉ</span>
-                                    @elseif($state === 'absent')
-                                        <span class="text-red-400 dark:text-red-500 text-[11px] font-medium">–</span>
-                                    @endif
-                                    {{-- off / future: empty cell --}}
+
                                 </td>
                             @endfor
                         </tr>
@@ -374,12 +470,14 @@
                         $dk  = $cellDate->toDateString();
                         $dow = $cellDate->dayOfWeek;
                         if ($dow === 0 || $dow === 6 || in_array($dk, $holidayDates)) continue;
-                        $att = $attendances->get($m->id . '_' . $dk);
-                        $lv  = $leavesByDay[$m->id . '_' . $dk] ?? null;
+                        $sumKey  = $m->id . '_' . $dk;
+                        $attColl = ($attendances->get($sumKey) ?? collect())
+                                       ->filter(fn($a) => $a->status === 'approved');
+                        $lv      = $leavesByDay[$sumKey] ?? null;
                         $isPartialLv = $lv && $lv->hours !== null && $lv->hours < 8;
-                        if ($att && $att->status === 'approved') {
-                            if ($att->type === 'on_site') $sumOnSite++;
-                            else $sumWfh++;
+                        if ($attColl->isNotEmpty()) {
+                            $sumOnSite += $attColl->where('type', 'on_site')->count();
+                            $sumWfh    += $attColl->where('type', 'wfh')->count();
                         } elseif ($isPartialLv) {
                             $sumPartialLeave++;
                         } elseif ($lv) {

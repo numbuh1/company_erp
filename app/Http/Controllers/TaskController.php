@@ -13,13 +13,41 @@ class TaskController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $user  = auth()->user();
         $query = Task::with(['project', 'assignees']);
         $this->_scopeQuery($query, $user);
-        $tasks = $query->latest()->paginate(15);
-        return view('tasks.index', compact('tasks'));
+
+        // Search by name or TK-id
+        if ($search = trim($request->input('search', ''))) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%");
+                $numId = (int) preg_replace('/[^0-9]/', '', $search);
+                if ($numId > 0) {
+                    $q->orWhere('id', $numId);
+                }
+            });
+        }
+
+        // Filter by assignee
+        if ($assigneeId = $request->input('assignee_id')) {
+            $query->whereHas('assignees', fn ($q) => $q->where('users.id', (int) $assigneeId));
+        }
+
+        // Sort
+        match ($request->input('sort', 'latest')) {
+            'id_asc'  => $query->orderBy('id', 'asc'),
+            'id_desc' => $query->orderBy('id', 'desc'),
+            'due_asc' => $query->orderBy('expected_end_date', 'asc'),
+            'due_desc'=> $query->orderBy('expected_end_date', 'desc'),
+            default   => $query->latest(),
+        };
+
+        $tasks = $query->paginate(20)->withQueryString();
+        $users = User::orderBy('name')->get();
+
+        return view('tasks.index', compact('tasks', 'users'));
     }
 
     /**

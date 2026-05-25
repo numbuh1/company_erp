@@ -321,8 +321,9 @@ class AttendanceController extends Controller
         // Key: "{user_id}_{Y-m-d}"
         $attendances = Attendance::whereBetween('date', [$month->toDateString(), $monthEnd->toDateString()])
             ->whereIn('user_id', $memberIds)
+            ->orderBy('check_in_time')
             ->get()
-            ->keyBy(fn($a) => $a->user_id . '_' . $a->date->format('Y-m-d'));
+            ->groupBy(fn($a) => $a->user_id . '_' . $a->date->format('Y-m-d'));
 
         // ── Approved leaves ──────────────────────────────────────────────
         $leaveRows = LeaveRequest::where('status', 'approved')
@@ -399,12 +400,6 @@ class AttendanceController extends Controller
         }
 
         // ── Create new record ────────────────────────────────────────────
-        if (Attendance::where('user_id', $request->user_id)
-                      ->whereDate('date', $request->date)
-                      ->exists()) {
-            return back()->with('error', 'Người dùng này đã có dữ liệu chấm công trong ngày đó.');
-        }
-
         Attendance::create([
             'user_id'        => $request->user_id,
             'date'           => $request->date,
