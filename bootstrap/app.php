@@ -31,7 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
                 session(['url.intended' => $intended]);
 
-                return redirect($e->redirectTo() ?? route('login'));
+                return redirect($e->redirectTo($request) ?? route('login'));
             }
         });
     })->create();
