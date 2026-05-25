@@ -99,8 +99,8 @@
                                             @endif
                                         </div>
                                         <div class="flex-1 min-w-0">
-                                            <p class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{{ $nd['title'] }}</p>
-                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{{ $nd['description'] }}</p>
+                                            <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ $nd['title'] }}</p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $nd['description'] }}</p>
                                             <p class="text-xs text-gray-400 mt-0.5">{{ $notification->created_at->diffForHumans() }}</p>
                                         </div>
                                     </a>
