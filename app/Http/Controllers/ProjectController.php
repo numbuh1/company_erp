@@ -138,8 +138,14 @@ class ProjectController extends Controller
         $projectTasks = $taskQuery->get();
 
         // Users who are assigned to any task in this project (for the filter dropdown)
-        $taskAssignees = User::whereHas('tasks', fn ($q) => $q->where('project_id', $project->id))
-            ->orderBy('name')->get();
+        $taskAssignees = User::whereIn('id', function ($q) use ($project) {
+            $q->select('task_user.user_id')
+              ->from('task_user')
+              ->join('tasks', 'task_user.task_id', '=', 'tasks.id')
+              ->where('tasks.project_id', $project->id)
+              ->whereNull('tasks.deleted_at')
+              ->distinct();
+        })->orderBy('name')->get();
 
         // ── Timesheet tab data ────────────────────────────────────────────────
         $tsMonthStr  = $request->query('tsmonth', now()->format('Y-m'));
