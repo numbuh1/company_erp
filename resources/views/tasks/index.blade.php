@@ -1,4 +1,14 @@
 <x-app-layout>
+    @push('styles')
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet"/>
+    <style>
+        .ts-wrapper .ts-control { border-color: #d1d5db; border-radius: 0.375rem; font-size: 0.875rem; min-height: 2.25rem; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
+        .dark .ts-wrapper .ts-control { background: #111827; border-color: #374151; color: #d1d5db; }
+        .dark .ts-dropdown { background: #1f2937; border-color: #374151; color: #d1d5db; }
+        .dark .ts-dropdown .option:hover, .dark .ts-dropdown .option.active { background: #374151; }
+    </style>
+    @endpush
+
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Công việc</h2>
@@ -38,11 +48,23 @@
                                class="block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 rounded-md shadow-sm text-sm px-3 py-1.5 focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
 
+                    {{-- Project --}}
+                    @if($projects->isNotEmpty())
+                    <div class="min-w-[200px]">
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Dự án</label>
+                        <select id="task-project-select" name="project_id">
+                            <option value="">— Tất cả —</option>
+                            @foreach($projects as $p)
+                                <option value="{{ $p->id }}" @selected(request('project_id') == $p->id)>PJ-{{ $p->id }} {{ $p->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    @endif
+
                     {{-- Assignee --}}
                     <div class="min-w-[180px]">
                         <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Người phân công</label>
-                        <select name="assignee_id"
-                                class="mt-0 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
+                        <select id="task-assignee-select" name="assignee_id">
                             <option value="">— Tất cả —</option>
                             @foreach($users as $u)
                                 <option value="{{ $u->id }}" @selected(request('assignee_id') == $u->id)>{{ $u->name }}</option>
@@ -69,7 +91,7 @@
                                 class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md shadow-sm transition">
                             Lọc
                         </button>
-                        @if(request()->hasAny(['search', 'assignee_id', 'sort']))
+                        @if(request()->hasAny(['search', 'project_id', 'assignee_id', 'sort']))
                             <a href="{{ route('tasks.index') }}"
                                class="px-4 py-1.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition">
                                 Reset
@@ -237,7 +259,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="9" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400 text-sm">
+                                    <td colspan="10" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400 text-sm">
                                         Không tìm thấy công việc nào.
                                     </td>
                                 </tr>
@@ -252,4 +274,17 @@
 
         </div>
     </div>
+
+    @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const cfg = { allowEmptyOption: true, maxOptions: 300 };
+        const projectEl  = document.getElementById('task-project-select');
+        const assigneeEl = document.getElementById('task-assignee-select');
+        if (projectEl)  new TomSelect(projectEl,  cfg);
+        if (assigneeEl) new TomSelect(assigneeEl, cfg);
+    });
+    </script>
+    @endpush
 </x-app-layout>

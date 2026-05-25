@@ -193,8 +193,7 @@
                             {{-- Assignee --}}
                             <div class="min-w-[160px]">
                                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Người phân công</label>
-                                <select name="assignee_id"
-                                        class="mt-0 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
+                                <select id="proj-task-assignee-select" name="assignee_id">
                                     <option value="">— Tất cả —</option>
                                     @foreach($taskAssignees as $u)
                                         <option value="{{ $u->id }}" @selected($taskAssigneeId == $u->id)>{{ $u->name }}</option>
@@ -734,4 +733,24 @@
 
     {{-- Team Members Modal --}}
     <x-team-modal :teams="$project->teams" />
+
+    @push('styles')
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet"/>
+    <style>
+        .ts-wrapper .ts-control { border-color: #d1d5db; border-radius: 0.375rem; font-size: 0.875rem; min-height: 2.25rem; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
+        .dark .ts-wrapper .ts-control { background: #111827; border-color: #374151; color: #d1d5db; }
+        .dark .ts-dropdown { background: #1f2937; border-color: #374151; color: #d1d5db; }
+        .dark .ts-dropdown .option:hover, .dark .ts-dropdown .option.active { background: #374151; }
+    </style>
+    @endpush
+
+    @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const el = document.getElementById('proj-task-assignee-select');
+        if (el) new TomSelect(el, { allowEmptyOption: true, maxOptions: 200 });
+    });
+    </script>
+    @endpush
 </x-app-layout>

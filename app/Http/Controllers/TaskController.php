@@ -30,6 +30,11 @@ class TaskController extends Controller
             });
         }
 
+        // Filter by project
+        if ($projectId = $request->input('project_id')) {
+            $query->where('project_id', (int) $projectId);
+        }
+
         // Filter by assignee
         if ($assigneeId = $request->input('assignee_id')) {
             $query->whereHas('assignees', fn ($q) => $q->where('users.id', (int) $assigneeId));
@@ -47,7 +52,20 @@ class TaskController extends Controller
         $tasks = $query->paginate(20)->withQueryString();
         $users = User::orderBy('name')->get();
 
-        return view('tasks.index', compact('tasks', 'users'));
+        // Projects for the filter dropdown — scoped by permission
+        if ($user->can('view all projects')) {
+            $projects = Project::orderBy('name')->get();
+        } elseif ($user->can('view assigned projects')) {
+            $teamIds  = $user->teams()->pluck('teams.id');
+            $projects = Project::where(function ($q) use ($user, $teamIds) {
+                $q->whereHas('users', fn ($q) => $q->where('users.id', $user->id))
+                  ->orWhereHas('teams', fn ($q) => $q->whereIn('teams.id', $teamIds));
+            })->orderBy('name')->get();
+        } else {
+            $projects = collect();
+        }
+
+        return view('tasks.index', compact('tasks', 'users', 'projects'));
     }
 
     /**
