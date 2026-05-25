@@ -14,6 +14,7 @@ class Attendance extends Model
         'user_id',
         'date',
         'type',
+        'check_out_type',
         'check_in_time',
         'check_out_time',
         'actual_work_hours',

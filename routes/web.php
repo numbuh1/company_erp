@@ -75,6 +75,7 @@ Route::middleware('auth')->group(function () {
     Route::post('users/{user}/reset-password', [UserController::class, 'resetPassword'])
         ->name('users.reset-password');
     Route::get('/profile', [UserController::class, 'profile'])->name('users.profile');
+    Route::post('/user/column-preferences', [UserController::class, 'updateColumnPreferences'])->name('user.column-preferences');
 
     Route::resource('teams', TeamController::class);
     Route::post('/teams/{team}/assign-user', [TeamUserController::class, 'store']);

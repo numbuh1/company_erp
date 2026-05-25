@@ -25,29 +25,32 @@
         modalOpen: false,
         editId: null,
         editUserId: '',
-        editType: 'on_site',
+        editCheckInType: 'on_site',
+        editCheckOutType: 'on_site',
         editDate: '{{ now()->toDateString() }}',
         editCheckIn: '{{ now()->format('H:i') }}',
         editCheckOut: '',
         openModal() {
             var n = new Date(), p = s => String(s).padStart(2, '0');
-            this.editId       = null;
-            this.editUserId   = '';
-            this.editType     = 'on_site';
-            this.editDate     = n.getFullYear() + '-' + p(n.getMonth()+1) + '-' + p(n.getDate());
-            this.editCheckIn  = p(n.getHours()) + ':' + p(n.getMinutes());
-            this.editCheckOut = '';
-            this.modalOpen    = true;
+            this.editId          = null;
+            this.editUserId      = '';
+            this.editCheckInType = 'on_site';
+            this.editCheckOutType= 'on_site';
+            this.editDate        = n.getFullYear() + '-' + p(n.getMonth()+1) + '-' + p(n.getDate());
+            this.editCheckIn     = p(n.getHours()) + ':' + p(n.getMinutes());
+            this.editCheckOut    = '';
+            this.modalOpen       = true;
             this.$nextTick(() => { if (window.fabTomSelect) window.fabTomSelect.clear(); });
         },
         openEdit(d) {
-            this.editId       = d.id;
-            this.editUserId   = String(d.userId);
-            this.editType     = d.type;
-            this.editDate     = d.date;
-            this.editCheckIn  = d.checkIn;
-            this.editCheckOut = d.checkOut;
-            this.modalOpen    = true;
+            this.editId          = d.id;
+            this.editUserId      = String(d.userId);
+            this.editCheckInType = d.checkInType;
+            this.editCheckOutType= d.checkOutType;
+            this.editDate        = d.date;
+            this.editCheckIn     = d.checkIn;
+            this.editCheckOut    = d.checkOut;
+            this.modalOpen       = true;
             this.$nextTick(() => { if (window.fabTomSelect) window.fabTomSelect.setValue(String(d.userId)); });
         },
         closeModal() { this.modalOpen = false; this.editId = null; }
@@ -152,6 +155,9 @@
                 </span>
                 <span class="flex items-center gap-1.5">
                     <span class="w-3 h-3 rounded bg-emerald-200 dark:bg-emerald-800/40 border border-emerald-500 dark:border-emerald-600"></span>WFH
+                </span>
+                <span class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded bg-teal-100 dark:bg-teal-900/30 border border-teal-400 dark:border-teal-600"></span>WFH nửa ngày
                 </span>
                 <span class="flex items-center gap-1.5">
                     <span class="w-3 h-3 rounded bg-blue-100 dark:bg-blue-900/30 border border-blue-400 dark:border-blue-600"></span>Chưa check out
@@ -262,7 +268,12 @@
                                         if ($attCount === 1) {
                                             $att = $attList->first();
                                             if ($att->status === 'approved') {
-                                                $state = $att->check_out_time ? $att->type : 'checked_in';
+                                                if ($att->check_out_time) {
+                                                    $coType = $att->check_out_type ?? $att->type;
+                                                    $state  = ($coType !== $att->type) ? 'wfh_half_day' : $att->type;
+                                                } else {
+                                                    $state = 'checked_in';
+                                                }
                                             } elseif ($att->status === 'pending') {
                                                 $state = 'pending';
                                             } else {
@@ -287,6 +298,7 @@
                                     $bg = match($state) {
                                         'on_site'           => 'bg-green-100 dark:bg-green-900/30',
                                         'wfh'               => 'bg-emerald-200 dark:bg-emerald-800/40',
+                                        'wfh_half_day'      => 'bg-teal-100 dark:bg-teal-900/30',
                                         'checked_in'        => 'bg-blue-100 dark:bg-blue-900/30',
                                         'pending'           => 'bg-sky-50 dark:bg-sky-900/10',
                                         'leave'             => 'bg-orange-100 dark:bg-orange-900/20',
@@ -311,15 +323,27 @@
                                             ? substr($att->check_in_time, 0, 5)
                                             : ($att->created_at ? $att->created_at->format('H:i') : null);
                                         $checkOutStr = $att->check_out_time ? substr($att->check_out_time, 0, 5) : null;
-                                        $timeStr = ($att->check_out_time && $att->actual_work_hours !== null)
-                                            ? $att->actual_work_hours . 'h'
-                                            : $checkInStr;
+                                        if ($checkOutStr) {
+                                            if ($att->actual_work_hours !== null) {
+                                                $timeStr = $att->actual_work_hours . 'h';
+                                            } elseif ($checkInStr) {
+                                                // compute from HH:MM strings
+                                                [$ih, $im] = array_map('intval', explode(':', $checkInStr));
+                                                [$oh, $om] = array_map('intval', explode(':', $checkOutStr));
+                                                $diffH = round(max(0, ($oh * 60 + $om) - ($ih * 60 + $im)) / 60, 1);
+                                                $timeStr = $diffH > 0 ? $diffH . 'h' : $checkOutStr;
+                                            } else {
+                                                $timeStr = $checkOutStr;
+                                            }
+                                        } else {
+                                            $timeStr = $checkInStr;
+                                        }
                                     }
                                 @endphp
                                 <td class="att-cell relative border-b border-r {{ $borderCls }} {{ $bg }} px-0 py-0 {{ $attCount > 1 ? 'h-auto align-top' : 'h-10 align-middle' }} text-center w-12 min-w-[3rem]
                                            {{ ($canCheckinForOther && $attCount === 1) ? 'cursor-pointer hover:ring-1 hover:ring-inset hover:ring-indigo-400' : '' }}"
                                     @if($canCheckinForOther && $attCount === 1)
-                                    @click="openEdit({id: {{ $att->id }}, userId: {{ $att->user_id }}, type: '{{ $att->type }}', date: '{{ $dk }}', checkIn: '{{ $checkInStr ?? '' }}', checkOut: '{{ $checkOutStr ?? '' }}'})"
+                                    @click="openEdit({id: {{ $att->id }}, userId: {{ $att->user_id }}, checkInType: '{{ $att->type }}', checkOutType: '{{ $att->check_out_type ?? $att->type }}', date: '{{ $dk }}', checkIn: '{{ $checkInStr ?? '' }}', checkOut: '{{ $checkOutStr ?? '' }}'})"
                                     @endif
                                     >
 
@@ -377,6 +401,11 @@
                                                 <span class="text-emerald-700 dark:text-emerald-400 font-semibold text-[10px]">WFH</span>
                                                 @if($timeStr)<span class="text-emerald-600 dark:text-emerald-500 text-[10px] opacity-80">{{ $timeStr }}</span>@endif
                                             </div>
+                                        @elseif($state === 'wfh_half_day')
+                                            <div class="flex flex-col items-center justify-center leading-tight">
+                                                <span class="text-teal-700 dark:text-teal-400 font-semibold text-[10px]">½WFH</span>
+                                                @if($timeStr)<span class="text-teal-600 dark:text-teal-500 text-[10px] opacity-80">{{ $timeStr }}</span>@endif
+                                            </div>
                                         @elseif($state === 'checked_in')
                                             <div class="flex flex-col items-center justify-center leading-tight">
                                                 <span class="text-blue-600 dark:text-blue-400 font-semibold text-[10px]">{{ $att->type === 'wfh' ? 'WFH' : 'OS' }}</span>
@@ -407,7 +436,7 @@
                                             <div class="att-row relative flex items-center justify-center py-0.5
                                                         {{ !$loop->last ? 'border-b border-purple-200 dark:border-purple-800' : '' }}"
                                                  @if($canCheckinForOther)
-                                                 @click.stop="openEdit({id: {{ $atRec->id }}, userId: {{ $atRec->user_id }}, type: '{{ $atRec->type }}', date: '{{ $dk }}', checkIn: '{{ $atIn ?? '' }}', checkOut: '{{ $atOut ?? '' }}'})"
+                                                 @click.stop="openEdit({id: {{ $atRec->id }}, userId: {{ $atRec->user_id }}, checkInType: '{{ $atRec->type }}', checkOutType: '{{ $atRec->check_out_type ?? $atRec->type }}', date: '{{ $dk }}', checkIn: '{{ $atIn ?? '' }}', checkOut: '{{ $atOut ?? '' }}'})"
                                                  @endif>
                                                 <div class="flex flex-col items-center leading-none">
                                                     <span class="{{ $atTxt }} font-semibold text-[10px]">{{ $atLbl }}</span>
@@ -569,57 +598,64 @@
                         </select>
                     </div>
 
-                    {{-- Type --}}
+                    {{-- Date --}}
+                    <div>
+                        <label for="checkin-date"
+                               class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Ngày <span class="text-red-500">*</span>
+                        </label>
+                        <input type="date" id="checkin-date" name="date"
+                               x-model="editDate" required
+                               class="block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 rounded-md shadow-sm text-sm px-3 py-1.5 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+
+                    {{-- Check-in row: time + type --}}
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Loại <span class="text-red-500">*</span>
+                            Giờ vào <span class="text-red-500">*</span>
                         </label>
-                        <div class="flex gap-4">
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="type" value="on_site" x-model="editType" required
-                                       class="text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600">
-                                <span class="text-sm text-gray-700 dark:text-gray-300">On Site</span>
-                            </label>
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="type" value="wfh" x-model="editType"
-                                       class="text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600">
-                                <span class="text-sm text-gray-700 dark:text-gray-300">WFH</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    {{-- Date + Check-in time --}}
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label for="checkin-date"
-                                   class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Ngày <span class="text-red-500">*</span>
-                            </label>
-                            <input type="date" id="checkin-date" name="date"
-                                   x-model="editDate" required
-                                   class="block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 rounded-md shadow-sm text-sm px-3 py-1.5 focus:ring-indigo-500 focus:border-indigo-500">
-                        </div>
-                        <div>
-                            <label for="checkin-time"
-                                   class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Giờ vào <span class="text-red-500">*</span>
-                            </label>
+                        <div class="flex items-center gap-3">
                             <input type="time" id="checkin-time" name="check_in_time"
                                    x-model="editCheckIn" required
-                                   class="block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 rounded-md shadow-sm text-sm px-3 py-1.5 focus:ring-indigo-500 focus:border-indigo-500">
+                                   class="block border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 rounded-md shadow-sm text-sm px-3 py-1.5 focus:ring-indigo-500 focus:border-indigo-500">
+                            <div class="flex gap-3 shrink-0">
+                                <label class="flex items-center gap-1.5 cursor-pointer">
+                                    <input type="radio" name="check_in_type" value="on_site" x-model="editCheckInType" required
+                                           class="text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">On Site</span>
+                                </label>
+                                <label class="flex items-center gap-1.5 cursor-pointer">
+                                    <input type="radio" name="check_in_type" value="wfh" x-model="editCheckInType"
+                                           class="text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">WFH</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
 
-                    {{-- Check-out time (optional) --}}
+                    {{-- Check-out row: time + type --}}
                     <div>
-                        <label for="checkout-time"
-                               class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Giờ ra
                             <span class="text-xs font-normal text-gray-400">(tùy chọn)</span>
                         </label>
-                        <input type="time" id="checkout-time" name="check_out_time"
-                               x-model="editCheckOut"
-                               class="block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 rounded-md shadow-sm text-sm px-3 py-1.5 focus:ring-indigo-500 focus:border-indigo-500">
+                        <div class="flex items-center gap-3">
+                            <input type="time" id="checkout-time" name="check_out_time"
+                                   x-model="editCheckOut"
+                                   class="block border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 rounded-md shadow-sm text-sm px-3 py-1.5 focus:ring-indigo-500 focus:border-indigo-500">
+                            <div class="flex gap-3 shrink-0">
+                                <label class="flex items-center gap-1.5 cursor-pointer">
+                                    <input type="radio" name="check_out_type" value="on_site" x-model="editCheckOutType"
+                                           class="text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">On Site</span>
+                                </label>
+                                <label class="flex items-center gap-1.5 cursor-pointer">
+                                    <input type="radio" name="check_out_type" value="wfh" x-model="editCheckOutType"
+                                           class="text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">WFH</span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
 
                     {{-- Actions --}}

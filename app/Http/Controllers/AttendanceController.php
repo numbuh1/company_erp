@@ -375,42 +375,60 @@ class AttendanceController extends Controller
 
         $request->validate([
             'user_id'        => 'required|exists:users,id',
-            'type'           => 'required|in:on_site,wfh',
+            'check_in_type'  => 'required|in:on_site,wfh',
+            'check_out_type' => 'nullable|in:on_site,wfh',
             'date'           => 'required|date',
             'check_in_time'  => 'required|date_format:H:i',
             'check_out_time' => 'nullable|date_format:H:i',
             'attendance_id'  => 'nullable|exists:attendances,id',
         ]);
 
-        $checkOutVal = $request->filled('check_out_time')
-            ? $request->check_out_time . ':00'
-            : null;
+        $checkOutVal  = $request->filled('check_out_time') ? $request->check_out_time . ':00' : null;
+        $checkOutType = $request->filled('check_out_type') ? $request->check_out_type : null;
+
+        // Compute actual_work_hours if both times present
+        $actualHours = null;
+        if ($checkOutVal) {
+            $lunchStart   = AppSetting::get('lunch_break_start', '12:00');
+            $lunchEnd     = AppSetting::get('lunch_break_end',   '13:00');
+            $checkInMins  = $this->_timeToMinutes($request->check_in_time . ':00');
+            $checkOutMins = $this->_timeToMinutes($checkOutVal);
+            $lunchSMins   = $this->_timeToMinutes($lunchStart);
+            $lunchEMins   = $this->_timeToMinutes($lunchEnd);
+            $totalMins    = max(0, $checkOutMins - $checkInMins);
+            $lunchMins    = max(0, min($checkOutMins, $lunchEMins) - max($checkInMins, $lunchSMins));
+            $actualHours  = round(($totalMins - $lunchMins) / 60, 2);
+        }
 
         // ── Update existing record ───────────────────────────────────────
         if ($request->filled('attendance_id')) {
             $attendance = Attendance::findOrFail($request->attendance_id);
             $attendance->update([
-                'type'           => $request->type,
-                'date'           => $request->date,
-                'check_in_time'  => $request->check_in_time . ':00',
-                'check_out_time' => $checkOutVal,
-                'created_by'     => auth()->id(),
+                'type'              => $request->check_in_type,
+                'check_out_type'    => $checkOutType,
+                'date'              => $request->date,
+                'check_in_time'     => $request->check_in_time . ':00',
+                'check_out_time'    => $checkOutVal,
+                'actual_work_hours' => $actualHours,
+                'created_by'        => auth()->id(),
             ]);
             return back()->with('success', 'Đã cập nhật chấm công thành công.');
         }
 
         // ── Create new record ────────────────────────────────────────────
         Attendance::create([
-            'user_id'        => $request->user_id,
-            'date'           => $request->date,
-            'type'           => $request->type,
-            'check_in_time'  => $request->check_in_time . ':00',
-            'check_out_time' => $checkOutVal,
-            'status'         => 'approved',
-            'hours'          => 8,
-            'approved_by'    => auth()->id(),
-            'approved_at'    => now(),
-            'created_by'     => auth()->id(),
+            'user_id'           => $request->user_id,
+            'date'              => $request->date,
+            'type'              => $request->check_in_type,
+            'check_out_type'    => $checkOutType,
+            'check_in_time'     => $request->check_in_time . ':00',
+            'check_out_time'    => $checkOutVal,
+            'actual_work_hours' => $actualHours,
+            'status'            => 'approved',
+            'hours'             => 8,
+            'approved_by'       => auth()->id(),
+            'approved_at'       => now(),
+            'created_by'        => auth()->id(),
         ]);
 
         return back()->with('success', 'Đã ghi nhận chấm công thành công.');

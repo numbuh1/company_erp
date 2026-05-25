@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\UserPreference;
 use App\Models\LeaveBalanceLog;
 use Spatie\Permission\Models\Role;
 use Illuminate\Http\Request;
@@ -236,6 +237,21 @@ class UserController extends Controller
         }
 
         return redirect()->route('users.index')->with('success', 'User updated');
+    }
+
+    public function updateColumnPreferences(Request $request)
+    {
+        $request->validate([
+            'context' => 'required|string|in:task_list_column_preferences,project_task_column_preferences',
+            'cols'    => 'required|array',
+        ]);
+
+        UserPreference::updateOrCreate(
+            ['user_id' => auth()->id()],
+            [$request->input('context') => $request->input('cols')]
+        );
+
+        return response()->json(['ok' => true]);
     }
 
     public function destroy(User $user)

@@ -59,8 +59,8 @@ class User extends Authenticatable
             'password'          => 'hashed',
             'is_active'         => 'boolean',
             'wfh_without_approval' => 'boolean',
-            'birthday'         => 'date',
-            'contract_expiry'  => 'date',
+            'birthday'        => 'date',
+            'contract_expiry' => 'date',
         ];
     }
 
@@ -135,6 +135,11 @@ class User extends Authenticatable
         return User::whereHas('teams', function ($q) {
             $q->whereIn('teams.id', $this->teams->pluck('id'));
         });
+    }
+
+    public function preferences()
+    {
+        return $this->hasOne(UserPreference::class);
     }
 
     public function leaveBalanceLogs()

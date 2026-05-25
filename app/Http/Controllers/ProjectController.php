@@ -324,13 +324,21 @@ class ProjectController extends Controller
         $tsCanViewSalary = $user->can('view salary') || $user->can('edit all user');
         $tsInitialTab    = $request->query('tab', $request->has('tsmonth') ? 'timesheet' : 'tasks');
 
+        // Column preferences for project tasks tab
+        $savedTaskCols = $user->preferences?->project_task_column_preferences;
+        $taskColPrefs  = json_encode($savedTaskCols ?? [
+            'status' => true, 'assignees' => true,
+            'progress' => true, 'start_date' => true, 'due_date' => true,
+        ]);
+
         return view('projects.show', compact(
             'project', 'items', 'currentFolder', 'breadcrumb', 'activities', 'canUpload', 'canManageAll',
             'projectTasks', 'taskAssignees', 'taskSearch', 'taskAssigneeId', 'taskSort',
             'tsMonthStr', 'tsMonthDate', 'tsDays', 'tsPrevMonth', 'tsNextMonth',
             'tsTaskRows', 'tsUserRows', 'tsDayTotals',
             'tsGrandTotalHours', 'tsGrandTotalOt', 'tsGrandTotalCost', 'tsGrandTotalOtCost',
-            'tsHolidayDates', 'tsCanViewSalary', 'tsInitialTab'
+            'tsHolidayDates', 'tsCanViewSalary', 'tsInitialTab',
+            'taskColPrefs'
         ));
     }
 

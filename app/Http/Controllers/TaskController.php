@@ -65,7 +65,14 @@ class TaskController extends Controller
             $projects = collect();
         }
 
-        return view('tasks.index', compact('tasks', 'users', 'projects'));
+        // Column preferences
+        $savedCols = $user->preferences?->task_list_column_preferences;
+        $colPrefs  = json_encode($savedCols ?? [
+            'project' => true, 'status' => true, 'assignees' => true,
+            'progress' => true, 'start_date' => true, 'due_date' => true,
+        ]);
+
+        return view('tasks.index', compact('tasks', 'users', 'projects', 'colPrefs'));
     }
 
     /**

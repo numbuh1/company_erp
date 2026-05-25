@@ -20,17 +20,25 @@
         </div>
     </x-slot>
 
-    <div class="py-12" x-data="{
-        cols: {
-            project:    true,
-            status:     true,
-            assignees:  true,
-            progress:   true,
-            start_date: true,
-            due_date:   true,
+    <div class="px-4 sm:px-6 py-4" x-data="{
+        colsOpen: false,
+        cols: {{ $colPrefs }},
+        saveTimer: null,
+        saveCols() {
+            clearTimeout(this.saveTimer);
+            this.saveTimer = setTimeout(() => {
+                fetch('{{ route('user.column-preferences') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content'),
+                    },
+                    body: JSON.stringify({ context: 'task_list_column_preferences', cols: this.cols }),
+                });
+            }, 800);
         }
     }">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-4">
+        <div class="space-y-4">
 
             @if(session('success'))
                 <div class="p-3 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-lg text-sm">{{ session('success') }}</div>
@@ -100,27 +108,42 @@
                     </div>
                 </form>
 
-                {{-- Column visibility toggles --}}
-                <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex flex-wrap items-center gap-x-5 gap-y-1.5">
+                {{-- Column visibility popup --}}
+                <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center gap-2">
                     <span class="text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0">Cột:</span>
-                    <label class="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 cursor-pointer select-none">
-                        <input type="checkbox" x-model="cols.project"    class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Dự án
-                    </label>
-                    <label class="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 cursor-pointer select-none">
-                        <input type="checkbox" x-model="cols.status"     class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Trạng thái
-                    </label>
-                    <label class="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 cursor-pointer select-none">
-                        <input type="checkbox" x-model="cols.assignees"  class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Người phân công
-                    </label>
-                    <label class="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 cursor-pointer select-none">
-                        <input type="checkbox" x-model="cols.progress"   class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Tiến độ
-                    </label>
-                    <label class="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 cursor-pointer select-none">
-                        <input type="checkbox" x-model="cols.start_date" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Bắt đầu
-                    </label>
-                    <label class="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 cursor-pointer select-none">
-                        <input type="checkbox" x-model="cols.due_date"   class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> End (EST)
-                    </label>
+                    <div class="relative" @click.outside="colsOpen = false">
+                        <button type="button" @click="colsOpen = !colsOpen"
+                                class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
+                            </svg>
+                            Hiển thị cột
+                            <svg class="w-3 h-3 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        <div x-show="colsOpen" x-cloak
+                             class="absolute left-0 top-full mt-1 z-30 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 space-y-2 min-w-[170px]">
+                            <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400">
+                                <input type="checkbox" x-model="cols.project"    @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Dự án
+                            </label>
+                            <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400">
+                                <input type="checkbox" x-model="cols.status"     @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Trạng thái
+                            </label>
+                            <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400">
+                                <input type="checkbox" x-model="cols.assignees"  @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Người phân công
+                            </label>
+                            <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400">
+                                <input type="checkbox" x-model="cols.progress"   @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Tiến độ
+                            </label>
+                            <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400">
+                                <input type="checkbox" x-model="cols.start_date" @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Bắt đầu
+                            </label>
+                            <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400">
+                                <input type="checkbox" x-model="cols.due_date"   @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> End (EST)
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </div>
 
