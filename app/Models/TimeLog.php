@@ -55,4 +55,11 @@ class TimeLog extends Model
         if ($h > 0) return "{$h} giờ";
         return "{$m} phút";
     }
+
+    public static function formatTimeShort(float $hours): string
+    {
+        $rounded = round($hours * 4) / 4;
+        $formatted = rtrim(rtrim(number_format($rounded, 2), '0'), '.');
+        return "{$formatted}h";
+    }
 }

@@ -23,7 +23,7 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-4">
+        <div class="max-w-7xl mx-auto space-y-4">
 
             {{-- Tabs --}}
             <div class="border-b border-gray-200 dark:border-gray-700">
@@ -195,16 +195,16 @@
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-64">
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-56">
                                 {{ $groupBy === 'user' ? 'Nhân sự' : 'Công việc' }}
                             </th>
-                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase w-20">Tổng</th>
+                            <th class="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase w-16">Tổng</th>
                             @foreach($days as $day)
                                 @php
                                     $isHolidayDay = in_array($day->format('Y-m-d'), $holidayDates);
                                     $isWeekendDay = $day->isWeekend();
                                 @endphp
-                                <th class="px-3 py-3 text-center text-xs font-medium uppercase w-24
+                                <th class="px-1 py-2 text-center text-xs font-medium uppercase w-20
                                     {{ $day->isToday()
                                         ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950'
                                         : ($isHolidayDay ? $calHolidayHeaderCls
@@ -220,7 +220,7 @@
                         @forelse($rows as $row)
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                                 {{-- Row label --}}
-                                <td class="px-4 py-3">
+                                <td class="px-3 py-2">
                                     @if($row['link'])
                                         <a href="{{ $row['link'] }}" class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium text-sm">
                                             {{ $row['label'] }}
@@ -230,9 +230,9 @@
                                     @endif
                                 </td>
                                 {{-- Row total --}}
-                                <td class="px-4 py-3 text-center">
+                                <td class="px-2 py-2 text-center">
                                     <span class="text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 px-2 py-0.5 rounded">
-                                        {{ \App\Models\TimeLog::formatTime($row['total']) }}
+                                        {{ \App\Models\TimeLog::formatTimeShort($row['total']) }}
                                     </span>
                                 </td>
                                 {{-- Day cells --}}
@@ -243,7 +243,7 @@
                                         $isHolidayDay = in_array($dayKey, $holidayDates);
                                         $isWeekendDay = $day->isWeekend();
                                     @endphp
-                                    <td class="px-2 py-1 text-center
+                                    <td class="px-1 py-1 text-center
                                         {{ $day->isToday() ? 'bg-indigo-50 dark:bg-indigo-950'
                                             : ($isHolidayDay ? $calHolidayBg
                                                 : ($isWeekendDay ? $calWeekendBg : '')) }}">
@@ -265,8 +265,8 @@
                                             <div x-data="{ open: false }" class="relative inline-block"
                                                 @mouseenter="open = true" @mouseleave="open = false">
                                                 <a href="{{ $cellUrl }}"
-                                                    class="block text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline px-2 py-1.5 rounded hover:bg-indigo-50 dark:hover:bg-indigo-900 transition">
-                                                    {{ \App\Models\TimeLog::formatTime($cell['total']) }}
+                                                    class="block text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline px-1 py-1 rounded hover:bg-indigo-50 dark:hover:bg-indigo-900 transition">
+                                                    {{ \App\Models\TimeLog::formatTimeShort($cell['total']) }}
                                                 </a>
                                                 @if($tooltip)
                                                     <div x-show="open" x-cloak
@@ -292,10 +292,10 @@
                     @if(count($rows) > 0)
                         <tfoot class="border-t-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <td class="px-4 py-3 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Tổng</td>
-                                <td class="px-4 py-3 text-center">
+                                <td class="px-3 py-2 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Tổng</td>
+                                <td class="px-2 py-2 text-center">
                                     <span class="text-xs font-bold text-gray-800 dark:text-gray-200 bg-indigo-100 dark:bg-indigo-900 px-2 py-0.5 rounded">
-                                        {{ \App\Models\TimeLog::formatTime($weekTotal) }}
+                                        {{ \App\Models\TimeLog::formatTimeShort($weekTotal) }}
                                     </span>
                                 </td>
                                 @foreach($days as $day)
@@ -304,13 +304,13 @@
                                         $isHolidayDay = in_array($dk, $holidayDates);
                                         $isWeekendDay = $day->isWeekend();
                                     @endphp
-                                    <td class="px-2 py-3 text-center
+                                    <td class="px-1 py-2 text-center
                                         {{ $day->isToday() ? 'bg-indigo-50 dark:bg-indigo-950'
                                             : ($isHolidayDay ? $calHolidayBg
                                                 : ($isWeekendDay ? $calWeekendBg : '')) }}">
                                         @if($dayTotals[$dk] > 0)
                                             <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                                {{ \App\Models\TimeLog::formatTime($dayTotals[$dk]) }}
+                                                {{ \App\Models\TimeLog::formatTimeShort($dayTotals[$dk]) }}
                                             </span>
                                         @else
                                             <span class="text-gray-300 dark:text-gray-600 text-xs">—</span>
