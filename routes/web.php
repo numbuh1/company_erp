@@ -118,6 +118,8 @@ Route::middleware('auth')->group(function () {
         ->name('projects.files.download');
     Route::post('projects/{project}/user-budgets/{user}', [ProjectController::class, 'updateUserBudget'])
         ->name('projects.user-budgets.update');
+    Route::post('projects/{project}/user-budgets', [ProjectController::class, 'bulkUpdateUserBudgets'])
+        ->name('projects.user-budgets.bulk');
 
     Route::resource('tasks', TaskController::class);
 

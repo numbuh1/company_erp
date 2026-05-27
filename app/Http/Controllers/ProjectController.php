@@ -404,6 +404,14 @@ class ProjectController extends Controller
         $canEditBudget = $user->can('edit projects') ||
             ($user->can('edit assigned projects') && $this->_isAssigned($project, $user));
 
+        // Sort assignees: budget desc (highest first), then name
+        $assigneeUsers = $assigneeUsers->sort(function ($a, $b) use ($userBudgetMap) {
+            $bA = $userBudgetMap->get($a->id, 0.0);
+            $bB = $userBudgetMap->get($b->id, 0.0);
+            if ($bB !== $bA) return $bB <=> $bA;
+            return $a->name <=> $b->name;
+        })->values();
+
         // Column preferences for project tasks tab
         $savedTaskCols = $user->preferences?->project_task_column_preferences;
         $taskColPrefs  = json_encode($savedTaskCols ?? [
@@ -517,6 +525,46 @@ class ProjectController extends Controller
                 ' → ' . number_format($budget->budget_hours, 2) . 'h');
 
         return back()->with('success', "Đã cập nhật budget cho {$user->name}.");
+    }
+
+    /**
+     * Bulk update per-user budget hours for a project
+     */
+    public function bulkUpdateUserBudgets(Request $request, Project $project)
+    {
+        $authUser = auth()->user();
+        if (!$authUser->can('edit projects') &&
+            !($authUser->can('edit assigned projects') && $this->_isAssigned($project, $authUser))) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'budgets'   => 'required|array',
+            'budgets.*' => 'nullable|numeric|min:0|max:9999.99',
+        ]);
+
+        $changes = [];
+        foreach ($data['budgets'] as $userId => $hours) {
+            $budget = ProjectUserBudget::firstOrNew([
+                'project_id' => $project->id,
+                'user_id'    => (int) $userId,
+            ]);
+            $newHours = (float) ($hours ?? 0);
+            if (!$budget->exists || $budget->budget_hours !== $newHours) {
+                $changes[] = ($budget->exists ? $budget->budget_hours : 0) . '→' . $newHours . ' (user #' . $userId . ')';
+            }
+            $budget->budget_hours = $newHours;
+            $budget->save();
+        }
+
+        if (!empty($changes)) {
+            activity()
+                ->causedBy($authUser)
+                ->performedOn($project)
+                ->log('Bulk updated user budgets: ' . implode(', ', $changes));
+        }
+
+        return back()->with('success', 'Đã cập nhật budget.');
     }
 
     /**
