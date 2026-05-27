@@ -836,9 +836,9 @@
                 <div x-show="activeTab === 'assignees'"
                      x-data="{
                          bulkOpen: false,
-                         projectBudget: @json($project->budget_hours),
-                         origBudgets: @json($assigneeUsers->mapWithKeys(fn($u) => [$u->id => $userBudgetMap->get($u->id, 0.0)])),
-                         budgets: @json($assigneeUsers->mapWithKeys(fn($u) => [$u->id => $userBudgetMap->get($u->id, 0.0)])),
+                         projectBudget: @json($project->budget_hours !== null ? (float) $project->budget_hours : null),
+                         origBudgets: @json($assigneeUsers->mapWithKeys(fn($u) => [$u->id => $userBudgetMap->get($u->id, 0.0)])->toArray()),
+                         budgets: @json($assigneeUsers->mapWithKeys(fn($u) => [$u->id => $userBudgetMap->get($u->id, 0.0)])->toArray()),
                          get totalAssigned() {
                              return Object.values(this.budgets).reduce((s, v) => s + (isNaN(parseFloat(v)) ? 0 : parseFloat(v)), 0);
                          },
