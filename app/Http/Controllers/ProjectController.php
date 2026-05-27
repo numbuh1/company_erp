@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Models\OvertimeRequest;
 use App\Models\Project;
 use App\Models\ProjectFile;
+use App\Models\ProjectUserBudget;
 use App\Models\PublicHoliday;
 use App\Models\Task;
 use App\Models\Team;
@@ -359,6 +360,50 @@ class ProjectController extends Controller
         $tsCanViewSalary = $user->can('view salary') || $user->can('edit all user');
         $tsInitialTab    = $request->query('tab', ($request->has('ts_from') || $request->has('ts_to')) ? 'timesheet' : 'tasks');
 
+        // ── Assignee budget tab data ──────────────────────────────────────────
+        // All unique users (direct + via teams) for this project
+        $assigneeUserIds  = array_values(array_unique(array_merge(
+            $project->users->pluck('id')->toArray(),
+            $project->teams->flatMap(fn($t) => $t->users->pluck('id'))->toArray()
+        )));
+        $assigneeUsers = User::whereIn('id', $assigneeUserIds)->orderBy('name')->get();
+
+        // Task IDs in this project
+        $projectTaskIds = $project->tasks()->pluck('id')->toArray();
+
+        // NT time: time logs for this project OR any of its tasks, grouped by user
+        $ntByUser = TimeLog::where(function ($q) use ($project, $projectTaskIds) {
+                $q->where('project_id', $project->id);
+                if (!empty($projectTaskIds)) {
+                    $q->orWhereIn('task_id', $projectTaskIds);
+                }
+            })
+            ->groupBy('user_id')
+            ->selectRaw('user_id, SUM(time_spent) as total')
+            ->pluck('total', 'user_id')
+            ->map(fn($v) => (float) $v);
+
+        // OT time: approved OT requests linked to this project OR any of its tasks, grouped by user
+        $otByUser = OvertimeRequest::where('status', 'approved')
+            ->where(function ($q) use ($project, $projectTaskIds) {
+                $q->where('project_id', $project->id);
+                if (!empty($projectTaskIds)) {
+                    $q->orWhereIn('task_id', $projectTaskIds);
+                }
+            })
+            ->groupBy('user_id')
+            ->selectRaw('user_id, SUM(hours) as total')
+            ->pluck('total', 'user_id')
+            ->map(fn($v) => (float) $v);
+
+        // Budget per user (keyed by user_id)
+        $userBudgetMap = ProjectUserBudget::where('project_id', $project->id)
+            ->pluck('budget_hours', 'user_id')
+            ->map(fn($v) => (float) $v);
+
+        $canEditBudget = $user->can('edit projects') ||
+            ($user->can('edit assigned projects') && $this->_isAssigned($project, $user));
+
         // Column preferences for project tasks tab
         $savedTaskCols = $user->preferences?->project_task_column_preferences;
         $taskColPrefs  = json_encode($savedTaskCols ?? [
@@ -374,7 +419,8 @@ class ProjectController extends Controller
             'tsTaskRows', 'tsUserRows', 'tsDayTotals',
             'tsGrandTotalHours', 'tsGrandTotalOt', 'tsGrandTotalCost', 'tsGrandTotalOtCost',
             'tsHolidayDates', 'tsCanViewSalary', 'tsInitialTab',
-            'taskColPrefs'
+            'taskColPrefs',
+            'assigneeUsers', 'ntByUser', 'otByUser', 'userBudgetMap', 'canEditBudget'
         ));
     }
 
@@ -438,6 +484,39 @@ class ProjectController extends Controller
         if (!auth()->user()->can('delete projects')) abort(403);
         $project->delete();
         return redirect()->route('projects.index')->with('success', 'Project deleted.');
+    }
+
+    /**
+     * Update per-user budget hours for a project
+     */
+    public function updateUserBudget(Request $request, Project $project, User $user)
+    {
+        $authUser = auth()->user();
+        if (!$authUser->can('edit projects') &&
+            !($authUser->can('edit assigned projects') && $this->_isAssigned($project, $authUser))) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'budget_hours' => 'required|numeric|min:0|max:9999.99',
+        ]);
+
+        $budget = ProjectUserBudget::firstOrNew([
+            'project_id' => $project->id,
+            'user_id'    => $user->id,
+        ]);
+        $oldHours = $budget->exists ? $budget->budget_hours : null;
+        $budget->budget_hours = $data['budget_hours'];
+        $budget->save();
+
+        activity()
+            ->causedBy($authUser)
+            ->performedOn($project)
+            ->log("Updated budget for {$user->name}: " .
+                ($oldHours !== null ? number_format($oldHours, 2) : '—') .
+                ' → ' . number_format($budget->budget_hours, 2) . 'h');
+
+        return back()->with('success', "Đã cập nhật budget cho {$user->name}.");
     }
 
     /**

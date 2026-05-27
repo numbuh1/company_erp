@@ -53,6 +53,11 @@ class Project extends Model
         return $this->morphMany(Comment::class, 'commentable')->oldest();
     }
 
+    public function userBudgets()
+    {
+        return $this->hasMany(ProjectUserBudget::class);
+    }
+
 
     // Activity Logs
     public function getActivitylogOptions(): LogOptions

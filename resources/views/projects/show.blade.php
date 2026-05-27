@@ -211,6 +211,13 @@
                         Timesheet
                     </button>
                     @endcanany
+                    <button @click="activeTab = 'assignees'"
+                        :class="activeTab === 'assignees'
+                            ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                            : 'border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
+                        class="px-5 py-3 text-sm font-medium -mb-px transition">
+                        Người phụ trách
+                    </button>
                 </div>
 
                 {{-- Tasks Panel --}}
@@ -824,6 +831,114 @@
                     @endif
                 </div>
                 @endcanany
+
+                {{-- Assignees Panel --}}
+                <div x-show="activeTab === 'assignees'" class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-b-lg sm:rounded-tr-lg">
+                    <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+                        <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200">Người phụ trách</h3>
+                    </div>
+
+                    @if($assigneeUsers->isEmpty())
+                        <div class="px-5 py-8 text-center text-sm text-gray-400">Chưa có người phụ trách nào.</div>
+                    @else
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40">
+                                    <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-48">Nhân viên</th>
+                                    <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Budget</th>
+                                    <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">NT</th>
+                                    <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">OT</th>
+                                    <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Còn lại</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                                @foreach($assigneeUsers as $au)
+                                @php
+                                    $auBudget   = $userBudgetMap->get($au->id, 0.0);
+                                    $auNt       = $ntByUser->get($au->id, 0.0);
+                                    $auOt       = $otByUser->get($au->id, 0.0);
+                                    $auActual   = $auNt + $auOt;
+                                    $auLeft     = $auBudget > 0 ? $auBudget - $auActual : null;
+                                    $auPct      = $auBudget > 0 ? min(round($auActual / $auBudget * 100), 100) : 100;
+                                    $auOver     = $auBudget > 0 && $auActual > $auBudget;
+                                    $auNoBudget = $auBudget <= 0;
+                                    // Progress bar colors:
+                                    // No budget → gray bg, red fill 100%
+                                    // Over budget → blue bg, red fill 100%
+                                    // Under budget → gray bg, blue fill
+                                    $barBg      = $auOver ? 'bg-blue-400 dark:bg-blue-600' : 'bg-gray-200 dark:bg-gray-600';
+                                    $barFill    = ($auNoBudget || $auOver) ? 'bg-red-500' : 'bg-blue-500';
+                                @endphp
+                                {{-- Data row --}}
+                                <tr>
+                                    <td class="px-4 pt-3 pb-1" rowspan="2">
+                                        <a href="{{ route('users.show', $au) }}" class="flex items-center gap-2 hover:opacity-80 transition">
+                                            <x-user-status :user="$au" />
+                                        </a>
+                                    </td>
+                                    {{-- Budget cell with edit popup --}}
+                                    <td class="px-4 pt-3 pb-1 text-right align-top">
+                                        @if($canEditBudget)
+                                        <div x-data="{ open: false, val: '{{ $auBudget }}' }" class="inline-block relative">
+                                            <button type="button" @click="open = !open"
+                                                class="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline tabular-nums cursor-pointer">
+                                                {{ number_format($auBudget, 1) }}h
+                                            </button>
+                                            <div x-show="open" x-cloak @click.away="open = false"
+                                                class="absolute right-0 top-full mt-1 z-30 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg p-3 w-48">
+                                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Budget (giờ)</p>
+                                                <form method="POST"
+                                                    action="{{ route('projects.user-budgets.update', [$project, $au]) }}"
+                                                    class="flex gap-2 items-center">
+                                                    @csrf
+                                                    <input type="number" name="budget_hours" x-model="val"
+                                                        min="0" max="9999.99" step="0.25"
+                                                        class="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 rounded-md text-sm px-2 py-1 focus:ring-indigo-500 focus:border-indigo-500">
+                                                    <button type="submit"
+                                                        class="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs rounded-md font-medium transition">
+                                                        Lưu
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                        @else
+                                            <span class="font-semibold text-gray-700 dark:text-gray-200 tabular-nums">{{ number_format($auBudget, 1) }}h</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 pt-3 pb-1 text-right align-top tabular-nums text-gray-700 dark:text-gray-200 font-medium">
+                                        {{ number_format($auNt, 1) }}h
+                                    </td>
+                                    <td class="px-4 pt-3 pb-1 text-right align-top tabular-nums {{ $auOt > 0 ? 'text-orange-600 dark:text-orange-400 font-medium' : 'text-gray-400' }}">
+                                        {{ $auOt > 0 ? number_format($auOt, 1) . 'h' : '—' }}
+                                    </td>
+                                    <td class="px-4 pt-3 pb-1 text-right align-top tabular-nums font-semibold {{ $auLeft === null ? 'text-gray-400' : ($auLeft < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400') }}">
+                                        @if($auLeft === null)—
+                                        @else{{ number_format($auLeft, 1) }}h
+                                        @endif
+                                    </td>
+                                </tr>
+                                {{-- Progress bar row --}}
+                                <tr>
+                                    <td colspan="4" class="px-4 pt-0 pb-3 align-top">
+                                        <div class="flex items-center gap-2">
+                                            <div class="flex-1 rounded-full h-2 overflow-hidden {{ $barBg }}">
+                                                <div class="{{ $barFill }} h-2 rounded-full transition-all" style="width: {{ $auPct }}%"></div>
+                                            </div>
+                                            <span class="text-xs tabular-nums {{ ($auNoBudget || $auOver) ? 'text-red-500' : 'text-gray-500 dark:text-gray-400' }} w-9 text-right shrink-0">
+                                                @if($auNoBudget)—
+                                                @else{{ $auOver ? '>100' : $auPct }}%
+                                                @endif
+                                            </span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @endif
+                </div>
 
             </div>
 

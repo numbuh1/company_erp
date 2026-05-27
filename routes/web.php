@@ -116,6 +116,8 @@ Route::middleware('auth')->group(function () {
         ->name('projects.folders.create');
     Route::get('projects/{project}/files/{file}/download', [ProjectController::class, 'downloadItem'])
         ->name('projects.files.download');
+    Route::post('projects/{project}/user-budgets/{user}', [ProjectController::class, 'updateUserBudget'])
+        ->name('projects.user-budgets.update');
 
     Route::resource('tasks', TaskController::class);
 
