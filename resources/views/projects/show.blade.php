@@ -833,12 +833,17 @@
                 @endcanany
 
                 {{-- Assignees Panel --}}
+                @php
+                    $_budgetsArr  = $assigneeUsers->mapWithKeys(fn($u) => [$u->id => $userBudgetMap->get($u->id, 0.0)])->toArray();
+                    $_budgetsJson = htmlspecialchars(json_encode($_budgetsArr, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
+                    $_projBudget  = $project->budget_hours !== null ? (float) $project->budget_hours : 'null';
+                @endphp
                 <div x-show="activeTab === 'assignees'"
                      x-data="{
                          bulkOpen: false,
-                         projectBudget: @json($project->budget_hours !== null ? (float) $project->budget_hours : null),
-                         origBudgets: @json($assigneeUsers->mapWithKeys(fn($u) => [$u->id => $userBudgetMap->get($u->id, 0.0)])->toArray()),
-                         budgets: @json($assigneeUsers->mapWithKeys(fn($u) => [$u->id => $userBudgetMap->get($u->id, 0.0)])->toArray()),
+                         projectBudget: {{ $_projBudget }},
+                         origBudgets: {!! $_budgetsJson !!},
+                         budgets: {!! $_budgetsJson !!},
                          get totalAssigned() {
                              return Object.values(this.budgets).reduce((s, v) => s + (isNaN(parseFloat(v)) ? 0 : parseFloat(v)), 0);
                          },
