@@ -234,19 +234,25 @@
                                     {{-- Budget / Time Spent --}}
                                     <td :class="{ 'hidden': !cols.budget }" class="px-4 py-3">
                                         @php
-                                            $budgetH = $task->budget_hours;
-                                            $spentH  = $timeSpentMap[$task->id] ?? 0;
-                                            $percent = $budgetH > 0 ? round($spentH / $budgetH * 100) : null;
-                                            $isOver  = $budgetH > 0 && $spentH > $budgetH;
+                                            $budgetH  = $task->budget_hours;
+                                            $ntH      = $timeSpentMap[$task->id] ?? 0;
+                                            $otH      = $otTimeMap[$task->id] ?? 0;
+                                            $actualH  = $ntH + $otH;
+                                            $isDone   = $task->status === 'Đã xong';
+                                            $percent  = $budgetH > 0 ? round($actualH / $budgetH * 100) : null;
+                                            $isOver   = $budgetH > 0 && $actualH > $budgetH;
+                                            $barColor = $isOver
+                                                ? ($isDone ? 'bg-amber-700 dark:bg-amber-600' : 'bg-red-500')
+                                                : ($isDone ? 'bg-green-500' : 'bg-blue-500');
                                         @endphp
                                         <div class="flex items-center gap-2 min-w-[120px]">
-                                            @if($budgetH)
-                                                <div class="flex-1 bg-white dark:bg-gray-900 rounded h-2 border border-gray-300 dark:border-gray-600 overflow-hidden">
-                                                    <div class="{{ $isOver ? 'bg-red-500' : 'bg-gray-800 dark:bg-gray-100' }} h-2" style="width: {{ min($percent, 100) }}%"></div>
+                                            @if($budgetH > 0)
+                                                <div class="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden">
+                                                    <div class="{{ $barColor }} h-2 rounded-full" style="width: {{ min($percent, 100) }}%"></div>
                                                 </div>
-                                                <span class="text-xs {{ $isOver ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-500' }} w-8 text-right shrink-0">{{ $percent }}%</span>
-                                            @elseif($spentH > 0)
-                                                <span class="text-xs text-gray-500">{{ number_format($spentH, 1) }}h</span>
+                                                <span class="text-xs tabular-nums {{ $isOver ? 'font-semibold' : '' }} {{ $isOver ? ($isDone ? 'text-amber-700 dark:text-amber-500' : 'text-red-600 dark:text-red-400') : ($isDone ? 'text-green-600 dark:text-green-400' : 'text-gray-500') }} w-9 text-right shrink-0">{{ $percent }}%</span>
+                                            @elseif($actualH > 0)
+                                                <span class="text-xs text-gray-500 tabular-nums">{{ number_format($actualH, 1) }}h</span>
                                             @else
                                                 <span class="text-xs text-gray-400">—</span>
                                             @endif

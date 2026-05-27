@@ -107,7 +107,7 @@
                     </div>
 
                     <div class="flex justify-end gap-2">
-                        <a href="{{ route('tasks.index') }}"><x-secondary-button type="button">Hủy</x-secondary-button></a>
+                        <a href="javascript:history.back()"><x-secondary-button type="button">Hủy</x-secondary-button></a>
                         <x-primary-button type="submit">{{ isset($task) ? 'Update Task' : 'Create Task' }}</x-primary-button>
                     </div>
                 </form>

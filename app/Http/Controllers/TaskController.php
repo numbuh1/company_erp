@@ -69,11 +69,18 @@ class TaskController extends Controller
             $projects = collect();
         }
 
-        // Compute time spent per task from time_logs
+        // Compute NT and OT time per task
         $taskIds      = $tasks->pluck('id')->toArray();
         $timeSpentMap = \App\Models\TimeLog::whereIn('task_id', $taskIds)
             ->groupBy('task_id')
             ->selectRaw('task_id, SUM(time_spent) as total')
+            ->pluck('total', 'task_id')
+            ->map(fn($v) => (float) $v);
+
+        $otTimeMap = OvertimeRequest::whereIn('task_id', $taskIds)
+            ->where('status', 'approved')
+            ->groupBy('task_id')
+            ->selectRaw('task_id, SUM(hours) as total')
             ->pluck('total', 'task_id')
             ->map(fn($v) => (float) $v);
 
@@ -84,7 +91,7 @@ class TaskController extends Controller
             'budget' => true, 'start_date' => true, 'due_date' => true,
         ]);
 
-        return view('tasks.index', compact('tasks', 'users', 'projects', 'colPrefs', 'timeSpentMap'));
+        return view('tasks.index', compact('tasks', 'users', 'projects', 'colPrefs', 'timeSpentMap', 'otTimeMap'));
     }
 
     /**
