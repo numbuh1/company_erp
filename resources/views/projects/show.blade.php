@@ -845,7 +845,8 @@
                         <table class="min-w-full text-sm">
                             <thead>
                                 <tr class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40">
-                                    <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-48">Nhân viên</th>
+                                    <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-40">Nhân viên</th>
+                                    <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Tiến độ</th>
                                     <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Budget</th>
                                     <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">NT</th>
                                     <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">OT</th>
@@ -860,25 +861,39 @@
                                     $auOt       = $otByUser->get($au->id, 0.0);
                                     $auActual   = $auNt + $auOt;
                                     $auLeft     = $auBudget > 0 ? $auBudget - $auActual : null;
-                                    $auPct      = $auBudget > 0 ? min(round($auActual / $auBudget * 100), 100) : 100;
+                                    // Actual % (not capped — show real number even over 100)
+                                    $auPct      = $auBudget > 0 ? round($auActual / $auBudget * 100) : 0;
                                     $auOver     = $auBudget > 0 && $auActual > $auBudget;
-                                    $auNoBudget = $auBudget <= 0;
+                                    $auAllZero  = $auBudget <= 0 && $auActual <= 0; // budget=0 AND no time logged
+                                    $auNoBudget = $auBudget <= 0 && $auActual > 0;  // no budget but has time logged
                                     // Progress bar colors:
-                                    // No budget → gray bg, red fill 100%
-                                    // Over budget → blue bg, red fill 100%
-                                    // Under budget → gray bg, blue fill
+                                    // All zero          → gray bg, no fill
+                                    // No budget + time  → gray bg, orange fill at 100%
+                                    // Over budget       → blue bg, red fill at 100%
+                                    // Under/at budget   → gray bg, blue fill proportional
                                     $barBg      = $auOver ? 'bg-blue-400 dark:bg-blue-600' : 'bg-gray-200 dark:bg-gray-600';
-                                    $barFill    = ($auNoBudget || $auOver) ? 'bg-red-500' : 'bg-blue-500';
+                                    $barFill    = $auNoBudget ? 'bg-orange-400' : ($auOver ? 'bg-red-500' : 'bg-blue-500');
+                                    $barWidth   = $auAllZero ? 0 : ($auNoBudget || $auOver ? 100 : min($auPct, 100));
+                                    $pctLabel   = $auBudget > 0 ? $auPct . '%' : '—';
+                                    $pctColor   = $auNoBudget ? 'text-orange-500' : ($auOver ? 'text-red-500' : 'text-gray-500 dark:text-gray-400');
                                 @endphp
-                                {{-- Data row --}}
                                 <tr>
-                                    <td class="px-4 pt-3 pb-1" rowspan="2">
+                                    <td class="px-4 py-3">
                                         <a href="{{ route('users.show', $au) }}" class="flex items-center gap-2 hover:opacity-80 transition">
                                             <x-user-status :user="$au" />
                                         </a>
                                     </td>
+                                    {{-- Progress bar column --}}
+                                    <td class="px-4 py-3 min-w-[140px]">
+                                        <div class="flex items-center gap-2">
+                                            <div class="flex-1 rounded-full h-2 overflow-hidden {{ $barBg }}">
+                                                <div class="{{ $barFill }} h-2 rounded-full transition-all" style="width: {{ $barWidth }}%"></div>
+                                            </div>
+                                            <span class="text-xs tabular-nums {{ $pctColor }} w-10 text-right shrink-0">{{ $pctLabel }}</span>
+                                        </div>
+                                    </td>
                                     {{-- Budget cell with edit popup --}}
-                                    <td class="px-4 pt-3 pb-1 text-right align-top">
+                                    <td class="px-4 py-3 text-right">
                                         @if($canEditBudget)
                                         <div x-data="{ open: false, val: '{{ $auBudget }}' }" class="inline-block relative">
                                             <button type="button" @click="open = !open"
@@ -906,31 +921,16 @@
                                             <span class="font-semibold text-gray-700 dark:text-gray-200 tabular-nums">{{ number_format($auBudget, 1) }}h</span>
                                         @endif
                                     </td>
-                                    <td class="px-4 pt-3 pb-1 text-right align-top tabular-nums text-gray-700 dark:text-gray-200 font-medium">
+                                    <td class="px-4 py-3 text-right tabular-nums text-gray-700 dark:text-gray-200 font-medium">
                                         {{ number_format($auNt, 1) }}h
                                     </td>
-                                    <td class="px-4 pt-3 pb-1 text-right align-top tabular-nums {{ $auOt > 0 ? 'text-orange-600 dark:text-orange-400 font-medium' : 'text-gray-400' }}">
+                                    <td class="px-4 py-3 text-right tabular-nums {{ $auOt > 0 ? 'text-orange-600 dark:text-orange-400 font-medium' : 'text-gray-400' }}">
                                         {{ $auOt > 0 ? number_format($auOt, 1) . 'h' : '—' }}
                                     </td>
-                                    <td class="px-4 pt-3 pb-1 text-right align-top tabular-nums font-semibold {{ $auLeft === null ? 'text-gray-400' : ($auLeft < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400') }}">
+                                    <td class="px-4 py-3 text-right tabular-nums font-semibold {{ $auLeft === null ? 'text-gray-400' : ($auLeft < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400') }}">
                                         @if($auLeft === null)—
                                         @else{{ number_format($auLeft, 1) }}h
                                         @endif
-                                    </td>
-                                </tr>
-                                {{-- Progress bar row --}}
-                                <tr>
-                                    <td colspan="4" class="px-4 pt-0 pb-3 align-top">
-                                        <div class="flex items-center gap-2">
-                                            <div class="flex-1 rounded-full h-2 overflow-hidden {{ $barBg }}">
-                                                <div class="{{ $barFill }} h-2 rounded-full transition-all" style="width: {{ $auPct }}%"></div>
-                                            </div>
-                                            <span class="text-xs tabular-nums {{ ($auNoBudget || $auOver) ? 'text-red-500' : 'text-gray-500 dark:text-gray-400' }} w-9 text-right shrink-0">
-                                                @if($auNoBudget)—
-                                                @else{{ $auOver ? '>100' : $auPct }}%
-                                                @endif
-                                            </span>
-                                        </div>
                                     </td>
                                 </tr>
                                 @endforeach
