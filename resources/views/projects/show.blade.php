@@ -10,7 +10,7 @@
                 @canany(['edit projects', 'edit assigned projects'])
                     <a href="{{ route('projects.edit', $project) }}"><x-secondary-button>Chỉnh sửa</x-secondary-button></a>
                 @endcanany
-                <a href="{{ route('projects.index') }}"><x-secondary-button>Quay lại</x-secondary-button></a>
+                <a href="javascript:history.back()"><x-secondary-button>Quay lại</x-secondary-button></a>
             </div>
         </div>
     </x-slot>
@@ -396,19 +396,28 @@
                                         {{-- Budget / Time Spent --}}
                                         <td :class="{ 'hidden': !cols.budget }" class="px-4 py-3">
                                             @php
-                                                $tBudgetH = $task->budget_hours;
-                                                $tSpentH  = $taskTimeSpentMap[$task->id] ?? 0;
-                                                $tPct     = $tBudgetH > 0 ? round($tSpentH / $tBudgetH * 100) : null;
-                                                $tOver    = $tBudgetH > 0 && $tSpentH > $tBudgetH;
+                                                $tBudgetH  = $task->budget_hours;
+                                                $tNtH      = $taskTimeSpentMap[$task->id] ?? 0;
+                                                $tOtH      = $taskOtMap[$task->id] ?? 0;
+                                                $tActualH  = $tNtH + $tOtH;
+                                                $tIsDone   = $task->status === 'Đã xong';
+                                                $tPct      = $tBudgetH > 0 ? round($tActualH / $tBudgetH * 100) : null;
+                                                $tOver     = $tBudgetH > 0 && $tActualH > $tBudgetH;
+                                                $tBarColor = $tOver
+                                                    ? ($tIsDone ? 'bg-amber-700 dark:bg-amber-600' : 'bg-red-500')
+                                                    : ($tIsDone ? 'bg-green-500' : 'bg-blue-500');
+                                                $tPctColor = $tOver
+                                                    ? ($tIsDone ? 'text-amber-700 dark:text-amber-500' : 'text-red-600 dark:text-red-400')
+                                                    : ($tIsDone ? 'text-green-600 dark:text-green-400' : 'text-gray-500');
                                             @endphp
                                             <div class="flex items-center gap-2 min-w-[120px]">
-                                                @if($tBudgetH)
-                                                    <div class="flex-1 bg-white dark:bg-gray-900 rounded h-2 border border-gray-300 dark:border-gray-600 overflow-hidden">
-                                                        <div class="{{ $tOver ? 'bg-red-500' : 'bg-gray-800 dark:bg-gray-100' }} h-2" style="width: {{ min($tPct, 100) }}%"></div>
+                                                @if($tBudgetH > 0)
+                                                    <div class="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden">
+                                                        <div class="{{ $tBarColor }} h-2 rounded-full" style="width: {{ min($tPct, 100) }}%"></div>
                                                     </div>
-                                                    <span class="text-xs {{ $tOver ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-500' }} w-8 text-right shrink-0">{{ $tPct }}%</span>
-                                                @elseif($tSpentH > 0)
-                                                    <span class="text-xs text-gray-500">{{ number_format($tSpentH, 1) }}h</span>
+                                                    <span class="text-xs tabular-nums {{ $tOver ? 'font-semibold' : '' }} {{ $tPctColor }} w-9 text-right shrink-0">{{ $tPct }}%</span>
+                                                @elseif($tActualH > 0)
+                                                    <span class="text-xs text-gray-500 tabular-nums">{{ number_format($tActualH, 1) }}h</span>
                                                 @else
                                                     <span class="text-xs text-gray-400">—</span>
                                                 @endif

@@ -148,11 +148,18 @@ class ProjectController extends Controller
         };
         $projectTasks = $taskQuery->get();
 
-        // Compute time spent per task
+        // Compute NT and OT time per task
         $ptaskIds        = $projectTasks->pluck('id')->toArray();
         $taskTimeSpentMap = TimeLog::whereIn('task_id', $ptaskIds)
             ->groupBy('task_id')
             ->selectRaw('task_id, SUM(time_spent) as total')
+            ->pluck('total', 'task_id')
+            ->map(fn($v) => (float) $v);
+
+        $taskOtMap = OvertimeRequest::whereIn('task_id', $ptaskIds)
+            ->where('status', 'approved')
+            ->groupBy('task_id')
+            ->selectRaw('task_id, SUM(hours) as total')
             ->pluck('total', 'task_id')
             ->map(fn($v) => (float) $v);
 
@@ -422,7 +429,7 @@ class ProjectController extends Controller
         return view('projects.show', compact(
             'project', 'items', 'currentFolder', 'breadcrumb', 'activities', 'canUpload', 'canManageAll',
             'projectTasks', 'taskAssignees', 'taskSearch', 'taskAssigneeId', 'taskSort',
-            'taskTimeSpentMap', 'projectTotalSpent', 'projectTotalOt', 'projectRemaining',
+            'taskTimeSpentMap', 'taskOtMap', 'projectTotalSpent', 'projectTotalOt', 'projectRemaining',
             'tsFromStr', 'tsToStr', 'tsDays',
             'tsTaskRows', 'tsUserRows', 'tsDayTotals',
             'tsGrandTotalHours', 'tsGrandTotalOt', 'tsGrandTotalCost', 'tsGrandTotalOtCost',

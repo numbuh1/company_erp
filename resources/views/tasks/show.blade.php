@@ -10,7 +10,7 @@
                 @canany(['edit tasks', 'edit assigned tasks'])
                     <a href="{{ route('tasks.edit', $task) }}"><x-secondary-button>Chỉnh sửa</x-secondary-button></a>
                 @endcanany
-                <a href="{{ route('tasks.index') }}"><x-secondary-button>Quay lại</x-secondary-button></a>
+                <a href="javascript:history.back()"><x-secondary-button>Quay lại</x-secondary-button></a>
             </div>
         </div>
     </x-slot>

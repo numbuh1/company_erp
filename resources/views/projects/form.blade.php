@@ -103,7 +103,7 @@
 
                 {{-- Buttons --}}
                 <div class="flex justify-end gap-2 mt-5 mb-10">
-                    <a href="{{ isset($project) ? route('projects.show', $project) : route('projects.index') }}">
+                    <a href="javascript:history.back()">
                         <x-secondary-button type="button">Hủy</x-secondary-button>
                     </a>
                     <x-primary-button>{{ isset($project) ? 'Lưu' : 'Tạo' }}</x-primary-button>

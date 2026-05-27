@@ -4,7 +4,7 @@
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
                 {{ isset($task) ? 'Chỉnh sửa Công việc' : 'Tạo Công việc' }}
             </h2>
-            <a href="{{ route('tasks.index') }}"><x-secondary-button>Quay lại</x-secondary-button></a>
+            <a href="javascript:history.back()"><x-secondary-button>Quay lại</x-secondary-button></a>
         </div>
     </x-slot>
 
