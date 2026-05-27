@@ -22,7 +22,7 @@
         </div>
     </x-slot>
 
-    <div class="py-12">
+    <div>
         <div class="max-w-7xl mx-auto space-y-4">
 
             {{-- Tabs --}}
@@ -33,20 +33,20 @@
                             border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
                         Danh sách
                     </a>
-                    <a href="{{ route('timesheets.weekly') }}"
+                    <a href="{{ route('timesheets.timeline') }}"
                         class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
                             border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400">
-                        Tuần
-                    </a>
-                    <a href="{{ route('timesheets.monthly') }}"
-                        class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
-                            border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-                        Tháng
+                        Theo ngày
                     </a>
                     <a href="{{ route('timesheets.project') }}"
                         class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
                             border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-                        Dự án
+                        Theo dự án
+                    </a>
+                    <a href="{{ route('timesheets.calendar') }}"
+                        class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
+                            border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                        Lịch
                     </a>
                 </nav>
             </div>
@@ -57,11 +57,11 @@
                 {{-- Week / custom-range navigation --}}
                 <div class="flex items-center gap-2 flex-wrap">
                     @if(!$tsFrom)
-                        <a href="{{ route('timesheets.weekly', $prevParams) }}"
+                        <a href="{{ route('timesheets.timeline', $prevParams) }}"
                             class="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
                             ← Prev
                         </a>
-                        <form method="GET" action="{{ route('timesheets.weekly') }}" class="inline-flex">
+                        <form method="GET" action="{{ route('timesheets.timeline') }}" class="inline-flex">
                             @foreach($noRangeParams as $fpk => $fpv)
                                 <input type="hidden" name="{{ $fpk }}" value="{{ $fpv }}">
                             @endforeach
@@ -71,12 +71,12 @@
                                    title="{{ $weekStart->translatedFormat('d M') }} – {{ $weekEnd->translatedFormat('d M Y') }}"
                                    class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded text-sm px-2 py-1.5 cursor-pointer">
                         </form>
-                        <a href="{{ route('timesheets.weekly', $nextParams) }}"
+                        <a href="{{ route('timesheets.timeline', $nextParams) }}"
                             class="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
                             Next →
                         </a>
                         @if($offset !== 0)
-                            <a href="{{ route('timesheets.weekly', $thisWeekParams) }}"
+                            <a href="{{ route('timesheets.timeline', $thisWeekParams) }}"
                                 class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Tuần này</a>
                         @endif
                     @else
@@ -88,13 +88,13 @@
                                 ({{ \Carbon\Carbon::parse($tsFrom)->diffInDays(\Carbon\Carbon::parse($tsTo ?? $tsFrom)) + 1 }} ngày)
                             </span>
                         </span>
-                        <a href="{{ route('timesheets.weekly', $thisWeekParams) }}"
+                        <a href="{{ route('timesheets.timeline', $thisWeekParams) }}"
                             class="text-sm text-red-500 dark:text-red-400 hover:underline ml-1">× Xóa</a>
                     @endif
                 </div>
 
                 {{-- Custom date range form --}}
-                <form method="GET" action="{{ route('timesheets.weekly') }}" class="flex flex-wrap gap-2 items-end">
+                <form method="GET" action="{{ route('timesheets.timeline') }}" class="flex flex-wrap gap-2 items-end">
                     @foreach($noRangeParams as $k => $v)
                         <input type="hidden" name="{{ $k }}" value="{{ $v }}">
                     @endforeach
@@ -163,7 +163,7 @@
                     @endif
 
                     <x-primary-button type="submit">Áp dụng</x-primary-button>
-                    <a href="{{ route('timesheets.weekly', array_filter(['offset' => $offset, 'ts_from' => $tsFrom ?: null, 'ts_to' => $tsTo ?: null])) }}">
+                    <a href="{{ route('timesheets.timeline', array_filter(['offset' => $offset, 'ts_from' => $tsFrom ?: null, 'ts_to' => $tsTo ?: null])) }}">
                         <x-secondary-button type="button">Đặt lại</x-secondary-button>
                     </a>
                 </form>
@@ -174,14 +174,14 @@
             {{-- Group-by toggle (only visible when user can see multiple people) --}}
             @if($filterUsers)
                 <div class="flex gap-0.5 bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-1 w-fit">
-                    <a href="{{ route('timesheets.weekly', array_merge($filterParams, ['offset' => $offset, 'group' => 'context'])) }}"
+                    <a href="{{ route('timesheets.timeline', array_merge($filterParams, ['offset' => $offset, 'group' => 'context'])) }}"
                         class="px-3 py-1.5 text-sm rounded transition font-medium
                             {{ $groupBy === 'context'
                                 ? 'bg-indigo-600 text-white'
                                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
                         Theo công việc
                     </a>
-                    <a href="{{ route('timesheets.weekly', array_merge($filterParams, ['offset' => $offset, 'group' => 'user'])) }}"
+                    <a href="{{ route('timesheets.timeline', array_merge($filterParams, ['offset' => $offset, 'group' => 'user'])) }}"
                         class="px-3 py-1.5 text-sm rounded transition font-medium
                             {{ $groupBy === 'user'
                                 ? 'bg-indigo-600 text-white'

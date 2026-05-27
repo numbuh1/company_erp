@@ -6,7 +6,7 @@
         </div>
     </x-slot>
 
-    <div class="py-12">
+    <div>
         <div class="max-w-5xl mx-auto sm:px-6 space-y-4">
 
             {{-- Tabs --}}
@@ -17,20 +17,20 @@
                             border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
                         Danh sách
                     </a>
-                    <a href="{{ route('timesheets.weekly') }}"
+                    <a href="{{ route('timesheets.timeline') }}"
                         class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
                             border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-                        Tuần
-                    </a>
-                    <a href="{{ route('timesheets.monthly') }}"
-                        class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
-                            border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400">
-                        Tháng
+                        Theo ngày
                     </a>
                     <a href="{{ route('timesheets.project') }}"
                         class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
                             border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-                        Dự án
+                        Theo dự án
+                    </a>
+                    <a href="{{ route('timesheets.calendar') }}"
+                        class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
+                            border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400">
+                        Lịch
                     </a>
                 </nav>
             </div>
@@ -100,11 +100,11 @@
 
                 {{-- Month navigation --}}
                 <div class="flex items-center gap-2">
-                    <a href="{{ route('timesheets.monthly', array_merge(['month' => $prevMonth], $navParams)) }}"
+                    <a href="{{ route('timesheets.calendar', array_merge(['month' => $prevMonth], $navParams)) }}"
                         class="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
                         ← Prev
                     </a>
-                    <form method="GET" action="{{ route('timesheets.monthly') }}" class="inline-flex">
+                    <form method="GET" action="{{ route('timesheets.calendar') }}" class="inline-flex">
                         @foreach($navParams as $npk => $npv)
                             <input type="hidden" name="{{ $npk }}" value="{{ $npv }}">
                         @endforeach
@@ -113,12 +113,12 @@
                                onchange="this.form.submit()"
                                class="text-sm font-semibold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded px-3 py-1.5 min-w-[130px] text-center cursor-pointer">
                     </form>
-                    <a href="{{ route('timesheets.monthly', array_merge(['month' => $nextMonth], $navParams)) }}"
+                    <a href="{{ route('timesheets.calendar', array_merge(['month' => $nextMonth], $navParams)) }}"
                         class="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
                         Next →
                     </a>
                     @if($monthStr !== now()->format('Y-m'))
-                        <a href="{{ route('timesheets.monthly', $navParams) }}"
+                        <a href="{{ route('timesheets.calendar', $navParams) }}"
                             class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
                             This month
                         </a>

@@ -11,7 +11,7 @@
         </div>
     </x-slot>
 
-    <div class="py-12">
+    <div>
         <div class="max-w-2xl mx-auto sm:px-6 space-y-4">
 
             @if(session('success'))

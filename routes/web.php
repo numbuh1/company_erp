@@ -123,8 +123,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
 
     Route::resource('time-logs', TimeLogController::class);
-    Route::get('timesheets/weekly', [TimeLogController::class, 'weekly'])->name('timesheets.weekly');
-    Route::get('timesheets/monthly', [TimeLogController::class, 'monthly'])->name('timesheets.monthly');
+    Route::get('timesheets/timeline', [TimeLogController::class, 'weekly'])->name('timesheets.timeline');
+    Route::get('timesheets/calendar', [TimeLogController::class, 'monthly'])->name('timesheets.calendar');
     Route::get('timesheets/project', [TimeLogController::class, 'projectView'])->name('timesheets.project');
 
     Route::post('announcements/upload-image', [AnnouncementController::class, 'uploadImage'])
