@@ -22,7 +22,7 @@
                         </div>
                     @endif
 
-                    {{-- User --}}
+                    {{-- ── User ──────────────────────────────────────────────────── --}}
                     @if(isset($ot))
                         <div class="mb-4">
                             <x-input-label value="Người dùng" />
@@ -47,26 +47,108 @@
                         @endcanany
                     @endif
 
-                    {{-- Type --}}
+                    {{-- ── OT Date ────────────────────────────────────────────────── --}}
                     <div class="mb-4">
-                        <x-input-label value="Loại" />
-                        <select name="type" class="w-full border rounded p-2" @disabled($readonly)>
-                            @foreach(['OT x1.5', 'OT x2', 'OT x3'] as $type)
-                                <option value="{{ $type }}" @selected(old('type', $ot->type ?? '') == $type)>{{ $type }}</option>
-                            @endforeach
-                        </select>
+                        <x-input-label for="ot_date" value="Ngày tăng ca" />
+                        @if($readonly)
+                            <p class="mt-1 text-sm text-gray-700 dark:text-gray-300 py-1">
+                                {{ $ot->start_at->format('d/m/Y') }}
+                                <span class="ml-2 text-xs text-gray-400 dark:text-gray-500">
+                                    ({{ $ot->start_at->translatedFormat('l') }})
+                                </span>
+                            </p>
+                        @else
+                            <input type="date" name="ot_date" id="ot_date"
+                                value="{{ old('ot_date', isset($ot) ? $ot->start_at->format('Y-m-d') : '') }}"
+                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2 cursor-pointer">
+                            @error('ot_date')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                        @endif
                     </div>
 
-                    {{-- Project & Task --}}
+                    {{-- ── Start / End Time ───────────────────────────────────────── --}}
+                    @if($readonly)
+                        <div class="mb-4">
+                            <x-input-label value="Thời gian" />
+                            <p class="mt-1 text-sm text-gray-700 dark:text-gray-300 py-1">
+                                {{ $ot->start_at->format('H:i') }} – {{ $ot->end_at->format('H:i') }}
+                            </p>
+                        </div>
+                    @else
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <x-input-label for="start_time" value="Giờ bắt đầu" />
+                                <input type="time" name="start_time" id="start_time"
+                                    value="{{ old('start_time', isset($ot) ? $ot->start_at->format('H:i') : '') }}"
+                                    class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
+                                @error('start_time')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                            </div>
+                            <div>
+                                <x-input-label for="end_time" value="Giờ kết thúc" />
+                                <input type="time" name="end_time" id="end_time"
+                                    value="{{ old('end_time', isset($ot) ? $ot->end_at->format('H:i') : '') }}"
+                                    class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
+                                @error('end_time')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- ── OT Type (auto-selected) ────────────────────────────────── --}}
+                    <div class="mb-4">
+                        <x-input-label value="Loại tăng ca" />
+                        @if($readonly)
+                            @php
+                                $typeCls = match($ot->type) {
+                                    'OT x3' => 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+                                    'OT x2' => 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+                                    default  => 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+                                };
+                            @endphp
+                            <span class="mt-1 inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold {{ $typeCls }}">
+                                {{ $ot->type }}
+                            </span>
+                        @else
+                            @php
+                                $currentType = old('type', $ot->type ?? 'OT x1.5');
+                                $typeCls = match($currentType) {
+                                    'OT x3' => 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+                                    'OT x2' => 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+                                    default  => 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+                                };
+                            @endphp
+                            <div class="mt-1 flex items-center gap-3">
+                                <span id="ot_type_display"
+                                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold {{ $typeCls }}">
+                                    {{ $currentType }}
+                                </span>
+                                <span class="text-xs text-gray-400 dark:text-gray-500">Tự động xác định theo ngày</span>
+                            </div>
+                            <input type="hidden" name="type" id="ot_type_hidden" value="{{ $currentType }}">
+                        @endif
+                    </div>
+
+                    {{-- ── Hours ──────────────────────────────────────────────────── --}}
+                    <div class="mb-4">
+                        <x-input-label value="Số giờ" />
+                        @if($readonly)
+                            <p class="mt-1 text-sm text-gray-700 dark:text-gray-300 py-1">{{ $ot->hours }}h</p>
+                        @else
+                            <input type="number" step="0.25" min="0.25" id="hours" name="hours"
+                                value="{{ old('hours', $ot->hours ?? '') }}"
+                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
+                            @error('hours')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                        @endif
+                    </div>
+
+                    {{-- ── Project & Task ─────────────────────────────────────────── --}}
                     @if($readonly)
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <x-input-label value="Dự án" />
-                                <p class="mt-1 text-sm text-gray-700 dark:text-gray-300 py-1">{{ isset($ot) ? ($ot->project?->name ?? '—') : '—' }}</p>
+                                <p class="mt-1 text-sm text-gray-700 dark:text-gray-300 py-1">{{ $ot->project?->name ?? '—' }}</p>
                             </div>
                             <div>
                                 <x-input-label value="Công việc" />
-                                <p class="mt-1 text-sm text-gray-700 dark:text-gray-300 py-1">{{ isset($ot) ? ($ot->task?->name ?? '—') : '—' }}</p>
+                                <p class="mt-1 text-sm text-gray-700 dark:text-gray-300 py-1">{{ $ot->task?->name ?? '—' }}</p>
                             </div>
                         </div>
                     @else
@@ -80,7 +162,9 @@
                                 class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
                                 <option value="">— Không có —</option>
                                 @foreach($projects as $p)
-                                    <option value="{{ $p->id }}" {{ $selProject == $p->id ? 'selected' : '' }}>{{ $p->name }}</option>
+                                    <option value="{{ $p->id }}" {{ $selProject == $p->id ? 'selected' : '' }}>
+                                        PJ-{{ $p->id }} · {{ $p->name }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
@@ -92,43 +176,26 @@
                                 @foreach($tasks as $t)
                                     <option value="{{ $t->id }}"
                                         data-project="{{ $t->project_id ?? '' }}"
-                                        {{ $selTask == $t->id ? 'selected' : '' }}>{{ $t->name }}</option>
+                                        {{ $selTask == $t->id ? 'selected' : '' }}>
+                                        TK-{{ $t->id }} · {{ $t->name }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
                     @endif
 
-                    {{-- Start --}}
-                    <div class="mb-4">
-                        <x-input-label value="Giờ bắt đầu" />
-                        <input type="datetime-local" name="start_at" id="start_at"
-                            value="{{ old('start_at', isset($ot) ? $ot->start_at->format('Y-m-d\TH:i') : '') }}"
-                            class="w-full border rounded p-2" @disabled($readonly)>
-                    </div>
-
-                    {{-- End --}}
-                    <div class="mb-4">
-                        <x-input-label value="Giờ kết thúc" />
-                        <input type="datetime-local" name="end_at" id="end_at"
-                            value="{{ old('end_at', isset($ot) ? $ot->end_at->format('Y-m-d\TH:i') : '') }}"
-                            class="w-full border rounded p-2" @disabled($readonly)>
-                    </div>
-
-                    {{-- Hours --}}
-                    <div class="mb-4">
-                        <x-input-label value="Giờ" />
-                        <input type="number" step="0.5" id="hours" name="hours"
-                            value="{{ old('hours', $ot->hours ?? '') }}"
-                            class="w-full border rounded p-2" @disabled($readonly)>
-                    </div>
-
-                    {{-- Description --}}
+                    {{-- ── Description ────────────────────────────────────────────── --}}
                     <div class="mb-4">
                         <x-input-label value="Lý do" />
-                        <textarea name="description" class="w-full border rounded p-2" @disabled($readonly)>{{ old('description', $ot->description ?? '') }}</textarea>
+                        @if($readonly)
+                            <p class="mt-1 text-sm text-gray-700 dark:text-gray-300 py-1 whitespace-pre-wrap">{{ $ot->description ?? '—' }}</p>
+                        @else
+                            <textarea name="description"
+                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">{{ old('description', $ot->description ?? '') }}</textarea>
+                        @endif
                     </div>
 
-                    {{-- Buttons --}}
+                    {{-- ── Buttons ─────────────────────────────────────────────────── --}}
                     <div class="flex justify-end mt-6 space-x-2">
                         @if(!$readonly)
                             <x-primary-button>{{ isset($ot) ? 'Lưu' : 'Tạo' }}</x-primary-button>
@@ -174,65 +241,61 @@
         @include('overtime_requests._partials.reject_modal')
     @endif
 
-    @push('scripts')
-        @vite('resources/js/overtime_requests/form.js')
-    @endpush
-
     @if(!$readonly)
-    @push('scripts')
-    @php
-        $taskJson = $tasks->map(fn($t) => [
-            'value'     => (string) $t->id,
-            'text'      => $t->name,
-            'projectId' => $t->project_id ? (string) $t->project_id : '',
-        ])->values();
-    @endphp
-    <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const userEl = document.getElementById('ot-user-select');
-        if (userEl) new TomSelect(userEl, { allowEmptyOption: true, maxOptions: 300 });
+        {{-- Holiday dates must be set before form.js runs --}}
+        @push('scripts')
+        <script>window._otHolidayDates = @json($holidayDates);</script>
+        @endpush
+        @push('scripts')
+            @vite('resources/js/overtime_requests/form.js')
+        @endpush
 
-        const allTasks = @json($taskJson);
+        @php
+            $taskJson = $tasks->map(fn($t) => [
+                'value'     => (string) $t->id,
+                'text'      => 'TK-' . $t->id . ' · ' . $t->name,
+                'projectId' => $t->project_id ? (string) $t->project_id : '',
+            ])->values();
+        @endphp
+        @push('scripts')
+        <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const userEl = document.getElementById('ot-user-select');
+            if (userEl) new TomSelect(userEl, { allowEmptyOption: true, maxOptions: 300 });
 
-        const selTask    = '{{ $selTask ?? '' }}';
-        const selProject = '{{ $selProject ?? '' }}';
+            const allTasks   = @json($taskJson);
+            const selTask    = '{{ $selTask ?? '' }}';
+            const selProject = '{{ $selProject ?? '' }}';
 
-        // Task TomSelect — on change, auto-select parent project
-        let projectTs;
-        let taskTs = new TomSelect('#ot_task_id', {
-            maxOptions: null,
-            allowEmptyOption: true,
-            onChange: function (val) {
-                if (!val || !projectTs) return;
-                const task = allTasks.find(t => t.value === String(val));
-                if (task && task.projectId) {
-                    projectTs.setValue(task.projectId, true); // true = silent (no re-trigger)
-                }
-            },
+            let projectTs;
+            let taskTs = new TomSelect('#ot_task_id', {
+                maxOptions: null,
+                allowEmptyOption: true,
+                onChange: function (val) {
+                    if (!val || !projectTs) return;
+                    const task = allTasks.find(t => t.value === String(val));
+                    if (task && task.projectId) projectTs.setValue(task.projectId, true);
+                },
+            });
+
+            projectTs = new TomSelect('#ot_project_id', {
+                maxOptions: null,
+                allowEmptyOption: true,
+                onChange: function (val) {
+                    const filtered = val ? allTasks.filter(t => t.projectId === String(val)) : allTasks;
+                    taskTs.clear(true);
+                    taskTs.clearOptions();
+                    taskTs.addOption({ value: '', text: '— Không có —' });
+                    filtered.forEach(t => taskTs.addOption({ value: t.value, text: t.text }));
+                    taskTs.refreshOptions(false);
+                    if (selTask) {
+                        const stillVisible = filtered.find(t => t.value === selTask);
+                        if (stillVisible) taskTs.setValue(selTask, true);
+                    }
+                },
+            });
         });
-
-        // Project TomSelect — on change, rebuild task options
-        projectTs = new TomSelect('#ot_project_id', {
-            maxOptions: null,
-            allowEmptyOption: true,
-            onChange: function (val) {
-                const filtered = val
-                    ? allTasks.filter(t => t.projectId === String(val))
-                    : allTasks;
-                taskTs.clear(true);
-                taskTs.clearOptions();
-                taskTs.addOption({ value: '', text: '— Không có —' });
-                filtered.forEach(t => taskTs.addOption({ value: t.value, text: t.text }));
-                taskTs.refreshOptions(false);
-                // Re-select current task if it belongs to the new project filter
-                if (selTask) {
-                    const stillVisible = filtered.find(t => t.value === selTask);
-                    if (stillVisible) taskTs.setValue(selTask, true);
-                }
-            },
-        });
-    });
-    </script>
-    @endpush
+        </script>
+        @endpush
     @endif
 </x-app-layout>

@@ -26,8 +26,9 @@
     @endpush
 
     <div x-data="{
-        showContext: true,
-        showUser:    true
+        showContext: {{ $showContext ? 'true' : 'false' }},
+        showUser:    {{ $showUser    ? 'true' : 'false' }},
+        showProject: {{ $showProject ? 'true' : 'false' }},
     }">
 
         <div class="max-w-full mx-auto sm:px-6 lg:px-8 space-y-3 py-4">
@@ -103,44 +104,49 @@
                     </div>
                     @endif
 
-                    {{-- Project multi-select --}}
+                    {{-- Project multi-select (search by PJ-xxx or name) --}}
                     @if($availableProjects->isNotEmpty())
-                    <div class="min-w-[180px]">
+                    <div class="min-w-[200px]">
                         <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Dự án</label>
                         <select name="project_ids[]" multiple data-multi-select data-placeholder="Tất cả dự án"
                             class="w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md text-sm">
                             @foreach($availableProjects as $ap)
                                 <option value="{{ $ap->id }}"
                                     {{ in_array($ap->id, $filterProjectIds) ? 'selected' : '' }}>
-                                    {{ $ap->name }}
+                                    PJ-{{ $ap->id }} · {{ $ap->name }}
                                 </option>
                             @endforeach
                         </select>
                     </div>
                     @endif
 
-                    {{-- Task multi-select --}}
+                    {{-- Task multi-select (search by TK-xxx or name) --}}
                     @if($availableTasks->isNotEmpty())
-                    <div class="min-w-[180px]">
+                    <div class="min-w-[200px]">
                         <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Công việc</label>
                         <select name="task_ids[]" multiple data-multi-select data-placeholder="Tất cả công việc"
                             class="w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md text-sm">
                             @foreach($availableTasks as $at)
                                 <option value="{{ $at->id }}"
                                     {{ in_array($at->id, $filterTaskIds) ? 'selected' : '' }}>
-                                    {{ $at->name }}
+                                    TK-{{ $at->id }} · {{ $at->name }}
                                 </option>
                             @endforeach
                         </select>
                     </div>
                     @endif
 
+                    {{-- Hidden inputs carry group-view state so it's saved on form submit --}}
+                    <input type="hidden" name="show_context" x-bind:value="showContext ? '1' : '0'">
+                    <input type="hidden" name="show_user"    x-bind:value="showUser    ? '1' : '0'">
+                    <input type="hidden" name="show_project" x-bind:value="showProject ? '1' : '0'">
+
                     <div class="self-end flex gap-2">
                         <button type="submit"
                             class="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 transition">
                             Áp dụng
                         </button>
-                        <a href="{{ route('timesheets.timeline') }}"
+                        <a href="{{ route('timesheets.timeline', ['reset' => 1]) }}"
                             class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                             Đặt lại
                         </a>
@@ -148,8 +154,7 @@
                 </form>
             </div>
 
-            {{-- ── Group View checkboxes (multi-user only) ──────────────── --}}
-            @if($isMultiUser)
+            {{-- ── Group View checkboxes ────────────────────────────────── --}}
             <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg px-4 py-2.5 flex items-center gap-5">
                 <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                     Group View
@@ -160,12 +165,18 @@
                     <span class="text-sm text-gray-700 dark:text-gray-300">Theo công việc</span>
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" x-model="showProject"
+                        class="rounded border-gray-300 dark:border-gray-600 text-emerald-600 focus:ring-emerald-500">
+                    <span class="text-sm text-gray-700 dark:text-gray-300">Theo dự án</span>
+                </label>
+                @if($isMultiUser)
+                <label class="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" x-model="showUser"
-                        class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500">
+                        class="rounded border-gray-300 dark:border-gray-600 text-violet-600 focus:ring-violet-500">
                     <span class="text-sm text-gray-700 dark:text-gray-300">Theo từng người</span>
                 </label>
+                @endif
             </div>
-            @endif
 
             {{-- ── Main grid (single table, sticky first 2 cols) ────────── --}}
             <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-x-auto">
@@ -201,7 +212,7 @@
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
 
                         @php
-                            $hasAnyRows = !empty($rowsByContext) || !empty($rowsByUser);
+                            $hasAnyRows = !empty($rowsByContext) || !empty($rowsByProject) || !empty($rowsByUser);
                         @endphp
 
                         @if(!$hasAnyRows)
@@ -213,8 +224,7 @@
                             </tr>
                         @else
 
-                            {{-- ── Context section ─────────────────────── --}}
-                            @if($isMultiUser)
+                            {{-- ══ SECTION 1: By Context ══════════════════ --}}
                             <tr x-show="showContext" x-cloak>
                                 <td class="ts-col-label bg-indigo-50 dark:bg-indigo-950 px-3 py-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
                                     📋 Theo công việc
@@ -222,13 +232,11 @@
                                 <td class="ts-col-total bg-indigo-50 dark:bg-indigo-950 px-2 py-1.5"></td>
                                 <td colspan="{{ $colCount - 2 }}" class="bg-indigo-50 dark:bg-indigo-950"></td>
                             </tr>
-                            @endif
 
                             @foreach($rowsByContext as $row)
-                            <tr class="{{ $isMultiUser ? 'x-show-context' : '' }} group hover:bg-gray-50 dark:hover:bg-gray-750 transition"
-                                @if($isMultiUser) x-show="showContext" x-cloak @endif>
+                            <tr class="group hover:bg-gray-50 dark:hover:bg-gray-750 transition"
+                                x-show="showContext" x-cloak>
 
-                                {{-- Label (sticky col 1) --}}
                                 <td class="ts-col-label bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-750 px-3 py-2">
                                     @if($row['link'])
                                         <a href="{{ $row['link'] }}" class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium text-sm">
@@ -239,14 +247,12 @@
                                     @endif
                                 </td>
 
-                                {{-- Total (sticky col 2, darker) --}}
                                 <td class="ts-col-total bg-gray-100 dark:bg-gray-700 group-hover:bg-gray-200 dark:group-hover:bg-gray-600 px-2 py-2 text-center">
                                     <span class="text-xs font-bold text-gray-800 dark:text-gray-100">
                                         {{ \App\Models\TimeLog::formatTimeShort($row['total']) }}
                                     </span>
                                 </td>
 
-                                {{-- Day cells --}}
                                 @foreach($days as $day)
                                     @php
                                         $dayKey       = $day->format('Y-m-d');
@@ -287,24 +293,90 @@
                             </tr>
                             @endforeach
 
-                            {{-- ── User section (only in multi-user view) ── --}}
-                            @if($isMultiUser)
-                            <tr x-show="showUser" x-cloak>
+                            {{-- ══ SECTION 2: By Project ═══════════════════ --}}
+                            <tr x-show="showProject" x-cloak>
                                 <td class="ts-col-label bg-emerald-50 dark:bg-emerald-950 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
-                                    👤 Theo từng người
+                                    📁 Theo dự án
                                 </td>
                                 <td class="ts-col-total bg-emerald-50 dark:bg-emerald-950 px-2 py-1.5"></td>
                                 <td colspan="{{ $colCount - 2 }}" class="bg-emerald-50 dark:bg-emerald-950"></td>
+                            </tr>
+
+                            @foreach($rowsByProject as $row)
+                            <tr class="group hover:bg-gray-50 dark:hover:bg-gray-750 transition"
+                                x-show="showProject" x-cloak>
+
+                                <td class="ts-col-label bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-750 px-3 py-2">
+                                    @if($row['link'])
+                                        <a href="{{ $row['link'] }}" class="text-emerald-600 dark:text-emerald-400 hover:underline font-medium text-sm">
+                                            {{ $row['label'] }}
+                                        </a>
+                                    @else
+                                        <span class="text-gray-500 dark:text-gray-400 font-medium text-sm italic">{{ $row['label'] }}</span>
+                                    @endif
+                                </td>
+
+                                <td class="ts-col-total bg-gray-100 dark:bg-gray-700 group-hover:bg-gray-200 dark:group-hover:bg-gray-600 px-2 py-2 text-center">
+                                    <span class="text-xs font-bold text-gray-800 dark:text-gray-100">
+                                        {{ \App\Models\TimeLog::formatTimeShort($row['total']) }}
+                                    </span>
+                                </td>
+
+                                @foreach($days as $day)
+                                    @php
+                                        $dayKey       = $day->format('Y-m-d');
+                                        $cell         = $row['days'][$dayKey] ?? null;
+                                        $isHolidayDay = in_array($dayKey, $holidayDates);
+                                        $isWeekendDay = $day->isWeekend();
+                                    @endphp
+                                    <td class="px-1 py-1 text-center
+                                        {{ $day->isToday() ? 'bg-indigo-50 dark:bg-indigo-950'
+                                            : ($isHolidayDay ? $calHolidayBg
+                                                : ($isWeekendDay ? $calWeekendBg : '')) }}">
+                                        @if($cell)
+                                            @php
+                                                $tooltip = implode("\n", array_filter($cell['descriptions']));
+                                                $params  = ['date_from' => $dayKey, 'date_to' => $dayKey];
+                                                if ($row['project_id']) $params['project_id'] = $row['project_id'];
+                                                $cellUrl = route('time-logs.index', $params);
+                                            @endphp
+                                            <div x-data="{ open: false }" class="relative inline-block"
+                                                @mouseenter="open = true" @mouseleave="open = false">
+                                                <a href="{{ $cellUrl }}"
+                                                    class="block text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline px-1 py-1 rounded hover:bg-emerald-50 dark:hover:bg-emerald-900 transition">
+                                                    {{ \App\Models\TimeLog::formatTimeShort($cell['total']) }}
+                                                </a>
+                                                @if($tooltip)
+                                                <div x-show="open" x-cloak
+                                                    class="absolute z-30 bottom-full left-1/2 -translate-x-1/2 mb-2 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-xl pointer-events-none min-w-max max-w-xs text-left"
+                                                    style="white-space: pre-wrap;">{{ $tooltip }}</div>
+                                                @endif
+                                            </div>
+                                        @else
+                                            <span class="text-gray-300 dark:text-gray-600 text-xs">—</span>
+                                        @endif
+                                    </td>
+                                @endforeach
+                            </tr>
+                            @endforeach
+
+                            {{-- ══ SECTION 3: By Individual (multi-user only) ══ --}}
+                            @if($isMultiUser)
+                            <tr x-show="showUser" x-cloak>
+                                <td class="ts-col-label bg-violet-50 dark:bg-violet-950 px-3 py-1.5 text-xs font-semibold text-violet-700 dark:text-violet-400 uppercase tracking-wider">
+                                    👤 Theo từng người
+                                </td>
+                                <td class="ts-col-total bg-violet-50 dark:bg-violet-950 px-2 py-1.5"></td>
+                                <td colspan="{{ $colCount - 2 }}" class="bg-violet-50 dark:bg-violet-950"></td>
                             </tr>
 
                             @foreach($rowsByUser as $row)
                             <tr class="group hover:bg-gray-50 dark:hover:bg-gray-750 transition"
                                 x-show="showUser" x-cloak>
 
-                                {{-- Label (sticky col 1) --}}
                                 <td class="ts-col-label bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-750 px-3 py-2">
                                     @if($row['link'])
-                                        <a href="{{ $row['link'] }}" class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium text-sm">
+                                        <a href="{{ $row['link'] }}" class="text-violet-600 dark:text-violet-400 hover:underline font-medium text-sm">
                                             {{ $row['label'] }}
                                         </a>
                                     @else
@@ -312,14 +384,12 @@
                                     @endif
                                 </td>
 
-                                {{-- Total (sticky col 2) --}}
                                 <td class="ts-col-total bg-gray-100 dark:bg-gray-700 group-hover:bg-gray-200 dark:group-hover:bg-gray-600 px-2 py-2 text-center">
                                     <span class="text-xs font-bold text-gray-800 dark:text-gray-100">
                                         {{ \App\Models\TimeLog::formatTimeShort($row['total']) }}
                                     </span>
                                 </td>
 
-                                {{-- Day cells --}}
                                 @foreach($days as $day)
                                     @php
                                         $dayKey       = $day->format('Y-m-d');
@@ -343,7 +413,7 @@
                                             <div x-data="{ open: false }" class="relative inline-block"
                                                 @mouseenter="open = true" @mouseleave="open = false">
                                                 <a href="{{ $cellUrl }}"
-                                                    class="block text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline px-1 py-1 rounded hover:bg-emerald-50 dark:hover:bg-emerald-900 transition">
+                                                    class="block text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline px-1 py-1 rounded hover:bg-violet-50 dark:hover:bg-violet-900 transition">
                                                     {{ \App\Models\TimeLog::formatTimeShort($cell['total']) }}
                                                 </a>
                                                 @if($tooltip)

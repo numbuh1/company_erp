@@ -208,22 +208,37 @@ class TimeLogController extends Controller
     }
 
     /**
-     * Show Weekly View
+     * Show Weekly / Day-range View
      */
     public function weekly(Request $request)
     {
         $user        = auth()->user();
         $viewableIds = $this->_viewableUserIds($user);
 
-        // ── Date range (always explicit, default = this week) ──────────────
-        $tsFrom = $request->query('ts_from');
-        $tsTo   = $request->query('ts_to');
+        // ── Saved preferences ──────────────────────────────────────────────
+        $prefs       = $user->preferences()->firstOrCreate(['user_id' => $user->id]);
+        $saved       = $prefs->timesheet_weekly_filters ?? [];
+
+        // ── Handle reset ───────────────────────────────────────────────────
+        if ($request->boolean('reset')) {
+            $prefs->update(['timesheet_weekly_filters' => null]);
+            return redirect()->route('timesheets.timeline');
+        }
+
+        // Whether the user explicitly submitted the filter form
+        $hasExplicit = $request->has('ts_from');
+
+        // ── Date range ─────────────────────────────────────────────────────
+        $tsFrom = $hasExplicit ? $request->query('ts_from') : ($saved['ts_from'] ?? null);
+        $tsTo   = $hasExplicit ? $request->query('ts_to')   : ($saved['ts_to']   ?? null);
 
         if ($tsFrom) {
             $weekStart = Carbon::parse($tsFrom)->startOfDay();
             $weekEnd   = $tsTo ? Carbon::parse($tsTo)->endOfDay() : $weekStart->copy()->addDays(6);
             if ($weekStart->gt($weekEnd)) $weekEnd = $weekStart->copy()->addDays(6);
             if ($weekStart->diffInDays($weekEnd) > 90) $weekEnd = $weekStart->copy()->addDays(90);
+            $tsFrom = $weekStart->format('Y-m-d');
+            $tsTo   = $weekEnd->format('Y-m-d');
         } else {
             $weekStart = Carbon::now()->startOfWeek(Carbon::MONDAY)->startOfDay();
             $weekEnd   = Carbon::now()->endOfWeek(Carbon::SUNDAY)->endOfDay();
@@ -249,11 +264,15 @@ class TimeLogController extends Controller
             }
         }
 
-        // ── Resolve selected user IDs (multi-select array) ─────────────────
-        $selectedUserIds = array_values(array_map('intval',
-            array_filter((array) $request->query('user_ids', []))));
-        $selectedTeamIds = array_values(array_map('intval',
-            array_filter((array) $request->query('team_ids', []))));
+        // ── Resolve selected user/team IDs ─────────────────────────────────
+        $toInts = fn(mixed $v) => array_values(array_map('intval', array_filter((array) $v)));
+
+        $selectedUserIds = $hasExplicit
+            ? $toInts($request->query('user_ids', []))
+            : $toInts($saved['user_ids'] ?? []);
+        $selectedTeamIds = $hasExplicit
+            ? $toInts($request->query('team_ids', []))
+            : $toInts($saved['team_ids'] ?? []);
 
         if ($viewableIds !== null && !empty($selectedUserIds)) {
             $selectedUserIds = array_values(array_intersect($selectedUserIds, $viewableIds));
@@ -276,12 +295,25 @@ class TimeLogController extends Controller
         }
 
         // ── Project / Task filters ─────────────────────────────────────────
-        $filterProjectIds = array_values(array_map('intval',
-            array_filter((array) $request->query('project_ids', []))));
-        $filterTaskIds    = array_values(array_map('intval',
-            array_filter((array) $request->query('task_ids', []))));
+        $filterProjectIds = $hasExplicit
+            ? $toInts($request->query('project_ids', []))
+            : $toInts($saved['project_ids'] ?? []);
+        $filterTaskIds    = $hasExplicit
+            ? $toInts($request->query('task_ids', []))
+            : $toInts($saved['task_ids'] ?? []);
 
-        // Dropdown options (projects/tasks that have logs from viewable users)
+        // ── Group view flags ───────────────────────────────────────────────
+        $showContext = ($hasExplicit
+            ? $request->query('show_context', '1')
+            : ($saved['show_context'] ?? '1')) !== '0';
+        $showUser    = ($hasExplicit
+            ? $request->query('show_user', '1')
+            : ($saved['show_user'] ?? '1')) !== '0';
+        $showProject = ($hasExplicit
+            ? $request->query('show_project', '1')
+            : ($saved['show_project'] ?? '1')) !== '0';
+
+        // Dropdown options
         $availableProjects = Project::orderBy('name')->get(['id', 'name']);
         $availableTasks    = Task::orderBy('name')->get(['id', 'name']);
 
@@ -295,71 +327,93 @@ class TimeLogController extends Controller
         } else {
             $logsQuery->whereIn('user_id', $queryUserIds);
         }
-        if (!empty($filterProjectIds)) {
-            $logsQuery->whereIn('project_id', $filterProjectIds);
-        }
-        if (!empty($filterTaskIds)) {
-            $logsQuery->whereIn('task_id', $filterTaskIds);
-        }
+        if (!empty($filterProjectIds)) $logsQuery->whereIn('project_id', $filterProjectIds);
+        if (!empty($filterTaskIds))    $logsQuery->whereIn('task_id',    $filterTaskIds);
 
         $logs = $logsQuery->get();
 
-        // ── Build BOTH row groupings ───────────────────────────────────────
+        // ── Build ALL three row groupings ──────────────────────────────────
         $rowsByContext = [];
+        $rowsByProject = [];
         $rowsByUser    = [];
 
         foreach ($logs as $log) {
             $dayKey = $log->date->format('Y-m-d');
 
-            // — By Context —
+            // — By Context (task / project-only / other) —
             if ($log->task_id) {
                 $cKey  = 'task_' . $log->task_id;
                 $label = 'TK-' . $log->task_id . ($log->task ? ' · ' . $log->task->name : ' (deleted)');
                 $link  = $log->task ? route('tasks.show', $log->task_id) : null;
-                $type  = 'task';
+                $cType = 'task';
             } elseif ($log->project_id) {
                 $cKey  = 'project_' . $log->project_id;
                 $label = 'PJ-' . $log->project_id . ($log->project ? ' · ' . $log->project->name : ' (deleted)');
                 $link  = $log->project ? route('projects.show', $log->project_id) : null;
-                $type  = 'project';
+                $cType = 'project';
             } else {
                 $cKey  = 'other';
                 $label = 'Other';
                 $link  = null;
-                $type  = 'other';
+                $cType = 'other';
             }
             if (!isset($rowsByContext[$cKey])) {
-                $rowsByContext[$cKey] = ['type' => $type, 'label' => $label, 'link' => $link,
+                $rowsByContext[$cKey] = ['type' => $cType, 'label' => $label, 'link' => $link,
                     'total' => 0, 'days' => [], 'project_id' => $log->project_id, 'task_id' => $log->task_id];
             }
             if (!isset($rowsByContext[$cKey]['days'][$dayKey])) {
                 $rowsByContext[$cKey]['days'][$dayKey] = ['total' => 0, 'descriptions' => []];
             }
-            $rowsByContext[$cKey]['days'][$dayKey]['total']          += $log->time_spent;
-            $rowsByContext[$cKey]['days'][$dayKey]['descriptions'][]  = $log->description ?? '';
-            $rowsByContext[$cKey]['total']                           += $log->time_spent;
+            $rowsByContext[$cKey]['days'][$dayKey]['total']         += $log->time_spent;
+            $rowsByContext[$cKey]['days'][$dayKey]['descriptions'][] = $log->description ?? '';
+            $rowsByContext[$cKey]['total']                          += $log->time_spent;
+
+            // — By Project —
+            if ($log->project_id) {
+                $pKey   = 'project_' . $log->project_id;
+                $pLabel = 'PJ-' . $log->project_id . ($log->project ? ' · ' . $log->project->name : ' (deleted)');
+                $pLink  = $log->project ? route('projects.show', $log->project_id) : null;
+            } else {
+                $pKey   = 'no_project';
+                $pLabel = '(Không có dự án)';
+                $pLink  = null;
+            }
+            if (!isset($rowsByProject[$pKey])) {
+                $rowsByProject[$pKey] = ['label' => $pLabel, 'link' => $pLink,
+                    'total' => 0, 'days' => [], 'project_id' => $log->project_id];
+            }
+            if (!isset($rowsByProject[$pKey]['days'][$dayKey])) {
+                $rowsByProject[$pKey]['days'][$dayKey] = ['total' => 0, 'descriptions' => []];
+            }
+            $rowsByProject[$pKey]['days'][$dayKey]['total']         += $log->time_spent;
+            $rowsByProject[$pKey]['days'][$dayKey]['descriptions'][] = $log->description ?? '';
+            $rowsByProject[$pKey]['total']                          += $log->time_spent;
 
             // — By User —
             $uKey = 'user_' . $log->user_id;
             if (!isset($rowsByUser[$uKey])) {
-                $rowsByUser[$uKey] = ['type' => 'user', 'label' => $log->user?->name ?? 'Unknown',
-                    'link' => $log->user_id ? route('users.show', $log->user_id) : null,
-                    'total' => 0, 'days' => [], 'user_id' => $log->user_id];
+                $rowsByUser[$uKey] = ['label' => $log->user?->name ?? 'Unknown',
+                    'link'    => $log->user_id ? route('users.show', $log->user_id) : null,
+                    'total'   => 0, 'days' => [], 'user_id' => $log->user_id];
             }
             if (!isset($rowsByUser[$uKey]['days'][$dayKey])) {
                 $rowsByUser[$uKey]['days'][$dayKey] = ['total' => 0, 'descriptions' => []];
             }
-            $rowsByUser[$uKey]['days'][$dayKey]['total']          += $log->time_spent;
-            $rowsByUser[$uKey]['days'][$dayKey]['descriptions'][]  = $log->description ?? '';
-            $rowsByUser[$uKey]['total']                           += $log->time_spent;
+            $rowsByUser[$uKey]['days'][$dayKey]['total']         += $log->time_spent;
+            $rowsByUser[$uKey]['days'][$dayKey]['descriptions'][] = $log->description ?? '';
+            $rowsByUser[$uKey]['total']                          += $log->time_spent;
         }
 
         uasort($rowsByContext, fn($a, $b) =>
             (['task' => 0, 'project' => 1, 'other' => 2][$a['type']] ?? 3)
             <=> (['task' => 0, 'project' => 1, 'other' => 2][$b['type']] ?? 3));
+        // Projects: named projects first (alphabetically), then no_project
+        uasort($rowsByProject, fn($a, $b) =>
+            ($a['project_id'] ? 0 : 1) <=> ($b['project_id'] ? 0 : 1)
+            ?: strcmp($a['label'], $b['label']));
         uasort($rowsByUser, fn($a, $b) => strcmp($a['label'], $b['label']));
 
-        // ── Day totals (from all logs regardless of grouping) ──────────────
+        // ── Day totals ─────────────────────────────────────────────────────
         $dayTotals = [];
         foreach ($days as $day) { $dayTotals[$day->format('Y-m-d')] = 0; }
         foreach ($logs as $log) {
@@ -367,19 +421,33 @@ class TimeLogController extends Controller
             if (array_key_exists($dk, $dayTotals)) $dayTotals[$dk] += $log->time_spent;
         }
 
-        $weekTotal    = $logs->sum('time_spent');
+        $weekTotal   = $logs->sum('time_spent');
         $holidayDates = PublicHoliday::getHolidayDates($weekStart->copy(), $weekEnd->copy());
-        $isMultiUser  = $filterUsers !== null;
+        $isMultiUser = $filterUsers !== null;
+
+        // ── Persist current filters ────────────────────────────────────────
+        $prefs->update(['timesheet_weekly_filters' => [
+            'ts_from'      => $tsFrom,
+            'ts_to'        => $tsTo,
+            'user_ids'     => $selectedUserIds,
+            'team_ids'     => $selectedTeamIds,
+            'project_ids'  => $filterProjectIds,
+            'task_ids'     => $filterTaskIds,
+            'show_context' => $showContext ? '1' : '0',
+            'show_user'    => $showUser    ? '1' : '0',
+            'show_project' => $showProject ? '1' : '0',
+        ]]);
 
         return view('time_logs.weekly', compact(
-            'days', 'rowsByContext', 'rowsByUser',
+            'days', 'rowsByContext', 'rowsByProject', 'rowsByUser',
             'weekStart', 'weekEnd', 'tsFrom', 'tsTo',
             'dayTotals', 'weekTotal',
             'filterUsers', 'filterTeams',
             'selectedUserIds', 'selectedTeamIds',
             'filterProjectIds', 'filterTaskIds',
             'availableProjects', 'availableTasks',
-            'holidayDates', 'isMultiUser'
+            'holidayDates', 'isMultiUser',
+            'showContext', 'showUser', 'showProject'
         ));
     }
 

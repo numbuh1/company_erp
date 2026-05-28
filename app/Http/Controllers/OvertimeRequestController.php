@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\OvertimeRequest;
 use App\Models\Project;
+use App\Models\PublicHoliday;
 use App\Models\Task;
 use App\Models\User;
 use App\Helper\Helper;
 use App\Helper\NotificationHelper;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class OvertimeRequestController extends Controller
@@ -63,10 +65,11 @@ class OvertimeRequestController extends Controller
             $query->where('id', $user->id);
         }
 
-        $users = $query->get();
+        $users        = $query->get();
         ['projects' => $projects, 'tasks' => $tasks] = $this->_getProjectsAndTasksFor($user);
+        $holidayDates = $this->_holidayDateRange();
 
-        return view('overtime_requests.form', compact('users', 'projects', 'tasks'));
+        return view('overtime_requests.form', compact('users', 'projects', 'tasks', 'holidayDates'));
     }
 
     /**
@@ -74,25 +77,35 @@ class OvertimeRequestController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'start_at'    => 'required|date',
-            'end_at'      => 'required|date|after_or_equal:start_at',
-            'hours'       => 'required|numeric|min:0',
-            'type'        => 'required|string',
+        $data = $request->validate([
+            'ot_date'     => 'required|date',
+            'start_time'  => 'required|date_format:H:i',
+            'end_time'    => 'required|date_format:H:i',
+            'hours'       => 'required|numeric|min:0.25',
             'description' => 'nullable|string',
             'project_id'  => 'nullable|exists:projects,id',
             'task_id'     => 'nullable|exists:tasks,id',
         ]);
 
-        $user = auth()->user();
-        if (!$user->can('edit team ot') && !$user->can('edit all ot')) {
-            $request->merge(['user_id' => $user->id]);
+        if ($this->_timeToMins($data['end_time']) <= $this->_timeToMins($data['start_time'])) {
+            return back()->withErrors(['end_time' => 'Giờ kết thúc phải sau giờ bắt đầu.'])->withInput();
         }
 
-        $otRequest = OvertimeRequest::create($request->only([
-            'user_id', 'project_id', 'task_id',
-            'start_at', 'end_at', 'hours', 'type', 'description',
-        ]));
+        $user   = auth()->user();
+        $userId = ($user->can('edit team ot') || $user->can('edit all ot'))
+            ? ($request->user_id ?: $user->id)
+            : $user->id;
+
+        $otRequest = OvertimeRequest::create([
+            'user_id'     => $userId,
+            'project_id'  => $data['project_id'] ?: null,
+            'task_id'     => $data['task_id']     ?: null,
+            'start_at'    => $data['ot_date'] . ' ' . $data['start_time'],
+            'end_at'      => $data['ot_date'] . ' ' . $data['end_time'],
+            'hours'       => $data['hours'],
+            'type'        => $this->_determineOtType($data['ot_date']),
+            'description' => $data['description'] ?? null,
+        ]);
         NotificationHelper::sendNewRequestNotification($otRequest, 'ot');
 
         return redirect()->route('requests.index', ['type' => 'ot'])->with('success', 'Tạo yêu cầu tăng ca thành công.');
@@ -107,11 +120,12 @@ class OvertimeRequestController extends Controller
         $overtimeRequest->load('project', 'task');
 
         return view('overtime_requests.form', [
-            'ot'       => $overtimeRequest,
-            'readonly' => true,
-            'users'    => collect([$overtimeRequest->user]),
-            'projects' => collect(),
-            'tasks'    => collect(),
+            'ot'           => $overtimeRequest,
+            'readonly'     => true,
+            'users'        => collect([$overtimeRequest->user]),
+            'projects'     => collect(),
+            'tasks'        => collect(),
+            'holidayDates' => [],
         ]);
     }
 
@@ -130,10 +144,11 @@ class OvertimeRequestController extends Controller
         ['projects' => $projects, 'tasks' => $tasks] = $this->_getProjectsAndTasksFor($overtimeRequest->user);
 
         return view('overtime_requests.form', [
-            'ot'       => $overtimeRequest,
-            'users'    => collect([$overtimeRequest->user]),
-            'projects' => $projects,
-            'tasks'    => $tasks,
+            'ot'           => $overtimeRequest,
+            'users'        => collect([$overtimeRequest->user]),
+            'projects'     => $projects,
+            'tasks'        => $tasks,
+            'holidayDates' => $this->_holidayDateRange(),
         ]);
     }
 
@@ -146,16 +161,29 @@ class OvertimeRequestController extends Controller
 
         $data = $request->validate([
             'user_id'     => 'required|exists:users,id',
-            'type'        => 'required|string',
-            'start_at'    => 'required|date',
-            'end_at'      => 'required|date|after:start_at',
-            'hours'       => 'required|numeric|min:0',
+            'ot_date'     => 'required|date',
+            'start_time'  => 'required|date_format:H:i',
+            'end_time'    => 'required|date_format:H:i',
+            'hours'       => 'required|numeric|min:0.25',
             'description' => 'nullable|string',
             'project_id'  => 'nullable|exists:projects,id',
             'task_id'     => 'nullable|exists:tasks,id',
         ]);
 
-        $overtimeRequest->update($data);
+        if ($this->_timeToMins($data['end_time']) <= $this->_timeToMins($data['start_time'])) {
+            return back()->withErrors(['end_time' => 'Giờ kết thúc phải sau giờ bắt đầu.'])->withInput();
+        }
+
+        $overtimeRequest->update([
+            'user_id'     => $data['user_id'],
+            'project_id'  => $data['project_id'] ?: null,
+            'task_id'     => $data['task_id']     ?: null,
+            'start_at'    => $data['ot_date'] . ' ' . $data['start_time'],
+            'end_at'      => $data['ot_date'] . ' ' . $data['end_time'],
+            'hours'       => $data['hours'],
+            'type'        => $this->_determineOtType($data['ot_date']),
+            'description' => $data['description'] ?? null,
+        ]);
 
         return redirect()->route('requests.index', ['type' => 'ot'])->with('success', 'Cập nhật yêu cầu tăng ca thành công.');
     }
@@ -213,6 +241,38 @@ class OvertimeRequestController extends Controller
         NotificationHelper::sendRequestApprovalNotification($overtimeRequest, 'ot');
 
         return back()->with('success', 'OT request rejected.');
+    }
+
+    /**
+     * Determine OT type based on date: holiday → x3, Sunday → x2, else → x1.5
+     */
+    private function _determineOtType(string $date): string
+    {
+        $carbon   = Carbon::parse($date);
+        $holidays = PublicHoliday::getHolidayDates($carbon->copy(), $carbon->copy());
+        if (!empty($holidays)) return 'OT x3';
+        if ($carbon->isSunday()) return 'OT x2';
+        return 'OT x1.5';
+    }
+
+    /**
+     * Convert "HH:MM" to total minutes.
+     */
+    private function _timeToMins(string $time): int
+    {
+        [$h, $m] = array_map('intval', explode(':', $time));
+        return $h * 60 + $m;
+    }
+
+    /**
+     * Holiday dates for a ~3-year window (past year → next 2 years).
+     */
+    private function _holidayDateRange(): array
+    {
+        return PublicHoliday::getHolidayDates(
+            Carbon::now()->subYear(),
+            Carbon::now()->addYears(2)
+        );
     }
 
     /**
