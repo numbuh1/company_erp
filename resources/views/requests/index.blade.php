@@ -150,7 +150,9 @@
                             {{ $r->created_at->format('d/m/y H:i') }}
                         </td>
                         <td class="px-4 py-3">
-                            <x-user-status :user="$r->user" />
+                            <a href="{{ route('users.show', $r->user) }}" class="hover:opacity-75 transition">
+                                <x-user-status :user="$r->user" />
+                            </a>
                         </td>
                         <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
                             <div>{{ $r->start_at->translatedFormat('D, d/m/y H:i') }}</div>

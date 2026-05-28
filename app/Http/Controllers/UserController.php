@@ -115,14 +115,14 @@ class UserController extends Controller
     {
         $roles             = Role::all();
         $supervisorOptions = User::where('id', '!=', $user->id)->orderBy('name')->get(['id', 'name', 'position']);
-        $user->load(['supervisors', 'salaryRecord']);
+        $user->load(['supervisors', 'salaryRecord', 'preferences']);
         return view('users.form', compact('user', 'roles', 'supervisorOptions'));
     }
 
     public function profile()
     {
         $user = auth()->user();
-        $user->load('supervisors');
+        $user->load(['supervisors', 'salaryRecord', 'preferences']);
         $roles             = Role::all();
         $supervisorOptions = User::where('id', '!=', $user->id)->orderBy('name')->get(['id', 'name', 'position']);
         return view('users.form', compact('user', 'roles', 'supervisorOptions'));
@@ -340,6 +340,19 @@ class UserController extends Controller
                 'personal_income_tax'  => $request->input('personal_income_tax') ?: null,
                 'other_deduction'      => $request->input('other_deduction') ?: null,
             ]);
+        }
+
+        // Email notification preferences — only the user themselves can update these
+        if (auth()->id() === $user->id && $request->has('_email_prefs')) {
+            UserPreference::updateOrCreate(
+                ['user_id' => $user->id],
+                ['email_notifications' => [
+                    'leave'        => $request->boolean('email_notify_leave'),
+                    'ot'           => $request->boolean('email_notify_ot'),
+                    'project'      => $request->boolean('email_notify_project'),
+                    'announcement' => $request->boolean('email_notify_announcement'),
+                ]]
+            );
         }
 
         if (auth()->user()->canAny(['edit team leaves balance', 'edit all leaves balance'])

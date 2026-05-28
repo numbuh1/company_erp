@@ -67,7 +67,11 @@
                         @forelse($leaveRequests as $leave)
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                                 <td class="px-6 py-4 text-gray-700 dark:text-gray-300 text-sm">{{ $leave->created_at->format('d/m/y H:i') }}</td>
-                                <td class="px-6 py-4"><x-user-status :user="$leave->user" /></td>
+                                <td class="px-6 py-4">
+                                    <a href="{{ route('users.show', $leave->user) }}" class="hover:opacity-75 transition">
+                                        <x-user-status :user="$leave->user" />
+                                    </a>
+                                </td>
                                 <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
                                     <div>{{ $leave->start_at->translatedFormat('D, d/m/y H:i') }}</div>
                                     <div class="text-xs text-gray-500">→ {{ $leave->end_at->translatedFormat('D, d/m/y H:i') }}</div>

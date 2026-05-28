@@ -143,6 +143,19 @@ class User extends Authenticatable
         return $this->hasOne(UserPreference::class);
     }
 
+    /**
+     * Check whether this user has a given email notification type enabled.
+     * Defaults to true if no preference has been saved.
+     *
+     * Keys: 'leave', 'ot', 'project', 'announcement'
+     */
+    public function emailNotificationEnabled(string $key): bool
+    {
+        $prefs = $this->preferences?->email_notifications;
+        if (!is_array($prefs)) return true;
+        return (bool) ($prefs[$key] ?? true);
+    }
+
     public function leaveBalanceLogs()
     {
         return $this->hasMany(LeaveBalanceLog::class);

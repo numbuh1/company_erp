@@ -69,7 +69,11 @@
                         @forelse($otRequests as $ot)
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                                 <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">{{ $ot->created_at->format('d/m/y H:i') }}</td>
-                                <td class="px-4 py-3"><x-user-status :user="$ot->user" /></td>
+                                <td class="px-4 py-3">
+                                    <a href="{{ route('users.show', $ot->user) }}" class="hover:opacity-75 transition">
+                                        <x-user-status :user="$ot->user" />
+                                    </a>
+                                </td>
                                 <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
                                     <div>{{ $ot->start_at->translatedFormat('D, d/m/y H:i') }}</div>
                                     <div class="text-xs text-gray-500">→ {{ $ot->end_at->translatedFormat('D, d/m/y H:i') }}</div>

@@ -160,8 +160,13 @@ class NotificationHelper
 
         // --- Send email ---
         if ($primaryIds->isNotEmpty()) {
-            $primaryUsers = User::whereIn('id', $primaryIds)->get();
-            $ccUsers      = $ccIds->isNotEmpty() ? User::whereIn('id', $ccIds)->get() : collect();
+            $emailKey     = $type; // 'leave' or 'ot'
+            $primaryUsers = User::with('preferences')->whereIn('id', $primaryIds)->get()
+                ->filter(fn($u) => $u->emailNotificationEnabled($emailKey));
+            $ccUsers      = $ccIds->isNotEmpty()
+                ? User::with('preferences')->whereIn('id', $ccIds)->get()
+                    ->filter(fn($u) => $u->emailNotificationEnabled($emailKey))
+                : collect();
 
             try {
                 $mailer = Mail::to($primaryUsers);
