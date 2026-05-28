@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\WelcomeUserMail;
 use App\Models\User;
 use App\Models\UserPreference;
 use App\Models\LeaveBalanceLog;
 use Spatie\Permission\Models\Role;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -55,7 +58,8 @@ class UserController extends Controller
             'other_deduction'      => 'nullable|integer|min:0',
         ]);
 
-        $data['password'] = bcrypt($data['password']);
+        $plainPassword    = $data['password'];
+        $data['password'] = bcrypt($plainPassword);
 
         $user = User::create($data);
 
@@ -97,6 +101,13 @@ class UserController extends Controller
             ]);
         }
 
+        // Send welcome email
+        try {
+            Mail::to($user->email)->send(new WelcomeUserMail($user, $plainPassword, route('login')));
+        } catch (\Throwable $e) {
+            logger()->error("Welcome email failed for user {$user->id}: " . $e->getMessage());
+        }
+
         return redirect()->route('users.index')->with('success', 'User created');
     }
 
@@ -115,6 +126,112 @@ class UserController extends Controller
         $roles             = Role::all();
         $supervisorOptions = User::where('id', '!=', $user->id)->orderBy('name')->get(['id', 'name', 'position']);
         return view('users.form', compact('user', 'roles', 'supervisorOptions'));
+    }
+
+    public function importForm()
+    {
+        if (!auth()->user()->can('create all user')) abort(403);
+        return view('users.import');
+    }
+
+    public function downloadImportTemplate()
+    {
+        if (!auth()->user()->can('create all user')) abort(403);
+
+        $headers = ['name', 'email', 'password', 'position', 'grade', 'roles'];
+        $sample  = ['Nguyen Van A', 'vana@company.com', '', 'Developer', 'Junior', 'Staff'];
+
+        $csv = implode(',', $headers) . "\n" . implode(',', $sample) . "\n";
+
+        return response($csv, 200, [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="users_import_template.csv"',
+        ]);
+    }
+
+    public function import(Request $request)
+    {
+        if (!auth()->user()->can('create all user')) abort(403);
+
+        $request->validate(['csv_file' => 'required|file|mimes:csv,txt|max:2048']);
+
+        $file      = $request->file('csv_file');
+        $sendEmail = $request->boolean('send_email', true);
+        $handle    = fopen($file->getRealPath(), 'r');
+
+        // Read header row
+        $headers = array_map('trim', fgetcsv($handle));
+        $headers = array_map('strtolower', $headers);
+
+        $created = 0;
+        $skipped = 0;
+        $failed  = 0;
+        $errors  = [];
+        $row     = 1;
+
+        while (($cols = fgetcsv($handle)) !== false) {
+            $row++;
+            if (count(array_filter($cols)) === 0) continue; // skip blank rows
+
+            $data = array_combine($headers, array_pad($cols, count($headers), ''));
+
+            $name     = trim($data['name']     ?? '');
+            $email    = trim($data['email']    ?? '');
+            $password = trim($data['password'] ?? '');
+            $position = trim($data['position'] ?? '') ?: null;
+            $grade    = trim($data['grade']    ?? '') ?: null;
+            $roles    = array_filter(array_map('trim', explode('|', $data['roles'] ?? '')));
+
+            if (!$name || !$email) {
+                $errors[] = "Dòng {$row}: thiếu name hoặc email.";
+                $failed++;
+                continue;
+            }
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $errors[] = "Dòng {$row}: email '{$email}' không hợp lệ.";
+                $failed++;
+                continue;
+            }
+            if (User::where('email', $email)->exists()) {
+                $errors[] = "Dòng {$row}: email '{$email}' đã tồn tại — bỏ qua.";
+                $skipped++;
+                continue;
+            }
+
+            $plainPassword = $password ?: Str::random(10);
+
+            try {
+                $user = User::create([
+                    'name'     => $name,
+                    'email'    => $email,
+                    'password' => bcrypt($plainPassword),
+                    'position' => $position,
+                    'grade'    => $grade,
+                ]);
+
+                if (!empty($roles)) {
+                    $validRoles = Role::whereIn('name', $roles)->pluck('name')->toArray();
+                    $user->syncRoles($validRoles);
+                }
+
+                if ($sendEmail) {
+                    try {
+                        Mail::to($user->email)->send(new WelcomeUserMail($user, $plainPassword, route('login')));
+                    } catch (\Throwable $e) {
+                        logger()->error("Welcome email failed for imported user {$user->id}: " . $e->getMessage());
+                    }
+                }
+
+                $created++;
+            } catch (\Throwable $e) {
+                $errors[] = "Dòng {$row} ({$email}): " . $e->getMessage();
+                $failed++;
+            }
+        }
+
+        fclose($handle);
+
+        return redirect()->route('users.import.form')->with('import_results', compact('created', 'skipped', 'failed', 'errors'));
     }
 
     public function show(User $user)

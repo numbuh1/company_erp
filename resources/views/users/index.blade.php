@@ -3,7 +3,10 @@
         <div class="flex justify-between items-center">
             <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Người dùng</h2>
             @can('create all user')
-                <a href="{{ route('users.create') }}"><x-primary-button>Tạo người dùng</x-primary-button></a>
+                <div class="flex gap-2">
+                    <a href="{{ route('users.import.form') }}"><x-secondary-button>Import CSV</x-secondary-button></a>
+                    <a href="{{ route('users.create') }}"><x-primary-button>Tạo người dùng</x-primary-button></a>
+                </div>
             @endcan
         </div>
     </x-slot>

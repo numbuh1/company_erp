@@ -69,6 +69,9 @@ Route::middleware('auth')->group(function () {
     // Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    Route::get('users/import', [UserController::class, 'importForm'])->name('users.import.form');
+    Route::post('users/import', [UserController::class, 'import'])->name('users.import');
+    Route::get('users/import/template', [UserController::class, 'downloadImportTemplate'])->name('users.import.template');
     Route::resource('users', UserController::class);
     Route::get('users/{user}/leave-balance-history', [UserController::class, 'leaveBalanceHistory'])
         ->name('users.leave-balance-history');
