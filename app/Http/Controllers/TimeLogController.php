@@ -215,27 +215,20 @@ class TimeLogController extends Controller
         $user        = auth()->user();
         $viewableIds = $this->_viewableUserIds($user);
 
-        $groupBy = $request->query('group', 'context'); // 'context' or 'user'
-        $tsFrom  = $request->query('ts_from');
-        $tsTo    = $request->query('ts_to');
+        // ── Date range (always explicit, default = this week) ──────────────
+        $tsFrom = $request->query('ts_from');
+        $tsTo   = $request->query('ts_to');
 
         if ($tsFrom) {
-            // Custom date range mode
             $weekStart = Carbon::parse($tsFrom)->startOfDay();
-            $weekEnd   = $tsTo ? Carbon::parse($tsTo)->startOfDay() : $weekStart->copy()->addDays(6);
+            $weekEnd   = $tsTo ? Carbon::parse($tsTo)->endOfDay() : $weekStart->copy()->addDays(6);
             if ($weekStart->gt($weekEnd)) $weekEnd = $weekStart->copy()->addDays(6);
-            if ($weekStart->diffInDays($weekEnd) > 365) $weekEnd = $weekStart->copy()->addDays(365);
-            $offset = 0;
-        } elseif ($request->filled('date')) {
-            $jumpMonday = Carbon::parse($request->input('date'))->startOfWeek(Carbon::MONDAY);
-            $thisMonday = Carbon::now()->startOfWeek(Carbon::MONDAY);
-            $offset     = (int) round(($jumpMonday->timestamp - $thisMonday->timestamp) / (7 * 86400));
-            $weekStart  = Carbon::now()->startOfWeek(Carbon::MONDAY)->addWeeks($offset);
-            $weekEnd    = $weekStart->copy()->endOfWeek(Carbon::SUNDAY);
+            if ($weekStart->diffInDays($weekEnd) > 90) $weekEnd = $weekStart->copy()->addDays(90);
         } else {
-            $offset    = (int) $request->query('offset', 0);
-            $weekStart = Carbon::now()->startOfWeek(Carbon::MONDAY)->addWeeks($offset);
-            $weekEnd   = $weekStart->copy()->endOfWeek(Carbon::SUNDAY);
+            $weekStart = Carbon::now()->startOfWeek(Carbon::MONDAY)->startOfDay();
+            $weekEnd   = Carbon::now()->endOfWeek(Carbon::SUNDAY)->endOfDay();
+            $tsFrom    = $weekStart->format('Y-m-d');
+            $tsTo      = $weekEnd->format('Y-m-d');
         }
 
         $days = collect();
@@ -243,139 +236,150 @@ class TimeLogController extends Controller
             $days->push($d->copy());
         }
 
-        // Build user/team filter lists for the dropdowns
+        // ── User / Team filter lists for dropdowns ─────────────────────────
         $filterUsers = null;
         $filterTeams = null;
         if ($viewableIds === null) {
-            $filterUsers = User::orderBy('name')->get();
-            $filterTeams = Team::orderBy('name')->get();
+            $filterUsers = User::orderBy('name')->get(['id', 'name', 'position']);
+            $filterTeams = Team::orderBy('name')->get(['id', 'name']);
         } elseif (count($viewableIds) > 1) {
-            $filterUsers = User::whereIn('id', $viewableIds)->orderBy('name')->get();
+            $filterUsers = User::whereIn('id', $viewableIds)->orderBy('name')->get(['id', 'name', 'position']);
             if ($user->can('view team timesheet')) {
-                $filterTeams = $user->teams()->get();
+                $filterTeams = $user->teams()->get(['teams.id', 'teams.name']);
             }
         }
 
-        // Mode: individual or team
-        $mode = ($request->query('mode') === 'team' && $filterTeams) ? 'team' : 'individual';
+        // ── Resolve selected user IDs (multi-select array) ─────────────────
+        $selectedUserIds = array_values(array_map('intval',
+            array_filter((array) $request->query('user_ids', []))));
+        $selectedTeamIds = array_values(array_map('intval',
+            array_filter((array) $request->query('team_ids', []))));
 
-        // Resolve selected user (individual mode)
-        $selectedUserId = (int) $request->query('user_id', $user->id);
-        if ($viewableIds !== null && !in_array($selectedUserId, $viewableIds)) {
-            $selectedUserId = $user->id;
+        if ($viewableIds !== null && !empty($selectedUserIds)) {
+            $selectedUserIds = array_values(array_intersect($selectedUserIds, $viewableIds));
         }
 
-        // Resolve selected team (team mode)
-        $selectedTeamId = $request->query('team_id');
-        if ($mode === 'team' && !$selectedTeamId && $filterTeams) {
-            $selectedTeamId = $filterTeams->first()?->id;
+        // Resolve actual user IDs to query (union of selected users + team members)
+        $queryUserIds = $selectedUserIds;
+        foreach ($selectedTeamIds as $tid) {
+            $members = Team::find($tid)?->users()->pluck('users.id')->toArray() ?? [];
+            if ($viewableIds !== null) {
+                $members = array_values(array_intersect($members, $viewableIds));
+            }
+            $queryUserIds = array_merge($queryUserIds, $members);
+        }
+        $queryUserIds = array_values(array_unique($queryUserIds));
+
+        if (empty($queryUserIds)) {
+            $queryUserIds    = [$user->id];
+            $selectedUserIds = [$user->id];
         }
 
-        // Build the log query
+        // ── Project / Task filters ─────────────────────────────────────────
+        $filterProjectIds = array_values(array_map('intval',
+            array_filter((array) $request->query('project_ids', []))));
+        $filterTaskIds    = array_values(array_map('intval',
+            array_filter((array) $request->query('task_ids', []))));
+
+        // Dropdown options (projects/tasks that have logs from viewable users)
+        $availableProjects = Project::orderBy('name')->get(['id', 'name']);
+        $availableTasks    = Task::orderBy('name')->get(['id', 'name']);
+
+        // ── Build the log query ────────────────────────────────────────────
         $logsQuery = TimeLog::whereBetween('date', [$weekStart->toDateString(), $weekEnd->toDateString()])
             ->with(['project', 'task', 'user'])
             ->orderBy('date');
 
-        if ($mode === 'team' && $selectedTeamId) {
-            $teamMemberIds = Team::find($selectedTeamId)?->users()->pluck('users.id')->toArray() ?? [];
-            if ($viewableIds !== null) {
-                $teamMemberIds = array_intersect($teamMemberIds, $viewableIds);
-            }
-            $logsQuery->whereIn('user_id', $teamMemberIds);
+        if (count($queryUserIds) === 1) {
+            $logsQuery->where('user_id', $queryUserIds[0]);
         } else {
-            $logsQuery->where('user_id', $selectedUserId);
+            $logsQuery->whereIn('user_id', $queryUserIds);
+        }
+        if (!empty($filterProjectIds)) {
+            $logsQuery->whereIn('project_id', $filterProjectIds);
+        }
+        if (!empty($filterTaskIds)) {
+            $logsQuery->whereIn('task_id', $filterTaskIds);
         }
 
         $logs = $logsQuery->get();
 
-        // Build grid rows
-        $rows = [];
-        if ($groupBy === 'user') {
-            foreach ($logs as $log) {
-                $key = 'user_' . $log->user_id;
-                if (!isset($rows[$key])) {
-                    $rows[$key] = [
-                        'type'    => 'user',
-                        'label'   => $log->user?->name ?? 'Unknown',
-                        'link'    => $log->user_id ? route('users.show', $log->user_id) : null,
-                        'total'   => 0,
-                        'days'    => [],
-                        'user_id' => $log->user_id,
-                    ];
-                }
-                $dayKey = $log->date->format('Y-m-d');
-                if (!isset($rows[$key]['days'][$dayKey])) {
-                    $rows[$key]['days'][$dayKey] = ['total' => 0, 'logs' => [], 'descriptions' => []];
-                }
-                $rows[$key]['days'][$dayKey]['total']         += $log->time_spent;
-                $rows[$key]['days'][$dayKey]['logs'][]         = $log;
-                $rows[$key]['days'][$dayKey]['descriptions'][] = $log->description ?? '';
-                $rows[$key]['total']                          += $log->time_spent;
-            }
-            uasort($rows, fn($a, $b) => strcmp($a['label'], $b['label']));
-        } else {
-            foreach ($logs as $log) {
-                if ($log->task_id) {
-                    $key   = 'task_' . $log->task_id;
-                    $label = 'TK-' . $log->task_id . ($log->task ? ' · ' . $log->task->name : ' (deleted)');
-                    $link  = $log->task ? route('tasks.show', $log->task_id) : null;
-                    $type  = 'task';
-                } elseif ($log->project_id) {
-                    $key   = 'project_' . $log->project_id;
-                    $label = 'PJ-' . $log->project_id . ($log->project ? ' · ' . $log->project->name : ' (deleted)');
-                    $link  = $log->project ? route('projects.show', $log->project_id) : null;
-                    $type  = 'project';
-                } else {
-                    $key   = 'other';
-                    $label = 'Other';
-                    $link  = null;
-                    $type  = 'other';
-                }
+        // ── Build BOTH row groupings ───────────────────────────────────────
+        $rowsByContext = [];
+        $rowsByUser    = [];
 
-                if (!isset($rows[$key])) {
-                    $rows[$key] = [
-                        'type'       => $type,
-                        'label'      => $label,
-                        'link'       => $link,
-                        'total'      => 0,
-                        'days'       => [],
-                        'project_id' => $log->project_id,
-                        'task_id'    => $log->task_id,
-                    ];
-                }
+        foreach ($logs as $log) {
+            $dayKey = $log->date->format('Y-m-d');
 
-                $dayKey = $log->date->format('Y-m-d');
-                if (!isset($rows[$key]['days'][$dayKey])) {
-                    $rows[$key]['days'][$dayKey] = ['total' => 0, 'logs' => [], 'descriptions' => []];
-                }
-                $rows[$key]['days'][$dayKey]['total']         += $log->time_spent;
-                $rows[$key]['days'][$dayKey]['logs'][]         = $log;
-                $rows[$key]['days'][$dayKey]['descriptions'][] = $log->description ?? '';
-                $rows[$key]['total']                          += $log->time_spent;
+            // — By Context —
+            if ($log->task_id) {
+                $cKey  = 'task_' . $log->task_id;
+                $label = 'TK-' . $log->task_id . ($log->task ? ' · ' . $log->task->name : ' (deleted)');
+                $link  = $log->task ? route('tasks.show', $log->task_id) : null;
+                $type  = 'task';
+            } elseif ($log->project_id) {
+                $cKey  = 'project_' . $log->project_id;
+                $label = 'PJ-' . $log->project_id . ($log->project ? ' · ' . $log->project->name : ' (deleted)');
+                $link  = $log->project ? route('projects.show', $log->project_id) : null;
+                $type  = 'project';
+            } else {
+                $cKey  = 'other';
+                $label = 'Other';
+                $link  = null;
+                $type  = 'other';
             }
-            uasort($rows, function ($a, $b) {
-                $order = ['task' => 0, 'project' => 1, 'other' => 2];
-                return ($order[$a['type']] ?? 3) <=> ($order[$b['type']] ?? 3);
-            });
+            if (!isset($rowsByContext[$cKey])) {
+                $rowsByContext[$cKey] = ['type' => $type, 'label' => $label, 'link' => $link,
+                    'total' => 0, 'days' => [], 'project_id' => $log->project_id, 'task_id' => $log->task_id];
+            }
+            if (!isset($rowsByContext[$cKey]['days'][$dayKey])) {
+                $rowsByContext[$cKey]['days'][$dayKey] = ['total' => 0, 'descriptions' => []];
+            }
+            $rowsByContext[$cKey]['days'][$dayKey]['total']          += $log->time_spent;
+            $rowsByContext[$cKey]['days'][$dayKey]['descriptions'][]  = $log->description ?? '';
+            $rowsByContext[$cKey]['total']                           += $log->time_spent;
+
+            // — By User —
+            $uKey = 'user_' . $log->user_id;
+            if (!isset($rowsByUser[$uKey])) {
+                $rowsByUser[$uKey] = ['type' => 'user', 'label' => $log->user?->name ?? 'Unknown',
+                    'link' => $log->user_id ? route('users.show', $log->user_id) : null,
+                    'total' => 0, 'days' => [], 'user_id' => $log->user_id];
+            }
+            if (!isset($rowsByUser[$uKey]['days'][$dayKey])) {
+                $rowsByUser[$uKey]['days'][$dayKey] = ['total' => 0, 'descriptions' => []];
+            }
+            $rowsByUser[$uKey]['days'][$dayKey]['total']          += $log->time_spent;
+            $rowsByUser[$uKey]['days'][$dayKey]['descriptions'][]  = $log->description ?? '';
+            $rowsByUser[$uKey]['total']                           += $log->time_spent;
         }
 
-        // Day totals
+        uasort($rowsByContext, fn($a, $b) =>
+            (['task' => 0, 'project' => 1, 'other' => 2][$a['type']] ?? 3)
+            <=> (['task' => 0, 'project' => 1, 'other' => 2][$b['type']] ?? 3));
+        uasort($rowsByUser, fn($a, $b) => strcmp($a['label'], $b['label']));
+
+        // ── Day totals (from all logs regardless of grouping) ──────────────
         $dayTotals = [];
-        foreach ($days as $day) {
-            $dk             = $day->format('Y-m-d');
-            $dayTotals[$dk] = 0;
-            foreach ($rows as $row) {
-                $dayTotals[$dk] += $row['days'][$dk]['total'] ?? 0;
-            }
+        foreach ($days as $day) { $dayTotals[$day->format('Y-m-d')] = 0; }
+        foreach ($logs as $log) {
+            $dk = $log->date->format('Y-m-d');
+            if (array_key_exists($dk, $dayTotals)) $dayTotals[$dk] += $log->time_spent;
         }
 
         $weekTotal    = $logs->sum('time_spent');
         $holidayDates = PublicHoliday::getHolidayDates($weekStart->copy(), $weekEnd->copy());
+        $isMultiUser  = $filterUsers !== null;
 
         return view('time_logs.weekly', compact(
-            'days', 'rows', 'weekStart', 'weekEnd', 'offset', 'dayTotals', 'weekTotal',
-            'filterUsers', 'filterTeams', 'selectedUserId', 'selectedTeamId',
-            'holidayDates', 'groupBy', 'mode', 'tsFrom', 'tsTo'
+            'days', 'rowsByContext', 'rowsByUser',
+            'weekStart', 'weekEnd', 'tsFrom', 'tsTo',
+            'dayTotals', 'weekTotal',
+            'filterUsers', 'filterTeams',
+            'selectedUserIds', 'selectedTeamIds',
+            'filterProjectIds', 'filterTaskIds',
+            'availableProjects', 'availableTasks',
+            'holidayDates', 'isMultiUser'
         ));
     }
 

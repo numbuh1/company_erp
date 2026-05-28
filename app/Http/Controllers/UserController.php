@@ -369,7 +369,10 @@ class UserController extends Controller
             ]);
         }
 
-        return redirect()->route('users.index')->with('success', 'User updated');
+        $redirectTo = (auth()->id() === $user->id)
+            ? route('users.profile')
+            : route('users.edit', $user);
+        return redirect($redirectTo)->with('success', 'Đã lưu thay đổi.');
     }
 
     public function updateColumnPreferences(Request $request)
