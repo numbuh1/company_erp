@@ -16,8 +16,9 @@
         /* Sticky columns */
         .ts-col-label { position: sticky; left: 0; z-index: 3; }
         .ts-col-total { position: sticky; left: 14rem; z-index: 3; border-right: 1px solid; }
-        /* Header sticky columns */
-        thead .ts-col-label { background-color: var(--tw-bg-opacity, 1); }
+        /* Header sticky cells must sit above scrolling body cells */
+        thead .ts-col-label,
+        thead .ts-col-total { z-index: 5; }
         /* Cell border colour for the total separator */
         .dark .ts-col-total { border-right-color: #4b5563; }
         .ts-col-total       { border-right-color: #d1d5db; }
@@ -215,10 +216,11 @@
                             {{-- ── Context section ─────────────────────── --}}
                             @if($isMultiUser)
                             <tr x-show="showContext" x-cloak>
-                                <td colspan="{{ $colCount }}"
-                                    class="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950 text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                                <td class="ts-col-label bg-indigo-50 dark:bg-indigo-950 px-3 py-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
                                     📋 Theo công việc
                                 </td>
+                                <td class="ts-col-total bg-indigo-50 dark:bg-indigo-950 px-2 py-1.5"></td>
+                                <td colspan="{{ $colCount - 2 }}" class="bg-indigo-50 dark:bg-indigo-950"></td>
                             </tr>
                             @endif
 
@@ -288,10 +290,11 @@
                             {{-- ── User section (only in multi-user view) ── --}}
                             @if($isMultiUser)
                             <tr x-show="showUser" x-cloak>
-                                <td colspan="{{ $colCount }}"
-                                    class="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950 text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+                                <td class="ts-col-label bg-emerald-50 dark:bg-emerald-950 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
                                     👤 Theo từng người
                                 </td>
+                                <td class="ts-col-total bg-emerald-50 dark:bg-emerald-950 px-2 py-1.5"></td>
+                                <td colspan="{{ $colCount - 2 }}" class="bg-emerald-50 dark:bg-emerald-950"></td>
                             </tr>
 
                             @foreach($rowsByUser as $row)
