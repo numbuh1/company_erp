@@ -425,6 +425,35 @@ class TimeLogController extends Controller
         $holidayDates = PublicHoliday::getHolidayDates($weekStart->copy(), $weekEnd->copy());
         $isMultiUser = $filterUsers !== null;
 
+        // ── Approved leave hours per user per day (used by "By User" section) ──
+        // Structure: [ user_id => [ 'Y-m-d' => [ ['hours'=>X,'type'=>'...'], ... ] ] ]
+        $leaveHoursByUserDay = [];
+        if ($isMultiUser) {
+            $leavesForView = LeaveRequest::whereIn('user_id', $queryUserIds)
+                ->where('status', 'approved')
+                ->where('start_at', '<=', $weekEnd->copy()->endOfDay()->toDateTimeString())
+                ->where('end_at',   '>=', $weekStart->copy()->startOfDay()->toDateTimeString())
+                ->get();
+
+            foreach ($leavesForView as $leave) {
+                $lStart    = Carbon::parse($leave->start_at)->startOfDay();
+                $lEnd      = Carbon::parse($leave->end_at)->startOfDay();
+                $totalDays = max(1, $lStart->diffInDays($lEnd) + 1);
+                $hpd       = $leave->hours / $totalDays;
+
+                $cursor   = $lStart->copy()->max($weekStart->copy()->startOfDay());
+                $clampEnd = $lEnd->copy()->min($weekEnd->copy()->startOfDay());
+                while ($cursor->lte($clampEnd)) {
+                    $dk = $cursor->toDateString();
+                    $leaveHoursByUserDay[$leave->user_id][$dk][] = [
+                        'hours' => $hpd,
+                        'type'  => $leave->type,
+                    ];
+                    $cursor->addDay();
+                }
+            }
+        }
+
         // ── Persist current filters ────────────────────────────────────────
         $prefs->update(['timesheet_weekly_filters' => [
             'ts_from'      => $tsFrom,
@@ -447,7 +476,8 @@ class TimeLogController extends Controller
             'filterProjectIds', 'filterTaskIds',
             'availableProjects', 'availableTasks',
             'holidayDates', 'isMultiUser',
-            'showContext', 'showUser', 'showProject'
+            'showContext', 'showUser', 'showProject',
+            'leaveHoursByUserDay'
         ));
     }
 

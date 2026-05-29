@@ -13,12 +13,14 @@
     @push('styles')
     <style>
         [x-cloak] { display: none !important; }
-        /* Sticky columns */
+        /* Sticky columns (horizontal) */
         .ts-col-label { position: sticky; left: 0; z-index: 3; }
         .ts-col-total { position: sticky; left: 14rem; z-index: 3; border-right: 1px solid; }
-        /* Header sticky cells must sit above scrolling body cells */
+        /* Sticky header row (vertical) — all header cells pin to top of scroll container */
+        thead th     { position: sticky; top: 0; z-index: 4; }
+        /* Corner cells: sticky both left and top — highest z-index */
         thead .ts-col-label,
-        thead .ts-col-total { z-index: 5; }
+        thead .ts-col-total { z-index: 6; }
         /* Cell border colour for the total separator */
         .dark .ts-col-total { border-right-color: #4b5563; }
         .ts-col-total       { border-right-color: #d1d5db; }
@@ -178,8 +180,10 @@
                 @endif
             </div>
 
-            {{-- ── Main grid (single table, sticky first 2 cols) ────────── --}}
-            <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-x-auto">
+            {{-- ── Main grid (single table, sticky first 2 cols + sticky header) ──
+                 overflow-auto + max-h creates the scroll container that makes
+                 both position:sticky left (cols) and position:sticky top (row) work --}}
+            <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-auto max-h-[calc(100vh-14rem)]">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm border-separate border-spacing-0">
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
@@ -396,34 +400,84 @@
                                         $cell         = $row['days'][$dayKey] ?? null;
                                         $isHolidayDay = in_array($dayKey, $holidayDates);
                                         $isWeekendDay = $day->isWeekend();
+
+                                        // Leave hours for this user on this day
+                                        $leavesForDay = $leaveHoursByUserDay[$row['user_id']][$dayKey] ?? [];
+                                        $leaveHours   = array_sum(array_column($leavesForDay, 'hours'));
+
+                                        // Effective total = work + leave; red when < 8h on a weekday
+                                        $workHours  = $cell ? $cell['total'] : 0;
+                                        $totalEff   = $workHours + $leaveHours;
+                                        $isWeekday  = !$isWeekendDay && !$isHolidayDay;
+                                        $isShort    = $isWeekday && $totalEff < 8;
+
+                                        // Cell background: red for short weekdays; otherwise today/holiday/weekend
+                                        $cellBg = $isShort
+                                            ? 'bg-red-50 dark:bg-red-950/50'
+                                            : ($day->isToday()
+                                                ? 'bg-indigo-50 dark:bg-indigo-950'
+                                                : ($isHolidayDay ? $calHolidayBg
+                                                    : ($isWeekendDay ? $calWeekendBg : '')));
+
+                                        // Build tooltip lines
+                                        $workDescs  = $cell ? array_filter($cell['descriptions']) : [];
                                     @endphp
-                                    <td class="px-1 py-1 text-center
-                                        {{ $day->isToday() ? 'bg-indigo-50 dark:bg-indigo-950'
-                                            : ($isHolidayDay ? $calHolidayBg
-                                                : ($isWeekendDay ? $calWeekendBg : '')) }}">
-                                        @if($cell)
+                                    <td class="px-1 py-1 text-center {{ $cellBg }}">
+                                        @if($cell || $leaveHours > 0)
                                             @php
-                                                $tooltip = implode("\n", array_filter($cell['descriptions']));
-                                                $cellUrl = route('time-logs.index', [
+                                                $cellUrl = $cell ? route('time-logs.index', [
                                                     'date_from' => $dayKey,
                                                     'date_to'   => $dayKey,
                                                     'user_id'   => $row['user_id'],
-                                                ]);
+                                                ]) : null;
+                                                $hasTip = !empty($workDescs) || $leaveHours > 0;
                                             @endphp
                                             <div x-data="{ open: false }" class="relative inline-block"
                                                 @mouseenter="open = true" @mouseleave="open = false">
-                                                <a href="{{ $cellUrl }}"
-                                                    class="block text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline px-1 py-1 rounded hover:bg-violet-50 dark:hover:bg-violet-900 transition">
-                                                    {{ \App\Models\TimeLog::formatTimeShort($cell['total']) }}
-                                                </a>
-                                                @if($tooltip)
+
+                                                {{-- Work hours --}}
+                                                @if($cell)
+                                                    <a href="{{ $cellUrl }}"
+                                                        class="block text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline px-1 rounded hover:bg-violet-50 dark:hover:bg-violet-900 transition">
+                                                        {{ \App\Models\TimeLog::formatTimeShort($cell['total']) }}
+                                                    </a>
+                                                @else
+                                                    <span class="block text-xs text-gray-400 dark:text-gray-500 px-1">—</span>
+                                                @endif
+
+                                                {{-- Leave badge (shown below work hours) --}}
+                                                @if($leaveHours > 0)
+                                                    <div class="text-xs text-amber-500 dark:text-amber-400 leading-tight mt-0.5 whitespace-nowrap">
+                                                        🏖 {{ \App\Models\TimeLog::formatTimeShort($leaveHours) }}
+                                                    </div>
+                                                @endif
+
+                                                {{-- Tooltip --}}
+                                                @if($hasTip)
                                                 <div x-show="open" x-cloak
-                                                    class="absolute z-30 bottom-full left-1/2 -translate-x-1/2 mb-2 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-xl pointer-events-none min-w-max max-w-xs text-left"
-                                                    style="white-space: pre-wrap;">{{ $tooltip }}</div>
+                                                    class="absolute z-30 bottom-full left-1/2 -translate-x-1/2 mb-2 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-xl pointer-events-none min-w-max max-w-xs text-left">
+                                                    @if(!empty($workDescs))
+                                                        <div style="white-space: pre-wrap;"
+                                                            class="{{ $leaveHours > 0 ? 'pb-1 mb-1 border-b border-gray-700' : '' }}">{{ implode("\n", $workDescs) }}</div>
+                                                    @endif
+                                                    @if($leaveHours > 0)
+                                                        <div class="text-yellow-300 font-medium">
+                                                            🏖 Nghỉ phép: {{ \App\Models\TimeLog::formatTimeShort($leaveHours) }}
+                                                        </div>
+                                                        @foreach($leavesForDay as $ld)
+                                                            <div class="text-yellow-400 pl-3">· {{ $ld['type'] }} ({{ \App\Models\TimeLog::formatTimeShort($ld['hours']) }})</div>
+                                                        @endforeach
+                                                    @endif
+                                                </div>
                                                 @endif
                                             </div>
                                         @else
-                                            <span class="text-gray-300 dark:text-gray-600 text-xs">—</span>
+                                            {{-- Nothing: show 0h in red on weekdays, dash otherwise --}}
+                                            @if($isShort)
+                                                <span class="text-red-400 dark:text-red-500 text-xs font-medium">0h</span>
+                                            @else
+                                                <span class="text-gray-300 dark:text-gray-600 text-xs">—</span>
+                                            @endif
                                         @endif
                                     </td>
                                 @endforeach
