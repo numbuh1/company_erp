@@ -82,11 +82,27 @@
                                 <td class="px-4 py-3">
                                     <span class="inline-block bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 text-xs px-2 py-1 rounded">{{ $ot->type }}</span>
                                 </td>
-                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                    {{ $ot->project?->name ?? '—' }}
+                                <td class="px-4 py-3 text-sm">
+                                    @if($ot->project)
+                                        <a href="{{ route('projects.show', $ot->project) }}"
+                                            class="text-indigo-600 dark:text-indigo-400 hover:underline">
+                                            <span class="font-mono text-xs font-semibold">PJ-{{ $ot->project_id }}</span>
+                                            <span class="ml-1">{{ $ot->project->name }}</span>
+                                        </a>
+                                    @else
+                                        <span class="text-gray-400 dark:text-gray-500">—</span>
+                                    @endif
                                 </td>
-                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                    {{ $ot->task?->name ?? '—' }}
+                                <td class="px-4 py-3 text-sm">
+                                    @if($ot->task)
+                                        <a href="{{ route('tasks.show', $ot->task) }}"
+                                            class="text-indigo-600 dark:text-indigo-400 hover:underline">
+                                            <span class="font-mono text-xs font-semibold">TK-{{ $ot->task_id }}</span>
+                                            <span class="ml-1">{{ $ot->task->name }}</span>
+                                        </a>
+                                    @else
+                                        <span class="text-gray-400 dark:text-gray-500">—</span>
+                                    @endif
                                 </td>
                                 <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 max-w-xs truncate">{{ $ot->description }}</td>
                                 <td class="px-4 py-3">
@@ -97,7 +113,15 @@
                                         {{ ['pending' => 'Đang chờ', 'approved' => 'Đã duyệt', 'rejected' => 'Đã từ chối'][$ot->status] ?? ucfirst($ot->status) }}
                                     </span>
                                 </td>
-                                <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{{ $ot->approver?->name ?? '—' }}</td>
+                                <td class="px-4 py-3">
+                                    @if($ot->approver)
+                                        <a href="{{ route('users.show', $ot->approver) }}" class="hover:opacity-75 transition">
+                                            <x-user-status :user="$ot->approver" />
+                                        </a>
+                                    @else
+                                        <span class="text-gray-400 text-sm">—</span>
+                                    @endif
+                                </td>
                                 <td class="px-4 py-3 text-sm">
                                     @if($ot->status === 'rejected')
                                         <span class="text-red-500">{{ $ot->reject_reason ?? '—' }}</span>

@@ -13,17 +13,47 @@
     @push('styles')
     <style>
         [x-cloak] { display: none !important; }
-        /* Sticky columns (horizontal) */
+
+        /* ── Sticky columns (horizontal) ───────────────────────────────── */
         .ts-col-label { position: sticky; left: 0; z-index: 3; }
         .ts-col-total { position: sticky; left: 14rem; z-index: 3; border-right: 1px solid; }
-        /* Sticky header row (vertical) — all header cells pin to top of scroll container */
-        thead th     { position: sticky; top: 0; z-index: 4; }
-        /* Corner cells: sticky both left and top — highest z-index */
+
+        /* ── Sticky header row (vertical) ──────────────────────────────── */
+        thead th { position: sticky; top: 0; z-index: 4; }
+
+        /* Corner cells: sticky in both directions — highest z-index */
         thead .ts-col-label,
         thead .ts-col-total { z-index: 6; }
-        /* Cell border colour for the total separator */
-        .dark .ts-col-total { border-right-color: #4b5563; }
+
+        /* ── Total separator border colour ─────────────────────────────── */
         .ts-col-total       { border-right-color: #d1d5db; }
+        .dark .ts-col-total { border-right-color: #4b5563; }
+
+        /* ── Always-visible styled scrollbars ──────────────────────────── *
+         * Setting a non-zero ::-webkit-scrollbar size on macOS switches    *
+         * the element from overlay scrollbars to classic (always visible)  *
+         * scrollbars, matching Windows/Linux behaviour.                    */
+        .ts-scroll {
+            /* Firefox */
+            scrollbar-width: thin;
+            scrollbar-color: #94a3b8 #e2e8f0;
+        }
+        .dark .ts-scroll {
+            scrollbar-color: #4b5563 #1e293b;
+        }
+
+        /* Chrome / Safari / Edge */
+        .ts-scroll::-webkit-scrollbar        { width: 8px; height: 8px; }
+        .ts-scroll::-webkit-scrollbar-track  { background: #e2e8f0; border-radius: 4px; }
+        .ts-scroll::-webkit-scrollbar-thumb  { background: #94a3b8; border-radius: 4px; }
+        .ts-scroll::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        .ts-scroll::-webkit-scrollbar-corner { background: #e2e8f0; }
+
+        /* Dark variants */
+        .dark .ts-scroll::-webkit-scrollbar-track  { background: #1e293b; }
+        .dark .ts-scroll::-webkit-scrollbar-thumb  { background: #4b5563; }
+        .dark .ts-scroll::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        .dark .ts-scroll::-webkit-scrollbar-corner { background: #1e293b; }
     </style>
     @endpush
 
@@ -31,6 +61,9 @@
         showContext: {{ $showContext ? 'true' : 'false' }},
         showUser:    {{ $showUser    ? 'true' : 'false' }},
         showProject: {{ $showProject ? 'true' : 'false' }},
+        showNT:      {{ $showNT     ? 'true' : 'false' }},
+        showLeaves:  {{ $showLeaves ? 'true' : 'false' }},
+        showOT:      {{ $showOT     ? 'true' : 'false' }},
     }">
 
         <div class="max-w-full mx-auto sm:px-6 lg:px-8 space-y-3 py-4">
@@ -138,10 +171,13 @@
                     </div>
                     @endif
 
-                    {{-- Hidden inputs carry group-view state so it's saved on form submit --}}
+                    {{-- Hidden inputs carry group-view + view-options state so they're saved on form submit --}}
                     <input type="hidden" name="show_context" x-bind:value="showContext ? '1' : '0'">
                     <input type="hidden" name="show_user"    x-bind:value="showUser    ? '1' : '0'">
                     <input type="hidden" name="show_project" x-bind:value="showProject ? '1' : '0'">
+                    <input type="hidden" name="show_nt"      x-bind:value="showNT      ? '1' : '0'">
+                    <input type="hidden" name="show_leaves"  x-bind:value="showLeaves  ? '1' : '0'">
+                    <input type="hidden" name="show_ot"      x-bind:value="showOT      ? '1' : '0'">
 
                     <div class="self-end flex gap-2">
                         <button type="submit"
@@ -156,34 +192,59 @@
                 </form>
             </div>
 
-            {{-- ── Group View checkboxes ────────────────────────────────── --}}
-            <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg px-4 py-2.5 flex items-center gap-5">
-                <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                    Group View
-                </span>
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" x-model="showContext"
-                        class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500">
-                    <span class="text-sm text-gray-700 dark:text-gray-300">Theo công việc</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" x-model="showProject"
-                        class="rounded border-gray-300 dark:border-gray-600 text-emerald-600 focus:ring-emerald-500">
-                    <span class="text-sm text-gray-700 dark:text-gray-300">Theo dự án</span>
-                </label>
-                @if($isMultiUser)
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" x-model="showUser"
-                        class="rounded border-gray-300 dark:border-gray-600 text-violet-600 focus:ring-violet-500">
-                    <span class="text-sm text-gray-700 dark:text-gray-300">Theo từng người</span>
-                </label>
-                @endif
+            {{-- ── Group View + View Options (two connected panels) ─────── --}}
+            <div class="flex flex-wrap gap-2">
+                {{-- Group View --}}
+                <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg px-4 py-2.5 flex items-center gap-5 flex-1 min-w-fit">
+                    <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap">
+                        Group View
+                    </span>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" x-model="showContext"
+                            class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">Theo công việc</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" x-model="showProject"
+                            class="rounded border-gray-300 dark:border-gray-600 text-emerald-600 focus:ring-emerald-500">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">Theo dự án</span>
+                    </label>
+                    @if($isMultiUser)
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" x-model="showUser"
+                            class="rounded border-gray-300 dark:border-gray-600 text-violet-600 focus:ring-violet-500">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">Theo từng người</span>
+                    </label>
+                    @endif
+                </div>
+
+                {{-- View Options --}}
+                <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg px-4 py-2.5 flex items-center gap-5 flex-1 min-w-fit">
+                    <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap">
+                        View Options
+                    </span>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" x-model="showNT"
+                            class="rounded border-gray-300 dark:border-gray-600 text-gray-600 focus:ring-gray-500">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">View NT</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" x-model="showLeaves"
+                            class="rounded border-gray-300 dark:border-gray-600 text-amber-500 focus:ring-amber-400">
+                        <span class="text-sm text-amber-600 dark:text-amber-400">🏖 Leaves</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" x-model="showOT"
+                            class="rounded border-gray-300 dark:border-gray-600 text-orange-500 focus:ring-orange-400">
+                        <span class="text-sm text-orange-600 dark:text-orange-400">⏱ OT</span>
+                    </label>
+                </div>
             </div>
 
             {{-- ── Main grid (single table, sticky first 2 cols + sticky header) ──
                  overflow-auto + max-h creates the scroll container that makes
                  both position:sticky left (cols) and position:sticky top (row) work --}}
-            <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-auto max-h-[calc(100vh-14rem)]">
+            <div class="ts-scroll bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-auto max-h-[calc(100vh-14rem)]">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm border-separate border-spacing-0">
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
@@ -263,30 +324,54 @@
                                         $cell         = $row['days'][$dayKey] ?? null;
                                         $isHolidayDay = in_array($dayKey, $holidayDates);
                                         $isWeekendDay = $day->isWeekend();
+                                        // OT for this context row on this day
+                                        $ctxKey   = ($row['type'] === 'task') ? 'task_' . $row['task_id']
+                                                  : (($row['type'] === 'project') ? 'project_' . $row['project_id'] : 'other');
+                                        $ctxOtH   = $otHoursByContextDay[$ctxKey][$dayKey] ?? 0;
                                     @endphp
                                     <td class="px-1 py-1 text-center
                                         {{ $day->isToday() ? 'bg-indigo-50 dark:bg-indigo-950'
                                             : ($isHolidayDay ? $calHolidayBg
                                                 : ($isWeekendDay ? $calWeekendBg : '')) }}">
-                                        @if($cell)
+                                        @if($cell || $ctxOtH > 0)
                                             @php
-                                                $tooltip = implode("\n", array_filter($cell['descriptions']));
+                                                $tooltip = $cell ? implode("\n", array_filter($cell['descriptions'])) : '';
                                                 $params  = ['date_from' => $dayKey, 'date_to' => $dayKey];
                                                 if ($row['type'] === 'task')        $params['task_id']    = $row['task_id'];
                                                 elseif ($row['type'] === 'project') $params['project_id'] = $row['project_id'];
                                                 else                                $params['no_context'] = 1;
-                                                $cellUrl = route('time-logs.index', $params);
+                                                $cellUrl = $cell ? route('time-logs.index', $params) : null;
+                                                $hasTip  = $tooltip || $ctxOtH > 0;
                                             @endphp
                                             <div x-data="{ open: false }" class="relative inline-block"
                                                 @mouseenter="open = true" @mouseleave="open = false">
-                                                <a href="{{ $cellUrl }}"
-                                                    class="block text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline px-1 py-1 rounded hover:bg-indigo-50 dark:hover:bg-indigo-900 transition">
-                                                    {{ \App\Models\TimeLog::formatTimeShort($cell['total']) }}
-                                                </a>
-                                                @if($tooltip)
+                                                {{-- NT (work hours) --}}
+                                                @if($cell)
+                                                <div x-show="showNT">
+                                                    <a href="{{ $cellUrl }}"
+                                                        class="block text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline px-1 rounded hover:bg-indigo-50 dark:hover:bg-indigo-900 transition">
+                                                        {{ \App\Models\TimeLog::formatTimeShort($cell['total']) }}
+                                                    </a>
+                                                </div>
+                                                @endif
+                                                {{-- OT badge --}}
+                                                @if($ctxOtH > 0)
+                                                <div x-show="showOT" class="text-xs text-orange-500 dark:text-orange-400 leading-tight mt-0.5 whitespace-nowrap">
+                                                    ⏱ {{ \App\Models\TimeLog::formatTimeShort($ctxOtH) }}
+                                                </div>
+                                                @endif
+                                                {{-- Tooltip --}}
+                                                @if($hasTip)
                                                 <div x-show="open" x-cloak
-                                                    class="absolute z-30 bottom-full left-1/2 -translate-x-1/2 mb-2 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-xl pointer-events-none min-w-max max-w-xs text-left"
-                                                    style="white-space: pre-wrap;">{{ $tooltip }}</div>
+                                                    class="absolute z-30 bottom-full left-1/2 -translate-x-1/2 mb-2 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-xl pointer-events-none min-w-max max-w-xs text-left">
+                                                    @if($tooltip)
+                                                        <div style="white-space: pre-wrap;"
+                                                            class="{{ $ctxOtH > 0 ? 'pb-1 mb-1 border-b border-gray-700' : '' }}">{{ $tooltip }}</div>
+                                                    @endif
+                                                    @if($ctxOtH > 0)
+                                                        <div class="text-orange-300 font-medium">⏱ OT: {{ \App\Models\TimeLog::formatTimeShort($ctxOtH) }}</div>
+                                                    @endif
+                                                </div>
                                                 @endif
                                             </div>
                                         @else
@@ -332,28 +417,51 @@
                                         $cell         = $row['days'][$dayKey] ?? null;
                                         $isHolidayDay = in_array($dayKey, $holidayDates);
                                         $isWeekendDay = $day->isWeekend();
+                                        // OT for this project row on this day
+                                        $prjKey  = $row['project_id'] ? 'project_' . $row['project_id'] : 'no_project';
+                                        $prjOtH  = $otHoursByProjectDay[$prjKey][$dayKey] ?? 0;
                                     @endphp
                                     <td class="px-1 py-1 text-center
                                         {{ $day->isToday() ? 'bg-indigo-50 dark:bg-indigo-950'
                                             : ($isHolidayDay ? $calHolidayBg
                                                 : ($isWeekendDay ? $calWeekendBg : '')) }}">
-                                        @if($cell)
+                                        @if($cell || $prjOtH > 0)
                                             @php
-                                                $tooltip = implode("\n", array_filter($cell['descriptions']));
+                                                $tooltip = $cell ? implode("\n", array_filter($cell['descriptions'])) : '';
                                                 $params  = ['date_from' => $dayKey, 'date_to' => $dayKey];
                                                 if ($row['project_id']) $params['project_id'] = $row['project_id'];
-                                                $cellUrl = route('time-logs.index', $params);
+                                                $cellUrl = $cell ? route('time-logs.index', $params) : null;
+                                                $hasTip  = $tooltip || $prjOtH > 0;
                                             @endphp
                                             <div x-data="{ open: false }" class="relative inline-block"
                                                 @mouseenter="open = true" @mouseleave="open = false">
-                                                <a href="{{ $cellUrl }}"
-                                                    class="block text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline px-1 py-1 rounded hover:bg-emerald-50 dark:hover:bg-emerald-900 transition">
-                                                    {{ \App\Models\TimeLog::formatTimeShort($cell['total']) }}
-                                                </a>
-                                                @if($tooltip)
+                                                {{-- NT --}}
+                                                @if($cell)
+                                                <div x-show="showNT">
+                                                    <a href="{{ $cellUrl }}"
+                                                        class="block text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline px-1 rounded hover:bg-emerald-50 dark:hover:bg-emerald-900 transition">
+                                                        {{ \App\Models\TimeLog::formatTimeShort($cell['total']) }}
+                                                    </a>
+                                                </div>
+                                                @endif
+                                                {{-- OT badge --}}
+                                                @if($prjOtH > 0)
+                                                <div x-show="showOT" class="text-xs text-orange-500 dark:text-orange-400 leading-tight mt-0.5 whitespace-nowrap">
+                                                    ⏱ {{ \App\Models\TimeLog::formatTimeShort($prjOtH) }}
+                                                </div>
+                                                @endif
+                                                {{-- Tooltip --}}
+                                                @if($hasTip)
                                                 <div x-show="open" x-cloak
-                                                    class="absolute z-30 bottom-full left-1/2 -translate-x-1/2 mb-2 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-xl pointer-events-none min-w-max max-w-xs text-left"
-                                                    style="white-space: pre-wrap;">{{ $tooltip }}</div>
+                                                    class="absolute z-30 bottom-full left-1/2 -translate-x-1/2 mb-2 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-xl pointer-events-none min-w-max max-w-xs text-left">
+                                                    @if($tooltip)
+                                                        <div style="white-space: pre-wrap;"
+                                                            class="{{ $prjOtH > 0 ? 'pb-1 mb-1 border-b border-gray-700' : '' }}">{{ $tooltip }}</div>
+                                                    @endif
+                                                    @if($prjOtH > 0)
+                                                        <div class="text-orange-300 font-medium">⏱ OT: {{ \App\Models\TimeLog::formatTimeShort($prjOtH) }}</div>
+                                                    @endif
+                                                </div>
                                                 @endif
                                             </div>
                                         @else
@@ -401,17 +509,21 @@
                                         $isHolidayDay = in_array($dayKey, $holidayDates);
                                         $isWeekendDay = $day->isWeekend();
 
-                                        // Leave hours for this user on this day
+                                        // Leave hours
                                         $leavesForDay = $leaveHoursByUserDay[$row['user_id']][$dayKey] ?? [];
                                         $leaveHours   = array_sum(array_column($leavesForDay, 'hours'));
 
-                                        // Effective total = work + leave; red when < 8h on a weekday
-                                        $workHours  = $cell ? $cell['total'] : 0;
-                                        $totalEff   = $workHours + $leaveHours;
-                                        $isWeekday  = !$isWeekendDay && !$isHolidayDay;
-                                        $isShort    = $isWeekday && $totalEff < 8;
+                                        // OT hours for this user on this day
+                                        $otsForDay  = $otHoursByUserDay[$row['user_id']][$dayKey] ?? [];
+                                        $otHoursDay = array_sum(array_column($otsForDay, 'hours'));
 
-                                        // Cell background: red for short weekdays; otherwise today/holiday/weekend
+                                        // Red background = work + leave < 8h on a weekday (OT is extra, not counted)
+                                        $workHours = $cell ? $cell['total'] : 0;
+                                        $totalEff  = $workHours + $leaveHours;
+                                        $isWeekday = !$isWeekendDay && !$isHolidayDay;
+                                        $isShort   = $isWeekday && $totalEff < 8;
+
+                                        // Cell background
                                         $cellBg = $isShort
                                             ? 'bg-red-50 dark:bg-red-950/50'
                                             : ($day->isToday()
@@ -419,36 +531,46 @@
                                                 : ($isHolidayDay ? $calHolidayBg
                                                     : ($isWeekendDay ? $calWeekendBg : '')));
 
-                                        // Build tooltip lines
-                                        $workDescs  = $cell ? array_filter($cell['descriptions']) : [];
+                                        $workDescs = $cell ? array_filter($cell['descriptions']) : [];
                                     @endphp
                                     <td class="px-1 py-1 text-center {{ $cellBg }}">
-                                        @if($cell || $leaveHours > 0)
+                                        @if($cell || $leaveHours > 0 || $otHoursDay > 0)
                                             @php
                                                 $cellUrl = $cell ? route('time-logs.index', [
                                                     'date_from' => $dayKey,
                                                     'date_to'   => $dayKey,
                                                     'user_id'   => $row['user_id'],
                                                 ]) : null;
-                                                $hasTip = !empty($workDescs) || $leaveHours > 0;
+                                                $hasTip = !empty($workDescs) || $leaveHours > 0 || $otHoursDay > 0;
                                             @endphp
                                             <div x-data="{ open: false }" class="relative inline-block"
                                                 @mouseenter="open = true" @mouseleave="open = false">
 
-                                                {{-- Work hours --}}
+                                                {{-- NT (work hours) --}}
                                                 @if($cell)
-                                                    <a href="{{ $cellUrl }}"
-                                                        class="block text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline px-1 rounded hover:bg-violet-50 dark:hover:bg-violet-900 transition">
-                                                        {{ \App\Models\TimeLog::formatTimeShort($cell['total']) }}
-                                                    </a>
+                                                    <div x-show="showNT">
+                                                        <a href="{{ $cellUrl }}"
+                                                            class="block text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline px-1 rounded hover:bg-violet-50 dark:hover:bg-violet-900 transition">
+                                                            {{ \App\Models\TimeLog::formatTimeShort($cell['total']) }}
+                                                        </a>
+                                                    </div>
                                                 @else
-                                                    <span class="block text-xs text-gray-400 dark:text-gray-500 px-1">—</span>
+                                                    <span class="block text-xs text-gray-400 dark:text-gray-500 px-1" x-show="showNT">—</span>
                                                 @endif
 
-                                                {{-- Leave badge (shown below work hours) --}}
+                                                {{-- Leave badge --}}
                                                 @if($leaveHours > 0)
-                                                    <div class="text-xs text-amber-500 dark:text-amber-400 leading-tight mt-0.5 whitespace-nowrap">
+                                                    <div x-show="showLeaves"
+                                                        class="text-xs text-amber-500 dark:text-amber-400 leading-tight mt-0.5 whitespace-nowrap">
                                                         🏖 {{ \App\Models\TimeLog::formatTimeShort($leaveHours) }}
+                                                    </div>
+                                                @endif
+
+                                                {{-- OT badge --}}
+                                                @if($otHoursDay > 0)
+                                                    <div x-show="showOT"
+                                                        class="text-xs text-orange-500 dark:text-orange-400 leading-tight mt-0.5 whitespace-nowrap">
+                                                        ⏱ {{ \App\Models\TimeLog::formatTimeShort($otHoursDay) }}
                                                     </div>
                                                 @endif
 
@@ -458,21 +580,30 @@
                                                     class="absolute z-30 bottom-full left-1/2 -translate-x-1/2 mb-2 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-xl pointer-events-none min-w-max max-w-xs text-left">
                                                     @if(!empty($workDescs))
                                                         <div style="white-space: pre-wrap;"
-                                                            class="{{ $leaveHours > 0 ? 'pb-1 mb-1 border-b border-gray-700' : '' }}">{{ implode("\n", $workDescs) }}</div>
+                                                            class="{{ ($leaveHours > 0 || $otHoursDay > 0) ? 'pb-1 mb-1 border-b border-gray-700' : '' }}">{{ implode("\n", $workDescs) }}</div>
                                                     @endif
                                                     @if($leaveHours > 0)
-                                                        <div class="text-yellow-300 font-medium">
+                                                        <div class="text-yellow-300 font-medium {{ $otHoursDay > 0 ? 'pb-1 mb-1 border-b border-gray-700' : '' }}">
                                                             🏖 Nghỉ phép: {{ \App\Models\TimeLog::formatTimeShort($leaveHours) }}
                                                         </div>
                                                         @foreach($leavesForDay as $ld)
-                                                            <div class="text-yellow-400 pl-3">· {{ $ld['type'] }} ({{ \App\Models\TimeLog::formatTimeShort($ld['hours']) }})</div>
+                                                            <div class="text-yellow-400 pl-3 {{ $otHoursDay > 0 ? 'pb-0.5' : '' }}">· {{ $ld['type'] }} ({{ \App\Models\TimeLog::formatTimeShort($ld['hours']) }})</div>
+                                                        @endforeach
+                                                    @endif
+                                                    @if($otHoursDay > 0)
+                                                        @if($leaveHours > 0)<div class="border-t border-gray-700 mt-1 pt-1"></div>@endif
+                                                        <div class="text-orange-300 font-medium">
+                                                            ⏱ Tăng ca: {{ \App\Models\TimeLog::formatTimeShort($otHoursDay) }}
+                                                        </div>
+                                                        @foreach($otsForDay as $od)
+                                                            <div class="text-orange-400 pl-3">· {{ $od['type'] }} ({{ \App\Models\TimeLog::formatTimeShort($od['hours']) }})</div>
                                                         @endforeach
                                                     @endif
                                                 </div>
                                                 @endif
                                             </div>
                                         @else
-                                            {{-- Nothing: show 0h in red on weekdays, dash otherwise --}}
+                                            {{-- Empty weekday: show 0h in red, otherwise dash --}}
                                             @if($isShort)
                                                 <span class="text-red-400 dark:text-red-500 text-xs font-medium">0h</span>
                                             @else

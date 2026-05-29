@@ -204,7 +204,7 @@ class TimeLogController extends Controller
         $user = auth()->user();
         if (!$this->_canEditLog($user, $timeLog)) abort(403);
         $timeLog->delete();
-        return redirect()->route('time-logs.index')->with('success', 'Time log deleted.');
+        return redirect()->back()->with('success', 'Time log deleted.');
     }
 
     /**
@@ -454,6 +454,44 @@ class TimeLogController extends Controller
             }
         }
 
+        // ── Approved OT hours mapped by context / project / user ─────────
+        // Used by all three group-view sections as an overlay on day cells.
+        $approvedOts = OvertimeRequest::whereIn('user_id', $queryUserIds)
+            ->where('status', 'approved')
+            ->where('start_at', '<=', $weekEnd->copy()->endOfDay()->toDateTimeString())
+            ->where('end_at',   '>=', $weekStart->copy()->startOfDay()->toDateTimeString())
+            ->get();
+
+        // [contextKey][date] = total hours  (contextKey = 'task_X' | 'project_X' | 'other')
+        $otHoursByContextDay = [];
+        // [projectKey][date] = total hours  (projectKey = 'project_X' | 'no_project')
+        $otHoursByProjectDay = [];
+        // [user_id][date] = [['hours'=>X, 'type'=>'...']]
+        $otHoursByUserDay    = [];
+
+        foreach ($approvedOts as $ot) {
+            $dk = Carbon::parse($ot->start_at)->toDateString();
+            if ($dk < $weekStart->toDateString() || $dk > $weekEnd->toDateString()) continue;
+
+            // Context key
+            if ($ot->task_id)        $cKey = 'task_'    . $ot->task_id;
+            elseif ($ot->project_id) $cKey = 'project_' . $ot->project_id;
+            else                     $cKey = 'other';
+            $otHoursByContextDay[$cKey][$dk] = ($otHoursByContextDay[$cKey][$dk] ?? 0) + $ot->hours;
+
+            // Project key
+            $pKey = $ot->project_id ? 'project_' . $ot->project_id : 'no_project';
+            $otHoursByProjectDay[$pKey][$dk] = ($otHoursByProjectDay[$pKey][$dk] ?? 0) + $ot->hours;
+
+            // Per user
+            $otHoursByUserDay[$ot->user_id][$dk][] = ['hours' => $ot->hours, 'type' => $ot->type];
+        }
+
+        // ── View-layer toggles (NT / Leaves / OT) ─────────────────────────
+        $showNT     = ($hasExplicit ? $request->query('show_nt',     '1') : ($saved['show_nt']     ?? '1')) !== '0';
+        $showLeaves = ($hasExplicit ? $request->query('show_leaves', '1') : ($saved['show_leaves'] ?? '1')) !== '0';
+        $showOT     = ($hasExplicit ? $request->query('show_ot',     '1') : ($saved['show_ot']     ?? '1')) !== '0';
+
         // ── Persist current filters ────────────────────────────────────────
         $prefs->update(['timesheet_weekly_filters' => [
             'ts_from'      => $tsFrom,
@@ -465,6 +503,9 @@ class TimeLogController extends Controller
             'show_context' => $showContext ? '1' : '0',
             'show_user'    => $showUser    ? '1' : '0',
             'show_project' => $showProject ? '1' : '0',
+            'show_nt'      => $showNT      ? '1' : '0',
+            'show_leaves'  => $showLeaves  ? '1' : '0',
+            'show_ot'      => $showOT      ? '1' : '0',
         ]]);
 
         return view('time_logs.weekly', compact(
@@ -477,7 +518,9 @@ class TimeLogController extends Controller
             'availableProjects', 'availableTasks',
             'holidayDates', 'isMultiUser',
             'showContext', 'showUser', 'showProject',
-            'leaveHoursByUserDay'
+            'leaveHoursByUserDay',
+            'otHoursByContextDay', 'otHoursByProjectDay', 'otHoursByUserDay',
+            'showNT', 'showLeaves', 'showOT'
         ));
     }
 

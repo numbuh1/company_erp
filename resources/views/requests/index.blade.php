@@ -100,8 +100,10 @@
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dự án</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Công việc</th>
                     @endif
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ghi chú</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Người duyệt</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lý do từ chối</th>
                     <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Thao tác</th>
                 </tr>
             </thead>
@@ -171,13 +173,33 @@
                             {{ $isLeave ? '—' : ($r->task?->name ?? '—') }}
                         </td>
                         @endif
+                        <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 max-w-[180px]">
+                            @if($r->description)
+                                <span class="block truncate" title="{{ $r->description }}">{{ $r->description }}</span>
+                            @else
+                                <span class="text-gray-300 dark:text-gray-600">—</span>
+                            @endif
+                        </td>
                         <td class="px-4 py-3">
                             <span class="inline-block text-xs px-2 py-1 rounded {{ $statusClass }}">
                                 {{ ['pending' => 'Đang chờ', 'approved' => 'Đã duyệt', 'rejected' => 'Đã từ chối'][$r->status] ?? ucfirst($r->status) }}
                             </span>
                         </td>
-                        <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                            {{ $r->approver?->name ?? '-' }}
+                        <td class="px-4 py-3">
+                            @if($r->approver)
+                                <a href="{{ route('users.show', $r->approver) }}" class="hover:opacity-75 transition">
+                                    <x-user-status :user="$r->approver" />
+                                </a>
+                            @else
+                                <span class="text-gray-400 text-sm">—</span>
+                            @endif
+                        </td>
+                        <td class="px-4 py-3 text-sm max-w-[160px]">
+                            @if($r->status === 'rejected' && $r->reject_reason)
+                                <span class="text-red-500 dark:text-red-400 block truncate" title="{{ $r->reject_reason }}">{{ $r->reject_reason }}</span>
+                            @else
+                                <span class="text-gray-300 dark:text-gray-600">—</span>
+                            @endif
                         </td>
                         <td class="px-4 py-3 text-right">
                             <div class="flex items-center justify-end gap-1.5">
@@ -218,7 +240,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="{{ $type === 'all' ? 11 : ($type === 'leave' ? 8 : 10) }}" class="px-6 py-10 text-center text-gray-400">
+                        <td colspan="{{ $type === 'all' ? 13 : ($type === 'leave' ? 10 : 12) }}" class="px-6 py-10 text-center text-gray-400">
                             Không có yêu cầu nào trong khoảng thời gian được chọn.
                         </td>
                     </tr>
