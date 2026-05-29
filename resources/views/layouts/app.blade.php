@@ -25,6 +25,21 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @stack('styles')
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/multi-select-dropdown-js/MultiSelect.min.css">
+        <style>
+            /* "N được chọn" collapse badge for multi-selects with 3+ selections */
+            .ms-count-badge {
+                display: inline-flex;
+                align-items: center;
+                padding: 2px 10px;
+                border-radius: 9999px;
+                font-size: 0.75rem;
+                font-weight: 500;
+                white-space: nowrap;
+                background: #e0e7ff;
+                color: #4338ca;
+            }
+            .dark .ms-count-badge { background: #3730a3; color: #c7d2fe; }
+        </style>
 
         {{-- Tom Select --}}
         <link href="https://cdn.jsdelivr.net/npm/tom-select@2.5.2/dist/css/tom-select.css" rel="stylesheet">
@@ -93,7 +108,31 @@
                 function initMultiSelects() {
                     document.querySelectorAll('[data-multi-select]').forEach(function (el) {
                         if (el._multiSelect) el._multiSelect.destroy();
-                        new MultiSelect(el, { theme: getTheme() });
+
+                        // Collapse header tags to "{N} được chọn" when 3+ items selected
+                        function collapseIfNeeded(msEl) {
+                            if (!msEl) return;
+                            var header = msEl.querySelector('.multi-select-header');
+                            if (!header) return;
+                            var tags = header.querySelectorAll('.multi-select-header-option');
+                            if (tags.length >= 3) {
+                                var n = tags.length;
+                                tags.forEach(function (t) { t.style.display = 'none'; });
+                                var badge = header.querySelector('.ms-count-badge');
+                                if (!badge) {
+                                    badge = document.createElement('span');
+                                    badge.className = 'ms-count-badge';
+                                    header.prepend(badge);
+                                }
+                                badge.textContent = n + ' được chọn';
+                            }
+                        }
+
+                        var inst = new MultiSelect(el, {
+                            theme: getTheme(),
+                            onChange: function () { collapseIfNeeded(inst.element); }
+                        });
+                        collapseIfNeeded(inst.element);
                     });
                 }
 

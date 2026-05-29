@@ -42,7 +42,7 @@
                     <table class="text-xs min-w-full border border-gray-200 dark:border-gray-700 rounded">
                         <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                @foreach(['name*','email*','password','position','grade','roles'] as $col)
+                                @foreach(['name*','email*','password','position','grade','roles','team','team_leader'] as $col)
                                     <th class="px-3 py-2 text-left font-semibold text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">{{ $col }}</th>
                                 @endforeach
                             </tr>
@@ -55,6 +55,8 @@
                                 <td class="px-3 py-2 text-gray-500 dark:text-gray-400">Developer</td>
                                 <td class="px-3 py-2 text-gray-500 dark:text-gray-400">Junior</td>
                                 <td class="px-3 py-2 text-gray-500 dark:text-gray-400">Staff|Manager</td>
+                                <td class="px-3 py-2 text-gray-500 dark:text-gray-400">Dev Team</td>
+                                <td class="px-3 py-2 text-gray-500 dark:text-gray-400">0</td>
                             </tr>
                         </tbody>
                     </table>
@@ -63,6 +65,8 @@
                     <li>* Bắt buộc. Dòng đầu tiên phải là tiêu đề (header row).</li>
                     <li>• <strong>password</strong> — để trống để tự động tạo mật khẩu ngẫu nhiên.</li>
                     <li>• <strong>roles</strong> — phân cách bằng dấu <code>|</code>, ví dụ: <code>Staff|Manager</code>.</li>
+                    <li>• <strong>team</strong> — tùy chọn. Tên nhóm để thêm người dùng vào; nếu chưa tồn tại sẽ tự động tạo mới.</li>
+                    <li>• <strong>team_leader</strong> — tùy chọn. Đặt <code>1</code> (hoặc <code>true</code> / <code>yes</code>) để gán người dùng làm trưởng nhóm; mặc định là <code>0</code>.</li>
                     <li>• Email trùng lặp sẽ bị bỏ qua.</li>
                 </ul>
                 <div class="mt-3">

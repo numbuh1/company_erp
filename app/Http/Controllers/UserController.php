@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\WelcomeUserMail;
+use App\Models\Team;
 use App\Models\User;
 use App\Models\UserPreference;
 use App\Models\LeaveBalanceLog;
@@ -138,8 +139,8 @@ class UserController extends Controller
     {
         if (!auth()->user()->can('create all user')) abort(403);
 
-        $headers = ['name', 'email', 'password', 'position', 'grade', 'roles'];
-        $sample  = ['Nguyen Van A', 'vana@company.com', '', 'Developer', 'Junior', 'Staff'];
+        $headers = ['name', 'email', 'password', 'position', 'grade', 'roles', 'team', 'team_leader'];
+        $sample  = ['Nguyen Van A', 'vana@company.com', '', 'Developer', 'Junior', 'Staff', 'Dev Team', '0'];
 
         $csv = implode(',', $headers) . "\n" . implode(',', $sample) . "\n";
 
@@ -175,12 +176,14 @@ class UserController extends Controller
 
             $data = array_combine($headers, array_pad($cols, count($headers), ''));
 
-            $name     = trim($data['name']     ?? '');
-            $email    = trim($data['email']    ?? '');
-            $password = trim($data['password'] ?? '');
-            $position = trim($data['position'] ?? '') ?: null;
-            $grade    = trim($data['grade']    ?? '') ?: null;
-            $roles    = array_filter(array_map('trim', explode('|', $data['roles'] ?? '')));
+            $name       = trim($data['name']        ?? '');
+            $email      = trim($data['email']       ?? '');
+            $password   = trim($data['password']    ?? '');
+            $position   = trim($data['position']    ?? '') ?: null;
+            $grade      = trim($data['grade']       ?? '') ?: null;
+            $roles      = array_filter(array_map('trim', explode('|', $data['roles'] ?? '')));
+            $teamName   = trim($data['team']        ?? '') ?: null;
+            $isLeader   = in_array(trim($data['team_leader'] ?? ''), ['1', 'true', 'yes'], true);
 
             if (!$name || !$email) {
                 $errors[] = "Dòng {$row}: thiếu name hoặc email.";
@@ -212,6 +215,14 @@ class UserController extends Controller
                 if (!empty($roles)) {
                     $validRoles = Role::whereIn('name', $roles)->pluck('name')->toArray();
                     $user->syncRoles($validRoles);
+                }
+
+                if ($teamName) {
+                    $team = Team::firstOrCreate(['name' => $teamName]);
+                    // Attach user to team (or update pivot if already a member)
+                    $team->users()->syncWithoutDetaching([
+                        $user->id => ['is_leader' => $isLeader],
+                    ]);
                 }
 
                 if ($sendEmail) {

@@ -44,9 +44,7 @@
     </x-slot>
 
     @if(session('success'))
-        <div class="px-6 pt-4">
-            <div class="p-3 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-sm">{{ session('success') }}</div>
-        </div>
+        <div class="mx-4 mt-3 p-3 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-sm">{{ session('success') }}</div>
     @endif
 
     {{-- Tab bar --}}

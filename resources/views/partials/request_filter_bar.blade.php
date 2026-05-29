@@ -9,7 +9,7 @@ $lastMonth = [
 ];
 @endphp
 
-<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm px-4 py-3 mb-4">
+<div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
     <form id="filterForm" method="GET" action="{{ route($routeName) }}" class="flex flex-wrap items-end gap-3">
 
         {{-- Date range --}}
