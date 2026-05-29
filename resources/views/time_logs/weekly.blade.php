@@ -244,7 +244,7 @@
             {{-- ── Main grid (single table, sticky first 2 cols + sticky header) ──
                  overflow-auto + max-h creates the scroll container that makes
                  both position:sticky left (cols) and position:sticky top (row) work --}}
-            <div class="ts-scroll bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-auto max-h-[calc(100vh-14rem)]">
+            <div class="ts-scroll bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-auto max-h-[calc(100vh-10rem)]">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm border-separate border-spacing-0">
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
