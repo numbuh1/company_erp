@@ -26,7 +26,11 @@
                             border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
                         Theo ngày
                     </a>
-                    {{-- Temporarily hidden: Theo dự án --}}
+                    <a href="{{ route('timesheets.project') }}"
+                        class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
+                            border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                        Theo dự án
+                    </a>
                     <a href="{{ route('timesheets.calendar') }}"
                         class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
                             border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">

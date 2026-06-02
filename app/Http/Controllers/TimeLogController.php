@@ -668,232 +668,182 @@ class TimeLogController extends Controller
         $user        = auth()->user();
         $viewableIds = $this->_viewableUserIds($user);
 
-        // Month
-        $monthStr   = $request->query('month', now()->format('Y-m'));
-        $monthDate  = Carbon::parse($monthStr . '-01');
-        $monthStart = $monthDate->copy()->startOfMonth();
-        $monthEnd   = $monthDate->copy()->endOfMonth();
-        $prevMonth  = $monthDate->copy()->subMonth()->format('Y-m');
-        $nextMonth  = $monthDate->copy()->addMonth()->format('Y-m');
+        // ── Date range (default = current week) ───────────────────────────
+        $fromDate = $request->query('from_date', now()->startOfWeek(Carbon::MONDAY)->format('Y-m-d'));
+        $toDate   = $request->query('to_date',   now()->endOfWeek(Carbon::SUNDAY)->format('Y-m-d'));
+        $start    = Carbon::parse($fromDate)->startOfDay();
+        $end      = Carbon::parse($toDate)->endOfDay();
+        if ($start->gt($end)) $end = $start->copy()->addDays(6);
+        if ($start->diffInDays($end) > 90) $end = $start->copy()->addDays(90);
+        $fromDate = $start->format('Y-m-d');
+        $toDate   = $end->format('Y-m-d');
 
         $days = collect();
-        for ($d = $monthStart->copy(); $d->lte($monthEnd); $d->addDay()) {
+        for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
             $days->push($d->copy());
         }
 
-        $projects          = Project::orderBy('name')->get();
-        $selectedProjectId = $request->query('project_id') ? (int) $request->query('project_id') : null;
-        $selectedProject   = null;
+        // ── Filters ────────────────────────────────────────────────────────
+        $toInts = fn(mixed $v) => array_values(array_map('intval', array_filter((array) $v)));
 
-        $taskRows  = [];
-        $userRows  = [];
+        $filterProjectIds = $toInts($request->query('project_ids', []));
+        $filterTaskIds    = $toInts($request->query('task_ids',    []));
+        $filterUserIds    = $toInts($request->query('user_ids',    []));
+
+        // Determine effective user IDs for queries
+        if ($viewableIds === null) {
+            $effectiveUserIds = empty($filterUserIds) ? null : $filterUserIds;
+        } else {
+            $effectiveUserIds = empty($filterUserIds)
+                ? $viewableIds
+                : array_values(array_intersect($filterUserIds, $viewableIds));
+        }
+
+        // ── Filter dropdown options ────────────────────────────────────────
+        $availableProjects = Project::orderBy('name')->get(['id', 'name']);
+        $availableTasks    = Task::whereNotNull('project_id')->orderBy('name')->get(['id', 'name', 'project_id']);
+        $availableUsers    = null;
+        if ($viewableIds === null) {
+            $availableUsers = User::orderBy('name')->get(['id', 'name', 'position']);
+        } elseif (count($viewableIds) > 1) {
+            $availableUsers = User::whereIn('id', $viewableIds)->orderBy('name')->get(['id', 'name', 'position']);
+        }
+
+        // ── Query time logs ────────────────────────────────────────────────
+        $logsQuery = TimeLog::whereBetween('date', [$fromDate, $toDate])
+            ->whereNotNull('project_id')
+            ->with(['user', 'task', 'project']);
+
+        if ($effectiveUserIds !== null) $logsQuery->whereIn('user_id', $effectiveUserIds);
+        if (!empty($filterProjectIds))  $logsQuery->whereIn('project_id', $filterProjectIds);
+        if (!empty($filterTaskIds))     $logsQuery->whereIn('task_id',    $filterTaskIds);
+
+        $timeLogs = $logsQuery->get();
+
+        // ── Query approved OT ──────────────────────────────────────────────
+        $otQuery = OvertimeRequest::where('status', 'approved')
+            ->whereDate('start_at', '>=', $fromDate)
+            ->whereDate('start_at', '<=', $toDate)
+            ->whereNotNull('project_id')
+            ->with(['user', 'task', 'project']);
+
+        if ($effectiveUserIds !== null) $otQuery->whereIn('user_id', $effectiveUserIds);
+        if (!empty($filterProjectIds))  $otQuery->whereIn('project_id', $filterProjectIds);
+        if (!empty($filterTaskIds))     $otQuery->whereIn('task_id',    $filterTaskIds);
+
+        $otRequests = $otQuery->get();
+
+        // ── Build nested structure: Project → Task → User ─────────────────
+        // Structure:
+        //   $projectGroups[$pk] = [project_id, project, total_hours, total_ot, days[], tasks[
+        //     $tk => [task_id, task, total_hours, total_ot, days[], users[
+        //       $uk => [user_id, user, total_hours, total_ot, days[]]
+        //     ]]
+        //   ]]
+        $projectGroups = [];
+
+        $bump = function (array &$node, string $dk, float $hours, float $ot) {
+            $node['total_hours'] += $hours;
+            $node['total_ot']    += $ot;
+            $node['days'][$dk]['hours']    = ($node['days'][$dk]['hours']    ?? 0) + $hours;
+            $node['days'][$dk]['ot_hours'] = ($node['days'][$dk]['ot_hours'] ?? 0) + $ot;
+        };
+
+        foreach ($timeLogs as $log) {
+            $dk = $log->date->format('Y-m-d');
+            $pk = 'p_'  . $log->project_id;
+            $tk = 'tk_' . ($log->task_id ?? 'none');
+            $uk = 'u_'  . $log->user_id;
+
+            if (!isset($projectGroups[$pk])) {
+                $projectGroups[$pk] = ['project_id' => $log->project_id, 'project' => $log->project,
+                    'total_hours' => 0, 'total_ot' => 0, 'days' => [], 'tasks' => []];
+            }
+            if (!isset($projectGroups[$pk]['tasks'][$tk])) {
+                $projectGroups[$pk]['tasks'][$tk] = ['task_id' => $log->task_id, 'task' => $log->task,
+                    'total_hours' => 0, 'total_ot' => 0, 'days' => [], 'users' => []];
+            }
+            if (!isset($projectGroups[$pk]['tasks'][$tk]['users'][$uk])) {
+                $projectGroups[$pk]['tasks'][$tk]['users'][$uk] = ['user_id' => $log->user_id, 'user' => $log->user,
+                    'total_hours' => 0, 'total_ot' => 0, 'days' => []];
+            }
+
+            $bump($projectGroups[$pk], $dk, $log->time_spent, 0);
+            $bump($projectGroups[$pk]['tasks'][$tk], $dk, $log->time_spent, 0);
+            $bump($projectGroups[$pk]['tasks'][$tk]['users'][$uk], $dk, $log->time_spent, 0);
+        }
+
+        foreach ($otRequests as $ot) {
+            $dk = Carbon::parse($ot->start_at)->format('Y-m-d');
+            if ($dk < $fromDate || $dk > $toDate) continue;
+            $pk = 'p_'  . $ot->project_id;
+            $tk = 'tk_' . ($ot->task_id ?? 'none');
+            $uk = 'u_'  . $ot->user_id;
+
+            if (!isset($projectGroups[$pk])) {
+                $projectGroups[$pk] = ['project_id' => $ot->project_id, 'project' => $ot->project,
+                    'total_hours' => 0, 'total_ot' => 0, 'days' => [], 'tasks' => []];
+            }
+            if (!isset($projectGroups[$pk]['tasks'][$tk])) {
+                $projectGroups[$pk]['tasks'][$tk] = ['task_id' => $ot->task_id, 'task' => $ot->task,
+                    'total_hours' => 0, 'total_ot' => 0, 'days' => [], 'users' => []];
+            }
+            if (!isset($projectGroups[$pk]['tasks'][$tk]['users'][$uk])) {
+                $projectGroups[$pk]['tasks'][$tk]['users'][$uk] = ['user_id' => $ot->user_id, 'user' => $ot->user,
+                    'total_hours' => 0, 'total_ot' => 0, 'days' => []];
+            }
+
+            $bump($projectGroups[$pk], $dk, 0, $ot->hours);
+            $bump($projectGroups[$pk]['tasks'][$tk], $dk, 0, $ot->hours);
+            $bump($projectGroups[$pk]['tasks'][$tk]['users'][$uk], $dk, 0, $ot->hours);
+        }
+
+        // Sort: projects & tasks alphabetically (named first), users alphabetically
+        uasort($projectGroups, fn($a, $b) => strcmp($a['project']?->name ?? '', $b['project']?->name ?? ''));
+        foreach ($projectGroups as &$pg) {
+            uasort($pg['tasks'], fn($a, $b) =>
+                ($a['task_id'] ? 0 : 1) <=> ($b['task_id'] ? 0 : 1)
+                ?: strcmp($a['task']?->name ?? '', $b['task']?->name ?? ''));
+            foreach ($pg['tasks'] as &$tg) {
+                uasort($tg['users'], fn($a, $b) => strcmp($a['user']?->name ?? '', $b['user']?->name ?? ''));
+            }
+            unset($tg);
+        }
+        unset($pg);
+
+        // ── Day totals ─────────────────────────────────────────────────────
         $dayTotals = [];
-
-        if ($selectedProjectId) {
-            $selectedProject = Project::with(['users', 'teams.users', 'tasks'])->find($selectedProjectId);
-        }
-
-        if ($selectedProject) {
-            // All user IDs for this project (direct + via teams), intersected with viewable scope
-            $projectUserIds = $selectedProject->users->pluck('id')->toArray();
-            $teamUserIds    = $selectedProject->teams->flatMap(fn($t) => $t->users->pluck('id'))->toArray();
-            $allProjectUserIds = array_values(array_unique(array_merge($projectUserIds, $teamUserIds)));
-            if ($viewableIds !== null) {
-                $allProjectUserIds = array_values(array_intersect($allProjectUserIds, $viewableIds));
-            }
-
-            $projectUsers = User::whereIn('id', $allProjectUserIds)->orderBy('name')->get()->keyBy('id');
-            $projectTasks = Task::where('project_id', $selectedProjectId)->orderBy('name')->get()->keyBy('id');
-
-            // Time logs
-            $timeLogs = TimeLog::where('project_id', $selectedProjectId)
-                ->whereBetween('date', [$monthStart->toDateString(), $monthEnd->toDateString()])
-                ->with(['user', 'task'])
-                ->get();
-
-            // Approved OT for this project
-            $otRequests = OvertimeRequest::where('project_id', $selectedProjectId)
-                ->where('status', 'approved')
-                ->whereDate('start_at', '>=', $monthStart->toDateString())
-                ->whereDate('start_at', '<=', $monthEnd->toDateString())
-                ->with('user')
-                ->get();
-
-            // ── Build Task rows ──────────────────────────────────────
-            $taskRowData = [];
-
-            foreach ($timeLogs as $log) {
-                $taskKey  = $log->task_id ? 'task_' . $log->task_id : 'no_task';
-                $dk       = $log->date->format('Y-m-d');
-                $userObj  = $projectUsers->get($log->user_id);
-                $cost     = (float) ($userObj?->hourly_rate ?? 0) * $log->time_spent;
-
-                if (!isset($taskRowData[$taskKey])) {
-                    $task = $log->task_id ? ($projectTasks->get($log->task_id) ?? $log->task) : null;
-                    $taskRowData[$taskKey] = [
-                        'task'           => $task,
-                        'task_id'        => $log->task_id,
-                        'label'          => $log->task_id
-                            ? 'TK-' . $log->task_id . ($task ? ' · ' . $task->name : '')
-                            : '(Không có công việc)',
-                        'days'           => [],
-                        'total_hours'    => 0,
-                        'total_ot'       => 0,
-                        'total_cost'     => 0,
-                        'total_ot_cost'  => 0,
-                    ];
-                }
-                if (!isset($taskRowData[$taskKey]['days'][$dk])) {
-                    $taskRowData[$taskKey]['days'][$dk] = ['hours' => 0, 'ot_hours' => 0, 'cost' => 0, 'ot_cost' => 0];
-                }
-                $taskRowData[$taskKey]['days'][$dk]['hours'] += $log->time_spent;
-                $taskRowData[$taskKey]['days'][$dk]['cost']  += $cost;
-                $taskRowData[$taskKey]['total_hours']        += $log->time_spent;
-                $taskRowData[$taskKey]['total_cost']         += $cost;
-            }
-
-            foreach ($otRequests as $ot) {
-                $taskKey    = $ot->task_id ? 'task_' . $ot->task_id : 'no_task';
-                $dk         = Carbon::parse($ot->start_at)->format('Y-m-d');
-                $multiplier = match ($ot->type) {
-                    'OT x1.5' => 1.5, 'OT x2' => 2.0, 'OT x3' => 3.0, default => 1.0,
-                };
-                $userObj = $projectUsers->get($ot->user_id);
-                $cost    = (float) ($userObj?->hourly_rate ?? 0) * $ot->hours * $multiplier;
-
-                if (!isset($taskRowData[$taskKey])) {
-                    $task = $ot->task_id ? $projectTasks->get($ot->task_id) : null;
-                    $taskRowData[$taskKey] = [
-                        'task'          => $task,
-                        'task_id'       => $ot->task_id,
-                        'label'         => $ot->task_id
-                            ? 'TK-' . $ot->task_id . ($task ? ' · ' . $task->name : '')
-                            : '(Không có công việc)',
-                        'days'          => [],
-                        'total_hours'   => 0,
-                        'total_ot'      => 0,
-                        'total_cost'    => 0,
-                        'total_ot_cost' => 0,
-                    ];
-                }
-                if (!isset($taskRowData[$taskKey]['days'][$dk])) {
-                    $taskRowData[$taskKey]['days'][$dk] = ['hours' => 0, 'ot_hours' => 0, 'cost' => 0, 'ot_cost' => 0];
-                }
-                $taskRowData[$taskKey]['days'][$dk]['ot_hours']  += $ot->hours;
-                $taskRowData[$taskKey]['days'][$dk]['ot_cost']   += $cost;
-                $taskRowData[$taskKey]['total_ot']               += $ot->hours;
-                $taskRowData[$taskKey]['total_ot_cost']          += $cost;
-            }
-            $taskRows = $taskRowData;
-
-            // ── Build User rows ──────────────────────────────────────
-            $userRowData = [];
-
-            foreach ($timeLogs as $log) {
-                $userKey = 'user_' . $log->user_id;
-                $dk      = $log->date->format('Y-m-d');
-                $userObj = $projectUsers->get($log->user_id);
-                $cost    = (float) ($userObj?->hourly_rate ?? 0) * $log->time_spent;
-
-                if (!isset($userRowData[$userKey])) {
-                    $userRowData[$userKey] = [
-                        'user'          => $userObj ?? $log->user,
-                        'user_id'       => $log->user_id,
-                        'days'          => [],
-                        'total_hours'   => 0,
-                        'total_ot'      => 0,
-                        'total_cost'    => 0,
-                        'total_ot_cost' => 0,
-                    ];
-                }
-                if (!isset($userRowData[$userKey]['days'][$dk])) {
-                    $userRowData[$userKey]['days'][$dk] = ['hours' => 0, 'ot_hours' => 0, 'cost' => 0, 'ot_cost' => 0];
-                }
-                $userRowData[$userKey]['days'][$dk]['hours'] += $log->time_spent;
-                $userRowData[$userKey]['days'][$dk]['cost']  += $cost;
-                $userRowData[$userKey]['total_hours']        += $log->time_spent;
-                $userRowData[$userKey]['total_cost']         += $cost;
-            }
-
-            foreach ($otRequests as $ot) {
-                $userKey    = 'user_' . $ot->user_id;
-                $dk         = Carbon::parse($ot->start_at)->format('Y-m-d');
-                $multiplier = match ($ot->type) {
-                    'OT x1.5' => 1.5, 'OT x2' => 2.0, 'OT x3' => 3.0, default => 1.0,
-                };
-                $userObj = $projectUsers->get($ot->user_id);
-                $cost    = (float) ($userObj?->hourly_rate ?? 0) * $ot->hours * $multiplier;
-
-                if (!isset($userRowData[$userKey])) {
-                    $userRowData[$userKey] = [
-                        'user'          => $userObj ?? $ot->user,
-                        'user_id'       => $ot->user_id,
-                        'days'          => [],
-                        'total_hours'   => 0,
-                        'total_ot'      => 0,
-                        'total_cost'    => 0,
-                        'total_ot_cost' => 0,
-                    ];
-                }
-                if (!isset($userRowData[$userKey]['days'][$dk])) {
-                    $userRowData[$userKey]['days'][$dk] = ['hours' => 0, 'ot_hours' => 0, 'cost' => 0, 'ot_cost' => 0];
-                }
-                $userRowData[$userKey]['days'][$dk]['ot_hours']  += $ot->hours;
-                $userRowData[$userKey]['days'][$dk]['ot_cost']   += $cost;
-                $userRowData[$userKey]['total_ot']               += $ot->hours;
-                $userRowData[$userKey]['total_ot_cost']          += $cost;
-            }
-
-            uasort($userRowData, fn($a, $b) => strcmp($a['user']?->name ?? '', $b['user']?->name ?? ''));
-            $userRows = $userRowData;
-
-            // Day totals (from user rows to avoid double-count)
-            foreach ($days as $day) {
-                $dk              = $day->format('Y-m-d');
-                $dayTotals[$dk]  = ['hours' => 0, 'ot_hours' => 0, 'cost' => 0, 'ot_cost' => 0];
-                foreach ($userRows as $row) {
-                    $dayTotals[$dk]['hours']    += $row['days'][$dk]['hours']    ?? 0;
-                    $dayTotals[$dk]['ot_hours'] += $row['days'][$dk]['ot_hours'] ?? 0;
-                    $dayTotals[$dk]['cost']     += $row['days'][$dk]['cost']     ?? 0;
-                    $dayTotals[$dk]['ot_cost']  += $row['days'][$dk]['ot_cost']  ?? 0;
-                }
+        foreach ($days as $day) {
+            $dk = $day->format('Y-m-d');
+            $dayTotals[$dk] = ['hours' => 0, 'ot_hours' => 0];
+            foreach ($projectGroups as $pg) {
+                $dayTotals[$dk]['hours']    += $pg['days'][$dk]['hours']    ?? 0;
+                $dayTotals[$dk]['ot_hours'] += $pg['days'][$dk]['ot_hours'] ?? 0;
             }
         }
 
-        // Grand totals & daily stats
-        $grandTotalHours   = (float) collect($dayTotals)->sum('hours');
-        $grandTotalOt      = (float) collect($dayTotals)->sum('ot_hours');
-        $grandTotalCost    = (float) collect($dayTotals)->sum('cost');
-        $grandTotalOtCost  = (float) collect($dayTotals)->sum('ot_cost');
+        $grandTotalHours = (float) collect($dayTotals)->sum('hours');
+        $grandTotalOt    = (float) collect($dayTotals)->sum('ot_hours');
+        $holidayDates    = PublicHoliday::getHolidayDates($start->copy(), $end->copy());
 
-        $activeDayHours = array_values(array_filter(
-            array_map(fn($d) => $d['hours'] + $d['ot_hours'], $dayTotals),
-            fn($h) => $h > 0
-        ));
-        $activeDayCosts = array_values(array_filter(
-            array_map(fn($d) => $d['cost'] + $d['ot_cost'], $dayTotals),
-            fn($c) => $c > 0
-        ));
-
-        $maxHours    = $activeDayHours ? max($activeDayHours) : 0;
-        $minHours    = $activeDayHours ? min($activeDayHours) : 0;
-        $medianHours = $activeDayHours ? $this->_median($activeDayHours) : 0;
-        $maxCost     = $activeDayCosts ? max($activeDayCosts)  : 0;
-        $minCost     = $activeDayCosts ? min($activeDayCosts)  : 0;
-        $medianCost  = $activeDayCosts ? $this->_median($activeDayCosts) : 0;
-
-        $holidayDates  = PublicHoliday::getHolidayDates($monthStart->copy(), $monthEnd->copy());
-        $canViewSalary = $user->can('view salary') || $user->can('edit all user');
+        // Alpine initial open state — all expanded by default
+        $initOpenProjects = [];
+        $initOpenTasks    = [];
+        foreach ($projectGroups as $pk => $pg) {
+            $initOpenProjects[$pk] = true;
+            foreach ($pg['tasks'] as $tk => $tg) {
+                $initOpenTasks[$pk . '_' . $tk] = true;
+            }
+        }
 
         return view('time_logs.project', compact(
-            'projects', 'selectedProject', 'selectedProjectId',
-            'monthDate', 'monthStart', 'monthEnd', 'days',
-            'prevMonth', 'nextMonth', 'monthStr',
-            'taskRows', 'userRows', 'dayTotals',
-            'grandTotalHours', 'grandTotalOt', 'grandTotalCost', 'grandTotalOtCost',
-            'maxHours', 'minHours', 'medianHours',
-            'maxCost', 'minCost', 'medianCost',
-            'holidayDates', 'canViewSalary'
+            'days', 'fromDate', 'toDate',
+            'projectGroups', 'dayTotals',
+            'grandTotalHours', 'grandTotalOt',
+            'availableProjects', 'availableTasks', 'availableUsers',
+            'filterProjectIds', 'filterTaskIds', 'filterUserIds',
+            'holidayDates',
+            'initOpenProjects', 'initOpenTasks'
         ));
     }
 
