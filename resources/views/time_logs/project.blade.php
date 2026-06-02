@@ -276,7 +276,12 @@
                             @php
                                 $dk    = $day->format('Y-m-d');
                                 $dCell = $pg['days'][$dk] ?? null;
-                                $wkBg  = (in_array($dk, $holidayDates) || $day->isWeekend()) ? 'bg-red-50/50 dark:bg-red-900/10' : 'bg-indigo-50/40 dark:bg-indigo-900/10';
+                                // Sticky cells MUST use opaque backgrounds — semi-transparent lets scrolling rows bleed through
+                                $wkBg  = $day->isToday()
+                                    ? 'bg-indigo-100 dark:bg-indigo-900/60'
+                                    : ((in_array($dk, $holidayDates) || $day->isWeekend())
+                                        ? 'bg-red-50 dark:bg-red-900/30'
+                                        : 'bg-indigo-50 dark:bg-indigo-900/30');
                             @endphp
                             <td class="pj-day-col px-0.5 py-3 text-center {{ $wkBg }}">
                                 @if($dCell && ($dCell['hours'] + $dCell['ot_hours'] > 0))
