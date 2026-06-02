@@ -21,6 +21,15 @@
         thead th { position: sticky; top: 0; z-index: 4; }
         thead .pj-c1, thead .pj-c2 { z-index: 6; }
 
+        /* ── Project rows sticky below thead (≈ 48px) ───────────────── */
+        .pj-project-row td          { position: sticky; top: 48px; z-index: 1; }
+        .pj-project-row .pj-c1,
+        .pj-project-row .pj-c2      { z-index: 4; }
+
+        /* ── Day column right-border separators ─────────────────────── */
+        .pj-day-col { border-right: 1px solid #e5e7eb; }
+        html.dark .pj-day-col { border-right-color: #374151; }
+
         /* ── Always-visible scrollbars ──────────────────────────────── */
         .pj-scroll { scrollbar-width: thin; scrollbar-color: #94a3b8 #e2e8f0; }
         .dark .pj-scroll { scrollbar-color: #4b5563 #1e293b; }
@@ -177,16 +186,6 @@
                 class="text-xs text-gray-500 dark:text-gray-400 hover:underline">
                 Thu gọn tất cả
             </button>
-            <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">
-                {{ count($projectGroups) }} dự án
-                · {{ $days->count() }} ngày
-                @if($grandTotalHours > 0)
-                    · <span class="font-medium text-gray-600 dark:text-gray-300">{{ number_format($grandTotalHours, 1) }}h</span>
-                @endif
-                @if($grandTotalOt > 0)
-                    + <span class="text-orange-500">{{ number_format($grandTotalOt, 1) }}h OT</span>
-                @endif
-            </span>
         </div>
         @endif
 
@@ -226,7 +225,7 @@
                                         ? 'bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400'
                                         : 'bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400');
                             @endphp
-                            <th class="px-0.5 py-2 text-center font-medium {{ $hCls }}">
+                            <th class="pj-day-col px-0.5 py-2 text-center font-medium {{ $hCls }}">
                                 <div class="font-semibold">{{ $day->format('d') }}</div>
                                 <div class="text-[10px] font-normal opacity-70">{{ $day->translatedFormat('D') }}</div>
                             </th>
@@ -243,13 +242,13 @@
                         $pLink  = $pg['project'] ? route('projects.show', $pId) : null;
                     @endphp
 
-                    {{-- ── Project row ── --}}
-                    <tr class="border-t-2 border-gray-300 dark:border-gray-500">
-                        <td class="pj-c1 bg-indigo-50 dark:bg-indigo-900/25 px-2 py-1.5">
+                    {{-- ── Project row (sticky below header) ── --}}
+                    <tr class="pj-project-row border-t-2 border-gray-300 dark:border-gray-500">
+                        <td class="pj-c1 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-3">
                             <div class="flex items-center gap-1.5 min-w-0">
                                 {{-- Expand/collapse toggle --}}
                                 <button type="button" @click="toggleProject('{{ $pk }}')"
-                                    class="shrink-0 w-4 h-4 text-indigo-400 dark:text-indigo-400 hover:text-indigo-600 transition">
+                                    class="shrink-0 w-4 h-4 text-indigo-400 hover:text-indigo-600 transition">
                                     <svg x-show="openProjects['{{ $pk }}']" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
                                     </svg>
@@ -265,7 +264,7 @@
                                 @endif
                             </div>
                         </td>
-                        <td class="pj-c2 bg-indigo-100 dark:bg-indigo-900/40 px-2 py-1.5 text-center font-bold">
+                        <td class="pj-c2 bg-indigo-100 dark:bg-indigo-900/40 px-2 py-3 text-center font-bold">
                             @if($pg['total_hours'] > 0)
                                 <div class="text-indigo-700 dark:text-indigo-300">{{ number_format($pg['total_hours'], 1) }}h</div>
                             @endif
@@ -279,7 +278,7 @@
                                 $dCell = $pg['days'][$dk] ?? null;
                                 $wkBg  = (in_array($dk, $holidayDates) || $day->isWeekend()) ? 'bg-red-50/50 dark:bg-red-900/10' : 'bg-indigo-50/40 dark:bg-indigo-900/10';
                             @endphp
-                            <td class="px-0.5 py-1.5 text-center {{ $wkBg }}">
+                            <td class="pj-day-col px-0.5 py-3 text-center {{ $wkBg }}">
                                 @if($dCell && ($dCell['hours'] + $dCell['ot_hours'] > 0))
                                     @if($dCell['hours'] > 0)<div class="font-semibold text-indigo-600 dark:text-indigo-400">{{ number_format($dCell['hours'], 1) }}h</div>@endif
                                     @if($dCell['ot_hours'] > 0)<div class="text-orange-500">+{{ number_format($dCell['ot_hours'], 1) }}h</div>@endif
@@ -298,8 +297,8 @@
                         @endphp
 
                         <tr x-show="openProjects['{{ $pk }}']" x-cloak
-                            class="border-t border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition">
-                            <td class="pj-c1 bg-white dark:bg-gray-800 px-2 py-1.5 pl-7">
+                            class="border-t border-gray-200 dark:border-gray-600 hover:brightness-95 transition">
+                            <td class="pj-c1 bg-gray-100 dark:bg-gray-700/50 px-2 py-2 pl-7">
                                 <div class="flex items-center gap-1.5 min-w-0">
                                     {{-- Task toggle --}}
                                     <button type="button" @click="toggleTask('{{ $openKey }}')"
@@ -312,18 +311,18 @@
                                         </svg>
                                     </button>
                                     @if($tId)
-                                        <span class="font-mono text-[10px] font-semibold text-gray-400 shrink-0">TK-{{ $tId }}</span>
+                                        <span class="font-mono text-[10px] font-semibold text-gray-500 dark:text-gray-400 shrink-0">TK-{{ $tId }}</span>
                                     @endif
                                     @if($tLink)
-                                        <a href="{{ $tLink }}" class="text-gray-700 dark:text-gray-300 hover:underline truncate">{{ $tLabel }}</a>
+                                        <a href="{{ $tLink }}" class="font-medium text-gray-800 dark:text-gray-200 hover:underline truncate">{{ $tLabel }}</a>
                                     @else
-                                        <span class="text-gray-400 italic truncate">{{ $tLabel }}</span>
+                                        <span class="text-gray-500 italic truncate">{{ $tLabel }}</span>
                                     @endif
                                 </div>
                             </td>
-                            <td class="pj-c2 bg-gray-50 dark:bg-gray-750 px-2 py-1.5 text-center">
+                            <td class="pj-c2 bg-gray-100 dark:bg-gray-700/50 px-2 py-2 text-center">
                                 @if($tg['total_hours'] > 0)
-                                    <div class="font-semibold text-gray-700 dark:text-gray-300">{{ number_format($tg['total_hours'], 1) }}h</div>
+                                    <div class="font-semibold text-gray-800 dark:text-gray-200">{{ number_format($tg['total_hours'], 1) }}h</div>
                                 @endif
                                 @if($tg['total_ot'] > 0)
                                     <div class="text-orange-500">+{{ number_format($tg['total_ot'], 1) }}h</div>
@@ -333,17 +332,17 @@
                                 @php
                                     $dk    = $day->format('Y-m-d');
                                     $dCell = $tg['days'][$dk] ?? null;
-                                    $wkBg  = (in_array($dk, $holidayDates) || $day->isWeekend()) ? 'bg-red-50/40 dark:bg-red-900/10' : '';
+                                    $wkBg  = (in_array($dk, $holidayDates) || $day->isWeekend()) ? 'bg-red-50/40 dark:bg-red-900/10' : 'bg-gray-100/60 dark:bg-gray-700/40';
                                     $url   = route('time-logs.index', array_filter([
                                         'project_id' => $pId,
                                         'task_id'    => $tId ?: null,
                                         'date_from'  => $dk, 'date_to' => $dk,
                                     ]));
                                 @endphp
-                                <td class="px-0.5 py-1.5 text-center {{ $wkBg }}">
+                                <td class="pj-day-col px-0.5 py-2 text-center {{ $wkBg }}">
                                     @if($dCell && ($dCell['hours'] + $dCell['ot_hours'] > 0))
                                         <a href="{{ $url }}" class="block rounded hover:bg-indigo-50 dark:hover:bg-indigo-900/20 px-0.5 transition">
-                                            @if($dCell['hours'] > 0)<div class="font-semibold text-gray-700 dark:text-gray-300">{{ number_format($dCell['hours'], 1) }}h</div>@endif
+                                            @if($dCell['hours'] > 0)<div class="font-semibold text-gray-800 dark:text-gray-200">{{ number_format($dCell['hours'], 1) }}h</div>@endif
                                             @if($dCell['ot_hours'] > 0)<div class="text-orange-500">+{{ number_format($dCell['ot_hours'], 1) }}h</div>@endif
                                         </a>
                                     @endif
@@ -359,18 +358,26 @@
                                 $uLink = $ug['user'] ? route('users.show', $uId) : null;
                             @endphp
                             <tr x-show="openProjects['{{ $pk }}'] && openTasks['{{ $openKey }}']" x-cloak
-                                class="border-t border-gray-100 dark:border-gray-700/50 hover:bg-gray-50/80 dark:hover:bg-gray-700/20 transition">
-                                <td class="pj-c1 bg-white dark:bg-gray-800 px-2 py-1 pl-14">
+                                class="border-t border-gray-100 dark:border-gray-700/40 hover:bg-gray-50 dark:hover:bg-gray-700/20 transition">
+                                <td class="pj-c1 bg-white dark:bg-gray-800 px-2 py-2 pl-12">
                                     <div class="flex items-center gap-1.5 min-w-0">
-                                        <span class="text-gray-400 dark:text-gray-600 shrink-0 text-[10px]">↳</span>
+                                        {{-- Mini avatar --}}
+                                        @if($ug['user']?->profile_picture)
+                                            <img src="{{ asset('storage/profile_pictures/' . $ug['user']->profile_picture) }}"
+                                                class="w-5 h-5 rounded-full object-cover border border-gray-200 dark:border-gray-600 shrink-0">
+                                        @elseif($ug['user'])
+                                            <div class="w-5 h-5 rounded-full bg-pink-100 dark:bg-pink-900 flex items-center justify-center text-pink-600 dark:text-pink-300 text-[9px] font-bold shrink-0 border border-pink-200 dark:border-pink-700">
+                                                {{ strtoupper(substr($ug['user']->name, 0, 1)) }}
+                                            </div>
+                                        @endif
                                         @if($uLink)
-                                            <a href="{{ $uLink }}" class="text-gray-600 dark:text-gray-400 hover:underline truncate">{{ $uName }}</a>
+                                            <a href="{{ $uLink }}" class="text-gray-700 dark:text-gray-300 hover:underline truncate">{{ $uName }}</a>
                                         @else
                                             <span class="text-gray-500 dark:text-gray-500 truncate">{{ $uName }}</span>
                                         @endif
                                     </div>
                                 </td>
-                                <td class="pj-c2 bg-gray-50/50 dark:bg-gray-800 px-2 py-1 text-center">
+                                <td class="pj-c2 bg-white dark:bg-gray-800 px-2 py-2 text-center">
                                     @if($ug['total_hours'] > 0)
                                         <div class="text-gray-600 dark:text-gray-400">{{ number_format($ug['total_hours'], 1) }}h</div>
                                     @endif
@@ -390,7 +397,7 @@
                                             'date_from'  => $dk, 'date_to' => $dk,
                                         ]));
                                     @endphp
-                                    <td class="px-0.5 py-1 text-center {{ $wkBg }}">
+                                    <td class="pj-day-col px-0.5 py-2 text-center {{ $wkBg }}">
                                         @if($dCell && ($dCell['hours'] + $dCell['ot_hours'] > 0))
                                             <a href="{{ $url }}" class="block rounded hover:bg-indigo-50 dark:hover:bg-indigo-900/20 px-0.5 transition">
                                                 @if($dCell['hours'] > 0)<div class="text-gray-600 dark:text-gray-400">{{ number_format($dCell['hours'], 1) }}h</div>@endif
@@ -426,7 +433,7 @@
                             $tot = $dayTotals[$dk] ?? ['hours' => 0, 'ot_hours' => 0];
                             $wkBg = (in_array($dk, $holidayDates) || $day->isWeekend()) ? 'bg-red-50/40 dark:bg-red-900/10' : '';
                         @endphp
-                        <td class="px-0.5 py-2 text-center {{ $wkBg }}">
+                        <td class="pj-day-col px-0.5 py-2 text-center {{ $wkBg }}">
                             @if($tot['hours'] > 0)
                                 <div class="font-semibold text-gray-700 dark:text-gray-300">{{ number_format($tot['hours'], 1) }}h</div>
                             @endif
