@@ -343,15 +343,26 @@ document.addEventListener('DOMContentLoaded', function () {
      TIME LOG FAB — quick log button (bottom-right, replaces check-in)
      Primary (pink) when today's total < 8h, secondary (gray) when ≥ 8h.
 ════════════════════════════════════════════════════════════════════ --}}
+
+{{-- Pass task array via a script global to avoid @json / " breaking
+     Alpine's JS object-literal parser when embedded in x-data="..." --}}
+<script>
+window._tlFabTasks = {!! json_encode(
+    $tlTasks->map(fn($t) => ['id' => $t->id, 'name' => $t->name, 'pid' => $t->project_id])->values()->all(),
+    JSON_HEX_TAG
+) !!};
+window._tlFabDefaultHours = {{ $tlLeft > 0 ? (float) min($tlLeft, 8) : 1 }};
+</script>
+
 <div id="timelog-fab"
      x-data="{
          open: false,
          projectId: '',
          taskId: '',
-         hours: {{ $tlLeft > 0 ? min($tlLeft, 8) : 1 }},
+         hours: window._tlFabDefaultHours,
          desc: '',
          submitting: false,
-         allTasks: @json($tlTasks->map(fn($t) => ['id' => $t->id, 'name' => $t->name, 'pid' => $t->project_id])),
+         allTasks: window._tlFabTasks || [],
          get filteredTasks() {
              if (!this.projectId) return this.allTasks;
              return this.allTasks.filter(t => String(t.pid) === String(this.projectId));
