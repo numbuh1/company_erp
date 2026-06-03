@@ -129,6 +129,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/comments', [CommentController::class, 'store'])->name('comments.store');
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
 
+    Route::get('time-logs/export', [TimeLogController::class, 'export'])->name('time-logs.export');
     Route::resource('time-logs', TimeLogController::class);
     Route::get('timesheets/timeline', [TimeLogController::class, 'weekly'])->name('timesheets.timeline');
     Route::get('timesheets/calendar', [TimeLogController::class, 'monthly'])->name('timesheets.calendar');

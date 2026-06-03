@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\TimeLogExport;
 use App\Models\TimeLog;
 use App\Models\Project;
 use App\Models\Task;
@@ -13,6 +14,7 @@ use App\Models\LeaveRequest;
 use App\Models\OvertimeRequest;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Maatwebsite\Excel\Facades\Excel;
 
 class TimeLogController extends Controller
 {
@@ -141,6 +143,12 @@ class TimeLogController extends Controller
         $data['user_id'] = auth()->id();
         TimeLog::create($data);
 
+        // _fab=1 means the request came from the floating Time Log button;
+        // redirect back to whichever page the user was on.
+        if ($request->boolean('_fab')) {
+            return redirect()->back()->with('success', 'Đã lưu giờ làm.');
+        }
+
         return redirect()->route('time-logs.index')->with('success', 'Time logged successfully.');
     }
 
@@ -205,6 +213,46 @@ class TimeLogController extends Controller
         if (!$this->_canEditLog($user, $timeLog)) abort(403);
         $timeLog->delete();
         return redirect()->back()->with('success', 'Time log deleted.');
+    }
+
+    /**
+     * Export Time Logs + OT Requests to Excel (.xlsx), two sheets.
+     * Respects the same viewable-scope and optional query filters as index().
+     */
+    public function export(Request $request)
+    {
+        $user        = auth()->user();
+        $viewableIds = $this->_viewableUserIds($user);
+
+        // Resolve effective user IDs (team or individual filter)
+        $userIds = null;
+        if ($request->filled('team_id') && ($user->can('view all timesheet') || $user->can('view team timesheet'))) {
+            $members = Team::find($request->team_id)?->users()->pluck('users.id')->toArray() ?? [];
+            $userIds = $viewableIds !== null ? array_values(array_intersect($members, $viewableIds)) : $members;
+        } elseif ($request->filled('user_id') && ($viewableIds === null || count($viewableIds) > 1)) {
+            $uid     = (int) $request->user_id;
+            $userIds = ($viewableIds === null || in_array($uid, $viewableIds)) ? [$uid] : null;
+        }
+
+        // If no explicit user filter was given but we have a viewable scope, use it
+        if ($userIds === null && $viewableIds !== null) {
+            $userIds = $viewableIds;
+        }
+
+        $filters = array_filter([
+            'date_from'  => $request->date_from  ?: null,
+            'date_to'    => $request->date_to    ?: null,
+            'user_ids'   => $userIds,
+            'project_id' => $request->project_id ?: null,
+            'task_id'    => $request->task_id    ?: null,
+        ]);
+
+        $filename = 'timelog_export_' . now()->format('Ymd_His') . '.xlsx';
+
+        return Excel::download(
+            new TimeLogExport(viewableIds: null, filters: $filters),
+            $filename
+        );
     }
 
     /**

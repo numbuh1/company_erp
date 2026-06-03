@@ -2,7 +2,19 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Bảng chấm công</h2>
-            <a href="{{ route('time-logs.create') }}"><x-primary-button>Chấm công</x-primary-button></a>
+            <div class="flex items-center gap-2">
+                @php
+                    $exportUrl = route('time-logs.export') . (request()->getQueryString() ? '?' . request()->getQueryString() : '');
+                @endphp
+                <a href="{{ $exportUrl }}"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 bg-white dark:bg-gray-800 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Xuất Excel
+                </a>
+                <a href="{{ route('time-logs.create') }}"><x-primary-button>Chấm công</x-primary-button></a>
+            </div>
         </div>
     </x-slot>
 
