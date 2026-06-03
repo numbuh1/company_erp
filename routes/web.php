@@ -131,9 +131,10 @@ Route::middleware('auth')->group(function () {
 
     Route::get('time-logs/export', [TimeLogController::class, 'export'])->name('time-logs.export');
     Route::resource('time-logs', TimeLogController::class);
-    Route::get('timesheets/timeline', [TimeLogController::class, 'weekly'])->name('timesheets.timeline');
-    Route::get('timesheets/calendar', [TimeLogController::class, 'monthly'])->name('timesheets.calendar');
-    Route::get('timesheets/project', [TimeLogController::class, 'projectView'])->name('timesheets.project');
+    Route::get('timesheets/timeline',    [TimeLogController::class, 'weekly'])->name('timesheets.timeline');
+    Route::get('timesheets/calendar',    [TimeLogController::class, 'monthly'])->name('timesheets.calendar');
+    Route::get('timesheets/project',     [TimeLogController::class, 'projectView'])->name('timesheets.project');
+    Route::get('timesheets/attendance',  [TimeLogController::class, 'attendanceView'])->name('timesheets.attendance');
 
     Route::post('announcements/upload-image', [AnnouncementController::class, 'uploadImage'])
         ->name('announcements.upload-image');

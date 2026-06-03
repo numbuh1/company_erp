@@ -896,6 +896,142 @@ class TimeLogController extends Controller
     }
 
     /**
+     * Attendance timesheet — user × day grid showing work / leave / OT hours
+     * with color-coded cells based on daily coverage.
+     */
+    public function attendanceView(Request $request)
+    {
+        $user        = auth()->user();
+        $viewableIds = $this->_viewableUserIds($user);
+
+        // ── Date range (default = current month) ──────────────────────────
+        $fromDate = $request->query('from_date', now()->startOfMonth()->format('Y-m-d'));
+        $toDate   = $request->query('to_date',   now()->endOfMonth()->format('Y-m-d'));
+        $start    = Carbon::parse($fromDate)->startOfDay();
+        $end      = Carbon::parse($toDate)->endOfDay();
+        if ($start->gt($end))              $end = $start->copy()->addDays(30);
+        if ($start->diffInDays($end) > 90) $end = $start->copy()->addDays(90);
+        $fromDate = $start->format('Y-m-d');
+        $toDate   = $end->format('Y-m-d');
+
+        $days = collect();
+        for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
+            $days->push($d->copy());
+        }
+
+        // ── Filters ────────────────────────────────────────────────────────
+        $toInts        = fn(mixed $v) => array_values(array_map('intval', array_filter((array) $v)));
+        $filterTeamIds = $toInts($request->query('team_ids', []));
+        $filterUserIds = $toInts($request->query('user_ids', []));
+
+        // ── Dropdown options ───────────────────────────────────────────────
+        if ($viewableIds === null) {
+            $availableTeams = Team::orderBy('name')->get(['id', 'name']);
+            $availableUsers = User::orderBy('name')->get(['id', 'name', 'position']);
+        } elseif (count($viewableIds) > 1) {
+            $availableTeams = Team::whereHas('users', fn ($q) => $q->whereIn('users.id', $viewableIds))
+                ->orderBy('name')->get(['id', 'name']);
+            $availableUsers = User::whereIn('id', $viewableIds)->orderBy('name')
+                ->get(['id', 'name', 'position']);
+        } else {
+            $availableTeams = collect();
+            $availableUsers = collect();
+        }
+
+        // ── Resolve effective member IDs ───────────────────────────────────
+        $effectiveIds = $viewableIds; // null = unrestricted
+
+        if (!empty($filterTeamIds)) {
+            $teamMemberIds = [];
+            foreach ($filterTeamIds as $tid) {
+                $ms = Team::find($tid)?->users()->pluck('users.id')->toArray() ?? [];
+                $teamMemberIds = array_merge($teamMemberIds, $ms);
+            }
+            $teamMemberIds = array_unique($teamMemberIds);
+            if ($effectiveIds !== null) {
+                $teamMemberIds = array_values(array_intersect($teamMemberIds, $effectiveIds));
+            }
+            $effectiveIds = $teamMemberIds;
+        }
+
+        if (!empty($filterUserIds)) {
+            $effectiveIds = $effectiveIds !== null
+                ? array_values(array_intersect($filterUserIds, $effectiveIds))
+                : $filterUserIds;
+        }
+
+        // ── Members ────────────────────────────────────────────────────────
+        $membersQuery = User::orderBy('name');
+        if ($effectiveIds !== null) {
+            $membersQuery->whereIn('id', !empty($effectiveIds) ? $effectiveIds : [-1]);
+        }
+        $members   = $membersQuery->get();
+        $memberIds = $members->pluck('id')->toArray();
+
+        // ── Time logs: [user_id][date] = hours ─────────────────────────────
+        $tlByUserDay = [];
+        if (!empty($memberIds)) {
+            foreach (
+                TimeLog::whereIn('user_id', $memberIds)
+                    ->whereBetween('date', [$fromDate, $toDate])
+                    ->get(['user_id', 'date', 'time_spent']) as $log
+            ) {
+                $dk = $log->date->format('Y-m-d');
+                $tlByUserDay[$log->user_id][$dk] = ($tlByUserDay[$log->user_id][$dk] ?? 0) + $log->time_spent;
+            }
+        }
+
+        // ── Approved leaves: [user_id][date] = prorated hours ─────────────
+        $lvByUserDay = [];
+        if (!empty($memberIds)) {
+            foreach (
+                LeaveRequest::where('status', 'approved')
+                    ->whereIn('user_id', $memberIds)
+                    ->where('start_at', '<=', $end->toDateTimeString())
+                    ->where('end_at',   '>=', $start->toDateTimeString())
+                    ->get(['user_id', 'start_at', 'end_at', 'hours']) as $leave
+            ) {
+                $lS  = Carbon::parse($leave->start_at)->startOfDay();
+                $lE  = Carbon::parse($leave->end_at)->startOfDay();
+                $hpd = $leave->hours / max(1, $lS->diffInDays($lE) + 1);
+                $cur = $lS->copy()->max($start->copy()->startOfDay());
+                $cap = $lE->copy()->min($end->copy()->startOfDay());
+                while ($cur->lte($cap)) {
+                    $dk = $cur->toDateString();
+                    $lvByUserDay[$leave->user_id][$dk] = ($lvByUserDay[$leave->user_id][$dk] ?? 0) + $hpd;
+                    $cur->addDay();
+                }
+            }
+        }
+
+        // ── Approved OT: [user_id][date] = hours ──────────────────────────
+        $otByUserDay = [];
+        if (!empty($memberIds)) {
+            foreach (
+                OvertimeRequest::where('status', 'approved')
+                    ->whereIn('user_id', $memberIds)
+                    ->whereDate('start_at', '>=', $fromDate)
+                    ->whereDate('start_at', '<=', $toDate)
+                    ->get(['user_id', 'start_at', 'hours']) as $ot
+            ) {
+                $dk = Carbon::parse($ot->start_at)->toDateString();
+                $otByUserDay[$ot->user_id][$dk] = ($otByUserDay[$ot->user_id][$dk] ?? 0) + $ot->hours;
+            }
+        }
+
+        $holidayDates = PublicHoliday::getHolidayDates($start->copy(), $end->copy());
+        $today        = now()->toDateString();
+
+        return view('time_logs.attendance', compact(
+            'members', 'days', 'fromDate', 'toDate',
+            'tlByUserDay', 'lvByUserDay', 'otByUserDay',
+            'availableTeams', 'availableUsers',
+            'filterTeamIds', 'filterUserIds',
+            'holidayDates', 'today'
+        ));
+    }
+
+    /**
      * Determine which user IDs the current user may view.
      * Returns null if unrestricted (all users).
      */
