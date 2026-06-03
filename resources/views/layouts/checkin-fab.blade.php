@@ -441,8 +441,10 @@ window._tlFabDefaultHours = {{ $tlLeft > 0 ? (float) min($tlLeft, 8) : 1 }};
                 </div>
             </div>
 
-            {{-- Form --}}
-            <form method="POST" action="{{ route('time-logs.store') }}" class="px-5 py-5 space-y-4">
+            {{-- Form — @submit sets submitting flag AFTER browser queues the
+                 native POST, so the button never becomes disabled mid-click. --}}
+            <form method="POST" action="{{ route('time-logs.store') }}"
+                  @submit="submitting = true" class="px-5 py-5 space-y-4">
                 @csrf
                 <input type="hidden" name="date"  value="{{ $tlToday }}">
                 <input type="hidden" name="_fab"  value="1">
@@ -478,7 +480,7 @@ window._tlFabDefaultHours = {{ $tlLeft > 0 ? (float) min($tlLeft, 8) : 1 }};
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Số giờ</label>
                     <div class="flex gap-1.5 flex-wrap mb-2">
-                        @foreach([0.25, 0.5, 1, 1.5, 2, 3, 4] as $qh)
+                        @foreach([0.5, 1, 2, 4, 8] as $qh)
                             <button type="button" @click="quickSet({{ $qh }})"
                                 :class="hours == {{ $qh }} ? 'bg-pink-100 dark:bg-pink-900/40 border-pink-400 text-pink-700 dark:text-pink-300' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'"
                                 class="px-2.5 py-1 text-xs rounded border transition font-medium">
@@ -513,7 +515,7 @@ window._tlFabDefaultHours = {{ $tlLeft > 0 ? (float) min($tlLeft, 8) : 1 }};
                                text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
                         Hủy
                     </button>
-                    <button type="submit" :disabled="submitting || !hours || hours <= 0" @click="submitting = true"
+                    <button type="submit" :disabled="submitting || hours <= 0"
                         class="px-4 py-2 text-sm rounded-lg bg-pink-600 hover:bg-pink-700
                                text-white font-medium transition disabled:opacity-50">
                         <span x-show="!submitting">Lưu giờ làm</span>
