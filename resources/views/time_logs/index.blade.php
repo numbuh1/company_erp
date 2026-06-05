@@ -14,8 +14,7 @@
                     </svg>
                     Xuất Excel
                 </a>
-                @endcan
-                <a href="{{ route('time-logs.create') }}"><x-primary-button>Chấm công</x-primary-button></a>
+                @endcan                
             </div>
         </div>
     </x-slot>
