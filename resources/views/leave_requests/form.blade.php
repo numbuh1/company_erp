@@ -70,12 +70,14 @@
                             class="w-full border rounded p-2" @disabled($readonly)>
                     </div>
 
-                    <!-- Hours (auto) -->
+                    <!-- Hours (auto-calculated; multi-day breakdown shown below) -->
                     <div class="mb-4">
-                        <x-input-label value="Giờ" />
-                        <input type="number" step="0.5" id="hours" name="hours"
+                        <x-input-label value="Tổng giờ nghỉ" />
+                        <input type="number" step="0.25" id="hours" name="hours"
                             value="{{ old('hours', $leave->hours ?? '') }}"
                             class="w-full border rounded p-2" @disabled($readonly)>
+                        {{-- Breakdown shown by JS when leave spans multiple days --}}
+                        <div id="leave-hours-breakdown" class="hidden mt-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded text-xs text-gray-600 dark:text-gray-300 space-y-0.5"></div>
                     </div>
 
                     <!-- Description -->

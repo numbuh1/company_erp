@@ -342,6 +342,13 @@
                                             @if($dCell['hours'] > 0)<div class="font-semibold text-gray-800 dark:text-gray-200">{{ number_format($dCell['hours'], 1) }}h</div>@endif
                                             @if($dCell['ot_hours'] > 0)<div class="text-orange-500">+{{ number_format($dCell['ot_hours'], 1) }}h</div>@endif
                                         </a>
+                                    @elseif(!$day->isWeekend() && !in_array($dk, $holidayDates))
+                                        {{-- Empty weekday task cell → open FAB prefilled --}}
+                                        @can('module timesheet')
+                                        <button type="button"
+                                            onclick="window.dispatchEvent(new CustomEvent('tl-fab-open',{detail:{date:'{{ $dk }}',projectId:'{{ $pId }}',taskId:'{{ $tId }}'},bubbles:true}))"
+                                            class="w-full h-full text-gray-300 dark:text-gray-600 text-[11px] hover:bg-gray-100 dark:hover:bg-gray-700/40 rounded transition" title="Chấm giờ {{ $dk }}">+</button>
+                                        @endcan
                                     @endif
                                 </td>
                             @endforeach
@@ -401,6 +408,12 @@
                                                 @if($dCell['hours'] > 0)<div class="text-gray-600 dark:text-gray-400">{{ number_format($dCell['hours'], 1) }}h</div>@endif
                                                 @if($dCell['ot_hours'] > 0)<div class="text-orange-500 text-[11px]">+{{ number_format($dCell['ot_hours'], 1) }}h</div>@endif
                                             </a>
+                                        @elseif(!$day->isWeekend() && !in_array($dk, $holidayDates))
+                                            @can('module timesheet')
+                                            <button type="button"
+                                                onclick="window.dispatchEvent(new CustomEvent('tl-fab-open',{detail:{date:'{{ $dk }}',projectId:'{{ $pId }}',taskId:'{{ $tId }}',userId:'{{ $uId }}'},bubbles:true}))"
+                                                class="w-full h-full text-gray-300 dark:text-gray-600 text-[11px] hover:bg-gray-100 dark:hover:bg-gray-700/40 rounded transition" title="Chấm giờ {{ $dk }}">+</button>
+                                            @endcan
                                         @endif
                                     </td>
                                 @endforeach

@@ -294,33 +294,36 @@
                             <td class="border-b border-r {{ $borderCls }} {{ $cellBg }}
                                        px-0.5 py-1 text-center align-top w-12 min-w-[3rem]">
                                 @if($hasAny)
-                                    @php
-                                        $cellUrl = route('time-logs.index', [
-                                            'user_id'   => $member->id,
-                                            'date_from' => $dk,
-                                            'date_to'   => $dk,
-                                        ]);
-                                    @endphp
-                                    <a href="{{ $cellUrl }}" class="block px-0.5 hover:opacity-80 transition">
+                                    @php $cellUrl = route('time-logs.index', ['user_id' => $member->id, 'date_from' => $dk, 'date_to' => $dk]); @endphp
+                                    <div class="leading-tight">
                                         @if($work > 0)
-                                            <div class="text-[10px] font-semibold text-gray-700 dark:text-gray-300 leading-tight">
+                                            <a href="{{ $cellUrl }}" class="block text-[10px] font-semibold text-gray-700 dark:text-gray-300 hover:underline leading-tight">
                                                 {{ \App\Models\TimeLog::formatTimeShort($work) }}
-                                            </div>
+                                            </a>
                                         @endif
                                         @if($leave > 0)
-                                            <div class="text-[10px] text-amber-600 dark:text-amber-400 leading-tight">
+                                            <a href="{{ route('requests.index', ['type' => 'leave', 'date_from' => $dk, 'date_to' => $dk]) }}"
+                                               class="block text-[10px] text-amber-600 dark:text-amber-400 hover:underline leading-tight">
                                                 🏖 {{ \App\Models\TimeLog::formatTimeShort($leave) }}
-                                            </div>
+                                            </a>
                                         @endif
                                         @if($ot > 0)
-                                            <div class="text-[10px] text-orange-500 dark:text-orange-400 leading-tight">
+                                            <a href="{{ route('requests.index', ['type' => 'ot', 'date_from' => $dk, 'date_to' => $dk]) }}"
+                                               class="block text-[10px] text-orange-500 dark:text-orange-400 hover:underline leading-tight">
                                                 ⏱ {{ \App\Models\TimeLog::formatTimeShort($ot) }}
-                                            </div>
+                                            </a>
                                         @endif
-                                    </a>
+                                    </div>
                                 @elseif($isPast && !$isOff)
-                                    {{-- Empty past weekday: show dash in lighter red cell --}}
+                                    {{-- Empty past weekday: clickable to open Time Log FAB --}}
+                                    @can('module timesheet')
+                                    <button type="button"
+                                        onclick="window.dispatchEvent(new CustomEvent('tl-fab-open',{detail:{userId:{{ $member->id }},date:'{{ $dk }}'},bubbles:true}))"
+                                        class="w-full h-full flex items-center justify-center text-red-300 dark:text-red-700 text-[11px] font-medium hover:bg-red-100/50 dark:hover:bg-red-900/20 rounded transition"
+                                        title="Chấm giờ {{ $dk }}">–</button>
+                                    @else
                                     <span class="text-red-300 dark:text-red-700 text-[11px] font-medium select-none">–</span>
+                                    @endcan
                                 @endif
                             </td>
                         @endforeach

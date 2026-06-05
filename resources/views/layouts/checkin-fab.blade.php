@@ -45,6 +45,17 @@
         ->orderBy('name')
         ->get(['id', 'name', 'project_id']);
 
+    // Users for the "log for someone else" dropdown (null = current user only)
+    $fabAuthUser = auth()->user();
+    $tlUsers = null;
+    if ($fabAuthUser->can('edit timesheet')) {
+        $tlUsers = \App\Models\User::orderBy('name')->get(['id', 'name', 'position']);
+    } elseif ($fabAuthUser->can('edit team timesheet')) {
+        $tmIds   = $fabAuthUser->teamMembers()->pluck('id')->toArray();
+        $tmIds[] = $fabAuthUser->id;
+        $tlUsers = \App\Models\User::whereIn('id', array_unique($tmIds))->orderBy('name')->get(['id', 'name', 'position']);
+    }
+
     // Checkout confirmation helpers
     $fabCheckInTime = null;
     if ($fabAtt) {
@@ -347,11 +358,11 @@ document.addEventListener('DOMContentLoaded', function () {
 {{-- Pass task array via a script global to avoid @json / " breaking
      Alpine's JS object-literal parser when embedded in x-data="..." --}}
 <script>
-window._tlFabTasks = {!! json_encode(
-    $tlTasks->map(fn($t) => ['id' => $t->id, 'name' => $t->name, 'pid' => $t->project_id])->values()->all(),
-    JSON_HEX_TAG
-) !!};
+window._tlFabTasks        = {!! json_encode($tlTasks->map(fn($t) => ['id' => $t->id, 'name' => $t->name, 'pid' => $t->project_id])->values()->all(), JSON_HEX_TAG) !!};
 window._tlFabDefaultHours = {{ $tlLeft > 0 ? (float) min($tlLeft, 8) : 1 }};
+window._tlFabDayHoursUrl  = '{{ route('timesheets.day-hours') }}';
+window._tlFabCurrentUser  = {{ auth()->id() }};
+window._tlFabToday        = '{{ now()->toDateString() }}';
 </script>
 
 <div id="timelog-fab"
@@ -360,38 +371,64 @@ window._tlFabDefaultHours = {{ $tlLeft > 0 ? (float) min($tlLeft, 8) : 1 }};
          hours: window._tlFabDefaultHours,
          desc: '',
          submitting: false,
+         summaryWork:  {{ (float) $tlWorkHours }},
+         summaryLeave: {{ (float) $tlLeaveHours }},
+         get summaryTotal() { return Math.round((this.summaryWork + this.summaryLeave) * 100) / 100; },
+         get summaryLeft()  { return Math.max(0, Math.round((8 - this.summaryTotal) * 100) / 100); },
+         get btnPrimary()   { return this.summaryTotal < 8; },
+         fetchSummary(userId, date) {
+             if (!date || !userId) return;
+             fetch(window._tlFabDayHoursUrl + '?user_id=' + encodeURIComponent(userId) + '&date=' + encodeURIComponent(date))
+                 .then(r => r.ok ? r.json() : null)
+                 .then(d => { if (d) { this.summaryWork = d.work; this.summaryLeave = d.leave; } })
+                 .catch(() => {});
+         },
+         openFromCell(data) {
+             const dateEl = document.getElementById('fab-date');
+             if (dateEl && data.date) dateEl.value = data.date;
+             const uid = data.userId || window._tlFabCurrentUser;
+             if (window._fabUserTs) window._fabUserTs.setValue(String(uid));
+             const uh = document.getElementById('fab-user-id-hidden');
+             if (uh) uh.value = String(uid);
+             if (data.projectId && window._fabProjTs) window._fabProjTs.setValue(String(data.projectId));
+             if (data.taskId    && window._fabTaskTs) window._fabTaskTs.setValue(String(data.taskId));
+             this.fetchSummary(uid, data.date || window._tlFabToday);
+             this.open = true;
+         },
          quickSet(h) { this.hours = h; },
      }"
      x-init="
          $watch('open', val => {
              if (!val) {
-                 if (window._fabProjTs) window._fabProjTs.clear();
-                 if (window._fabTaskTs) window._fabTaskTs.clear();
-                 const ph = document.getElementById('fab-project-id');
-                 const th = document.getElementById('fab-task-id');
-                 if (ph) ph.value = '';
-                 if (th) th.value = '';
+                 if (window._fabUserTs)  window._fabUserTs.clear();
+                 if (window._fabProjTs)  window._fabProjTs.clear();
+                 if (window._fabTaskTs)  window._fabTaskTs.clear();
+                 ['fab-user-id-hidden','fab-project-id','fab-task-id'].forEach(id => {
+                     const el = document.getElementById(id);
+                     if (el) el.value = '';
+                 });
+                 const d = document.getElementById('fab-date');
+                 if (d) d.value = window._tlFabToday;
              }
          })
      "
+     @tl-fab-open.window="openFromCell($event.detail)"
      @keydown.escape.window="open = false"
      style="position:fixed; bottom:1.5rem; right:1.5rem; z-index:70">
 
     {{-- ── FAB button ── --}}
     <button type="button" @click="open = !open"
-        class="flex items-center gap-2 px-5 py-3 rounded-full shadow-lg font-bold text-sm transition-colors duration-150
-               {{ $tlIsPrimary
-                   ? 'bg-pink-600 hover:bg-pink-700 text-white'
-                   : 'bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-500 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600' }}">
+        :class="btnPrimary
+            ? 'bg-pink-600 hover:bg-pink-700 text-white'
+            : 'bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-500 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'"
+        class="flex items-center gap-2 px-5 py-3 rounded-full shadow-lg font-bold text-sm transition-colors duration-150">
         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
         </svg>
-        <span>{{ $tlDisplay }}</span>
-        @if($tlLeft > 0)
-            <span class="text-xs font-normal opacity-75">/ {{ number_format($tlLeft, 1) }}h còn lại</span>
-        @else
-            <span class="text-xs font-normal opacity-75">✓</span>
-        @endif
+        <span x-text="summaryTotal.toFixed(1) + 'h'">{{ $tlDisplay }}</span>
+        <span x-show="summaryLeft > 0" class="text-xs font-normal opacity-75"
+              x-text="'/ ' + summaryLeft.toFixed(1) + 'h còn lại'"></span>
+        <span x-show="summaryLeft <= 0" class="text-xs font-normal opacity-75" x-cloak>✓</span>
     </button>
 
     {{-- ── Modal overlay ── --}}
@@ -424,36 +461,57 @@ window._tlFabDefaultHours = {{ $tlLeft > 0 ? (float) min($tlLeft, 8) : 1 }};
                 </button>
             </div>
 
-            {{-- Today summary bar --}}
+            {{-- Summary bar — reactive via Alpine --}}
             <div class="px-5 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 flex items-center gap-4 text-xs">
                 <div class="flex items-center gap-1.5">
                     <span class="text-gray-500 dark:text-gray-400">Công việc:</span>
-                    <span class="font-semibold text-gray-800 dark:text-gray-200">{{ number_format($tlWorkHours, 1) }}h</span>
+                    <span class="font-semibold text-gray-800 dark:text-gray-200" x-text="summaryWork.toFixed(1) + 'h'"></span>
                 </div>
-                @if($tlLeaveHours > 0)
-                <div class="flex items-center gap-1.5">
+                <div class="flex items-center gap-1.5" x-show="summaryLeave > 0">
                     <span class="text-amber-500">🏖</span>
-                    <span class="font-semibold text-amber-600 dark:text-amber-400">{{ number_format($tlLeaveHours, 1) }}h</span>
+                    <span class="font-semibold text-amber-600 dark:text-amber-400" x-text="summaryLeave.toFixed(1) + 'h'"></span>
                 </div>
-                @endif
                 <div class="flex items-center gap-1.5 ml-auto">
                     <span class="text-gray-500 dark:text-gray-400">Tổng:</span>
-                    <span class="font-bold {{ $tlIsPrimary ? 'text-pink-600 dark:text-pink-400' : 'text-green-600 dark:text-green-400' }}">
-                        {{ $tlDisplay }}
-                        {{ $tlIsPrimary ? '/ 8h' : '✓' }}
-                    </span>
+                    <span class="font-bold"
+                          :class="btnPrimary ? 'text-pink-600 dark:text-pink-400' : 'text-green-600 dark:text-green-400'"
+                          x-text="summaryTotal.toFixed(1) + 'h ' + (btnPrimary ? '/ 8h' : '✓')"></span>
                 </div>
             </div>
 
-            {{-- Form — @submit sets submitting flag AFTER browser queues the
-                 native POST, so the button never becomes disabled mid-click. --}}
+            {{-- Form --}}
             <form method="POST" action="{{ route('time-logs.store') }}"
                   @submit="submitting = true" class="px-5 py-5 space-y-4">
                 @csrf
-                <input type="hidden" name="date"       value="{{ $tlToday }}">
                 <input type="hidden" name="_fab"       value="1">
                 <input type="hidden" name="project_id" id="fab-project-id" value="">
                 <input type="hidden" name="task_id"    id="fab-task-id"    value="">
+                <input type="hidden" name="user_id"    id="fab-user-id-hidden" value="{{ auth()->id() }}">
+
+                {{-- User (only shown if permission to log for others) --}}
+                @if($tlUsers)
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Người dùng</label>
+                    <select id="fab-user-ts">
+                        @foreach($tlUsers as $u)
+                            <option value="{{ $u->id }}" {{ $u->id === auth()->id() ? 'selected' : '' }}>
+                                {{ $u->name }}{{ $u->position ? ' · '.$u->position : '' }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                @endif
+
+                {{-- Date --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ngày</label>
+                    <input type="date" id="fab-date" name="date" value="{{ $tlToday }}"
+                        @change="
+                            const uid = document.getElementById('fab-user-id-hidden')?.value || '{{ auth()->id() }}';
+                            fetchSummary(uid, $event.target.value);
+                        "
+                        class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-pink-500 focus:border-pink-500">
+                </div>
 
                 {{-- Project (searchable via TomSelect) --}}
                 <div>
@@ -548,7 +606,26 @@ window._tlFabDefaultHours = {{ $tlLeft > 0 ? (float) min($tlLeft, 8) : 1 }};
 document.addEventListener('DOMContentLoaded', function () {
     const projEl = document.getElementById('fab-project-ts');
     const taskEl = document.getElementById('fab-task-ts');
+    const userEl = document.getElementById('fab-user-ts');
     if (!projEl || !taskEl) return;
+
+    // ── User TomSelect (optional — only present when permission grants it) ──
+    if (userEl) {
+        window._fabUserTs = new TomSelect(userEl, {
+            allowEmptyOption: false,
+            onChange: function (val) {
+                const h = document.getElementById('fab-user-id-hidden');
+                if (h) h.value = val || '';
+                const dateEl = document.getElementById('fab-date');
+                const date   = dateEl ? dateEl.value : window._tlFabToday;
+                // Update summary bar via Alpine
+                const fabEl = document.getElementById('timelog-fab');
+                if (fabEl && fabEl._x_dataStack) {
+                    try { Alpine.$data(fabEl).fetchSummary(val || window._tlFabCurrentUser, date); } catch(e) {}
+                }
+            },
+        });
+    }
 
     const allTasks = window._tlFabTasks || [];
 

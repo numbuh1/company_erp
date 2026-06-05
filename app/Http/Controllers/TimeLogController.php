@@ -140,7 +140,14 @@ class TimeLogController extends Controller
             'time_spent'  => 'required|numeric|min:0.25|max:24',
         ]);
 
-        $data['user_id'] = auth()->id();
+        // Allow logging for other users when the caller has the right permission
+        $targetId = (int) ($request->input('user_id') ?: $user->id);
+        if ($targetId !== $user->id) {
+            if (!$user->can('edit timesheet') && !$user->can('edit team timesheet')) {
+                $targetId = $user->id; // silently fall back to own
+            }
+        }
+        $data['user_id'] = $targetId;
         TimeLog::create($data);
 
         // _fab=1 means the request came from the floating Time Log button;
@@ -254,6 +261,47 @@ class TimeLogController extends Controller
             new TimeLogExport(viewableIds: null, filters: $filters),
             $filename
         );
+    }
+
+    /**
+     * JSON: work + leave hours for a specific user on a specific date.
+     * Used by the Time Log FAB to update the summary bar dynamically.
+     */
+    public function dayHours(Request $request)
+    {
+        $user   = auth()->user();
+        $date   = $request->query('date', now()->toDateString());
+        $userId = (int) ($request->query('user_id') ?: $user->id);
+
+        // Enforce viewable scope
+        $canViewOthers = $user->can('edit timesheet') || $user->can('edit team timesheet');
+        if (!$canViewOthers) $userId = $user->id;
+
+        $work = (float) TimeLog::where('user_id', $userId)
+            ->whereDate('date', $date)
+            ->sum('time_spent');
+
+        $day   = Carbon::parse($date);
+        $leave = 0.0;
+        foreach (
+            LeaveRequest::where('user_id', $userId)
+                ->where('status', 'approved')
+                ->where('start_at', '<=', $day->copy()->endOfDay()->toDateTimeString())
+                ->where('end_at',   '>=', $day->copy()->startOfDay()->toDateTimeString())
+                ->get(['start_at', 'end_at', 'hours']) as $lr
+        ) {
+            $lS  = Carbon::parse($lr->start_at)->startOfDay();
+            $lE  = Carbon::parse($lr->end_at)->startOfDay();
+            $leave += $lr->hours / max(1, $lS->diffInDays($lE) + 1);
+        }
+
+        $total = $work + $leave;
+        return response()->json([
+            'work'  => round($work,  2),
+            'leave' => round($leave, 2),
+            'total' => round($total, 2),
+            'left'  => round(max(0, 8 - $total), 2),
+        ]);
     }
 
     /**
@@ -1000,13 +1048,29 @@ class TimeLogController extends Controller
                     ->where('end_at',   '>=', $start->toDateTimeString())
                     ->get(['user_id', 'start_at', 'end_at', 'hours']) as $leave
             ) {
-                $lS  = Carbon::parse($leave->start_at)->startOfDay();
-                $lE  = Carbon::parse($leave->end_at)->startOfDay();
-                $hpd = $leave->hours / max(1, $lS->diffInDays($lE) + 1);
-                $cur = $lS->copy()->max($start->copy()->startOfDay());
-                $cap = $lE->copy()->min($end->copy()->startOfDay());
+                $lStart    = Carbon::parse($leave->start_at);
+                $lEnd      = Carbon::parse($leave->end_at);
+                $lStartDay = $lStart->toDateString();
+                $lEndDay   = $lEnd->toDateString();
+                // Per-day hours: accurate based on actual start/end times
+                // Work day defaults: 08:00–17:00 (8h)
+                $wStartMins = 8  * 60; // 08:00
+                $wEndMins   = 17 * 60; // 17:00
+                $cur = $lStart->copy()->startOfDay()->max($start->copy()->startOfDay());
+                $cap = $lEnd->copy()->startOfDay()->min($end->copy()->startOfDay());
                 while ($cur->lte($cap)) {
                     $dk = $cur->toDateString();
+                    if ($lStartDay === $lEndDay) {
+                        $hpd = $leave->hours; // single-day leave: store as-is
+                    } elseif ($dk === $lStartDay) {
+                        $startMins = $lStart->hour * 60 + $lStart->minute;
+                        $hpd = max(0, $wEndMins - $startMins) / 60;
+                    } elseif ($dk === $lEndDay) {
+                        $endMins = $lEnd->hour * 60 + $lEnd->minute;
+                        $hpd = max(0, $endMins - $wStartMins) / 60;
+                    } else {
+                        $hpd = 8.0; // full workday
+                    }
                     $lvByUserDay[$leave->user_id][$dk] = ($lvByUserDay[$leave->user_id][$dk] ?? 0) + $hpd;
                     $cur->addDay();
                 }

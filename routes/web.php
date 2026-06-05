@@ -131,6 +131,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('time-logs/export', [TimeLogController::class, 'export'])->name('time-logs.export');
     Route::resource('time-logs', TimeLogController::class);
+    Route::get('timesheets/day-hours',   [TimeLogController::class, 'dayHours'])->name('timesheets.day-hours');
     Route::get('timesheets/timeline',    [TimeLogController::class, 'weekly'])->name('timesheets.timeline');
     Route::get('timesheets/calendar',    [TimeLogController::class, 'monthly'])->name('timesheets.calendar');
     Route::get('timesheets/project',     [TimeLogController::class, 'projectView'])->name('timesheets.project');
