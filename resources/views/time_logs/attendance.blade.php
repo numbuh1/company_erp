@@ -7,10 +7,15 @@
     <style>
         [x-cloak] { display: none !important; }
 
-        /* ── Sticky name column ─────────────────────────────────────────── */
-        .atts-c1        { position: sticky; left: 0; z-index: 3; }
-        thead .atts-c1  { position: sticky; top: 0; z-index: 6; }
-        thead th        { position: sticky; top: 0; z-index: 4; }
+        /* ── Sticky columns ─────────────────────────────────────────────── */
+        /* col1: name (160px)  col2: totals (80px, sits right after col1) */
+        .atts-c1        { position: sticky; left: 0;      z-index: 3; }
+        .atts-c2        { position: sticky; left: 160px;  z-index: 3; border-right: 1px solid; }
+        thead .atts-c1,
+        thead .atts-c2  { position: sticky; top: 0;       z-index: 6; }
+        thead th        { position: sticky; top: 0;       z-index: 4; }
+        .atts-c2        { border-right-color: #d1d5db; }
+        html.dark .atts-c2 { border-right-color: #4b5563; }
 
         /* ── Scrollbars ─────────────────────────────────────────────────── */
         .atts-scroll { scrollbar-width: thin; scrollbar-color: #94a3b8 #e2e8f0; }
@@ -90,7 +95,7 @@
                     @foreach($qDates as $q)
                         @php $isActive = $fromDate === $q['f'] && $toDate === $q['t']; @endphp
                         <button type="button"
-                            onclick="document.querySelector('[name=from_date]').value='{{ $q['f'] }}'; document.querySelector('[name=to_date]').value='{{ $q['t'] }}';"
+                            onclick="document.querySelector('[name=from_date]').value='{{ $q['f'] }}'; document.querySelector('[name=to_date]').value='{{ $q['t'] }}'; this.closest('form').submit();"
                             class="px-2 py-1 text-xs rounded border transition
                                 {{ $isActive
                                     ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 text-indigo-700 dark:text-indigo-300'
@@ -146,7 +151,7 @@
         {{-- ── Legend ──────────────────────────────────────────────────── --}}
         <div class="flex flex-wrap gap-3 text-xs text-gray-600 dark:text-gray-400">
             <span class="flex items-center gap-1.5">
-                <span class="w-3 h-3 rounded bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700"></span>
+                <span class="w-3 h-3 rounded bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"></span>
                 Không có giờ (đến hôm nay)
             </span>
             <span class="flex items-center gap-1.5">
@@ -182,6 +187,10 @@
                         <th class="atts-c1 bg-gray-50 dark:bg-gray-700 border-b border-r border-gray-200 dark:border-gray-600
                                    px-3 py-2 text-left font-semibold text-gray-600 dark:text-gray-400 whitespace-nowrap min-w-[160px] w-40">
                             Thành viên
+                        </th>
+                        <th class="atts-c2 bg-gray-200 dark:bg-gray-600 border-b border-gray-200 dark:border-gray-600
+                                   px-1 py-2 text-center text-[10px] font-semibold text-gray-600 dark:text-gray-300 uppercase w-20 min-w-[5rem]">
+                            Tổng
                         </th>
                         @foreach($days as $day)
                             @php
@@ -229,6 +238,34 @@
                             </div>
                         </td>
 
+                        {{-- Sticky total cell --}}
+                        @php
+                            $rowWork  = (float) collect($tlByUserDay[$member->id] ?? [])->sum();
+                            $rowLeave = (float) collect($lvByUserDay[$member->id] ?? [])->sum();
+                            $rowOt    = (float) collect($otByUserDay[$member->id] ?? [])->sum();
+                        @endphp
+                        <td class="atts-c2 bg-gray-100 dark:bg-gray-700/50 group-hover/row:bg-gray-200 dark:group-hover/row:bg-gray-600/50
+                                   border-b border-gray-200 dark:border-gray-700 px-1 py-1.5 text-center">
+                            @if($rowWork > 0)
+                                <div class="text-[10px] font-semibold text-gray-700 dark:text-gray-300 leading-tight">
+                                    {{ \App\Models\TimeLog::formatTimeShort($rowWork) }}
+                                </div>
+                            @endif
+                            @if($rowLeave > 0)
+                                <div class="text-[10px] text-amber-600 dark:text-amber-400 leading-tight">
+                                    🏖 {{ \App\Models\TimeLog::formatTimeShort($rowLeave) }}
+                                </div>
+                            @endif
+                            @if($rowOt > 0)
+                                <div class="text-[10px] text-orange-500 dark:text-orange-400 leading-tight">
+                                    ⏱ {{ \App\Models\TimeLog::formatTimeShort($rowOt) }}
+                                </div>
+                            @endif
+                            @if($rowWork == 0 && $rowLeave == 0 && $rowOt == 0)
+                                <span class="text-gray-300 dark:text-gray-600 text-[10px]">—</span>
+                            @endif
+                        </td>
+
                         {{-- Day cells --}}
                         @foreach($days as $day)
                             @php
@@ -260,7 +297,7 @@
                                     $cellBg = 'bg-orange-100 dark:bg-orange-900/30';
                                 } elseif ($isPast && !$isOff) {
                                     if ($total == 0) {
-                                        $cellBg = 'bg-red-100 dark:bg-red-900/30';
+                                        $cellBg = 'bg-red-50 dark:bg-red-900/20';  // lighter: no hours at all
                                     } elseif ($total < 8) {
                                         $cellBg = 'bg-pink-100 dark:bg-pink-900/30';
                                     } else {
@@ -301,6 +338,9 @@
                                             </div>
                                         @endif
                                     </a>
+                                @elseif($isPast && !$isOff)
+                                    {{-- Empty past weekday: show dash in lighter red cell --}}
+                                    <span class="text-red-300 dark:text-red-700 text-[11px] font-medium select-none">–</span>
                                 @endif
                             </td>
                         @endforeach

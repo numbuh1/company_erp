@@ -111,7 +111,7 @@
                     ] as $q)
                         @php $isActive = $fromDate === $q['f'] && $toDate === $q['t']; @endphp
                         <button type="button"
-                            onclick="document.querySelector('[name=from_date]').value='{{ $q['f'] }}'; document.querySelector('[name=to_date]').value='{{ $q['t'] }}';"
+                            onclick="document.querySelector('[name=from_date]').value='{{ $q['f'] }}'; document.querySelector('[name=to_date]').value='{{ $q['t'] }}'; this.closest('form').submit();"
                             class="px-2 py-1 text-xs rounded border transition
                                 {{ $isActive
                                     ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 text-indigo-700 dark:text-indigo-300'
