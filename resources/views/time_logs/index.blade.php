@@ -6,6 +6,7 @@
                 @php
                     $exportUrl = route('time-logs.export') . (request()->getQueryString() ? '?' . request()->getQueryString() : '');
                 @endphp
+                @can('export timesheet')
                 <a href="{{ $exportUrl }}"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 bg-white dark:bg-gray-800 transition">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -13,6 +14,7 @@
                     </svg>
                     Xuất Excel
                 </a>
+                @endcan
                 <a href="{{ route('time-logs.create') }}"><x-primary-button>Chấm công</x-primary-button></a>
             </div>
         </div>
@@ -33,21 +35,20 @@
                             border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400">
                         Danh sách
                     </a>
-                    <a href="{{ route('timesheets.timeline') }}"
-                        class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
-                            border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-                        Theo ngày
-                    </a>
+                    @canany(['view project timesheet', 'view all timesheet'])
                     <a href="{{ route('timesheets.project') }}"
                         class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
                             border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
                         Theo dự án
                     </a>
+                    @endcanany
+                    @canany(['view attendance timesheet', 'view all timesheet'])
                     <a href="{{ route('timesheets.attendance') }}"
                         class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
                             border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
                         Điểm danh
                     </a>
+                    @endcanany
                     <a href="{{ route('timesheets.calendar') }}"
                         class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
                             border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">

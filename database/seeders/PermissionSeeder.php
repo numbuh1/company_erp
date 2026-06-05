@@ -241,13 +241,16 @@ class PermissionSeeder extends Seeder
 
         // TIMESHEET        
         $timesheet_permissions = [
-            'module timesheet' => 'Enable',
-            'view all timesheet' => 'View All Timesheet',
-            'view team timesheet' => 'View Team Timesheet',
-            'view own timesheet' => 'View Own Timesheet',
-            'edit timesheet' => 'Log Time For All',
-            'edit team timesheet' => 'Log Time For Team',
-            'edit own timesheet' => 'Log Time For Yourself',
+            'module timesheet'            => 'Enable',
+            'view all timesheet'          => 'View All Timesheet',
+            'view team timesheet'         => 'View Team Timesheet',
+            'view own timesheet'          => 'View Own Timesheet',
+            'edit timesheet'              => 'Log Time For All',
+            'edit team timesheet'         => 'Log Time For Team',
+            'edit own timesheet'          => 'Log Time For Yourself',
+            'view project timesheet'      => 'Access Timesheet by Project',
+            'view attendance timesheet'   => 'Access Timesheet Attendance View',
+            'export timesheet'            => 'Export Timesheet Data',
         ];
 
         foreach ($timesheet_permissions as $name => $label) {

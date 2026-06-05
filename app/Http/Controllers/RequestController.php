@@ -91,13 +91,17 @@ class RequestController extends Controller
 
     private function applyScope($query, string $module, $user): void
     {
-        $allPerm  = $module === 'leave' ? 'view all leaves' : 'view all ot';
-        $teamPerm = $module === 'leave' ? 'view team leaves' : 'view team ot';
-        if ($user->can($allPerm)) {
-            // no scope
-        } elseif ($user->can($teamPerm)) {
+        // Scope is driven by timesheet view permissions (what people data you can see),
+        // not by request-module permissions (which only gate approve/edit actions).
+        $isTeamLeader = $user->teams()->where('team_user.is_leader', true)->exists();
+
+        if ($user->can('view all timesheet')) {
+            // unrestricted — see everyone's requests
+        } elseif ($user->can('view team timesheet') || $isTeamLeader) {
+            // team scope
             $query->whereIn('user_id', $user->teamMembers()->pluck('id'));
         } else {
+            // own only
             $query->where('user_id', $user->id);
         }
     }

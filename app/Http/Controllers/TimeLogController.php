@@ -221,7 +221,8 @@ class TimeLogController extends Controller
      */
     public function export(Request $request)
     {
-        $user        = auth()->user();
+        $user = auth()->user();
+        if (!$user->can('export timesheet')) abort(403);
         $viewableIds = $this->_viewableUserIds($user);
 
         // Resolve effective user IDs (team or individual filter)
@@ -713,7 +714,8 @@ class TimeLogController extends Controller
      */
     public function projectView(Request $request)
     {
-        $user        = auth()->user();
+        $user = auth()->user();
+        if (!$user->canAny(['view project timesheet', 'view all timesheet'])) abort(403);
         $viewableIds = $this->_viewableUserIds($user);
 
         // ── Date range (default = current week) ───────────────────────────
@@ -907,7 +909,8 @@ class TimeLogController extends Controller
      */
     public function attendanceView(Request $request)
     {
-        $user        = auth()->user();
+        $user = auth()->user();
+        if (!$user->canAny(['view attendance timesheet', 'view all timesheet'])) abort(403);
         $viewableIds = $this->_viewableUserIds($user);
 
         // ── Date range (default = current month) ──────────────────────────
