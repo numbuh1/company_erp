@@ -105,18 +105,19 @@
                                 <p class="text-xs text-gray-400 mt-1">Giờ nghỉ vào ngày trở lại</p>
                             </div>
                         </div>
-
-                        <!-- Middle days info (read-only display) -->
-                        <p id="middle-days-info" class="text-xs text-gray-500 dark:text-gray-400"></p>
                     </div>
 
-                    <!-- Total hours (auto-calculated) -->
+                    <!-- Breakdown (appears above total hours input; header + bullet lines written by JS) -->
+                    <div id="leave-hours-breakdown"
+                         class="hidden mb-3 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg text-xs text-gray-700 dark:text-gray-300">
+                    </div>
+
+                    <!-- Total hours (auto-calculated from partial-day inputs) -->
                     <div class="mb-4">
                         <x-input-label value="Tổng giờ nghỉ" />
                         <input type="number" step="0.25" id="hours" name="hours"
                             value="{{ old('hours', isset($leave) ? $leave->hours : '') }}"
                             class="w-full border rounded p-2" @disabled($readonly)>
-                        <div id="leave-hours-breakdown" class="hidden mt-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded text-xs text-gray-600 dark:text-gray-300 space-y-0.5"></div>
                     </div>
 
                     <!-- Description -->
@@ -170,6 +171,13 @@
         @include('leave_requests._partials.reject_modal')
     @endif
     @push('scripts')
+        @php
+            $formHolidays = \App\Models\PublicHoliday::getHolidayDates(
+                \Carbon\Carbon::now()->subYear(),
+                \Carbon\Carbon::now()->addYears(2)
+            );
+        @endphp
+        <script>window._leaveHolidays = {!! json_encode($formHolidays, JSON_HEX_TAG) !!};</script>
         @vite('resources/js/leave_requests/form.js')
         <script>
         document.addEventListener('DOMContentLoaded', function () {

@@ -1,28 +1,27 @@
 /**
  * Leave request form JS.
  *
- * Single-day leave:
- *   total hours = end_time − start_time (raw diff, user can override)
+ * Single-day:
+ *   total = end_time − start_time (raw diff)
  *
- * Multi-day leave:
- *   Shows two editable inputs (start_day_hours, end_day_hours).
- *   total hours = start_day_hours + 8 × middle_days + end_day_hours
+ * Multi-day:
+ *   Shows editable start_day_hours + end_day_hours inputs.
+ *   Middle days = working days between start and end (skip weekends + holidays).
+ *   total = start_day_hours + 8 × working_middle_days + end_day_hours
  *
- * Default partial-day values are computed from the datetime fields
- * (work day edges: 08:00 – 17:00) but the user can freely edit them.
+ * Holiday dates are injected via window._leaveHolidays (array of 'YYYY-MM-DD').
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-    const startEl        = document.getElementById('start_at');
-    const endEl          = document.getElementById('end_at');
-    const hoursEl        = document.getElementById('hours');
-    const startDayEl     = document.getElementById('start_day_hours');
-    const endDayEl       = document.getElementById('end_day_hours');
-    const sectionEl      = document.getElementById('partial-day-section');
-    const breakdownEl    = document.getElementById('leave-hours-breakdown');
-    const startLabelEl   = document.getElementById('partial-start-label');
-    const endLabelEl     = document.getElementById('partial-end-label');
-    const middleInfoEl   = document.getElementById('middle-days-info');
+    const startEl      = document.getElementById('start_at');
+    const endEl        = document.getElementById('end_at');
+    const hoursEl      = document.getElementById('hours');
+    const startDayEl   = document.getElementById('start_day_hours');
+    const endDayEl     = document.getElementById('end_day_hours');
+    const sectionEl    = document.getElementById('partial-day-section');
+    const breakdownEl  = document.getElementById('leave-hours-breakdown');
+    const startLabelEl = document.getElementById('partial-start-label');
+    const endLabelEl   = document.getElementById('partial-end-label');
 
     if (!startEl || !endEl || !hoursEl) return;
 
@@ -33,24 +32,51 @@ document.addEventListener('DOMContentLoaded', () => {
     function pad(n)      { return String(n).padStart(2, '0'); }
     function fmtTime(dt) { return pad(dt.getHours()) + ':' + pad(dt.getMinutes()); }
     function fmtDate(dt) { return pad(dt.getDate()) + '/' + pad(dt.getMonth() + 1); }
+    function isoDate(dt) {
+        return dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate());
+    }
 
-    function daysBetween(a, b) {
+    /** Calendar days between two Date objects (date part only). */
+    function calDaysBetween(a, b) {
         const d1 = new Date(a); d1.setHours(0, 0, 0, 0);
-        const d2 = new Date(b); b = new Date(b); b.setHours(0, 0, 0, 0);
-        return Math.round((b - d1) / 86_400_000);
+        const d2 = new Date(b); d2.setHours(0, 0, 0, 0);
+        return Math.round((d2 - d1) / 86_400_000);
     }
 
-    /** Compute default partial-day hours from the datetime fields. */
-    function defaultStartDayH(startDt) {
-        const mins = startDt.getHours() * 60 + startDt.getMinutes();
-        return Math.max(0, WORK_END * 60 - mins) / 60;
-    }
-    function defaultEndDayH(endDt) {
-        const mins = endDt.getHours() * 60 + endDt.getMinutes();
-        return Math.max(0, mins - WORK_START * 60) / 60;
+    /**
+     * Count working days STRICTLY between startDate and endDate
+     * (i.e. excluding both the start day and end day).
+     * Skips weekends (Sat/Sun) and public holidays from window._leaveHolidays.
+     */
+    function countWorkingMiddleDays(startDt, endDt) {
+        const holidays = window._leaveHolidays || [];
+        let count = 0;
+        // start from day after startDt, stop before endDt
+        const d = new Date(startDt);
+        d.setHours(12, 0, 0, 0); // noon avoids DST edge cases
+        d.setDate(d.getDate() + 1);
+        const stop = new Date(endDt);
+        stop.setHours(0, 0, 0, 0);
+
+        while (d < stop) {
+            const dow = d.getDay(); // 0=Sun, 6=Sat
+            if (dow !== 0 && dow !== 6 && !holidays.includes(isoDate(d))) {
+                count++;
+            }
+            d.setDate(d.getDate() + 1);
+        }
+        return count;
     }
 
-    // Track whether the *total hours* field has been manually overridden
+    /** Default partial hours from work-day edges. */
+    function defaultStartDayH(dt) {
+        return Math.max(0, WORK_END * 60 - (dt.getHours() * 60 + dt.getMinutes())) / 60;
+    }
+    function defaultEndDayH(dt) {
+        return Math.max(0, (dt.getHours() * 60 + dt.getMinutes()) - WORK_START * 60) / 60;
+    }
+
+    // Track whether the total-hours input was manually overridden
     let totalManual = false;
     hoursEl.addEventListener('input', () => { totalManual = true; });
 
@@ -61,15 +87,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const endDt   = new Date(endEl.value);
         if (endDt < startDt) { hoursEl.value = ''; return; }
 
-        const diff = daysBetween(startDt, endDt);
+        const calDiff = calDaysBetween(startDt, endDt);
 
-        if (diff === 0) {
-            // ── Single-day ───────────────────────────────────────────────────
-            if (sectionEl) sectionEl.classList.add('hidden');
+        // ── Single-day ────────────────────────────────────────────────────────
+        if (calDiff === 0) {
+            if (sectionEl)   sectionEl.classList.add('hidden');
             if (breakdownEl) breakdownEl.classList.add('hidden');
             if (!totalManual) {
-                const h = (endDt - startDt) / 3_600_000;
-                hoursEl.value = h.toFixed(2);
+                hoursEl.value = ((endDt - startDt) / 3_600_000).toFixed(2);
             }
             return;
         }
@@ -77,61 +102,63 @@ document.addEventListener('DOMContentLoaded', () => {
         // ── Multi-day ─────────────────────────────────────────────────────────
         if (sectionEl) sectionEl.classList.remove('hidden');
 
-        const midDays = Math.max(0, diff - 1);
-
-        // Pre-fill partial-day inputs with defaults if they're still empty
-        if (startDayEl && startDayEl.value === '') {
+        // Pre-fill partial inputs with computed defaults the first time
+        if (startDayEl && startDayEl.value === '')
             startDayEl.value = defaultStartDayH(startDt).toFixed(2);
-        }
-        if (endDayEl && endDayEl.value === '') {
+        if (endDayEl && endDayEl.value === '')
             endDayEl.value = defaultEndDayH(endDt).toFixed(2);
-        }
 
-        // Update date labels on the inputs
+        // Update date labels inside the partial-day section
         if (startLabelEl) startLabelEl.textContent = '(' + fmtDate(startDt) + ')';
         if (endLabelEl)   endLabelEl.textContent   = '(' + fmtDate(endDt)   + ')';
 
-        // Middle days info
-        if (middleInfoEl) {
-            middleInfoEl.textContent = midDays > 0
-                ? `📋 ${midDays} ngày giữa × ${FULL_DAY}h = ${midDays * FULL_DAY}h`
-                : '';
-        }
-
-        // Recalculate total from the editable inputs
-        const sdH = parseFloat(startDayEl?.value) || 0;
-        const edH = parseFloat(endDayEl?.value)   || 0;
-        const total = sdH + midDays * FULL_DAY + edH;
+        const midCount = countWorkingMiddleDays(startDt, endDt);
+        const sdH      = parseFloat(startDayEl?.value) || 0;
+        const edH      = parseFloat(endDayEl?.value)   || 0;
+        const midH     = midCount * FULL_DAY;
+        const total    = sdH + midH + edH;
 
         if (!totalManual) hoursEl.value = total.toFixed(2);
 
-        // Breakdown display
+        // ── Breakdown panel ───────────────────────────────────────────────────
         if (breakdownEl) {
-            let html = `<div>📅 <strong>Ngày ${fmtDate(startDt)}</strong>: ${sdH.toFixed(1)}h</div>`;
-            if (midDays > 0) html += `<div>📅 <strong>${midDays} ngày giữa</strong>: ${midDays * FULL_DAY}h (8h/ngày)</div>`;
-            html += `<div>📅 <strong>Ngày ${fmtDate(endDt)}</strong>: ${edH.toFixed(1)}h</div>`;
-            html += `<div class="font-semibold pt-1 mt-1 border-t border-blue-200 dark:border-blue-700">Tổng: ${total.toFixed(1)}h</div>`;
+            const bullet = '<span class="text-blue-400 mr-1">•</span>';
+
+            let html = '<p class="font-semibold text-blue-700 dark:text-blue-400 mb-2">Tổng giờ dự kiến</p>';
+            html += '<div class="space-y-0.5">';
+            html += `<div>${bullet}<strong>Ngày ${fmtDate(startDt)}</strong>: ${sdH.toFixed(1)}h`
+                  + ` <span class="text-gray-400">(${fmtTime(startDt)} → 17:00)</span></div>`;
+
+            if (midCount > 0) {
+                html += `<div>${bullet}<strong>${midCount} ngày làm việc</strong>: ${midH}h`
+                      + ` <span class="text-gray-400">(8h/ngày, bỏ qua cuối tuần &amp; ngày lễ)</span></div>`;
+            }
+
+            html += `<div>${bullet}<strong>Ngày ${fmtDate(endDt)}</strong>: ${edH.toFixed(1)}h`
+                  + ` <span class="text-gray-400">(08:00 → ${fmtTime(endDt)})</span></div>`;
+            html += '</div>';
+
             breakdownEl.innerHTML = html;
             breakdownEl.classList.remove('hidden');
         }
     }
 
-    // When the datetime fields change, reset partial-day defaults
+    // Datetime fields change → reset partial-day defaults, recalculate
     startEl.addEventListener('change', () => {
-        if (startDayEl) startDayEl.value = ''; // re-derive default
+        if (startDayEl) startDayEl.value = '';
         totalManual = false;
         update();
     });
     endEl.addEventListener('change', () => {
-        if (endDayEl) endDayEl.value = ''; // re-derive default
+        if (endDayEl) endDayEl.value = '';
         totalManual = false;
         update();
     });
 
-    // When partial-day inputs change, just recalculate (don't reset to defaults)
+    // Partial-day inputs change → recalculate total only
     if (startDayEl) startDayEl.addEventListener('input', () => { totalManual = false; update(); });
     if (endDayEl)   endDayEl.addEventListener('input',   () => { totalManual = false; update(); });
 
-    // Run once on page load (handles edit mode with pre-filled values)
+    // Restore state on page load (edit mode with pre-filled values)
     if (startEl.value && endEl.value) update();
 });
