@@ -36,6 +36,22 @@ document.addEventListener('DOMContentLoaded', () => {
         return dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate());
     }
 
+    /** Parse "HH:MM" → total minutes. */
+    function parseTimeMins(str) {
+        const [h, m] = (str || '00:00').split(':').map(Number);
+        return h * 60 + (m || 0);
+    }
+
+    const lunchStartMins = parseTimeMins(window._leaveLunchStart || '12:00');
+    const lunchEndMins   = parseTimeMins(window._leaveLunchEnd   || '13:00');
+
+    /** Minutes of lunch break that fall within [fromMins, toMins]. */
+    function lunchOverlapH(fromMins, toMins) {
+        const overlapStart = Math.max(fromMins, lunchStartMins);
+        const overlapEnd   = Math.min(toMins,   lunchEndMins);
+        return Math.max(0, overlapEnd - overlapStart) / 60;
+    }
+
     /** Calendar days between two Date objects (date part only). */
     function calDaysBetween(a, b) {
         const d1 = new Date(a); d1.setHours(0, 0, 0, 0);
@@ -68,12 +84,18 @@ document.addEventListener('DOMContentLoaded', () => {
         return count;
     }
 
-    /** Default partial hours from work-day edges. */
+    /** Default partial hours from work-day edges, excluding lunch break. */
     function defaultStartDayH(dt) {
-        return Math.max(0, WORK_END * 60 - (dt.getHours() * 60 + dt.getMinutes())) / 60;
+        const startMins = dt.getHours() * 60 + dt.getMinutes();
+        const workEndM  = WORK_END * 60;
+        const gross     = Math.max(0, workEndM - startMins) / 60;
+        return Math.max(0, gross - lunchOverlapH(startMins, workEndM));
     }
     function defaultEndDayH(dt) {
-        return Math.max(0, (dt.getHours() * 60 + dt.getMinutes()) - WORK_START * 60) / 60;
+        const endMins    = dt.getHours() * 60 + dt.getMinutes();
+        const workStartM = WORK_START * 60;
+        const gross      = Math.max(0, endMins - workStartM) / 60;
+        return Math.max(0, gross - lunchOverlapH(workStartM, endMins));
     }
 
     // Track whether the total-hours input was manually overridden

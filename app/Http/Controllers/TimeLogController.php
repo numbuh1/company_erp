@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\TimeLogExport;
+use App\Models\AppSetting;
 use App\Models\TimeLog;
 use App\Models\Project;
 use App\Models\Task;
@@ -1046,15 +1047,27 @@ class TimeLogController extends Controller
                     ->whereIn('user_id', $memberIds)
                     ->where('start_at', '<=', $end->toDateTimeString())
                     ->where('end_at',   '>=', $start->toDateTimeString())
-                    ->get(['user_id', 'start_at', 'end_at', 'hours']) as $leave
+                    ->get(['user_id', 'start_at', 'end_at', 'hours', 'start_day_hours', 'end_day_hours']) as $leave
             ) {
                 $lStart    = Carbon::parse($leave->start_at);
                 $lEnd      = Carbon::parse($leave->end_at);
                 $lStartDay = $lStart->toDateString();
                 $lEndDay   = $lEnd->toDateString();
-                // Work day edges used as fallback for legacy records without partial-day hours
+                // Work day edges (08:30–17:30) and lunch break from settings
                 $wStartMins = (int) (8.5 * 60);  // 08:30 = 510 min
                 $wEndMins   = (int) (17.5 * 60); // 17:30 = 1050 min
+                [$lhH, $lhM] = array_map('intval', explode(':', AppSetting::get('lunch_break_start', '12:00')));
+                [$leH, $leM] = array_map('intval', explode(':', AppSetting::get('lunch_break_end',   '13:00')));
+                $lunchStartM = $lhH * 60 + $lhM;
+                $lunchEndM   = $leH * 60 + $leM;
+
+                /** Subtract lunch overlap from a [fromMins, toMins] period. */
+                $netH = function (int $fromMins, int $toMins) use ($lunchStartM, $lunchEndM): float {
+                    $gross   = max(0, $toMins - $fromMins) / 60;
+                    $overlap = max(0, min($toMins, $lunchEndM) - max($fromMins, $lunchStartM)) / 60;
+                    return max(0, $gross - $overlap);
+                };
+
                 $cur = $lStart->copy()->startOfDay()->max($start->copy()->startOfDay());
                 $cap = $lEnd->copy()->startOfDay()->min($end->copy()->startOfDay());
                 while ($cur->lte($cap)) {
@@ -1062,14 +1075,14 @@ class TimeLogController extends Controller
                     if ($lStartDay === $lEndDay) {
                         $hpd = $leave->hours; // single-day: stored value is exact
                     } elseif ($dk === $lStartDay) {
-                        // Use stored value if present; fall back to time-based calc
+                        // Use stored value if present; fall back to time-based calc with lunch
                         $hpd = $leave->start_day_hours
-                            ?? max(0, $wEndMins - ($lStart->hour * 60 + $lStart->minute)) / 60;
+                            ?? $netH($lStart->hour * 60 + $lStart->minute, $wEndMins);
                     } elseif ($dk === $lEndDay) {
                         $hpd = $leave->end_day_hours
-                            ?? max(0, ($lEnd->hour * 60 + $lEnd->minute) - $wStartMins) / 60;
+                            ?? $netH($wStartMins, $lEnd->hour * 60 + $lEnd->minute);
                     } else {
-                        $hpd = 8.0;
+                        $hpd = 8.0; // full working day (lunch already excluded from daily budget)
                     }
                     $lvByUserDay[$leave->user_id][$dk] = ($lvByUserDay[$leave->user_id][$dk] ?? 0) + $hpd;
                     $cur->addDay();

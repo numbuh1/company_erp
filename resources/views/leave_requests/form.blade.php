@@ -172,12 +172,18 @@
     @endif
     @push('scripts')
         @php
-            $formHolidays = \App\Models\PublicHoliday::getHolidayDates(
+            $formHolidays  = \App\Models\PublicHoliday::getHolidayDates(
                 \Carbon\Carbon::now()->subYear(),
                 \Carbon\Carbon::now()->addYears(2)
             );
+            $formLunchStart = \App\Models\AppSetting::get('lunch_break_start', '12:00');
+            $formLunchEnd   = \App\Models\AppSetting::get('lunch_break_end',   '13:00');
         @endphp
-        <script>window._leaveHolidays = {!! json_encode($formHolidays, JSON_HEX_TAG) !!};</script>
+        <script>
+            window._leaveHolidays   = {!! json_encode($formHolidays, JSON_HEX_TAG) !!};
+            window._leaveLunchStart = '{{ $formLunchStart }}';
+            window._leaveLunchEnd   = '{{ $formLunchEnd }}';
+        </script>
         @vite('resources/js/leave_requests/form.js')
         <script>
         document.addEventListener('DOMContentLoaded', function () {
