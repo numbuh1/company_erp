@@ -54,7 +54,7 @@
                         </select>
                     </div>
 
-                    <!-- Start -->
+                    <!-- Start datetime -->
                     <div class="mb-4">
                         <x-input-label value="Giờ bắt đầu" />
                         <input type="datetime-local" name="start_at" id="start_at"
@@ -62,7 +62,7 @@
                             class="w-full border rounded p-2" @disabled($readonly)>
                     </div>
 
-                    <!-- End -->
+                    <!-- End datetime -->
                     <div class="mb-4">
                         <x-input-label value="Giờ kết thúc" />
                         <input type="datetime-local" name="end_at" id="end_at"
@@ -70,13 +70,52 @@
                             class="w-full border rounded p-2" @disabled($readonly)>
                     </div>
 
-                    <!-- Hours (auto-calculated; multi-day breakdown shown below) -->
+                    <!-- Partial-day hours section (multi-day leaves only, shown/hidden by JS) -->
+                    <div id="partial-day-section" class="hidden mb-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg space-y-3">
+                        <p class="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide">⚡ Chỉnh giờ nghỉ từng ngày</p>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <!-- Start day -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Ngày đầu <span id="partial-start-label" class="font-normal text-gray-400 text-xs"></span>
+                                </label>
+                                <div class="flex items-center gap-1.5">
+                                    <input type="number" step="0.25" min="0" max="24" id="start_day_hours" name="start_day_hours"
+                                        value="{{ old('start_day_hours', isset($leave) ? ($leave->start_day_hours ?? '') : '') }}"
+                                        class="w-24 border rounded p-2 text-sm" @disabled($readonly)
+                                        placeholder="0">
+                                    <span class="text-xs text-gray-500">giờ</span>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-1">Giờ nghỉ vào ngày bắt đầu</p>
+                            </div>
+
+                            <!-- End day -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Ngày cuối <span id="partial-end-label" class="font-normal text-gray-400 text-xs"></span>
+                                </label>
+                                <div class="flex items-center gap-1.5">
+                                    <input type="number" step="0.25" min="0" max="24" id="end_day_hours" name="end_day_hours"
+                                        value="{{ old('end_day_hours', isset($leave) ? ($leave->end_day_hours ?? '') : '') }}"
+                                        class="w-24 border rounded p-2 text-sm" @disabled($readonly)
+                                        placeholder="0">
+                                    <span class="text-xs text-gray-500">giờ</span>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-1">Giờ nghỉ vào ngày trở lại</p>
+                            </div>
+                        </div>
+
+                        <!-- Middle days info (read-only display) -->
+                        <p id="middle-days-info" class="text-xs text-gray-500 dark:text-gray-400"></p>
+                    </div>
+
+                    <!-- Total hours (auto-calculated) -->
                     <div class="mb-4">
                         <x-input-label value="Tổng giờ nghỉ" />
                         <input type="number" step="0.25" id="hours" name="hours"
-                            value="{{ old('hours', $leave->hours ?? '') }}"
+                            value="{{ old('hours', isset($leave) ? $leave->hours : '') }}"
                             class="w-full border rounded p-2" @disabled($readonly)>
-                        {{-- Breakdown shown by JS when leave spans multiple days --}}
                         <div id="leave-hours-breakdown" class="hidden mt-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded text-xs text-gray-600 dark:text-gray-300 space-y-0.5"></div>
                     </div>
 

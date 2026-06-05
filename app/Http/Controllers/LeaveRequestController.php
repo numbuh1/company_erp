@@ -91,10 +91,13 @@ class LeaveRequestController extends Controller
         }
 
         $request->validate([
-            'start_at'    => 'required|date',
-            'end_at'      => 'required|date|after_or_equal:start_at',
-            'type'        => 'required|string',
-            'description' => 'nullable|string',
+            'start_at'        => 'required|date',
+            'end_at'          => 'required|date|after_or_equal:start_at',
+            'type'            => 'required|string',
+            'hours'           => 'nullable|numeric|min:0',
+            'start_day_hours' => 'nullable|numeric|min:0|max:24',
+            'end_day_hours'   => 'nullable|numeric|min:0|max:24',
+            'description'     => 'nullable|string',
         ]);
 
         $requestedUserId = $request->user_id;
@@ -183,12 +186,14 @@ class LeaveRequestController extends Controller
         }
 
         $data = $request->validate([
-            'user_id'     => 'required|exists:users,id',
-            'type'        => 'required|string',
-            'start_at'    => 'required|date',
-            'end_at'      => 'required|date|after:start_at',
-            'hours'       => 'required|numeric|min:0',
-            'description' => 'nullable|string',
+            'user_id'         => 'required|exists:users,id',
+            'type'            => 'required|string',
+            'start_at'        => 'required|date',
+            'end_at'          => 'required|date|after_or_equal:start_at',
+            'hours'           => 'nullable|numeric|min:0',
+            'start_day_hours' => 'nullable|numeric|min:0|max:24',
+            'end_day_hours'   => 'nullable|numeric|min:0|max:24',
+            'description'     => 'nullable|string',
         ]);
 
         $leaveRequest->update($data);

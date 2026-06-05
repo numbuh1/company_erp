@@ -1052,24 +1052,24 @@ class TimeLogController extends Controller
                 $lEnd      = Carbon::parse($leave->end_at);
                 $lStartDay = $lStart->toDateString();
                 $lEndDay   = $lEnd->toDateString();
-                // Per-day hours: accurate based on actual start/end times
-                // Work day defaults: 08:00–17:00 (8h)
-                $wStartMins = 8  * 60; // 08:00
-                $wEndMins   = 17 * 60; // 17:00
+                // Work day edges used as fallback for legacy records without partial-day hours
+                $wStartMins = 8  * 60;
+                $wEndMins   = 17 * 60;
                 $cur = $lStart->copy()->startOfDay()->max($start->copy()->startOfDay());
                 $cap = $lEnd->copy()->startOfDay()->min($end->copy()->startOfDay());
                 while ($cur->lte($cap)) {
                     $dk = $cur->toDateString();
                     if ($lStartDay === $lEndDay) {
-                        $hpd = $leave->hours; // single-day leave: store as-is
+                        $hpd = $leave->hours; // single-day: stored value is exact
                     } elseif ($dk === $lStartDay) {
-                        $startMins = $lStart->hour * 60 + $lStart->minute;
-                        $hpd = max(0, $wEndMins - $startMins) / 60;
+                        // Use stored value if present; fall back to time-based calc
+                        $hpd = $leave->start_day_hours
+                            ?? max(0, $wEndMins - ($lStart->hour * 60 + $lStart->minute)) / 60;
                     } elseif ($dk === $lEndDay) {
-                        $endMins = $lEnd->hour * 60 + $lEnd->minute;
-                        $hpd = max(0, $endMins - $wStartMins) / 60;
+                        $hpd = $leave->end_day_hours
+                            ?? max(0, ($lEnd->hour * 60 + $lEnd->minute) - $wStartMins) / 60;
                     } else {
-                        $hpd = 8.0; // full workday
+                        $hpd = 8.0;
                     }
                     $lvByUserDay[$leave->user_id][$dk] = ($lvByUserDay[$leave->user_id][$dk] ?? 0) + $hpd;
                     $cur->addDay();
