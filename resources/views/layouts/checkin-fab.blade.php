@@ -357,19 +357,23 @@ window._tlFabDefaultHours = {{ $tlLeft > 0 ? (float) min($tlLeft, 8) : 1 }};
 <div id="timelog-fab"
      x-data="{
          open: false,
-         projectId: '',
-         taskId: '',
          hours: window._tlFabDefaultHours,
          desc: '',
          submitting: false,
-         allTasks: window._tlFabTasks || [],
-         get filteredTasks() {
-             if (!this.projectId) return this.allTasks;
-             return this.allTasks.filter(t => String(t.pid) === String(this.projectId));
-         },
          quickSet(h) { this.hours = h; },
-         watchProject() { this.taskId = ''; },
      }"
+     x-init="
+         $watch('open', val => {
+             if (!val) {
+                 if (window._fabProjTs) window._fabProjTs.clear();
+                 if (window._fabTaskTs) window._fabTaskTs.clear();
+                 const ph = document.getElementById('fab-project-id');
+                 const th = document.getElementById('fab-task-id');
+                 if (ph) ph.value = '';
+                 if (th) th.value = '';
+             }
+         })
+     "
      @keydown.escape.window="open = false"
      style="position:fixed; bottom:1.5rem; right:1.5rem; z-index:70">
 
@@ -446,33 +450,32 @@ window._tlFabDefaultHours = {{ $tlLeft > 0 ? (float) min($tlLeft, 8) : 1 }};
             <form method="POST" action="{{ route('time-logs.store') }}"
                   @submit="submitting = true" class="px-5 py-5 space-y-4">
                 @csrf
-                <input type="hidden" name="date"  value="{{ $tlToday }}">
-                <input type="hidden" name="_fab"  value="1">
-                <input type="hidden" name="task_id" x-bind:value="taskId">
+                <input type="hidden" name="date"       value="{{ $tlToday }}">
+                <input type="hidden" name="_fab"       value="1">
+                <input type="hidden" name="project_id" id="fab-project-id" value="">
+                <input type="hidden" name="task_id"    id="fab-task-id"    value="">
 
-                {{-- Project --}}
+                {{-- Project (searchable via TomSelect) --}}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dự án <span class="text-gray-400 font-normal">(tuỳ chọn)</span></label>
-                    <select x-model="projectId" @change="watchProject()"
-                        class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-pink-500 focus:border-pink-500">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Dự án <span class="text-gray-400 font-normal">(tuỳ chọn)</span>
+                    </label>
+                    <select id="fab-project-ts">
                         <option value="">— Không có dự án —</option>
                         @foreach($tlProjects as $p)
-                            <option value="{{ $p->id }}">PJ-{{ $p->id }} {{ $p->name }}</option>
+                            <option value="{{ $p->id }}">PJ-{{ $p->id }} · {{ $p->name }}</option>
                         @endforeach
                     </select>
-                    {{-- project_id for the form (bound to select above) --}}
-                    <input type="hidden" name="project_id" x-bind:value="projectId">
                 </div>
 
-                {{-- Task (filtered by project) --}}
-                <div x-show="filteredTasks.length > 0">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Công việc <span class="text-gray-400 font-normal">(tuỳ chọn)</span></label>
-                    <select x-model="taskId"
-                        class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-pink-500 focus:border-pink-500">
+                {{-- Task (searchable via TomSelect; selecting a task auto-fills the project) --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Công việc <span class="text-gray-400 font-normal">(tuỳ chọn)</span>
+                    </label>
+                    <select id="fab-task-ts">
                         <option value="">— Không có công việc —</option>
-                        <template x-for="t in filteredTasks" :key="t.id">
-                            <option :value="t.id" x-text="'TK-' + t.id + ' · ' + t.name"></option>
-                        </template>
+                        {{-- Options populated by JS from window._tlFabTasks --}}
                     </select>
                 </div>
 
@@ -528,4 +531,78 @@ window._tlFabDefaultHours = {{ $tlLeft > 0 ? (float) min($tlLeft, 8) : 1 }};
     </div>
 
 </div>
+
+{{-- TomSelect: searchable project + task dropdowns in Time Log FAB --}}
+<style>
+    /* Compact TomSelect inside the FAB modal */
+    #timelog-fab .ts-wrapper .ts-control {
+        border-color: #d1d5db; border-radius: 0.375rem; font-size: 0.875rem;
+        min-height: 2.25rem; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    }
+    html.dark #timelog-fab .ts-wrapper .ts-control { background: #111827; border-color: #374151; color: #d1d5db; }
+    html.dark #timelog-fab .ts-dropdown           { background: #1f2937; border-color: #374151; color: #d1d5db; }
+    html.dark #timelog-fab .ts-dropdown .option:hover,
+    html.dark #timelog-fab .ts-dropdown .option.active { background: #374151; }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const projEl = document.getElementById('fab-project-ts');
+    const taskEl = document.getElementById('fab-task-ts');
+    if (!projEl || !taskEl) return;
+
+    const allTasks = window._tlFabTasks || [];
+
+    // Build TomSelect option list for tasks, optionally filtered by project
+    function taskOpts(projectId) {
+        const list = projectId
+            ? allTasks.filter(t => String(t.pid) === String(projectId))
+            : allTasks;
+        return list.map(t => ({ value: String(t.id), text: 'TK-' + t.id + ' · ' + t.name, pid: String(t.pid || '') }));
+    }
+
+    // ── Task TomSelect (initialised first so projTs.onChange can reference it) ──
+    window._fabTaskTs = new TomSelect(taskEl, {
+        allowEmptyOption: true,
+        placeholder: '— Không có công việc —',
+        options: taskOpts(null),
+        onChange: function (val) {
+            document.getElementById('fab-task-id').value = val || '';
+            if (!val) return;
+            // Auto-fill project from the selected task
+            const task = allTasks.find(t => String(t.id) === String(val));
+            if (task && task.pid) {
+                const projVal = String(task.pid);
+                if (window._fabProjTs && window._fabProjTs.getValue() !== projVal) {
+                    window._fabProjTs.setValue(projVal); // this triggers projTs.onChange → re-filters tasks
+                }
+            }
+        },
+    });
+
+    // ── Project TomSelect ──────────────────────────────────────────────────────
+    window._fabProjTs = new TomSelect(projEl, {
+        allowEmptyOption: true,
+        placeholder: '— Không có dự án —',
+        onChange: function (val) {
+            document.getElementById('fab-project-id').value = val || '';
+            // Re-populate task options for the chosen project
+            const currentTask = window._fabTaskTs.getValue();
+            window._fabTaskTs.clearOptions();
+            taskOpts(val).forEach(o => window._fabTaskTs.addOption(o));
+            window._fabTaskTs.refreshOptions(false);
+            // Keep task selection if it still belongs to this project
+            if (currentTask) {
+                const stillValid = taskOpts(val).find(o => o.value === currentTask);
+                if (stillValid) {
+                    window._fabTaskTs.setValue(currentTask, true); // silent — don't re-trigger onChange
+                } else {
+                    window._fabTaskTs.clear();
+                    document.getElementById('fab-task-id').value = '';
+                }
+            }
+        },
+    });
+});
+</script>
+
 @endauth

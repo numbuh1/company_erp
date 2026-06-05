@@ -50,28 +50,13 @@
         {{-- ── Tabs ──────────────────────────────────────────────────── --}}
         <div class="border-b border-gray-200 dark:border-gray-700">
             <nav class="flex gap-1">
-                <a href="{{ route('time-logs.index') }}"
-                    class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
-                        border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-                    Danh sách
-                </a>
-                <a href="{{ route('timesheets.project') }}"
-                    class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
-                        border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400">
-                    Theo dự án
-                </a>
-                @canany(['view attendance timesheet', 'view all timesheet'])
-                <a href="{{ route('timesheets.attendance') }}"
-                    class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
-                        border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-                    Điểm danh
-                </a>
-                @endcanany
+                @php $tabBase = 'px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition'; $tabOn = 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400'; $tabOff = 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'; @endphp
+                <a href="{{ route('time-logs.index') }}"       class="{{ $tabBase }} {{ $tabOff }}">Danh sách</a>
+                <a href="{{ route('timesheets.project') }}"    class="{{ $tabBase }} {{ $tabOn }}">Dự án</a>
+                <a href="{{ route('timesheets.attendance') }}" class="{{ $tabBase }} {{ $tabOff }}">Điểm danh</a>
                 <a href="{{ route('timesheets.calendar') }}"
                     class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
-                        border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-                    Lịch
-                </a>
+                        {{ $tabOff }}">Lịch</a>
             </nav>
         </div>
 
