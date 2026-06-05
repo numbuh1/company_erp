@@ -884,6 +884,11 @@ class TimeLogController extends Controller
             }
         }
 
+        // Can this user see other people's per-user rows?
+        $canViewOthers = $user->can('view all timesheet')
+            || $user->can('view team timesheet')
+            || $user->teams()->where('team_user.is_leader', true)->exists();
+
         return view('time_logs.project', compact(
             'days', 'fromDate', 'toDate',
             'projectGroups', 'dayTotals',
@@ -891,7 +896,8 @@ class TimeLogController extends Controller
             'availableProjects', 'availableTasks', 'availableUsers',
             'filterProjectIds', 'filterTaskIds', 'filterUserIds',
             'holidayDates',
-            'initOpenProjects', 'initOpenTasks'
+            'initOpenProjects', 'initOpenTasks',
+            'canViewOthers'
         ));
     }
 

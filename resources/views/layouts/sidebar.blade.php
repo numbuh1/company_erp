@@ -78,7 +78,7 @@
         <div class="relative px-2 py-0.5"
              @mouseenter="open = 'work'" @mouseleave="open = null">
             <button type="button"
-                class="{{ $catBtn($active('attendance.*','announcements.*','projects.*','tasks.*','timesheets.*','time-logs.*','calendar.*', 'attendance.list')) }}">
+                class="{{ $catBtn($active('announcements.*','tasks.*','timesheets.*','time-logs.*','requests.*','leave-requests.*','overtime-requests.*','calendar.*')) }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
@@ -89,22 +89,6 @@
                  class="{{ $flyout }}">
                 <p class="{{ $flyHead }}">Công việc</p>
                 <div class="px-1.5 space-y-0.5">
-                    <a href="{{ route('attendance.index') }}" class="{{ $flyItem('attendance.index', 'attendance.store') }}">
-                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        Chấm công
-                    </a>
-                    @can('module attendance')
-                    <a href="{{ route('attendance.list') }}" class="{{ $flyItem('attendance.list') }}">
-                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                        </svg>
-                        Bảng điểm danh
-                    </a>
-                    @endcan
                     @can('module announcements')
                     <a href="{{ route('announcements.index') }}" class="{{ $flyItem('announcements.*') }}">
                         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -112,15 +96,6 @@
                                 d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
                         </svg>
                         Thông báo
-                    </a>
-                    @endcan
-                    @can('module projects')
-                    <a href="{{ route('projects.index') }}" class="{{ $flyItem('projects.*') }}">
-                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
-                        </svg>
-                        Dự án
                     </a>
                     @endcan
                     @can('module tasks')
@@ -138,9 +113,18 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
                         </svg>
-                        Bảng chấm công
+                        Timesheet
                     </a>
                     @endcan
+                    @canany(['module leaves', 'module ot'])
+                    <a href="{{ route('requests.index') }}" class="{{ $flyItem('requests.*','leave-requests.*','overtime-requests.*') }}">
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Nghỉ / OT
+                    </a>
+                    @endcanany
                     @can('module calendar')
                     <a href="{{ route('calendar.index') }}" class="{{ $flyItem('calendar.*') }}">
                         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -154,30 +138,21 @@
             </div>
         </div>
 
-        {{-- ── People ────────────────────────────────────────── --}}
+        {{-- ── Management (Quản lý) ──────────────────────────── --}}
         <div class="relative px-2 py-0.5"
-             @mouseenter="open = 'people'" @mouseleave="open = null">
+             @mouseenter="open = 'mgmt'" @mouseleave="open = null">
             <button type="button"
-                class="{{ $catBtn($active('teams.*','users.*','recruitment.*','skills.*')) }}">
+                class="{{ $catBtn($active('users.*','teams.*','projects.*','recruitment.*','skills.*')) }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
             </button>
-            <div x-show="open === 'people'" x-cloak
-                 @mouseenter="open = 'people'" @mouseleave="open = null"
+            <div x-show="open === 'mgmt'" x-cloak
+                 @mouseenter="open = 'mgmt'" @mouseleave="open = null"
                  class="{{ $flyout }}">
-                <p class="{{ $flyHead }}">Nhân sự</p>
+                <p class="{{ $flyHead }}">Quản lý</p>
                 <div class="px-1.5 space-y-0.5">
-                    @can('module teams')
-                    <a href="{{ route('teams.index') }}" class="{{ $flyItem('teams.*') }}">
-                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                        </svg>
-                        Nhóm
-                    </a>
-                    @endcan
                     @can('module user')
                     <a href="{{ route('users.index') }}" class="{{ $flyItem('users.*') }}">
                         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -187,6 +162,24 @@
                         Người dùng
                     </a>
                     @endcan
+                    @can('module teams')
+                    <a href="{{ route('teams.index') }}" class="{{ $flyItem('teams.*') }}">
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                        </svg>
+                        Nhóm
+                    </a>
+                    @endcan
+                    @can('module projects')
+                    <a href="{{ route('projects.index') }}" class="{{ $flyItem('projects.*') }}">
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                        </svg>
+                        Dự án
+                    </a>
+                    @endcan
                     @can('module recruitment')
                     <a href="{{ route('recruitment.index') }}" class="{{ $flyItem('recruitment.*') }}">
                         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -194,6 +187,7 @@
                                 d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
                         </svg>
                         Tuyển dụng
+                        <span class="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 font-medium">WIP</span>
                     </a>
                     @endcan
                     @can('edit recruitment')
@@ -203,41 +197,12 @@
                                 d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m1.636-6.364l.707.707M12 21v-1M6.343 17.657l-.707-.707M17.657 17.657l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/>
                         </svg>
                         Kỹ năng
+                        <span class="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 font-medium">WIP</span>
                     </a>
                     @endcan
                 </div>
             </div>
         </div>
-
-        {{-- ── Requests ──────────────────────────────────────── --}}
-        @canany(['module leaves', 'module ot'])
-        <div class="relative px-2 py-0.5"
-             @mouseenter="open = 'requests'" @mouseleave="open = null">
-            <button type="button"
-                class="{{ $catBtn($active('requests.*','leave-requests.*','overtime-requests.*')) }}">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-            </button>
-            <div x-show="open === 'requests'" x-cloak
-                 @mouseenter="open = 'requests'" @mouseleave="open = null"
-                 class="{{ $flyout }}">
-                <p class="{{ $flyHead }}">Yêu cầu</p>
-                <div class="px-1.5 space-y-0.5">
-                    @canany(['module leaves', 'module ot'])
-                    <a href="{{ route('requests.index') }}" class="{{ $flyItem('requests.*') }}">
-                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/>
-                        </svg>
-                        Tất cả yêu cầu
-                    </a>
-                    @endcanany
-                </div>
-            </div>
-        </div>
-        @endcanany
 
         {{-- ── Admin ─────────────────────────────────────────── --}}
         @canany(['module roles', 'module settings'])

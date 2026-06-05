@@ -152,11 +152,11 @@
         <div class="flex flex-wrap gap-3 text-xs text-gray-600 dark:text-gray-400">
             <span class="flex items-center gap-1.5">
                 <span class="w-3 h-3 rounded bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"></span>
-                Không có giờ (đến hôm nay)
+                Không chấm công
             </span>
             <span class="flex items-center gap-1.5">
                 <span class="w-3 h-3 rounded bg-pink-100 dark:bg-pink-900/30 border border-pink-300 dark:border-pink-700"></span>
-                Giờ &lt; 8h (đến hôm nay)
+                Chấm công dưới 8h
             </span>
             <span class="flex items-center gap-1.5">
                 <span class="w-3 h-3 rounded bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700"></span>
@@ -175,7 +175,7 @@
         {{-- ── Table ──────────────────────────────────────────────────── --}}
         @if($members->isEmpty())
             <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-10 text-center text-gray-400 text-sm">
-                Không có thành viên nào trong bộ lọc đã chọn.
+                Không có nhân viên nào trong bộ lọc đã chọn.
             </div>
         @else
         <div class="atts-scroll bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-auto max-h-[calc(100vh-10rem)]">
@@ -186,7 +186,7 @@
                     <tr>
                         <th class="atts-c1 bg-gray-50 dark:bg-gray-700 border-b border-r border-gray-200 dark:border-gray-600
                                    px-3 py-2 text-left font-semibold text-gray-600 dark:text-gray-400 whitespace-nowrap min-w-[160px] w-40">
-                            Thành viên
+                            Nhân viên
                         </th>
                         <th class="atts-c2 bg-gray-200 dark:bg-gray-600 border-b border-gray-200 dark:border-gray-600
                                    px-1 py-2 text-center text-[10px] font-semibold text-gray-600 dark:text-gray-300 uppercase w-20 min-w-[5rem]">

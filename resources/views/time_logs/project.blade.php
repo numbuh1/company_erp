@@ -310,7 +310,8 @@
                             class="border-t border-gray-200 dark:border-gray-600 hover:brightness-95 transition">
                             <td class="pj-c1 bg-gray-100 dark:bg-gray-700/50 px-2 py-2 pl-7">
                                 <div class="flex items-center gap-1.5 min-w-0">
-                                    {{-- Task toggle --}}
+                                    {{-- Task toggle: only shown when user can see per-user rows --}}
+                                    @if($canViewOthers)
                                     <button type="button" @click="toggleTask('{{ $openKey }}')"
                                         class="shrink-0 w-3.5 h-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
                                         <svg x-show="openTasks['{{ $openKey }}']" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -320,6 +321,10 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
                                         </svg>
                                     </button>
+                                    @else
+                                    {{-- Spacer to maintain indent when toggle is hidden --}}
+                                    <span class="shrink-0 w-3.5 h-3.5"></span>
+                                    @endif
                                     @if($tId)
                                         <span class="font-mono text-[10px] font-semibold text-gray-500 dark:text-gray-400 shrink-0">TK-{{ $tId }}</span>
                                     @endif
@@ -360,7 +365,8 @@
                             @endforeach
                         </tr>
 
-                        {{-- ── User rows (under this task) ── --}}
+                        {{-- ── User rows (under this task) — only for users who can see others ── --}}
+                        @if($canViewOthers)
                         @foreach($tg['users'] as $uk => $ug)
                             @php
                                 $uId   = $ug['user_id'];
@@ -418,6 +424,7 @@
                                 @endforeach
                             </tr>
                         @endforeach
+                        @endif {{-- canViewOthers --}}
 
                     @endforeach {{-- tasks --}}
 
