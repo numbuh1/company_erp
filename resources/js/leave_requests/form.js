@@ -25,8 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!startEl || !endEl || !hoursEl) return;
 
-    const WORK_START = 8;   // 08:00
-    const WORK_END   = 17;  // 17:00
+    const WORK_START = 8.5;   // 08:30
+    const WORK_END   = 17.5;  // 17:30
     const FULL_DAY   = 8;
 
     function pad(n)      { return String(n).padStart(2, '0'); }
@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let html = '<p class="font-semibold text-blue-700 dark:text-blue-400 mb-2">Tổng giờ dự kiến</p>';
             html += '<div class="space-y-0.5">';
             html += `<div>${bullet}<strong>Ngày ${fmtDate(startDt)}</strong>: ${sdH.toFixed(1)}h`
-                  + ` <span class="text-gray-400">(${fmtTime(startDt)} → 17:00)</span></div>`;
+                  + ` <span class="text-gray-400">(${fmtTime(startDt)} → 17:30)</span></div>`;
 
             if (midCount > 0) {
                 html += `<div>${bullet}<strong>${midCount} ngày làm việc</strong>: ${midH}h`
@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             html += `<div>${bullet}<strong>Ngày ${fmtDate(endDt)}</strong>: ${edH.toFixed(1)}h`
-                  + ` <span class="text-gray-400">(08:00 → ${fmtTime(endDt)})</span></div>`;
+                  + ` <span class="text-gray-400">(08:30 → ${fmtTime(endDt)})</span></div>`;
             html += '</div>';
 
             breakdownEl.innerHTML = html;

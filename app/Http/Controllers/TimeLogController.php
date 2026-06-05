@@ -1053,8 +1053,8 @@ class TimeLogController extends Controller
                 $lStartDay = $lStart->toDateString();
                 $lEndDay   = $lEnd->toDateString();
                 // Work day edges used as fallback for legacy records without partial-day hours
-                $wStartMins = 8  * 60;
-                $wEndMins   = 17 * 60;
+                $wStartMins = (int) (8.5 * 60);  // 08:30 = 510 min
+                $wEndMins   = (int) (17.5 * 60); // 17:30 = 1050 min
                 $cur = $lStart->copy()->startOfDay()->max($start->copy()->startOfDay());
                 $cap = $lEnd->copy()->startOfDay()->min($end->copy()->startOfDay());
                 while ($cur->lte($cap)) {
