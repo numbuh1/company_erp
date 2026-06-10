@@ -1,3 +1,12 @@
+<script>
+    window.eventRoutes = {
+        store: @js(route('events.store')),
+        users: @js(route('events.users')),
+        locations: @js(route('events.locations')),
+        base: @js(url('/events')),
+    };
+</script>
+
 <div id="event-modal"
     class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
     onclick="if(event.target===this) closeEventModal()">

@@ -186,47 +186,6 @@
                                 </div>
                             @endif
                         </div>
-
-                        {{-- Leave Requests --}}
-                        <div>
-                            <x-input-label value="Yêu cầu nghỉ phép" />
-                            @if($leaveRequests->isEmpty())
-                                <p class="mt-1 text-sm text-gray-400">Không có yêu cầu nghỉ phép đang chờ hoặc đã duyệt.</p>
-                            @else
-                                <div class="overflow-x-auto mt-1">
-                                <table class="min-w-full text-sm">
-                                    <thead class="bg-gray-100 dark:bg-gray-700">
-                                        <tr>
-                                            <th class="px-3 py-2 text-left">Loại</th>
-                                            <th class="px-3 py-2 text-left">Bắt đầu</th>
-                                            <th class="px-3 py-2 text-left">Kết thúc</th>
-                                            <th class="px-3 py-2 text-left">Giờ</th>
-                                            <th class="px-3 py-2 text-left">Trạng thái</th>
-                                            <th class="px-3 py-2 text-left">Đã gửi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($leaveRequests as $lr)
-                                            <tr class="border-t dark:border-gray-700">
-                                                <td class="px-3 py-2 capitalize">{{ $lr->type }}</td>
-                                                <td class="px-3 py-2">{{ $lr->start_at->format('d/m/y') }}</td>
-                                                <td class="px-3 py-2">{{ $lr->end_at->format('d/m/y') }}</td>
-                                                <td class="px-3 py-2">{{ rtrim(rtrim(number_format($lr->hours, 2), '0'), '.') }}h</td>
-                                                <td class="px-3 py-2">
-                                                    @if($lr->status === 'pending')
-                                                        <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded">Đang chờ</span>
-                                                    @elseif($lr->status === 'approved')
-                                                        <span class="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded">Đã duyệt</span>
-                                                    @endif
-                                                </td>
-                                                <td class="px-3 py-2 text-gray-500">{{ $lr->created_at->format('d/m/y H:i') }}</td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                                </div>
-                            @endif
-                        </div>
                     </div>
 
                     {{-- ── Private Info ───────────────────── --}}

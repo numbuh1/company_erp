@@ -245,16 +245,11 @@ class UserController extends Controller
     public function show(User $user)
     {
         $user->load(['roles', 'teams', 'supervisors']);
-        $leaveRequests = \App\Models\LeaveRequest::where('user_id', $user->id)
-            ->whereIn('status', ['pending', 'approved'])
-            ->orderByRaw("FIELD(status, 'pending', 'approved')")
-            ->latest()
-            ->get();
         $isOwnProfile    = auth()->id() === $user->id;
         $canViewSalary   = $isOwnProfile || auth()->user()->canAny(['view salary', 'edit all user']);
         $canViewPersonal = $isOwnProfile || auth()->user()->canAny(['view all user personal info', 'edit all user']);
         $spentBalance    = $this->_spentLeaveBalance($user);
-        return view('users.show', compact('user', 'leaveRequests', 'canViewSalary', 'canViewPersonal', 'spentBalance'));
+        return view('users.show', compact('user', 'canViewSalary', 'canViewPersonal', 'spentBalance'));
     }
 
     /**

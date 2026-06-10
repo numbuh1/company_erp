@@ -8,7 +8,7 @@ const _eventCache = new Map();
 async function _loadUsers() {
     if (_usersLoaded) return;
     try {
-        const res  = await fetch('/events/users', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        const res  = await fetch(window.eventRoutes.users, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
         const data = await res.json();
         _tsAttendants = new TomSelect('#event-attendants', {
             options: data,
@@ -25,7 +25,7 @@ async function _loadUsers() {
 async function _loadLocations() {
     if (_locsLoaded) return;
     try {
-        const res  = await fetch('/events/locations', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        const res  = await fetch(window.eventRoutes.locations, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
         const data = await res.json();
         const opts = data.map(n => ({ value: n, text: n }));
         _tsLocation = new TomSelect('#event-location', {
@@ -43,7 +43,7 @@ async function _loadLocations() {
 async function _fetchEvent(id) {
     if (_eventCache.has(id)) return _eventCache.get(id);
     try {
-        const res  = await fetch(`/events/${id}/data`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        const res  = await fetch(`${window.eventRoutes.base}/${id}/data`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
         const data = await res.json();
         _eventCache.set(id, data);
         return data;
@@ -67,11 +67,11 @@ window.openEventModal = async function(data = {}) {
     form.reset();
 
     if (data.id) {
-        form.action = '/events/' + data.id;
+        form.action = window.eventRoutes.base + '/' + data.id;
         document.getElementById('event-modal-method').value = 'PUT';
         document.getElementById('event-modal-title').textContent = data.title || 'Edit Event';
     } else {
-        form.action = '/events';
+        form.action = window.eventRoutes.store;
         document.getElementById('event-modal-method').value = 'POST';
         document.getElementById('event-modal-title').textContent = data.title || 'New Event';
     }
@@ -79,7 +79,7 @@ window.openEventModal = async function(data = {}) {
     // Show/hide delete button
     const deleteForm = document.getElementById('event-delete-form');
     if (data.id) {
-        deleteForm.action = '/events/' + data.id;
+        deleteForm.action = window.eventRoutes.base + '/' + data.id;
         deleteForm.classList.remove('hidden');
     } else {
         deleteForm.classList.add('hidden');

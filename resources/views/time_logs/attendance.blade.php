@@ -327,7 +327,7 @@
                                                         hours:{{ $dl['time_spent'] }},
                                                         description:@js($dl['description'] ?? '')
                                                     },bubbles:true}))"
-                                                    class="block w-full text-left bg-transparent border-0 p-0 m-0 cursor-pointer text-[10px] font-semibold text-gray-700 dark:text-gray-300 hover:underline leading-tight"
+                                                    class="block w-full text-center bg-transparent border-0 p-0 m-0 cursor-pointer text-[10px] font-semibold text-gray-700 dark:text-gray-300 hover:underline leading-tight"
                                                     title="Sửa nhật ký">
                                                     {{ \App\Models\TimeLog::formatTimeShort($work) }}
                                                 </button>
