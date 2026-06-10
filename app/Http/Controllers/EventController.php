@@ -30,8 +30,9 @@ class EventController extends Controller
             'name'           => 'required|string|max:255',
             'event_type'     => 'required|in:' . implode(',', array_keys(Event::$types)),
             'location'       => 'nullable|string|max:255',
-            'start_at'       => 'required|date',
-            'end_at'         => 'required|date|after_or_equal:start_at',
+            'date'           => 'required|date',
+            'time'           => 'required|date_format:H:i',
+            'duration'       => 'required|integer|min:1',
             'description'    => 'nullable|string',
             'file'           => 'nullable|file|max:20480',
             'attendants'     => 'nullable|array',
@@ -39,6 +40,8 @@ class EventController extends Controller
             'applicant_ids'  => 'nullable|array',
             'applicant_ids.*'=> 'exists:recruitment_applicants,id',
         ]);
+
+        $data = $this->_applyDateTimeRange($data);
 
         if ($request->hasFile('file')) {
             $data['file_path'] = $request->file('file')->store('event_files', 'public');
@@ -99,13 +102,16 @@ class EventController extends Controller
             'name'        => 'required|string|max:255',
             'event_type'  => 'required|in:' . implode(',', array_keys(Event::$types)),
             'location'    => 'nullable|string|max:255',
-            'start_at'    => 'required|date',
-            'end_at'      => 'required|date|after_or_equal:start_at',
+            'date'        => 'required|date',
+            'time'        => 'required|date_format:H:i',
+            'duration'    => 'required|integer|min:1',
             'description' => 'nullable|string',
             'file'        => 'nullable|file|max:20480',
             'attendants'  => 'nullable|array',
             'attendants.*'=> 'exists:users,id',
         ]);
+
+        $data = $this->_applyDateTimeRange($data);
 
         if ($request->hasFile('file')) {
             if ($event->file_path) Storage::disk('public')->delete($event->file_path);
@@ -144,6 +150,20 @@ class EventController extends Controller
 
         $event->delete();
         return back()->with('success', 'Event deleted.');
+    }
+
+    // Converts validated 'date' + 'time' + 'duration' (minutes) into 'start_at' / 'end_at'
+    private function _applyDateTimeRange(array $data): array
+    {
+        $startAt = \Carbon\Carbon::parse($data['date'] . ' ' . $data['time']);
+        $endAt   = $startAt->copy()->addMinutes((int) $data['duration']);
+
+        $data['start_at'] = $startAt;
+        $data['end_at']   = $endAt;
+
+        unset($data['date'], $data['time'], $data['duration']);
+
+        return $data;
     }
 
     // JSON endpoint: list of users for modal attendants picker

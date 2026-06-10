@@ -74,17 +74,22 @@
                     </div>
                 </div>
 
-                <!-- Dates -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <!-- Date / Time / Duration -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                     <div>
-                        <x-input-label for="event-start" value="Start *" />
-                        <x-text-input id="event-start" name="start_at" type="datetime-local" class="mt-1 block w-full"
-                            value="{{ old('start_at') }}" required />
+                        <x-input-label for="event-date" value="Date *" />
+                        <x-text-input id="event-date" name="date" type="date" class="mt-1 block w-full"
+                            value="{{ old('date') }}" required />
                     </div>
                     <div>
-                        <x-input-label for="event-end" value="End *" />
-                        <x-text-input id="event-end" name="end_at" type="datetime-local" class="mt-1 block w-full"
-                            value="{{ old('end_at') }}" required />
+                        <x-input-label for="event-time" value="Time *" />
+                        <x-text-input id="event-time" name="time" type="time" class="mt-1 block w-full"
+                            value="{{ old('time') }}" required />
+                    </div>
+                    <div>
+                        <x-input-label for="event-duration" value="Duration (min) *" />
+                        <x-text-input id="event-duration" name="duration" type="number" min="1" step="1" class="mt-1 block w-full"
+                            value="{{ old('duration') }}" required />
                     </div>
                 </div>
 

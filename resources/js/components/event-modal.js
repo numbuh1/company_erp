@@ -115,8 +115,19 @@ window.openEventModal = async function(data = {}) {
     if (data.name)        document.getElementById('event-name').value        = data.name;
     if (data.event_type)  document.getElementById('event-type').value        = data.event_type;
     if (data.description) document.getElementById('event-description').value = data.description;
-    if (data.start_at)    document.getElementById('event-start').value       = data.start_at;
-    if (data.end_at)      document.getElementById('event-end').value         = data.end_at;
+
+    if (data.start_at) {
+        const [datePart, timePart] = data.start_at.split('T');
+        document.getElementById('event-date').value = datePart || '';
+        document.getElementById('event-time').value = timePart || '';
+
+        if (data.end_at) {
+            const start    = new Date(data.start_at);
+            const end      = new Date(data.end_at);
+            const diffMins = Math.round((end - start) / 60000);
+            document.getElementById('event-duration').value = diffMins > 0 ? diffMins : '';
+        }
+    }
 
     if (_tsLocation) {
         _tsLocation.clear();
