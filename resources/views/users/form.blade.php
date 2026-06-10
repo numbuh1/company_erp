@@ -29,6 +29,7 @@
 
         // Build tab list
         $tabs = [];
+        if (isset($user))    $tabs[] = ['key' => 'general',  'label' => 'Thông tin chung'];
         if ($canSeePersonal) $tabs[] = ['key' => 'private',  'label' => 'Thông tin riêng tư'];
         if ($canSeePersonal) $tabs[] = ['key' => 'contact',  'label' => 'Thông tin liên hệ'];
         if ($isOwnProfile)   $tabs[] = ['key' => 'settings', 'label' => 'Cài đặt'];
@@ -204,6 +205,86 @@
 
                     {{-- Tab panels --}}
                     <div class="bg-white dark:bg-gray-800 rounded-b-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+
+                        {{-- ── General Info ───────────────────── --}}
+                        @if(isset($user))
+                        <div x-show="activeTab === 'general'" x-cloak>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                                <div>
+                                    <x-input-label value="Số giờ phép còn lại" />
+                                    <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">
+                                        {{ rtrim(rtrim(number_format($user->leave_balance ?? 0, 2), '0'), '.') }}h
+                                        <a href="{{ route('users.leave-balance-history', $user) }}" class="text-xs text-blue-500 ml-1 hover:underline">lịch sử</a>
+                                    </p>
+                                </div>
+                                <div>
+                                    <x-input-label value="Số giờ phép đã sử dụng" />
+                                    <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">
+                                        {{ rtrim(rtrim(number_format($spentBalance ?? 0, 2), '0'), '.') }}h
+                                    </p>
+                                </div>
+                            </div>
+
+                            {{-- Supervisors --}}
+                            <div class="mb-6">
+                                <x-input-label value="Người giám sát" />
+                                @if($user->supervisors->isEmpty())
+                                    <p class="mt-1 text-sm text-gray-400">Chưa có người giám sát.</p>
+                                @else
+                                    <div class="space-y-2 mt-1">
+                                        @foreach($user->supervisors as $supervisor)
+                                            <div class="flex items-center gap-3 border rounded px-4 py-3 dark:border-gray-600">
+                                                @if($supervisor->profile_picture)
+                                                    <img src="{{ asset('storage/profile_pictures/' . $supervisor->profile_picture) }}"
+                                                        class="w-8 h-8 rounded-full object-cover border border-gray-300">
+                                                @else
+                                                    <div class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-600 dark:text-indigo-300 text-sm font-bold">
+                                                        {{ strtoupper(substr($supervisor->name, 0, 1)) }}
+                                                    </div>
+                                                @endif
+                                                <div>
+                                                    <a href="{{ route('users.show', $supervisor) }}"
+                                                        class="text-sm font-medium text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400">
+                                                        {{ $supervisor->name }}
+                                                    </a>
+                                                    @if($supervisor->position)
+                                                        <p class="text-xs text-gray-400">{{ $supervisor->position }}</p>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{-- Teams --}}
+                            <div>
+                                <x-input-label value="Nhóm" />
+                                @if($user->teams->isEmpty())
+                                    <p class="mt-1 text-sm text-gray-400">Chưa là thành viên của nhóm nào.</p>
+                                @else
+                                    <div class="space-y-2 mt-1">
+                                        @foreach($user->teams as $team)
+                                            <div class="flex items-center justify-between border rounded px-4 py-3 dark:border-gray-600">
+                                                <span class="text-sm font-medium text-gray-800 dark:text-gray-200">
+                                                    {{ $team->name }}
+                                                </span>
+                                                @if($team->pivot->is_leader)
+                                                    <span class="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 text-xs px-2 py-0.5 rounded">
+                                                        Trưởng nhóm
+                                                    </span>
+                                                @else
+                                                    <span class="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 text-xs px-2 py-0.5 rounded">
+                                                        Thành viên
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                        @endif
 
                         {{-- ── Private Info ───────────────────── --}}
                         @if($canSeePersonal)

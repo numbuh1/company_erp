@@ -209,6 +209,11 @@ class TimeLogController extends Controller
         ]);
 
         $timeLog->update($data);
+
+        if ($request->boolean('_fab')) {
+            return redirect()->back()->with('success', 'Đã cập nhật nhật ký.');
+        }
+
         return redirect()->route('time-logs.show', $timeLog)->with('success', 'Time log updated.');
     }
 
@@ -1026,16 +1031,24 @@ class TimeLogController extends Controller
         $members   = $membersQuery->get();
         $memberIds = $members->pluck('id')->toArray();
 
-        // ── Time logs: [user_id][date] = hours ─────────────────────────────
-        $tlByUserDay = [];
+        // ── Time logs: [user_id][date] = hours, plus per-record detail ─────
+        $tlByUserDay        = [];
+        $tlRecordsByUserDay = [];
         if (!empty($memberIds)) {
             foreach (
                 TimeLog::whereIn('user_id', $memberIds)
                     ->whereBetween('date', [$fromDate, $toDate])
-                    ->get(['user_id', 'date', 'time_spent']) as $log
+                    ->get(['id', 'user_id', 'project_id', 'task_id', 'date', 'time_spent', 'description']) as $log
             ) {
                 $dk = $log->date->format('Y-m-d');
                 $tlByUserDay[$log->user_id][$dk] = ($tlByUserDay[$log->user_id][$dk] ?? 0) + $log->time_spent;
+                $tlRecordsByUserDay[$log->user_id][$dk][] = [
+                    'id'          => $log->id,
+                    'project_id'  => $log->project_id,
+                    'task_id'     => $log->task_id,
+                    'time_spent'  => $log->time_spent,
+                    'description' => $log->description,
+                ];
             }
         }
 
@@ -1108,12 +1121,24 @@ class TimeLogController extends Controller
         $holidayDates = PublicHoliday::getHolidayDates($start->copy(), $end->copy());
         $today        = now()->toDateString();
 
+        // ── Which member's logs may be edited inline from this grid ───────
+        if ($user->can('edit timesheet')) {
+            $editableUserIds = null; // all
+        } elseif ($user->can('edit team timesheet')) {
+            $teamUserIds     = $user->teamMembers()->pluck('id')->toArray();
+            $editableUserIds = array_unique(array_merge([$user->id], $teamUserIds));
+        } elseif ($user->can('edit own timesheet')) {
+            $editableUserIds = [$user->id];
+        } else {
+            $editableUserIds = [];
+        }
+
         return view('time_logs.attendance', compact(
             'members', 'days', 'fromDate', 'toDate',
-            'tlByUserDay', 'lvByUserDay', 'otByUserDay',
+            'tlByUserDay', 'tlRecordsByUserDay', 'lvByUserDay', 'otByUserDay',
             'availableTeams', 'availableUsers',
             'filterTeamIds', 'filterUserIds',
-            'holidayDates', 'today'
+            'holidayDates', 'today', 'editableUserIds'
         ));
     }
 

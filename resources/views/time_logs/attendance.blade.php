@@ -131,12 +131,20 @@
         {{-- ── Legend ──────────────────────────────────────────────────── --}}
         <div class="flex flex-wrap gap-3 text-xs text-gray-600 dark:text-gray-400">
             <span class="flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700"></span>
+                Đủ 8h
+            </span>
+            <span class="flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded bg-orange-200 dark:bg-orange-900/50 border border-orange-400 dark:border-orange-600"></span>
+                Quá 8h
+            </span>
+            <span class="flex items-center gap-1.5">
                 <span class="w-3 h-3 rounded bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"></span>
                 Không chấm công
             </span>
             <span class="flex items-center gap-1.5">
                 <span class="w-3 h-3 rounded bg-pink-100 dark:bg-pink-900/30 border border-pink-300 dark:border-pink-700"></span>
-                Chấm công dưới 8h
+                Dưới 8h
             </span>
             <span class="flex items-center gap-1.5">
                 <span class="w-3 h-3 rounded bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700"></span>
@@ -263,12 +271,14 @@
                                 $hasAny = $work > 0 || $leave > 0 || $ot > 0;
 
                                 // ── Cell background priority ───────────────────
-                                // 1. Off day with no data          → gray
-                                // 2. Only leave (no work, no OT)   → yellow (any day)
-                                // 3. Only OT   (no work, no leave) → orange (any day)
-                                // 4. Past weekday, total = 0       → red
-                                // 5. Past weekday, 0 < total < 8   → pink
-                                // 6. Otherwise                     → white
+                                // 1. Off day with no data           → gray
+                                // 2. Only leave (no work, no OT)    → yellow (any day)
+                                // 3. Only OT   (no work, no leave)  → orange (any day)
+                                // 4. Past weekday, total > 8        → orange (overwork)
+                                // 5. Past weekday, total = 8        → green (full day)
+                                // 6. Past weekday, total = 0        → red
+                                // 7. Past weekday, 0 < total < 8    → pink
+                                // 8. Otherwise                      → white
                                 if ($isOff && !$hasAny) {
                                     $cellBg = 'bg-gray-100 dark:bg-gray-700/40';
                                 } elseif ($leave > 0 && $work == 0 && $ot == 0) {
@@ -276,12 +286,16 @@
                                 } elseif ($ot > 0 && $work == 0 && $leave == 0) {
                                     $cellBg = 'bg-orange-100 dark:bg-orange-900/30';
                                 } elseif ($isPast && !$isOff) {
-                                    if ($total == 0) {
-                                        $cellBg = 'bg-red-50 dark:bg-red-900/20';  // lighter: no hours at all
+                                    if ($total > 8) {
+                                        $cellBg = 'bg-orange-200 dark:bg-orange-900/50';   // overwork (NT + Leave > 8h)
+                                    } elseif ($total == 8) {
+                                        $cellBg = 'bg-green-100 dark:bg-green-900/30';     // full day (NT + Leave = 8h)
+                                    } elseif ($total == 0) {
+                                        $cellBg = 'bg-red-50 dark:bg-red-900/20';           // no hours at all
                                     } elseif ($total < 8) {
-                                        $cellBg = 'bg-pink-100 dark:bg-pink-900/30';
+                                        $cellBg = 'bg-pink-100 dark:bg-pink-900/30';        // short day
                                     } else {
-                                        $cellBg = '';
+                                        $cellBg = '';                                        // covered by leave
                                     }
                                 } else {
                                     $cellBg = '';
@@ -294,12 +308,34 @@
                             <td class="border-b border-r {{ $borderCls }} {{ $cellBg }}
                                        px-0.5 py-1 text-center align-top w-12 min-w-[3rem]">
                                 @if($hasAny)
-                                    @php $cellUrl = route('time-logs.index', ['user_id' => $member->id, 'date_from' => $dk, 'date_to' => $dk]); @endphp
+                                    @php
+                                        $cellUrl     = route('time-logs.index', ['user_id' => $member->id, 'date_from' => $dk, 'date_to' => $dk]);
+                                        $dayLogs     = $tlRecordsByUserDay[$member->id][$dk] ?? [];
+                                        $canEditThis = $editableUserIds === null || in_array($member->id, $editableUserIds);
+                                    @endphp
                                     <div class="leading-tight">
                                         @if($work > 0)
-                                            <a href="{{ $cellUrl }}" class="block text-[10px] font-semibold text-gray-700 dark:text-gray-300 hover:underline leading-tight">
-                                                {{ \App\Models\TimeLog::formatTimeShort($work) }}
-                                            </a>
+                                            @if(count($dayLogs) === 1 && $canEditThis)
+                                                @php $dl = $dayLogs[0]; @endphp
+                                                <button type="button"
+                                                    onclick="window.dispatchEvent(new CustomEvent('tl-fab-edit',{detail:{
+                                                        id:{{ $dl['id'] }},
+                                                        userId:{{ $member->id }},
+                                                        date:'{{ $dk }}',
+                                                        projectId:{{ $dl['project_id'] ?? 'null' }},
+                                                        taskId:{{ $dl['task_id'] ?? 'null' }},
+                                                        hours:{{ $dl['time_spent'] }},
+                                                        description:@js($dl['description'] ?? '')
+                                                    },bubbles:true}))"
+                                                    class="block w-full text-left bg-transparent border-0 p-0 m-0 cursor-pointer text-[10px] font-semibold text-gray-700 dark:text-gray-300 hover:underline leading-tight"
+                                                    title="Sửa nhật ký">
+                                                    {{ \App\Models\TimeLog::formatTimeShort($work) }}
+                                                </button>
+                                            @else
+                                                <a href="{{ $cellUrl }}" class="block text-[10px] font-semibold text-gray-700 dark:text-gray-300 hover:underline leading-tight">
+                                                    {{ \App\Models\TimeLog::formatTimeShort($work) }}
+                                                </a>
+                                            @endif
                                         @endif
                                         @if($leave > 0)
                                             <a href="{{ route('requests.index', ['type' => 'leave', 'date_from' => $dk, 'date_to' => $dk]) }}"

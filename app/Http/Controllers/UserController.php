@@ -116,17 +116,14 @@ class UserController extends Controller
     {
         $roles             = Role::all();
         $supervisorOptions = User::where('id', '!=', $user->id)->orderBy('name')->get(['id', 'name', 'position']);
-        $user->load(['supervisors', 'salaryRecord', 'preferences']);
-        return view('users.form', compact('user', 'roles', 'supervisorOptions'));
+        $user->load(['supervisors', 'salaryRecord', 'preferences', 'teams']);
+        $spentBalance = $this->_spentLeaveBalance($user);
+        return view('users.form', compact('user', 'roles', 'supervisorOptions', 'spentBalance'));
     }
 
     public function profile()
     {
-        $user = auth()->user();
-        $user->load(['supervisors', 'salaryRecord', 'preferences']);
-        $roles             = Role::all();
-        $supervisorOptions = User::where('id', '!=', $user->id)->orderBy('name')->get(['id', 'name', 'position']);
-        return view('users.form', compact('user', 'roles', 'supervisorOptions'));
+        return $this->show(auth()->user());
     }
 
     public function importForm()
@@ -256,7 +253,16 @@ class UserController extends Controller
         $isOwnProfile    = auth()->id() === $user->id;
         $canViewSalary   = $isOwnProfile || auth()->user()->canAny(['view salary', 'edit all user']);
         $canViewPersonal = $isOwnProfile || auth()->user()->canAny(['view all user personal info', 'edit all user']);
-        return view('users.show', compact('user', 'leaveRequests', 'canViewSalary', 'canViewPersonal'));
+        $spentBalance    = $this->_spentLeaveBalance($user);
+        return view('users.show', compact('user', 'leaveRequests', 'canViewSalary', 'canViewPersonal', 'spentBalance'));
+    }
+
+    /**
+     * Total leave-balance hours deducted over time (sum of negative changes).
+     */
+    private function _spentLeaveBalance(User $user): float
+    {
+        return (float) abs($user->leaveBalanceLogs()->where('change_hours', '<', 0)->sum('change_hours'));
     }
 
 

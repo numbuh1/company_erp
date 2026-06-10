@@ -373,8 +373,12 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
          submitting: false,
          summaryWork:  {{ (float) $tlWorkHours }},
          summaryLeave: {{ (float) $tlLeaveHours }},
+         editMode: false,
+         editId: null,
+         originalHours: 0,
          get summaryTotal() { return Math.round((this.summaryWork + this.summaryLeave) * 100) / 100; },
-         get summaryLeft()  { return Math.max(0, Math.round((8 - this.summaryTotal) * 100) / 100); },
+         get baseTotal()    { return this.editMode ? Math.max(0, Math.round((this.summaryTotal - this.originalHours) * 100) / 100) : this.summaryTotal; },
+         get summaryLeft()  { return Math.max(0, Math.round((8 - this.baseTotal) * 100) / 100); },
          get btnPrimary()   { return this.summaryTotal < 8; },
          fetchSummary(userId, date) {
              if (!date || !userId) return;
@@ -384,6 +388,9 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
                  .catch(() => {});
          },
          openFromCell(data) {
+             this.editMode      = false;
+             this.editId        = null;
+             this.originalHours = 0;
              const dateEl = document.getElementById('fab-date');
              if (dateEl && data.date) dateEl.value = data.date;
              const uid = data.userId || window._tlFabCurrentUser;
@@ -392,6 +399,29 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
              if (uh) uh.value = String(uid);
              if (data.projectId && window._fabProjTs) window._fabProjTs.setValue(String(data.projectId));
              if (data.taskId    && window._fabTaskTs) window._fabTaskTs.setValue(String(data.taskId));
+             this.fetchSummary(uid, data.date || window._tlFabToday);
+             this.open = true;
+         },
+         openEdit(data) {
+             this.editMode      = true;
+             this.editId        = data.id;
+             this.originalHours = parseFloat(data.hours) || 0;
+             this.hours = data.hours;
+             this.desc  = data.description || '';
+             const dateEl = document.getElementById('fab-date');
+             if (dateEl) dateEl.value = data.date || window._tlFabToday;
+             const uid = data.userId || window._tlFabCurrentUser;
+             if (window._fabUserTs) window._fabUserTs.setValue(String(uid));
+             const uh = document.getElementById('fab-user-id-hidden');
+             if (uh) uh.value = String(uid);
+             if (window._fabProjTs) {
+                 if (data.projectId) window._fabProjTs.setValue(String(data.projectId));
+                 else window._fabProjTs.clear();
+             }
+             if (window._fabTaskTs) {
+                 if (data.taskId) window._fabTaskTs.setValue(String(data.taskId));
+                 else window._fabTaskTs.clear();
+             }
              this.fetchSummary(uid, data.date || window._tlFabToday);
              this.open = true;
          },
@@ -409,10 +439,18 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
                  });
                  const d = document.getElementById('fab-date');
                  if (d) d.value = window._tlFabToday;
+                 editMode = false;
+                 editId = null;
+                 originalHours = 0;
+                 hours = window._tlFabDefaultHours;
+                 desc = '';
+                 summaryWork  = {{ (float) $tlWorkHours }};
+                 summaryLeave = {{ (float) $tlLeaveHours }};
              }
          })
      "
      @tl-fab-open.window="openFromCell($event.detail)"
+     @tl-fab-edit.window="openEdit($event.detail)"
      @keydown.escape.window="open = false"
      style="position:fixed; bottom:1.5rem; right:1.5rem; z-index:70">
 
@@ -450,7 +488,8 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
             {{-- Header --}}
             <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
                 <div>
-                    <h3 class="font-semibold text-gray-800 dark:text-gray-100">⏱ Chấm giờ làm</h3>
+                    <h3 class="font-semibold text-gray-800 dark:text-gray-100"
+                        x-text="editMode ? '✏️ Sửa nhật ký' : '⏱ Chấm giờ làm'">⏱ Chấm giờ làm</h3>
                     <p class="text-xs text-gray-400 mt-0.5">{{ now()->translatedFormat('l, d/m/Y') }}</p>
                 </div>
                 <button type="button" @click="open = false"
@@ -480,17 +519,28 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
             </div>
 
             {{-- Form --}}
-            <form method="POST" action="{{ route('time-logs.store') }}"
-                  @submit="submitting = true" class="px-5 py-5 space-y-4">
+            <form method="POST" :action="editMode ? ('{{ url('time-logs') }}/' + editId) : '{{ route('time-logs.store') }}'"
+                  @submit="
+                      const newTotal = (editMode ? baseTotal : summaryTotal) + (+hours);
+                      if (hours > summaryLeft) {
+                          const msg = 'Số giờ nhập (' + (+hours).toFixed(1) + 'h) vượt quá thời gian còn lại ('
+                                    + summaryLeft.toFixed(1) + 'h). Tổng hôm nay sẽ là '
+                                    + newTotal.toFixed(1) + 'h. Vẫn tiếp tục?';
+                          if (!window.confirm(msg)) { $event.preventDefault(); return; }
+                      }
+                      submitting = true;
+                  "
+                  class="px-5 py-5 space-y-4">
                 @csrf
+                <input type="hidden" name="_method" :value="editMode ? 'PUT' : 'POST'">
                 <input type="hidden" name="_fab"       value="1">
                 <input type="hidden" name="project_id" id="fab-project-id" value="">
                 <input type="hidden" name="task_id"    id="fab-task-id"    value="">
                 <input type="hidden" name="user_id"    id="fab-user-id-hidden" value="{{ auth()->id() }}">
 
-                {{-- User (only shown if permission to log for others) --}}
+                {{-- User (only shown if permission to log for others; not changeable when editing) --}}
                 @if($tlUsers)
-                <div>
+                <div x-show="!editMode">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Người dùng</label>
                     <select id="fab-user-ts">
                         @foreach($tlUsers as $u)
@@ -571,6 +621,12 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
 
                 {{-- Actions --}}
                 <div class="flex justify-end gap-2 pt-1">
+                    <button type="button" x-show="editMode" x-cloak
+                        @click="if (window.confirm('Xóa nhật ký này?')) document.getElementById('fab-delete-form').submit();"
+                        class="mr-auto px-4 py-2 text-sm rounded-lg border border-red-300 dark:border-red-700
+                               text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+                        Xóa
+                    </button>
                     <button type="button" @click="open = false"
                         class="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600
                                text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
@@ -579,10 +635,16 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
                     <button type="submit" :disabled="submitting || hours <= 0"
                         class="px-4 py-2 text-sm rounded-lg bg-pink-600 hover:bg-pink-700
                                text-white font-medium transition disabled:opacity-50">
-                        <span x-show="!submitting">Lưu giờ làm</span>
+                        <span x-show="!submitting" x-text="editMode ? 'Cập nhật' : 'Lưu giờ làm'">Lưu giờ làm</span>
                         <span x-show="submitting" x-cloak>Đang lưu…</span>
                     </button>
                 </div>
+            </form>
+
+            {{-- Hidden delete form for edit mode --}}
+            <form id="fab-delete-form" method="POST" :action="'{{ url('time-logs') }}/' + editId" class="hidden">
+                @csrf
+                @method('DELETE')
             </form>
 
         </div>
