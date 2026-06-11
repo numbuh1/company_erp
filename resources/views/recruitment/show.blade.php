@@ -399,11 +399,34 @@
 
                                                 <div class="flex items-start justify-between gap-1 mb-1.5">
                                                     <span class="font-medium text-sm text-gray-800 dark:text-gray-100 leading-tight">{{ $applicant->name }}</span>
-                                                    @if($applicant->evaluation > 0)
-                                                        <span class="text-amber-400 text-xs shrink-0 leading-none pt-0.5">
-                                                            @for($i = 1; $i <= 3; $i++){{ $i <= $applicant->evaluation ? '★' : '☆' }}@endfor
-                                                        </span>
-                                                    @endif
+                                                    <div class="flex items-center gap-1 shrink-0">
+                                                        @if($applicant->evaluation > 0)
+                                                            <span class="text-amber-400 text-xs leading-none pt-0.5">
+                                                                @for($i = 1; $i <= 3; $i++){{ $i <= $applicant->evaluation ? '★' : '☆' }}@endfor
+                                                            </span>
+                                                        @endif
+                                                        @if($canEdit)
+                                                            <div class="relative" x-data="{ open: false }">
+                                                                <button type="button" @click.stop="open = !open"
+                                                                    class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 -m-1 p-1 rounded">
+                                                                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                                                                        <path d="M12 6a2 2 0 100-4 2 2 0 000 4zM12 14a2 2 0 100-4 2 2 0 000 4zM12 22a2 2 0 100-4 2 2 0 000 4z"/>
+                                                                    </svg>
+                                                                </button>
+                                                                <div x-show="open" x-cloak @click.stop @click.outside="open = false"
+                                                                    class="absolute right-0 top-full mt-1 w-28 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-20 overflow-hidden text-xs">
+                                                                    <a href="{{ route('recruitment.applicants.edit', [$recruitmentPosition, $applicant]) }}"
+                                                                        class="block px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                                                        Chỉnh sửa
+                                                                    </a>
+                                                                    <button type="button" onclick="deleteKanbanApplicant(event, {{ $applicant->id }})"
+                                                                        class="block w-full text-left px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
+                                                                        Xóa
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        @endif
+                                                    </div>
                                                 </div>
 
                                                 @if($applicant->tags->isNotEmpty())

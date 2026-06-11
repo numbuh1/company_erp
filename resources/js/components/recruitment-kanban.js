@@ -1,18 +1,18 @@
 // Kanban board behaviour for the recruitment position "show" page:
 // - drag & drop applicant cards between status columns (persisted via AJAX)
 // - drag & drop status columns to reorder them (persisted via AJAX)
-// - drag & drop a CV file (from the OS) onto a column to import a new applicant
+// - drag & drop a CV file (from the OS) onto a column: immediately creates a
+//   new applicant (default name = filename) with the uploaded CV, then opens
+//   a modal (with a real, full CV preview) to confirm/edit the applicant info
 // - inline "add custom status" form
+// - per-card dropdown menu: edit / delete applicant
 // - click a card to navigate to the applicant's page
 
 let _draggingCard = null;
 let _draggingColumn = null;
 
-// State for the currently-open CV import modal.
-let _importFile     = null;
-let _importStatus   = null;
-let _importStoreUrl = null;
-let _importPreviewUrl = null;
+// id of the applicant currently being confirmed/edited in the import modal.
+let _editApplicantId = null;
 
 function _csrfToken() {
     const meta = document.querySelector('meta[name="csrf-token"]');
@@ -24,54 +24,73 @@ function _extOf(filename) {
     return parts.length > 1 ? parts.pop().toLowerCase() : '';
 }
 
-function _escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-}
-
-// Render a preview of the dropped CV file, styled to match the
-// `_cv-preview.blade.php` panel used on the applicant edit page.
-function _renderImportPreview(file) {
+// Render a CV preview from a real (server-hosted, internet-accessible) URL,
+// styled to match the `_cv-preview.blade.php` panel used on the applicant
+// edit/show pages. Unlike a blob: URL, this URL also supports the Office
+// Online embed for doc/docx files.
+function _renderCvPreview(url, filename) {
     const container = document.getElementById('import-cv-preview');
     if (!container) return;
 
-    if (_importPreviewUrl) {
-        URL.revokeObjectURL(_importPreviewUrl);
-        _importPreviewUrl = null;
+    if (!url) {
+        container.innerHTML = `<div class="flex flex-col items-center justify-center h-64 text-sm text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded">`
+            + `<p>Chưa có file CV.</p>`
+            + `</div>`;
+        return;
     }
 
-    const ext = _extOf(file.name);
+    const ext = _extOf(filename);
     const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
-    const url = URL.createObjectURL(file);
-    _importPreviewUrl = url;
 
     if (imageExts.includes(ext)) {
         container.innerHTML = `<img src="${url}" alt="CV Preview" class="max-w-full rounded border border-gray-200 dark:border-gray-700">`;
     } else if (ext === 'pdf') {
         container.innerHTML = `<iframe src="${url}" class="w-full rounded border border-gray-200 dark:border-gray-700" style="height: 60vh;"></iframe>`;
     } else if (['doc', 'docx'].includes(ext)) {
-        container.innerHTML = `<div class="flex flex-col items-center justify-center h-64 text-sm text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded text-center px-4">`
-            + `<p>📄 ${_escapeHtml(file.name)}</p>`
-            + `<p class="mt-1 text-xs">Bản xem trước Word sẽ khả dụng sau khi lưu.</p>`
-            + `</div>`;
+        container.innerHTML = `<iframe src="https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}" class="w-full rounded border border-gray-200 dark:border-gray-700" style="height: 60vh;"></iframe>`
+            + `<p class="text-xs text-gray-400 mt-2">Bản xem trước file Word/Doc cần URL có thể truy cập được từ Internet. Nếu không hiển thị được, vui lòng tải xuống để xem.</p>`;
     } else {
         container.innerHTML = `<div class="flex flex-col items-center justify-center h-64 text-sm text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded text-center px-4">`
             + `<p>Không có bản xem trước cho loại file này.</p>`
-            + `<p class="mt-1">📄 ${_escapeHtml(file.name)}</p>`
             + `</div>`;
     }
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// CV import modal
+// CV import: drop a file → create the applicant immediately, then show a
+// modal (with a real CV preview) to confirm/edit its details.
 // ─────────────────────────────────────────────────────────────────────────
-window.openImportModal = function (file, status, storeUrl) {
-    if (!window.recruitmentCanEdit) return;
+async function _importCvFile(file, status) {
+    const formData = new FormData();
+    formData.append('name', file.name.replace(/\.[^/.]+$/, ''));
+    if (status) formData.append('status', status);
+    formData.append('cv', file);
 
-    _importFile     = file;
-    _importStatus   = status;
-    _importStoreUrl = storeUrl;
+    try {
+        const resp = await fetch(window.recruitmentStoreUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': _csrfToken(),
+                'Accept': 'application/json',
+            },
+            body: formData,
+        });
+
+        const data = await resp.json().catch(() => ({}));
+
+        if (!resp.ok || !data.success) {
+            throw new Error(data.message || ('Server error ' + resp.status));
+        }
+
+        openImportModal(data.applicant, data.cv_url, status);
+    } catch (err) {
+        console.error('Import applicant failed', err);
+        alert('Không thể thêm ứng viên từ file này. Vui lòng thử lại.');
+    }
+}
+
+window.openImportModal = function (applicant, cvUrl, status) {
+    _editApplicantId = applicant.id;
 
     const nameInput  = document.getElementById('import-name');
     const emailInput = document.getElementById('import-email');
@@ -80,16 +99,16 @@ window.openImportModal = function (file, status, storeUrl) {
     const labelEl    = document.getElementById('import-status-label');
     const submitBtn  = document.getElementById('import-submit-btn');
 
-    if (nameInput)  nameInput.value  = file.name.replace(/\.[^/.]+$/, '');
-    if (emailInput) emailInput.value = '';
-    if (phoneInput) phoneInput.value = '';
+    if (nameInput)  nameInput.value  = applicant.name  || '';
+    if (emailInput) emailInput.value = applicant.email || '';
+    if (phoneInput) phoneInput.value = applicant.phone || '';
     if (errorEl)   { errorEl.classList.add('hidden'); errorEl.textContent = ''; }
-    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Thêm ứng viên'; }
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Lưu'; }
 
     const labels = window.recruitmentStatusLabels || {};
-    if (labelEl) labelEl.textContent = labels[status] || status;
+    if (labelEl) labelEl.textContent = labels[status] || status || (applicant.status || '');
 
-    _renderImportPreview(file);
+    _renderCvPreview(cvUrl, applicant.cv_path || '');
 
     const modal = document.getElementById('recruitment-import-modal');
     if (modal) {
@@ -103,18 +122,18 @@ window.closeImportModal = function () {
     if (modal) modal.classList.add('hidden');
     document.body.style.overflow = '';
 
-    if (_importPreviewUrl) {
-        URL.revokeObjectURL(_importPreviewUrl);
-        _importPreviewUrl = null;
-    }
+    const hadApplicant = _editApplicantId !== null;
+    _editApplicantId = null;
 
-    _importFile     = null;
-    _importStatus   = null;
-    _importStoreUrl = null;
+    // The applicant was already created server-side as soon as the CV was
+    // dropped — refresh the board so the new card shows up in its column.
+    if (hadApplicant) {
+        window.location.reload();
+    }
 };
 
 window.submitImportModal = async function () {
-    if (!_importFile || !_importStoreUrl) return;
+    if (!_editApplicantId) { closeImportModal(); return; }
 
     const nameInput  = document.getElementById('import-name');
     const emailInput = document.getElementById('import-email');
@@ -131,24 +150,18 @@ window.submitImportModal = async function () {
         return;
     }
 
-    const formData = new FormData();
-    formData.append('name', name);
-    if (email) formData.append('email', email);
-    if (phone) formData.append('phone', phone);
-    if (_importStatus) formData.append('status', _importStatus);
-    formData.append('cv', _importFile);
-
-    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Đang thêm…'; }
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Đang lưu…'; }
     if (errorEl)   { errorEl.classList.add('hidden'); errorEl.textContent = ''; }
 
     try {
-        const resp = await fetch(_importStoreUrl, {
-            method: 'POST',
+        const resp = await fetch(`${window.recruitmentBaseUrl}/applicants/${_editApplicantId}`, {
+            method: 'PUT',
             headers: {
                 'X-CSRF-TOKEN': _csrfToken(),
+                'Content-Type': 'application/json',
                 'Accept': 'application/json',
             },
-            body: formData,
+            body: JSON.stringify({ name, email, phone }),
         });
 
         if (!resp.ok) {
@@ -158,9 +171,9 @@ window.submitImportModal = async function () {
 
         window.location.reload();
     } catch (err) {
-        console.error('Import applicant failed', err);
-        if (errorEl) { errorEl.textContent = 'Không thể thêm ứng viên. Vui lòng thử lại.'; errorEl.classList.remove('hidden'); }
-        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Thêm ứng viên'; }
+        console.error('Update applicant failed', err);
+        if (errorEl) { errorEl.textContent = 'Không thể lưu thông tin. Vui lòng thử lại.'; errorEl.classList.remove('hidden'); }
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Lưu'; }
     }
 };
 
@@ -245,11 +258,12 @@ window.kanbanDrop = async function (e) {
     const col = e.currentTarget;
     col.classList.remove('ring-2', 'ring-indigo-400', 'dark:ring-indigo-500');
 
-    // Dropping a file from the OS → open the CV import modal for this column.
+    // Dropping a file from the OS → create the applicant immediately, then
+    // open a modal (with a real CV preview) to confirm/edit its details.
     if (e.dataTransfer.types.includes('Files') && e.dataTransfer.files.length) {
         const file = e.dataTransfer.files[0];
         if (window.recruitmentCanEdit) {
-            openImportModal(file, col.dataset.status, window.recruitmentStoreUrl);
+            _importCvFile(file, col.dataset.status);
         }
         return;
     }
@@ -354,6 +368,38 @@ async function _persistColumnOrder() {
         console.error('Reorder statuses failed', err);
     }
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// Per-card dropdown menu: delete applicant
+// ─────────────────────────────────────────────────────────────────────────
+window.deleteKanbanApplicant = async function (e, id) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!confirm('Bạn có chắc muốn xóa ứng viên này?')) return;
+
+    try {
+        const resp = await fetch(`${window.recruitmentBaseUrl}/applicants/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': _csrfToken(),
+                'Accept': 'application/json',
+            },
+        });
+        if (!resp.ok) throw new Error('Server error ' + resp.status);
+
+        const card = e.target.closest('.kanban-card');
+        const col  = e.target.closest('.kanban-col');
+        if (card) card.remove();
+        if (col) {
+            const countEl = col.querySelector('.kanban-col-count');
+            if (countEl) countEl.textContent = col.querySelectorAll('.kanban-card').length;
+        }
+    } catch (err) {
+        console.error('Delete applicant failed', err);
+        alert('Không thể xóa ứng viên. Vui lòng thử lại.');
+    }
+};
 
 // Click card → navigate to applicant show page
 document.addEventListener('click', function (e) {

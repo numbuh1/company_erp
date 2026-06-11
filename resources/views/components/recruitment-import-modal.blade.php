@@ -6,7 +6,10 @@
 
         <!-- Header -->
         <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 class="font-semibold text-lg text-gray-800 dark:text-gray-100">Thêm ứng viên từ CV</h3>
+            <div>
+                <h3 class="font-semibold text-lg text-gray-800 dark:text-gray-100">Đã thêm ứng viên từ CV</h3>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">CV đã được lưu. Kiểm tra và cập nhật thông tin ứng viên bên dưới.</p>
+            </div>
             <button type="button" onclick="closeImportModal()"
                 class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl leading-none">&times;</button>
         </div>
@@ -52,11 +55,11 @@
         <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end gap-3">
             <button type="button" onclick="closeImportModal()"
                 class="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                Hủy
+                Đóng
             </button>
             <button type="button" id="import-submit-btn" onclick="submitImportModal()"
                 class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition">
-                Thêm ứng viên
+                Lưu
             </button>
         </div>
     </div>

@@ -99,6 +99,7 @@ class RecruitmentApplicantController extends Controller
             return response()->json([
                 'success'   => true,
                 'applicant' => $applicant,
+                'cv_url'    => $applicant->cv_path ? Storage::disk('public')->url($applicant->cv_path) : null,
             ]);
         }
 
@@ -164,15 +165,28 @@ class RecruitmentApplicantController extends Controller
         $tagIds = RecruitmentTag::resolveIds($request->input('tags', []), 'applicant');
         $recruitmentApplicant->tags()->sync($tagIds);
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success'   => true,
+                'applicant' => $recruitmentApplicant,
+                'cv_url'    => $recruitmentApplicant->cv_path ? Storage::disk('public')->url($recruitmentApplicant->cv_path) : null,
+            ]);
+        }
+
         return redirect()->route('recruitment.show', $recruitmentPosition)->with('success', 'Applicant updated.');
     }
 
-    public function destroy(RecruitmentPosition $recruitmentPosition, RecruitmentApplicant $recruitmentApplicant)
+    public function destroy(Request $request, RecruitmentPosition $recruitmentPosition, RecruitmentApplicant $recruitmentApplicant)
     {
         $canFullEdit = $this->_authorizePosition($recruitmentPosition);
         if (!$canFullEdit) abort(403);
 
         $recruitmentApplicant->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true]);
+        }
+
         return redirect()->route('recruitment.show', $recruitmentPosition)->with('success', 'Applicant removed.');
     }
 
