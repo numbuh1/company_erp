@@ -11,6 +11,9 @@ class SettingController extends Controller
         if (!auth()->user()->can('manage settings')) abort(403);
 
         $settings = [
+            'company_name'       => AppSetting::get('company_name', ''),
+            'company_address'    => AppSetting::get('company_address', ''),
+            'company_phone'      => AppSetting::get('company_phone', ''),
             'office_name'        => AppSetting::get('office_name', ''),
             'office_ips'         => AppSetting::get('office_ips', ''),
             'office_latitude'    => AppSetting::get('office_latitude', ''),
@@ -28,6 +31,9 @@ class SettingController extends Controller
         if (!auth()->user()->can('manage settings')) abort(403);
 
         $data = $request->validate([
+            'company_name'      => 'nullable|string|max:255',
+            'company_address'   => 'nullable|string|max:500',
+            'company_phone'     => 'nullable|string|max:50',
             'office_name'       => 'nullable|string|max:255',
             'office_ips'        => 'nullable|string|max:1000',
             'office_latitude'   => 'nullable|numeric|between:-90,90',

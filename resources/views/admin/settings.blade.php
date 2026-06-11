@@ -3,6 +3,17 @@
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Cài đặt</h2>
     </x-slot>
 
+    @push('styles')
+    <style>[x-cloak] { display: none !important; }</style>
+    @endpush
+
+    @php
+        $tabs = [
+            ['key' => 'company', 'label' => 'Company'],
+            ['key' => 'policy',  'label' => 'Office Policy'],
+        ];
+    @endphp
+
     <div class="py-8">
         <div class="max-w-2xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
@@ -10,128 +21,193 @@
                 <div class="p-3 bg-green-100 text-green-800 rounded text-sm">{{ session('success') }}</div>
             @endif
 
-            <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
+            <div x-data="{ activeTab: '{{ $tabs[0]['key'] }}' }">
                 <form method="POST" action="{{ route('admin.settings.update') }}">
                     @csrf
                     @method('PUT')
 
-                    <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-1">
-                        📍 Office Location
-                    </h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
-                        Dùng để xác minh chấm công tại văn phòng.
-                    </p>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <x-input-label value="Tên văn phòng" />
-                            <x-text-input name="office_name" class="w-full mt-1"
-                                value="{{ old('office_name', $settings['office_name']) }}"
-                                placeholder="VD: Trụ sở chính" />
-                            @error('office_name')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                        <div class="mb-4">
-                            <x-input-label value="IP công khai văn phòng" />
-                            <x-text-input name="office_ips" class="w-full mt-1"
-                                value="{{ old('office_ips', $settings['office_ips']) }}"
-                                placeholder="e.g. 203.0.113.10, 203.0.113.11" />
-                            <p class="text-xs text-gray-400 mt-1">
-                                Comma-separated. Only users connecting from these IPs can check in On-Site.
-                                Leave blank to disable IP checking.
-                                <br>Your current IP: <span class="font-mono">{{ request()->ip() }}</span>
-                            </p>
-                            @error('office_ips')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
-                        </div>
-                    </div>
-
-                    {{-- ── GPS Coordinates ─────────────────────────────────── --}}
-                    <div class="pt-5 border-t border-gray-200 dark:border-gray-600 mb-6">
-                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
-                            🛰️ Tọa độ GPS
-                        </p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                            Khi cài đặt, trình duyệt nhân viên sẽ kiểm tra vị trí GPS khi chấm công
-                            <strong>Tại văn phòng</strong>. Nhân viên ngoài bán kính sẽ không thể chấm công on-site.
-                            Để trống để tắt xác minh GPS.
-                        </p>
-
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-                            <div>
-                                <x-input-label value="Vĩ độ (Latitude)" />
-                                <x-text-input id="settingLat" name="office_latitude" type="text"
-                                    inputmode="decimal" class="w-full mt-1"
-                                    value="{{ old('office_latitude', $settings['office_latitude']) }}"
-                                    placeholder="VD: 10.776900" />
-                                @error('office_latitude')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
-                            </div>
-                            <div>
-                                <x-input-label value="Kinh độ (Longitude)" />
-                                <x-text-input id="settingLng" name="office_longitude" type="text"
-                                    inputmode="decimal" class="w-full mt-1"
-                                    value="{{ old('office_longitude', $settings['office_longitude']) }}"
-                                    placeholder="VD: 106.700900" />
-                                @error('office_longitude')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
-                            </div>
-                            <div>
-                                <x-input-label value="Bán kính cho phép (km)" />
-                                <x-text-input name="office_radius_km" type="text"
-                                    inputmode="decimal" class="w-full mt-1"
-                                    value="{{ old('office_radius_km', $settings['office_radius_km']) }}"
-                                    placeholder="VD: 0.2" />
-                                <p class="text-xs text-gray-400 mt-1">Tối thiểu 0.05 km (50 m).</p>
-                                @error('office_radius_km')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
-                            </div>
-                        </div>
-
-                        <div class="flex flex-wrap items-center gap-3">
-                            <button type="button" id="getMyLocationBtn"
-                                class="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded border border-indigo-400 dark:border-indigo-500 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition">
-                                📍 Lấy vị trí hiện tại
+                    {{-- Tab navigation --}}
+                    <div class="bg-white dark:bg-gray-800 rounded-t-lg shadow-sm border border-gray-200 dark:border-gray-700 border-b-0">
+                        <nav class="flex overflow-x-auto">
+                            @foreach($tabs as $tab)
+                            <button type="button"
+                                @click="activeTab = '{{ $tab['key'] }}'"
+                                :class="activeTab === '{{ $tab['key'] }}'
+                                    ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                    : 'border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300'"
+                                class="px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors shrink-0">
+                                {{ $tab['label'] }}
                             </button>
-
-                            @if($settings['office_latitude'] && $settings['office_longitude'])
-                                <a href="https://www.google.com/maps?q={{ $settings['office_latitude'] }},{{ $settings['office_longitude'] }}"
-                                    target="_blank" rel="noopener"
-                                    class="text-sm text-blue-500 hover:underline">
-                                    🗺️ Xem trên Google Maps ↗
-                                </a>
-                            @endif
-
-                            <span id="geoStatusMsg" class="text-xs text-gray-400"></span>
-                        </div>
+                            @endforeach
+                        </nav>
                     </div>
 
-                    {{-- ── Lunch Break ─────────────────────────────────────── --}}
-                    <div class="pt-5 border-t border-gray-200 dark:border-gray-600 mb-6">
-                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
-                            🍱 Giờ nghỉ trưa
-                        </p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                            Khoảng thời gian nghỉ trưa sẽ được tự động trừ khi tính giờ làm thực tế lúc check-out.
-                        </p>
-                        <div class="grid grid-cols-2 gap-4 max-w-xs">
-                            <div>
-                                <x-input-label value="Bắt đầu nghỉ trưa" />
-                                <input type="time" name="lunch_break_start"
-                                    value="{{ old('lunch_break_start', $settings['lunch_break_start']) }}"
-                                    class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                                @error('lunch_break_start')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                    {{-- Tab panels --}}
+                    <div class="bg-white dark:bg-gray-800 rounded-b-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+
+                        {{-- ── Company ─────────────────────────────────── --}}
+                        <div x-show="activeTab === 'company'" x-cloak>
+
+                            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-1">
+                                🏢 Company Info
+                            </h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
+                                Thông tin công ty, được sử dụng trong các email và tài liệu liên quan.
+                            </p>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <x-input-label value="Company Name" />
+                                    <x-text-input name="company_name" class="w-full mt-1"
+                                        value="{{ old('company_name', $settings['company_name']) }}"
+                                        placeholder="VD: A6 Company Ltd." />
+                                    @error('company_name')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                                </div>
+                                <div>
+                                    <x-input-label value="Company Phone Number" />
+                                    <x-text-input name="company_phone" class="w-full mt-1"
+                                        value="{{ old('company_phone', $settings['company_phone']) }}"
+                                        placeholder="VD: +84 28 1234 5678" />
+                                    @error('company_phone')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                                </div>
                             </div>
-                            <div>
-                                <x-input-label value="Kết thúc nghỉ trưa" />
-                                <input type="time" name="lunch_break_end"
-                                    value="{{ old('lunch_break_end', $settings['lunch_break_end']) }}"
-                                    class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                                @error('lunch_break_end')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+
+                            <div class="grid grid-cols-1 gap-4 mb-6">
+                                <div>
+                                    <x-input-label value="Company Address" />
+                                    <x-text-input name="company_address" class="w-full mt-1"
+                                        value="{{ old('company_address', $settings['company_address']) }}"
+                                        placeholder="VD: 123 Đường ABC, Quận 1, TP. Hồ Chí Minh" />
+                                    @error('company_address')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                                </div>
+                            </div>
+
+                            {{-- ── Office Location ─────────────────────────────────── --}}
+                            <div class="pt-5 border-t border-gray-200 dark:border-gray-600 mb-6">
+                                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-1">
+                                    📍 Office Location
+                                </h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
+                                    Dùng để xác minh chấm công tại văn phòng.
+                                </p>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <x-input-label value="Tên văn phòng" />
+                                        <x-text-input name="office_name" class="w-full mt-1"
+                                            value="{{ old('office_name', $settings['office_name']) }}"
+                                            placeholder="VD: Trụ sở chính" />
+                                        @error('office_name')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="mb-4">
+                                        <x-input-label value="IP công khai văn phòng" />
+                                        <x-text-input name="office_ips" class="w-full mt-1"
+                                            value="{{ old('office_ips', $settings['office_ips']) }}"
+                                            placeholder="e.g. 203.0.113.10, 203.0.113.11" />
+                                        <p class="text-xs text-gray-400 mt-1">
+                                            Comma-separated. Only users connecting from these IPs can check in On-Site.
+                                            Leave blank to disable IP checking.
+                                            <br>Your current IP: <span class="font-mono">{{ request()->ip() }}</span>
+                                        </p>
+                                        @error('office_ips')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- ── GPS Coordinates ─────────────────────────────────── --}}
+                            <div class="pt-5 border-t border-gray-200 dark:border-gray-600">
+                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+                                    🛰️ Tọa độ GPS
+                                </p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                    Khi cài đặt, trình duyệt nhân viên sẽ kiểm tra vị trí GPS khi chấm công
+                                    <strong>Tại văn phòng</strong>. Nhân viên ngoài bán kính sẽ không thể chấm công on-site.
+                                    Để trống để tắt xác minh GPS.
+                                </p>
+
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                                    <div>
+                                        <x-input-label value="Vĩ độ (Latitude)" />
+                                        <x-text-input id="settingLat" name="office_latitude" type="text"
+                                            inputmode="decimal" class="w-full mt-1"
+                                            value="{{ old('office_latitude', $settings['office_latitude']) }}"
+                                            placeholder="VD: 10.776900" />
+                                        @error('office_latitude')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                                    </div>
+                                    <div>
+                                        <x-input-label value="Kinh độ (Longitude)" />
+                                        <x-text-input id="settingLng" name="office_longitude" type="text"
+                                            inputmode="decimal" class="w-full mt-1"
+                                            value="{{ old('office_longitude', $settings['office_longitude']) }}"
+                                            placeholder="VD: 106.700900" />
+                                        @error('office_longitude')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                                    </div>
+                                    <div>
+                                        <x-input-label value="Bán kính cho phép (km)" />
+                                        <x-text-input name="office_radius_km" type="text"
+                                            inputmode="decimal" class="w-full mt-1"
+                                            value="{{ old('office_radius_km', $settings['office_radius_km']) }}"
+                                            placeholder="VD: 0.2" />
+                                        <p class="text-xs text-gray-400 mt-1">Tối thiểu 0.05 km (50 m).</p>
+                                        @error('office_radius_km')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <button type="button" id="getMyLocationBtn"
+                                        class="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded border border-indigo-400 dark:border-indigo-500 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition">
+                                        📍 Lấy vị trí hiện tại
+                                    </button>
+
+                                    @if($settings['office_latitude'] && $settings['office_longitude'])
+                                        <a href="https://www.google.com/maps?q={{ $settings['office_latitude'] }},{{ $settings['office_longitude'] }}"
+                                            target="_blank" rel="noopener"
+                                            class="text-sm text-blue-500 hover:underline">
+                                            🗺️ Xem trên Google Maps ↗
+                                        </a>
+                                    @endif
+
+                                    <span id="geoStatusMsg" class="text-xs text-gray-400"></span>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="flex justify-end">
-                        <x-primary-button>Lưu cài đặt</x-primary-button>
+                        {{-- ── Office Policy ───────────────────────────── --}}
+                        <div x-show="activeTab === 'policy'" x-cloak>
+
+                            {{-- ── Lunch Break ─────────────────────────────────────── --}}
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-1">
+                                    🍱 Giờ nghỉ trưa
+                                </h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                    Khoảng thời gian nghỉ trưa sẽ được tự động trừ khi tính giờ làm thực tế lúc check-out.
+                                </p>
+                                <div class="grid grid-cols-2 gap-4 max-w-xs">
+                                    <div>
+                                        <x-input-label value="Bắt đầu nghỉ trưa" />
+                                        <input type="time" name="lunch_break_start"
+                                            value="{{ old('lunch_break_start', $settings['lunch_break_start']) }}"
+                                            class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                        @error('lunch_break_start')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                                    </div>
+                                    <div>
+                                        <x-input-label value="Kết thúc nghỉ trưa" />
+                                        <input type="time" name="lunch_break_end"
+                                            value="{{ old('lunch_break_end', $settings['lunch_break_end']) }}"
+                                            class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                        @error('lunch_break_end')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end pt-6 mt-6 border-t border-gray-200 dark:border-gray-600">
+                            <x-primary-button>Lưu cài đặt</x-primary-button>
+                        </div>
                     </div>
                 </form>
             </div>

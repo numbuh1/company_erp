@@ -5,6 +5,14 @@
         locations: @js(route('events.locations')),
         base: @js(url('/events')),
     };
+
+    window.appConfig = {
+        currentUserId: @js(auth()->id()),
+        currentUserName: @js(auth()->user()->name ?? ''),
+        companyName: @js(\App\Models\AppSetting::get('company_name', '')),
+        companyAddress: @js(\App\Models\AppSetting::get('company_address', '')),
+        companyPhone: @js(\App\Models\AppSetting::get('company_phone', '')),
+    };
 </script>
 
 <div id="event-modal"
@@ -144,3 +152,6 @@
         </div>
     </div>
 </div>
+
+<x-event-view-modal />
+<x-email-modal />

@@ -191,18 +191,34 @@ class EventController extends Controller
     {
         if (!auth()->check()) abort(403);
 
-        $event->load('attendants');
+        $event->load(['attendants', 'applicants.position']);
 
         return response()->json([
             'id'          => $event->id,
             'name'        => $event->name,
             'event_type'  => $event->event_type,
+            'event_type_label' => Event::$types[$event->event_type] ?? $event->event_type,
             'location'    => $event->location ?? '',
             'start_at'    => $event->start_at->format('Y-m-d\TH:i'),
             'end_at'      => $event->end_at->format('Y-m-d\TH:i'),
             'description' => $event->description ?? '',
             'attendants'  => $event->attendants->pluck('id'),
+            'attendants_detail' => $event->attendants->map(fn($u) => [
+                'id'    => $u->id,
+                'name'  => $u->name,
+                'email' => $u->email,
+            ])->values(),
+            'applicants' => $event->applicants->map(fn($a) => [
+                'id'       => $a->id,
+                'name'     => $a->name,
+                'email'    => $a->email,
+                'position' => $a->position->name ?? null,
+                'url'      => route('recruitment.applicants.show', [$a->recruitment_position_id, $a->id]),
+            ])->values(),
             'file_path'   => $event->file_path,
+            'file_url'    => $event->file_path ? Storage::disk('public')->url($event->file_path) : null,
+            'file_name'   => $event->file_path ? basename($event->file_path) : null,
+            'can_edit'    => auth()->user()->can('edit events') || $event->created_by === auth()->id(),
         ]);
     }
 
