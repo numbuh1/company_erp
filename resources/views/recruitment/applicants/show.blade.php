@@ -200,8 +200,10 @@
 
                 </div>
 
-                {{-- Right: Skills --}}
+                {{-- Right: CV Preview & Skills --}}
                 <div class="space-y-4">
+                    @include('recruitment.applicants._cv-preview', ['cvPreviewSticky' => false])
+
                     @if($recruitmentApplicant->skills->isNotEmpty())
                         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
                             <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Kỹ năng</h3>

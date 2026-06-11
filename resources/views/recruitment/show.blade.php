@@ -372,7 +372,12 @@
                                      ondrop="kanbanDrop(event)">
 
                                     {{-- Column Header --}}
-                                    <div class="px-3 py-2.5 rounded-t-xl {{ $col['header'] }} flex items-center justify-between shrink-0">
+                                    <div class="px-3 py-2.5 rounded-t-xl {{ $col['header'] }} flex items-center justify-between shrink-0 {{ $canEdit ? 'cursor-move' : '' }}"
+                                         @if($canEdit)
+                                            draggable="true"
+                                            ondragstart="kanbanColDragStart(event)"
+                                            ondragend="kanbanColDragEnd(event)"
+                                         @endif>
                                         <div class="flex items-center gap-2">
                                             <span class="w-2 h-2 rounded-full {{ $col['dot'] }} shrink-0"></span>
                                             <span class="text-xs font-semibold">{{ $label }}</span>
@@ -478,11 +483,12 @@
 
     @push('scripts')
     <script>
-        window.recruitmentBaseUrl       = @js(route('recruitment.show', $recruitmentPosition));
-        window.recruitmentStoreUrl      = @js(route('recruitment.applicants.store', $recruitmentPosition));
-        window.recruitmentAddStatusUrl  = @js(route('recruitment.applicants.statuses.add', $recruitmentPosition));
-        window.recruitmentStatusLabels  = @js($kanbanCols);
-        window.recruitmentCanEdit       = @js($canEdit);
+        window.recruitmentBaseUrl          = @js(route('recruitment.show', $recruitmentPosition));
+        window.recruitmentStoreUrl         = @js(route('recruitment.applicants.store', $recruitmentPosition));
+        window.recruitmentAddStatusUrl     = @js(route('recruitment.applicants.statuses.add', $recruitmentPosition));
+        window.recruitmentReorderStatusesUrl = @js(route('recruitment.applicants.statuses.reorder', $recruitmentPosition));
+        window.recruitmentStatusLabels     = @js($kanbanCols);
+        window.recruitmentCanEdit          = @js($canEdit);
     </script>
     @endpush
 

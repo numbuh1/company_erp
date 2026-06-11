@@ -3,9 +3,10 @@
     $cvUrl     = $cvPath ? \Illuminate\Support\Facades\Storage::disk('public')->url($cvPath) : null;
     $cvExt     = $cvPath ? strtolower(pathinfo($cvPath, PATHINFO_EXTENSION)) : null;
     $imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
+    $sticky    = $cvPreviewSticky ?? true;
 @endphp
 
-<div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6 lg:sticky lg:top-6">
+<div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6 {{ $sticky ? 'lg:sticky lg:top-6' : '' }}">
     <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Xem trước CV</h3>
 
     <div id="cv-preview-container">

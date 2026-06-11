@@ -1,10 +1,12 @@
 // Kanban board behaviour for the recruitment position "show" page:
 // - drag & drop applicant cards between status columns (persisted via AJAX)
+// - drag & drop status columns to reorder them (persisted via AJAX)
 // - drag & drop a CV file (from the OS) onto a column to import a new applicant
 // - inline "add custom status" form
 // - click a card to navigate to the applicant's page
 
-let _dragging = null;
+let _draggingCard = null;
+let _draggingColumn = null;
 
 // State for the currently-open CV import modal.
 let _importFile     = null;
@@ -28,6 +30,8 @@ function _escapeHtml(str) {
     return div.innerHTML;
 }
 
+// Render a preview of the dropped CV file, styled to match the
+// `_cv-preview.blade.php` panel used on the applicant edit page.
 function _renderImportPreview(file) {
     const container = document.getElementById('import-cv-preview');
     if (!container) return;
@@ -43,12 +47,18 @@ function _renderImportPreview(file) {
     _importPreviewUrl = url;
 
     if (imageExts.includes(ext)) {
-        container.innerHTML = `<img src="${url}" alt="CV Preview" class="max-w-full max-h-64 mx-auto rounded">`;
+        container.innerHTML = `<img src="${url}" alt="CV Preview" class="max-w-full rounded border border-gray-200 dark:border-gray-700">`;
     } else if (ext === 'pdf') {
-        container.innerHTML = `<iframe src="${url}" class="w-full rounded" style="height: 280px;"></iframe>`;
-    } else {
-        container.innerHTML = `<div class="flex flex-col items-center justify-center h-24 text-sm text-gray-400 text-center px-4">`
+        container.innerHTML = `<iframe src="${url}" class="w-full rounded border border-gray-200 dark:border-gray-700" style="height: 60vh;"></iframe>`;
+    } else if (['doc', 'docx'].includes(ext)) {
+        container.innerHTML = `<div class="flex flex-col items-center justify-center h-64 text-sm text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded text-center px-4">`
             + `<p>📄 ${_escapeHtml(file.name)}</p>`
+            + `<p class="mt-1 text-xs">Bản xem trước Word sẽ khả dụng sau khi lưu.</p>`
+            + `</div>`;
+    } else {
+        container.innerHTML = `<div class="flex flex-col items-center justify-center h-64 text-sm text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded text-center px-4">`
+            + `<p>Không có bản xem trước cho loại file này.</p>`
+            + `<p class="mt-1">📄 ${_escapeHtml(file.name)}</p>`
             + `</div>`;
     }
 }
@@ -212,10 +222,10 @@ window.submitAddStatus = async function () {
 // Drag & drop: applicant cards between columns + OS file drop to import
 // ─────────────────────────────────────────────────────────────────────────
 window.kanbanDragStart = function (e) {
-    _dragging = e.currentTarget;
+    _draggingCard = e.currentTarget;
     e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', _dragging.dataset.applicantId);
-    requestAnimationFrame(() => _dragging.classList.add('opacity-40', 'scale-95'));
+    e.dataTransfer.setData('text/plain', _draggingCard.dataset.applicantId);
+    requestAnimationFrame(() => _draggingCard.classList.add('opacity-40', 'scale-95'));
 };
 
 window.kanbanDragOver = function (e) {
@@ -244,15 +254,36 @@ window.kanbanDrop = async function (e) {
         return;
     }
 
-    if (!_dragging) return;
+    // Dropping a dragged column header → reorder Kanban columns.
+    if (_draggingColumn) {
+        const draggingCol = _draggingColumn;
+        draggingCol.classList.remove('opacity-50');
+        _draggingColumn = null;
 
-    _dragging.classList.remove('opacity-40', 'scale-95');
+        if (draggingCol === col) return;
+
+        const rect   = col.getBoundingClientRect();
+        const before = (e.clientX - rect.left) < (rect.width / 2);
+
+        if (before) {
+            col.parentNode.insertBefore(draggingCol, col);
+        } else {
+            col.parentNode.insertBefore(draggingCol, col.nextSibling);
+        }
+
+        await _persistColumnOrder();
+        return;
+    }
+
+    if (!_draggingCard) return;
+
+    _draggingCard.classList.remove('opacity-40', 'scale-95');
     const newStatus   = col.dataset.status;
-    const applicantId = _dragging.dataset.applicantId;
+    const applicantId = _draggingCard.dataset.applicantId;
     const cardsArea   = col.querySelector('.kanban-cards');
 
     // Move card in DOM
-    cardsArea.appendChild(_dragging);
+    cardsArea.appendChild(_draggingCard);
 
     // Update all column count badges
     document.querySelectorAll('.kanban-col').forEach(c => {
@@ -260,7 +291,7 @@ window.kanbanDrop = async function (e) {
         if (countEl) countEl.textContent = c.querySelectorAll('.kanban-card').length;
     });
 
-    _dragging = null;
+    _draggingCard = null;
 
     // Persist via AJAX
     try {
@@ -281,6 +312,48 @@ window.kanbanDrop = async function (e) {
         console.error('Kanban status update failed', err);
     }
 };
+
+// ─────────────────────────────────────────────────────────────────────────
+// Drag & drop: reorder Kanban status columns
+// ─────────────────────────────────────────────────────────────────────────
+window.kanbanColDragStart = function (e) {
+    const col = e.currentTarget.closest('.kanban-col');
+    if (!col) return;
+
+    _draggingColumn = col;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', 'column:' + (col.dataset.status || ''));
+    requestAnimationFrame(() => col.classList.add('opacity-50'));
+};
+
+window.kanbanColDragEnd = function () {
+    if (_draggingColumn) {
+        _draggingColumn.classList.remove('opacity-50');
+    }
+    _draggingColumn = null;
+};
+
+async function _persistColumnOrder() {
+    if (!window.recruitmentReorderStatusesUrl) return;
+
+    const order = Array.from(document.querySelectorAll('.kanban-col[data-status]'))
+        .map(c => c.dataset.status);
+
+    try {
+        const resp = await fetch(window.recruitmentReorderStatusesUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': _csrfToken(),
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ order }),
+        });
+        if (!resp.ok) throw new Error('Server error ' + resp.status);
+    } catch (err) {
+        console.error('Reorder statuses failed', err);
+    }
+}
 
 // Click card → navigate to applicant show page
 document.addEventListener('click', function (e) {

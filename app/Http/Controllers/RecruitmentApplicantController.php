@@ -225,4 +225,19 @@ class RecruitmentApplicantController extends Controller
         ]);
     }
 
+    public function reorderStatuses(Request $request, RecruitmentPosition $recruitmentPosition)
+    {
+        $canFullEdit = $this->_authorizePosition($recruitmentPosition);
+        if (!$canFullEdit) abort(403);
+
+        $data = $request->validate([
+            'order'   => 'required|array',
+            'order.*' => 'string|max:100',
+        ]);
+
+        $recruitmentPosition->setStatusOrder($data['order']);
+
+        return response()->json(['ok' => true]);
+    }
+
 }

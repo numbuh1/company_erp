@@ -196,6 +196,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/{recruitmentPosition}/statuses',
             [RecruitmentApplicantController::class, 'addStatus'])
             ->name('applicants.statuses.add');
+        Route::post('/{recruitmentPosition}/statuses/reorder',
+            [RecruitmentApplicantController::class, 'reorderStatuses'])
+            ->name('applicants.statuses.reorder');
     });
 
     // Holidays
