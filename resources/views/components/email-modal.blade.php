@@ -42,14 +42,21 @@
         </div>
 
         <!-- Footer -->
-        <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center gap-3">
+        <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex flex-wrap items-center gap-3">
             <button type="button" onclick="closeEmailModal()"
-                class="ml-auto px-4 py-2 text-sm text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                class="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                 Hủy
             </button>
-            <button type="button" onclick="sendEmailViaClient()"
+
+            <div class="flex-1"></div>
+
+            <button type="button" onclick="sendEmailViaOutlookWeb()"
+                class="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition">
+                Outlook trên Web
+            </button>
+            <button type="button" onclick="sendEmailViaOutlookApp()"
                 class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition">
-                Mở ứng dụng Email
+                Outlook (Ứng dụng)
             </button>
         </div>
     </div>

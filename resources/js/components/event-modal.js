@@ -25,6 +25,13 @@ function _formatDuration(mins) {
     return `${mins}m`;
 }
 
+// Splits a comma/semicolon separated list of email addresses into a
+// trimmed, non-empty array.
+function _splitEmails(value) {
+    if (!value) return [];
+    return value.split(/[,;]+/).map(s => s.trim()).filter(Boolean);
+}
+
 async function _loadUsers() {
     if (_usersLoaded) return;
     try {
@@ -338,21 +345,37 @@ window.closeEmailModal = function() {
 };
 
 // Builds a mailto: link from the modal fields and hands off to the
-// user's default mail client (e.g. Outlook).
-window.sendEmailViaClient = function() {
-    const to      = document.getElementById('email-to').value.trim();
-    const cc      = document.getElementById('email-cc').value.trim();
+// Outlook desktop app (or whichever app is registered for mailto: links).
+window.sendEmailViaOutlookApp = function() {
+    const to      = _splitEmails(document.getElementById('email-to').value);
+    const cc      = _splitEmails(document.getElementById('email-cc').value);
     const subject = document.getElementById('email-subject').value;
     const body    = document.getElementById('email-body').value;
 
-    let mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    let mailto = `mailto:${to.map(encodeURIComponent).join(',')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
-    if (cc) {
-        const ccEncoded = cc.split(',').map(s => encodeURIComponent(s.trim())).filter(Boolean).join(',');
-        if (ccEncoded) mailto += `&cc=${ccEncoded}`;
+    if (cc.length) {
+        mailto += `&cc=${cc.map(encodeURIComponent).join(',')}`;
     }
 
     window.location.href = mailto;
+};
+
+// Opens an Outlook on the web (OWA) "new message" compose window pre-filled
+// with the modal's fields. Recipients are separated with ';' per OWA convention.
+window.sendEmailViaOutlookWeb = function() {
+    const to      = _splitEmails(document.getElementById('email-to').value);
+    const cc      = _splitEmails(document.getElementById('email-cc').value);
+    const subject = document.getElementById('email-subject').value;
+    const body    = document.getElementById('email-body').value;
+
+    const params = new URLSearchParams();
+    if (to.length)  params.set('to', to.join(';'));
+    if (cc.length)  params.set('cc', cc.join(';'));
+    if (subject)    params.set('subject', subject);
+    if (body)       params.set('body', body);
+
+    window.open(`https://outlook.office.com/mail/deeplink/compose?${params.toString()}`, '_blank');
 };
 
 document.addEventListener('keydown', function(e) {
