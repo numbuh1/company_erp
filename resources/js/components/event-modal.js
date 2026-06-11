@@ -369,13 +369,26 @@ window.sendEmailViaOutlookWeb = function() {
     const subject = document.getElementById('email-subject').value;
     const body    = document.getElementById('email-body').value;
 
-    const params = new URLSearchParams();
-    if (to.length)  params.set('to', to.join(';'));
-    if (cc.length)  params.set('cc', cc.join(';'));
-    if (subject)    params.set('subject', subject);
-    if (body)       params.set('body', body);
+    // Build the query string manually with encodeURIComponent (which encodes
+    // spaces as %20). URLSearchParams encodes spaces as '+', which OWA's
+    // compose deep link displays literally instead of treating as a space.
+    const parts = [];
+    if (to.length)  parts.push('to=' + encodeURIComponent(to.join(';')));
+    if (cc.length)  parts.push('cc=' + encodeURIComponent(cc.join(';')));
+    if (subject)    parts.push('subject=' + encodeURIComponent(subject));
+    if (body)       parts.push('body=' + encodeURIComponent(body));
 
-    window.open(`https://outlook.office.com/mail/deeplink/compose?${params.toString()}`, '_blank');
+    window.open(`https://outlook.office.com/mail/deeplink/compose?${parts.join('&')}`, '_blank');
+
+    // OWA's compose deep link does not reliably pre-fill the CC field, so
+    // copy the CC addresses to the clipboard and let the user paste them in.
+    if (cc.length && navigator.clipboard) {
+        navigator.clipboard.writeText(cc.join('; ')).then(() => {
+            alert('Outlook trên web hiện chưa hỗ trợ tự điền CC.\n'
+                + 'Danh sách CC đã được sao chép vào clipboard:\n' + cc.join('; ')
+                + '\n\nVui lòng dán (Ctrl+V / Cmd+V) vào ô CC trong cửa sổ soạn thư.');
+        }).catch(() => {});
+    }
 };
 
 document.addEventListener('keydown', function(e) {

@@ -17,12 +17,13 @@ class RecruitmentController extends Controller
         $query = RecruitmentPosition::with('assignedUsers', 'team')
             ->withCount([
                 'applicants',
-                'applicants as cv_screening_count'      => fn($q) => $q->where('status', 'CV Screening'),
-                'applicants as interview_count'          => fn($q) => $q->where('status', 'Approved for Interview'),
-                'applicants as approved_count'           => fn($q) => $q->where('status', 'Approved'),
-                'applicants as rejected_count'           => fn($q) => $q->where('status', 'Rejected'),
-                'applicants as offered_count'            => fn($q) => $q->where('status', 'Offered'),
-                'applicants as hired_count'              => fn($q) => $q->where('status', 'Hired'),
+                'applicants as potential_count'          => fn($q) => $q->where('status', 'Tiềm năng'),
+                'applicants as cv_screening_count'       => fn($q) => $q->where('status', 'Lọc CV'),
+                'applicants as interview_count'          => fn($q) => $q->where('status', 'Duyệt phỏng vấn'),
+                'applicants as offer_consider_count'     => fn($q) => $q->where('status', 'Cân nhắc offer'),
+                'applicants as offered_count'            => fn($q) => $q->where('status', 'Đã gửi offer'),
+                'applicants as hired_count'              => fn($q) => $q->where('status', 'Đã tuyển'),
+                'applicants as rejected_count'           => fn($q) => $q->where('status', 'Không phù hợp'),
             ]);
 
         if ($user->can('edit recruitment')) return $query;

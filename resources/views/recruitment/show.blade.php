@@ -357,11 +357,14 @@
                     <div class="overflow-x-auto pb-2">
                         <div class="flex gap-3" style="min-width: max-content;">
                             @php
-                                $kanbanCols = \App\Models\RecruitmentApplicant::kanbanCols();
+                                $kanbanCols = $recruitmentPosition->allStatuses();
                             @endphp
 
-                            @foreach($kanbanCols as $status => $col)
-                                @php $colApplicants = $recruitmentPosition->applicants->where('status', $status)->values(); @endphp
+                            @foreach($kanbanCols as $status => $label)
+                                @php
+                                    $colApplicants = $recruitmentPosition->applicants->where('status', $status)->values();
+                                    $col = \App\Models\RecruitmentApplicant::kanbanColConfig($status);
+                                @endphp
                                 <div class="kanban-col w-60 shrink-0 flex flex-col rounded-xl bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700"
                                      data-status="{{ $status }}"
                                      ondragover="kanbanDragOver(event)"
@@ -372,7 +375,7 @@
                                     <div class="px-3 py-2.5 rounded-t-xl {{ $col['header'] }} flex items-center justify-between shrink-0">
                                         <div class="flex items-center gap-2">
                                             <span class="w-2 h-2 rounded-full {{ $col['dot'] }} shrink-0"></span>
-                                            <span class="text-xs font-semibold">{{ \App\Models\RecruitmentApplicant::statusLabel($status) }}</span>
+                                            <span class="text-xs font-semibold">{{ $label }}</span>
                                         </div>
                                         <span class="kanban-col-count text-xs font-medium opacity-60 tabular-nums">{{ $colApplicants->count() }}</span>
                                     </div>
@@ -432,6 +435,35 @@
                                     </div>
                                 </div>
                             @endforeach
+
+                            @if($canEdit)
+                                <div class="kanban-col w-60 shrink-0 flex flex-col">
+                                    <div id="add-status-display" class="rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 p-3 flex items-center justify-center h-12">
+                                        <button type="button" onclick="openAddStatusForm()"
+                                            class="text-sm text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition flex items-center gap-1.5">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                            </svg>
+                                            Thêm trạng thái
+                                        </button>
+                                    </div>
+                                    <div id="add-status-form" class="hidden rounded-xl border border-gray-300 dark:border-gray-600 p-3 space-y-2 bg-gray-50 dark:bg-gray-900/50">
+                                        <input type="text" id="add-status-input" maxlength="100" placeholder="Tên trạng thái"
+                                            class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
+                                        <p id="add-status-error" class="hidden text-xs text-red-600 dark:text-red-400"></p>
+                                        <div class="flex items-center gap-2">
+                                            <button type="button" onclick="submitAddStatus()"
+                                                class="px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition">
+                                                Thêm
+                                            </button>
+                                            <button type="button" onclick="cancelAddStatus()"
+                                                class="px-3 py-1.5 text-xs text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                                                Hủy
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -442,82 +474,15 @@
     </div>
 
     <x-event-modal />
+    <x-recruitment-import-modal />
 
     @push('scripts')
     <script>
-    (function () {
-        let _dragging = null;
-
-        window.kanbanDragStart = function (e) {
-            _dragging = e.currentTarget;
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', _dragging.dataset.applicantId);
-            requestAnimationFrame(() => _dragging.classList.add('opacity-40', 'scale-95'));
-        };
-
-        window.kanbanDragOver = function (e) {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            e.currentTarget.classList.add('ring-2', 'ring-indigo-400', 'dark:ring-indigo-500');
-        };
-
-        window.kanbanDragLeave = function (e) {
-            if (!e.currentTarget.contains(e.relatedTarget)) {
-                e.currentTarget.classList.remove('ring-2', 'ring-indigo-400', 'dark:ring-indigo-500');
-            }
-        };
-
-        window.kanbanDrop = async function (e) {
-            e.preventDefault();
-            const col = e.currentTarget;
-            col.classList.remove('ring-2', 'ring-indigo-400', 'dark:ring-indigo-500');
-            if (!_dragging) return;
-
-            _dragging.classList.remove('opacity-40', 'scale-95');
-            const newStatus    = col.dataset.status;
-            const applicantId  = _dragging.dataset.applicantId;
-            const cardsArea    = col.querySelector('.kanban-cards');
-
-            // Move card in DOM
-            cardsArea.appendChild(_dragging);
-
-            // Update all column count badges
-            document.querySelectorAll('.kanban-col').forEach(c => {
-                c.querySelector('.kanban-col-count').textContent =
-                    c.querySelectorAll('.kanban-card').length;
-            });
-
-            _dragging = null;
-
-            // Persist via AJAX
-            try {
-                const resp = await fetch(
-                    `/recruitment/{{ $recruitmentPosition->id }}/applicants/${applicantId}/status`,
-                    {
-                        method: 'PATCH',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                        },
-                        body: JSON.stringify({ status: newStatus }),
-                    }
-                );
-                if (!resp.ok) throw new Error('Server error ' + resp.status);
-            } catch (err) {
-                console.error('Kanban status update failed', err);
-            }
-        };
-
-        // Click card → navigate to applicant show page
-        document.addEventListener('click', function (e) {
-            const card = e.target.closest('.kanban-card');
-            if (!card) return;
-            // Don't navigate if user was dragging
-            if (card.classList.contains('opacity-40')) return;
-            window.location.href = card.dataset.applicantUrl;
-        });
-    })();
+        window.recruitmentBaseUrl       = @js(route('recruitment.show', $recruitmentPosition));
+        window.recruitmentStoreUrl      = @js(route('recruitment.applicants.store', $recruitmentPosition));
+        window.recruitmentAddStatusUrl  = @js(route('recruitment.applicants.statuses.add', $recruitmentPosition));
+        window.recruitmentStatusLabels  = @js($kanbanCols);
+        window.recruitmentCanEdit       = @js($canEdit);
     </script>
     @endpush
 

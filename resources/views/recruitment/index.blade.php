@@ -64,29 +64,33 @@
                                             <p class="text-xs font-medium px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400" title="Total">
                                                 Tổng: {{ $position->applicants_count }}
                                             </p>
+                                            @if($position->potential_count)
+                                                @php $s = 'Tiềm năng'; @endphp
+                                                <br><p class="text-xs font-medium px-1.5 py-0.5 rounded {{ \App\Models\RecruitmentApplicant::statusColor($s) }}" title="{{ \App\Models\RecruitmentApplicant::statusLabel($s) }}">{{ \App\Models\RecruitmentApplicant::statusLabel($s) }}: {{ $position->potential_count }}</p>
+                                            @endif
                                             @if($position->cv_screening_count)
-                                                @php $s = 'CV Screening'; @endphp
+                                                @php $s = 'Lọc CV'; @endphp
                                                 <br><p class="text-xs font-medium px-1.5 py-0.5 rounded {{ \App\Models\RecruitmentApplicant::statusColor($s) }}" title="{{ \App\Models\RecruitmentApplicant::statusLabel($s) }}">{{ \App\Models\RecruitmentApplicant::statusLabel($s) }}: {{ $position->cv_screening_count }}</p>
                                             @endif
                                             @if($position->interview_count)
-                                                @php $s = 'Approved for Interview'; @endphp
+                                                @php $s = 'Duyệt phỏng vấn'; @endphp
                                                 <br><p class="text-xs font-medium px-1.5 py-0.5 rounded {{ \App\Models\RecruitmentApplicant::statusColor($s) }}" title="{{ \App\Models\RecruitmentApplicant::statusLabel($s) }}">{{ \App\Models\RecruitmentApplicant::statusLabel($s) }}: {{ $position->interview_count }}</p>
                                             @endif
-                                            @if($position->approved_count)
-                                                @php $s = 'Approved'; @endphp
-                                                <br><p class="text-xs font-medium px-1.5 py-0.5 rounded {{ \App\Models\RecruitmentApplicant::statusColor($s) }}" title="{{ \App\Models\RecruitmentApplicant::statusLabel($s) }}">{{ \App\Models\RecruitmentApplicant::statusLabel($s) }}: {{ $position->approved_count }}</p>
-                                            @endif
-                                            @if($position->rejected_count)
-                                                @php $s = 'Rejected'; @endphp
-                                                <br><p class="text-xs font-medium px-1.5 py-0.5 rounded {{ \App\Models\RecruitmentApplicant::statusColor($s) }}" title="{{ \App\Models\RecruitmentApplicant::statusLabel($s) }}">{{ \App\Models\RecruitmentApplicant::statusLabel($s) }}: {{ $position->rejected_count }}</p>
+                                            @if($position->offer_consider_count)
+                                                @php $s = 'Cân nhắc offer'; @endphp
+                                                <br><p class="text-xs font-medium px-1.5 py-0.5 rounded {{ \App\Models\RecruitmentApplicant::statusColor($s) }}" title="{{ \App\Models\RecruitmentApplicant::statusLabel($s) }}">{{ \App\Models\RecruitmentApplicant::statusLabel($s) }}: {{ $position->offer_consider_count }}</p>
                                             @endif
                                             @if($position->offered_count)
-                                                @php $s = 'Offered'; @endphp
+                                                @php $s = 'Đã gửi offer'; @endphp
                                                 <br><p class="text-xs font-medium px-1.5 py-0.5 rounded {{ \App\Models\RecruitmentApplicant::statusColor($s) }}" title="{{ \App\Models\RecruitmentApplicant::statusLabel($s) }}">{{ \App\Models\RecruitmentApplicant::statusLabel($s) }}: {{ $position->offered_count }}</p>
                                             @endif
                                             @if($position->hired_count)
-                                                @php $s = 'Hired'; @endphp
+                                                @php $s = 'Đã tuyển'; @endphp
                                                 <br><p class="text-xs font-medium px-1.5 py-0.5 rounded {{ \App\Models\RecruitmentApplicant::statusColor($s) }}" title="{{ \App\Models\RecruitmentApplicant::statusLabel($s) }}">{{ \App\Models\RecruitmentApplicant::statusLabel($s) }}: {{ $position->hired_count }}</p>
+                                            @endif
+                                            @if($position->rejected_count)
+                                                @php $s = 'Không phù hợp'; @endphp
+                                                <br><p class="text-xs font-medium px-1.5 py-0.5 rounded {{ \App\Models\RecruitmentApplicant::statusColor($s) }}" title="{{ \App\Models\RecruitmentApplicant::statusLabel($s) }}">{{ \App\Models\RecruitmentApplicant::statusLabel($s) }}: {{ $position->rejected_count }}</p>
                                             @endif
                                         @endif
                                     </div>

@@ -13,18 +13,55 @@ class RecruitmentPosition extends Model
     protected $fillable = [
         'name', 'team_id', 'search_start_date', 'search_end_date',
         'description', 'file_path', 'salary_min', 'salary_max',
-        'status'
+        'status', 'custom_applicant_statuses',
     ];
 
     protected function casts(): array
     {
         return [
-            'search_start_date' => 'date',
-            'search_end_date'   => 'date',
+            'search_start_date'         => 'date',
+            'search_end_date'           => 'date',
+            'custom_applicant_statuses' => 'array',
         ];
     }
 
     public static array $statuses = ['upcoming', 'in_progress', 'done'];
+
+    /**
+     * All applicant statuses available for this position: the fixed set
+     * defined on RecruitmentApplicant, plus any custom statuses added via
+     * the Kanban board for this position only.
+     */
+    public function allStatuses(): array
+    {
+        $statuses = RecruitmentApplicant::$statuses;
+
+        foreach (($this->custom_applicant_statuses ?? []) as $custom) {
+            $statuses[$custom] = $custom;
+        }
+
+        return $statuses;
+    }
+
+    /**
+     * Add a custom applicant status, scoped to this position only.
+     * Returns false if the name is blank or already exists (fixed or custom).
+     */
+    public function addCustomStatus(string $name): bool
+    {
+        $name = trim($name);
+        if ($name === '') return false;
+
+        $existing = $this->allStatuses();
+        if (isset($existing[$name])) return false;
+
+        $custom   = $this->custom_applicant_statuses ?? [];
+        $custom[] = $name;
+        $this->custom_applicant_statuses = $custom;
+        $this->save();
+
+        return true;
+    }
 
     public function getActivitylogOptions(): LogOptions
     {

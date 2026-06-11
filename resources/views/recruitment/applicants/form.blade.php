@@ -7,7 +7,8 @@
     </x-slot>
 
     <div class="py-8">
-        <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
             <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
 
                 <form method="POST"
@@ -31,9 +32,9 @@
                         <x-input-label for="status" value="Status *" />
                         <select id="status" name="status"
                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
-                            @foreach(\App\Models\RecruitmentApplicant::$statuses as $s => $label)
+                            @foreach($recruitmentPosition->allStatuses() as $s => $label)
                                 <option value="{{ $s }}"
-                                    {{ old('status', $recruitmentApplicant->status ?? 'CV Screening') === $s ? 'selected' : '' }}>
+                                    {{ old('status', $recruitmentApplicant->status ?? 'Lọc CV') === $s ? 'selected' : '' }}>
                                     {{ $label }}
                                 </option>
                             @endforeach
@@ -194,6 +195,9 @@
                     </div>
                 </form>
             </div>
+
+            @include('recruitment.applicants._cv-preview')
+        </div>
         </div>
     </div>
     <x-skill-picker-modal />
@@ -248,6 +252,39 @@
                 }
             }
         });
+
+        // Live-preview a newly selected CV file before it's uploaded.
+        var cvInput = document.getElementById('cv');
+        var cvPreviewContainer = document.getElementById('cv-preview-container');
+        if (cvInput && cvPreviewContainer) {
+            cvInput.addEventListener('change', function (e) {
+                var file = e.target.files[0];
+                if (!file) return;
+
+                var ext = file.name.split('.').pop().toLowerCase();
+                var imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
+                var url = URL.createObjectURL(file);
+
+                if (imageExts.includes(ext)) {
+                    cvPreviewContainer.innerHTML =
+                        '<img src="' + url + '" alt="CV Preview" class="max-w-full rounded border border-gray-200 dark:border-gray-700">';
+                } else if (ext === 'pdf') {
+                    cvPreviewContainer.innerHTML =
+                        '<iframe src="' + url + '" class="w-full rounded border border-gray-200 dark:border-gray-700" style="height: 70vh;"></iframe>';
+                } else if (['doc', 'docx'].includes(ext)) {
+                    cvPreviewContainer.innerHTML =
+                        '<div class="flex flex-col items-center justify-center h-64 text-sm text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded text-center px-4">'
+                        + '<p>📄 ' + file.name.replace(/[<>&]/g, '') + '</p>'
+                        + '<p class="mt-1 text-xs">Bản xem trước Word sẽ khả dụng sau khi lưu.</p>'
+                        + '</div>';
+                } else {
+                    cvPreviewContainer.innerHTML =
+                        '<div class="flex flex-col items-center justify-center h-64 text-sm text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded">'
+                        + '<p>Không có bản xem trước cho loại file này.</p>'
+                        + '</div>';
+                }
+            });
+        }
     });
     </script>
     @endpush

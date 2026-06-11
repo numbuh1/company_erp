@@ -43,6 +43,12 @@
 
         <!-- Footer -->
         <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex flex-wrap items-center gap-3">
+            <p class="w-full text-xs text-gray-400 dark:text-gray-500">
+                "Outlook (Ứng dụng)" mở ứng dụng email mặc định của hệ điều hành. Trên macOS, để link này mở
+                Microsoft Outlook thay vì Mail, vào ứng dụng <strong>Mail</strong> → Settings → General →
+                "Default email reader" và chọn <strong>Microsoft Outlook</strong>.
+            </p>
+
             <button type="button" onclick="closeEmailModal()"
                 class="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                 Hủy

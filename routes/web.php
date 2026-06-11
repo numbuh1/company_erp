@@ -193,6 +193,9 @@ Route::middleware('auth')->group(function () {
         Route::patch('/{recruitmentPosition}/applicants/{recruitmentApplicant}/status',
             [RecruitmentApplicantController::class, 'updateStatus'])
             ->name('applicants.updateStatus');
+        Route::post('/{recruitmentPosition}/statuses',
+            [RecruitmentApplicantController::class, 'addStatus'])
+            ->name('applicants.statuses.add');
     });
 
     // Holidays

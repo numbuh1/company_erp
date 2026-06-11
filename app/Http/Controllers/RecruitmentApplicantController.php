@@ -59,9 +59,9 @@ class RecruitmentApplicantController extends Controller
 
         $data = $request->validate([
             'name'   => 'required|string|max:255',
-            'cv'     => 'nullable|file|max:10240',
+            'cv'     => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,gif,webp|max:10240',
             'notes'  => 'nullable|string|max:2000',
-            'status' => 'nullable|in:' . implode(',', RecruitmentApplicant::$statuses),
+            'status' => 'nullable|string|max:100',
             'evaluation'       => 'nullable|integer|min:0|max:3',
             'email'            => 'nullable|email|max:255',
             'phone'            => 'nullable|string|max:50',
@@ -75,7 +75,7 @@ class RecruitmentApplicantController extends Controller
         ]);
 
         $data['recruitment_position_id'] = $recruitmentPosition->id;
-        $data['status'] = $data['status'] ?? 'CV Screening';
+        $data['status'] = $data['status'] ?? 'Lọc CV';
 
         if ($request->hasFile('cv')) {
             $data['cv_path'] = $request->file('cv')->store(
@@ -94,6 +94,14 @@ class RecruitmentApplicantController extends Controller
 
         $tagIds = RecruitmentTag::resolveIds($request->input('tags', []), 'applicant');
         $applicant->tags()->sync($tagIds);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success'   => true,
+                'applicant' => $applicant,
+            ]);
+        }
+
         return redirect()->route('recruitment.show', $recruitmentPosition)->with('success', 'Applicant added.');
     }
 
@@ -120,9 +128,9 @@ class RecruitmentApplicantController extends Controller
 
         $data = $request->validate([
             'name'               => 'required|string|max:255',
-            'cv'                 => 'nullable|file|mimes:pdf,doc,docx|max:10240',
+            'cv'                 => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,gif,webp|max:10240',
             'notes'              => 'nullable|string|max:2000',
-            'status'             => 'required|in:' . implode(',', RecruitmentApplicant::$statuses),
+            'status'             => 'nullable|string|max:100',
             'evaluation'         => 'nullable|integer|min:0|max:3',
             'email'              => 'nullable|email|max:255',
             'phone'              => 'nullable|string|max:50',
@@ -186,12 +194,35 @@ class RecruitmentApplicantController extends Controller
         if (!$canFullEdit) abort(403);
 
         $request->validate([
-            'status' => 'required|in:' . implode(',', RecruitmentApplicant::$statuses),
+            'status' => 'required|string|max:100',
         ]);
 
         $recruitmentApplicant->update(['status' => $request->status]);
 
         return response()->json(['ok' => true]);
+    }
+
+    public function addStatus(Request $request, RecruitmentPosition $recruitmentPosition)
+    {
+        $canFullEdit = $this->_authorizePosition($recruitmentPosition);
+        if (!$canFullEdit) abort(403);
+
+        $data = $request->validate([
+            'name' => 'required|string|max:100',
+        ]);
+
+        $added = $recruitmentPosition->addCustomStatus($data['name']);
+
+        if (!$added) {
+            return response()->json(['ok' => false, 'message' => 'Status already exists.'], 422);
+        }
+
+        return response()->json([
+            'ok'     => true,
+            'status' => $data['name'],
+            'config' => RecruitmentApplicant::kanbanColConfig($data['name']),
+            'label'  => RecruitmentApplicant::statusLabel($data['name']),
+        ]);
     }
 
 }
