@@ -181,10 +181,10 @@
                             </button>
                         </div>
                         @if($canEdit)
-                            <a href="{{ route('recruitment.applicants.create', $recruitmentPosition) }}"
+                            <button type="button" onclick="openApplicantCreateModal()"
                                 class="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition">
                                 + Tạo Ứng Viên
-                            </a>
+                            </button>
                         @endif
                     </div>
                 </div>
@@ -430,10 +430,10 @@
                                                                 <template x-teleport="body">
                                                                     <div x-show="open" x-cloak :style="menuStyle" @click.stop @click.outside="open = false"
                                                                         class="fixed w-28 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 overflow-hidden text-xs">
-                                                                        <button type="button" onclick="open = false; openApplicantEditModal({{ $applicant->id }})"
-                                                                            class="block w-full text-left px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
-                                                                            Chỉnh sửa
-                                                                        </button>
+                                                                        <a href="{{ $applicantUrl }}"
+                                                                            class="block px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                                                            Xem
+                                                                        </a>
                                                                         <button type="button" onclick="deleteKanbanApplicant(event, {{ $applicant->id }})"
                                                                             class="block w-full text-left px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
                                                                             Xóa

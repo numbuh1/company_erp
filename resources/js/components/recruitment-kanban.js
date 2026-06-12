@@ -142,19 +142,10 @@ function _setVal(id, value) {
     if (el) el.value = value ?? '';
 }
 
-// Populate and show the modal for the given applicant (returned by the
-// store/update/show endpoints' `_applicantToJson()`).
-function _openApplicantModal(applicant, cvUrl, opts) {
-    opts = opts || {};
-    _editApplicantId = applicant.id;
-
-    const titleEl    = document.getElementById('am-title');
-    const subtitleEl = document.getElementById('am-subtitle');
-    if (titleEl)    titleEl.textContent = opts.isNew ? 'Đã thêm ứng viên từ CV' : 'Chỉnh sửa Ứng viên';
-    if (subtitleEl) subtitleEl.classList.toggle('hidden', !opts.isNew);
-
-    _clearApplicantModalErrors();
-
+// Fill every field in the modal from an applicant-like object (either the
+// `_applicantToJson()` payload from the store/update/show endpoints, or a
+// blank placeholder used when creating a brand new applicant).
+function _fillApplicantFields(applicant, cvUrl) {
     // Status
     const statusSelect = document.getElementById('am-status');
     if (statusSelect) statusSelect.value = applicant.status || '';
@@ -204,12 +195,33 @@ function _openApplicantModal(applicant, cvUrl, opts) {
     if (typeof window.initSkillPicker === 'function') {
         window.initSkillPicker(window.recruitmentSkillsByCategory || {}, existingSkills);
     }
+}
 
+function _showApplicantModal() {
     const modal = document.getElementById('recruitment-applicant-modal');
     if (modal) {
         modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
+}
+
+// Populate and show the modal to edit an existing applicant (object
+// returned by the store/update/show endpoints' `_applicantToJson()`).
+function _openApplicantModal(applicant, cvUrl, opts) {
+    opts = opts || {};
+    _editApplicantId = applicant.id;
+
+    const titleEl    = document.getElementById('am-title');
+    const subtitleEl = document.getElementById('am-subtitle');
+    if (titleEl)    titleEl.textContent = opts.isNew ? 'Đã thêm ứng viên từ CV' : 'Chỉnh sửa Ứng viên';
+    if (subtitleEl) subtitleEl.classList.toggle('hidden', !opts.isNew);
+
+    _clearApplicantModalErrors();
+    _fillApplicantFields(applicant, cvUrl);
+
+    document.getElementById('am-delete-btn')?.classList.remove('hidden');
+
+    _showApplicantModal();
 }
 
 // Open the modal to edit an existing applicant (fetches full details).
@@ -228,6 +240,28 @@ window.openApplicantEditModal = async function (id) {
     }
 };
 
+// Open the modal to create a brand new applicant (blank form).
+window.openApplicantCreateModal = function () {
+    _editApplicantId = null;
+
+    const titleEl    = document.getElementById('am-title');
+    const subtitleEl = document.getElementById('am-subtitle');
+    if (titleEl)    titleEl.textContent = 'Thêm Ứng viên mới';
+    if (subtitleEl) subtitleEl.classList.add('hidden');
+
+    _clearApplicantModalErrors();
+    _fillApplicantFields({
+        status: 'Lọc CV',
+        name: '', notes: '', hr_note: '', email: '', phone: '', profile_url: '',
+        salary_expectation: '', available_date: '', evaluation: 0,
+        cv_path: null, referer_user_id: null, skills: [], tags: [],
+    }, null);
+
+    document.getElementById('am-delete-btn')?.classList.add('hidden');
+
+    _showApplicantModal();
+};
+
 window.closeApplicantModal = function () {
     const modal = document.getElementById('recruitment-applicant-modal');
     if (modal) modal.classList.add('hidden');
@@ -236,7 +270,7 @@ window.closeApplicantModal = function () {
 };
 
 window.submitApplicantModal = async function () {
-    if (!_editApplicantId) { closeApplicantModal(); return; }
+    const isCreate = !_editApplicantId;
 
     const name = document.getElementById('am-name')?.value.trim() || '';
     if (!name) {
@@ -249,7 +283,7 @@ window.submitApplicantModal = async function () {
     _clearApplicantModalErrors();
 
     const formData = new FormData();
-    formData.append('_method', 'PUT');
+    if (!isCreate) formData.append('_method', 'PUT');
     formData.append('name', name);
 
     const statusVal = document.getElementById('am-status')?.value;
@@ -285,8 +319,12 @@ window.submitApplicantModal = async function () {
     const cvFile = document.getElementById('am-cv')?.files?.[0];
     if (cvFile) formData.append('cv', cvFile);
 
+    const url = isCreate
+        ? window.recruitmentStoreUrl
+        : `${window.recruitmentBaseUrl}/applicants/${_editApplicantId}`;
+
     try {
-        const resp = await fetch(`${window.recruitmentBaseUrl}/applicants/${_editApplicantId}`, {
+        const resp = await fetch(url, {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': _csrfToken(),
@@ -308,7 +346,7 @@ window.submitApplicantModal = async function () {
 
         window.location.reload();
     } catch (err) {
-        console.error('Update applicant failed', err);
+        console.error('Save applicant failed', err);
         _showApplicantModalErrors(null);
         const el = document.getElementById('am-error');
         if (el) { el.textContent = 'Không thể lưu thông tin. Vui lòng thử lại.'; el.classList.remove('hidden'); }
@@ -601,13 +639,13 @@ window.deleteKanbanApplicant = async function (e, id) {
     }
 };
 
-// Click card → navigate to applicant show page
+// Click card → open the edit modal directly
 document.addEventListener('click', function (e) {
     const card = e.target.closest('.kanban-card');
     if (!card) return;
-    // Don't navigate if user was dragging
+    // Don't open if user was dragging
     if (card.classList.contains('opacity-40')) return;
-    window.location.href = card.dataset.applicantUrl;
+    openApplicantEditModal(card.dataset.applicantId);
 });
 
 // Escape key closes the applicant edit modal
