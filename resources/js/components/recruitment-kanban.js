@@ -1,18 +1,25 @@
-// Kanban board behaviour for the recruitment position "show" page:
+// Kanban board behaviour for the recruitment position "show" page, plus the
+// shared applicant edit modal (also used on the applicant "show" page):
 // - drag & drop applicant cards between status columns (persisted via AJAX)
 // - drag & drop status columns to reorder them (persisted via AJAX)
 // - drag & drop a CV file (from the OS) onto a column: immediately creates a
 //   new applicant (default name = filename) with the uploaded CV, then opens
-//   a modal (with a real, full CV preview) to confirm/edit the applicant info
+//   the applicant edit modal (with a real, full CV preview) to fill in details
 // - inline "add custom status" form
 // - per-card dropdown menu: edit / delete applicant
 // - click a card to navigate to the applicant's page
+// - the applicant edit modal: full form (status, name, CV, HR note, notes,
+//   evaluation, contact info, salary/availability, referer, skills, tags),
+//   submitted via AJAX, with a "Xóa" (delete) button + confirmation
 
 let _draggingCard = null;
 let _draggingColumn = null;
 
-// id of the applicant currently being confirmed/edited in the import modal.
+// id of the applicant currently loaded in the edit modal.
 let _editApplicantId = null;
+
+let _refererTomSelect = null;
+let _tagsTomSelect = null;
 
 function _csrfToken() {
     const meta = document.querySelector('meta[name="csrf-token"]');
@@ -26,10 +33,10 @@ function _extOf(filename) {
 
 // Render a CV preview from a real (server-hosted, internet-accessible) URL,
 // styled to match the `_cv-preview.blade.php` panel used on the applicant
-// edit/show pages. Unlike a blob: URL, this URL also supports the Office
-// Online embed for doc/docx files.
+// show page. Unlike a blob: URL, this URL also supports the Office Online
+// embed for doc/docx files.
 function _renderCvPreview(url, filename) {
-    const container = document.getElementById('import-cv-preview');
+    const container = document.getElementById('am-cv-preview');
     if (!container) return;
 
     if (!url) {
@@ -56,9 +63,288 @@ function _renderCvPreview(url, filename) {
     }
 }
 
+// Live-preview a newly selected CV file before it's uploaded.
+function _previewLocalCvFile(file) {
+    const container = document.getElementById('am-cv-preview');
+    if (!container || !file) return;
+
+    const ext = _extOf(file.name);
+    const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
+    const url = URL.createObjectURL(file);
+
+    if (imageExts.includes(ext)) {
+        container.innerHTML = `<img src="${url}" alt="CV Preview" class="max-w-full rounded border border-gray-200 dark:border-gray-700">`;
+    } else if (ext === 'pdf') {
+        container.innerHTML = `<iframe src="${url}" class="w-full rounded border border-gray-200 dark:border-gray-700" style="height: 60vh;"></iframe>`;
+    } else if (['doc', 'docx'].includes(ext)) {
+        container.innerHTML = `<div class="flex flex-col items-center justify-center h-64 text-sm text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded text-center px-4">`
+            + `<p>📄 ${file.name.replace(/[<>&]/g, '')}</p>`
+            + `<p class="mt-1 text-xs">Bản xem trước Word sẽ khả dụng sau khi lưu.</p>`
+            + `</div>`;
+    } else {
+        container.innerHTML = `<div class="flex flex-col items-center justify-center h-64 text-sm text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded">`
+            + `<p>Không có bản xem trước cho loại file này.</p>`
+            + `</div>`;
+    }
+}
+
 // ─────────────────────────────────────────────────────────────────────────
-// CV import: drop a file → create the applicant immediately, then show a
-// modal (with a real CV preview) to confirm/edit its details.
+// Star rating (evaluation)
+// ─────────────────────────────────────────────────────────────────────────
+window.setRating = function (val) {
+    const input = document.getElementById('evaluation-input');
+    if (input) input.value = val;
+    document.querySelectorAll('#am-star-rating .star-btn').forEach(function (btn) {
+        const isFilled = parseInt(btn.dataset.star) <= val;
+        btn.textContent = isFilled ? '★' : '☆';
+        btn.style.color = isFilled ? '#f59e0b' : '';
+    });
+};
+
+// ─────────────────────────────────────────────────────────────────────────
+// Applicant edit modal
+// ─────────────────────────────────────────────────────────────────────────
+function _clearApplicantModalErrors() {
+    document.querySelectorAll('#recruitment-applicant-modal [id^="am-error"]').forEach(function (el) {
+        el.classList.add('hidden');
+        el.textContent = '';
+    });
+}
+
+function _showApplicantModalErrors(errors) {
+    _clearApplicantModalErrors();
+    if (!errors) return;
+
+    const generic = [];
+    Object.entries(errors).forEach(function ([field, messages]) {
+        const baseField = field.split('.')[0];
+        const el = document.getElementById('am-error-' + baseField);
+        const msg = Array.isArray(messages) ? messages[0] : messages;
+        if (el) {
+            el.textContent = msg;
+            el.classList.remove('hidden');
+        } else {
+            generic.push(msg);
+        }
+    });
+
+    if (generic.length) {
+        const el = document.getElementById('am-error');
+        if (el) {
+            el.textContent = generic.join(' ');
+            el.classList.remove('hidden');
+        }
+    }
+}
+
+function _setVal(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.value = value ?? '';
+}
+
+// Populate and show the modal for the given applicant (returned by the
+// store/update/show endpoints' `_applicantToJson()`).
+function _openApplicantModal(applicant, cvUrl, opts) {
+    opts = opts || {};
+    _editApplicantId = applicant.id;
+
+    const titleEl    = document.getElementById('am-title');
+    const subtitleEl = document.getElementById('am-subtitle');
+    if (titleEl)    titleEl.textContent = opts.isNew ? 'Đã thêm ứng viên từ CV' : 'Chỉnh sửa Ứng viên';
+    if (subtitleEl) subtitleEl.classList.toggle('hidden', !opts.isNew);
+
+    _clearApplicantModalErrors();
+
+    // Status
+    const statusSelect = document.getElementById('am-status');
+    if (statusSelect) statusSelect.value = applicant.status || '';
+
+    // Basic fields
+    _setVal('am-name', applicant.name);
+    _setVal('am-notes', applicant.notes);
+    _setVal('am-hr-note', applicant.hr_note);
+    _setVal('am-email', applicant.email);
+    _setVal('am-phone', applicant.phone);
+    _setVal('am-profile-url', applicant.profile_url);
+    _setVal('am-salary-expectation', applicant.salary_expectation);
+    _setVal('am-available-date', applicant.available_date);
+
+    // Evaluation
+    window.setRating(applicant.evaluation || 0);
+
+    // CV
+    const cvInput = document.getElementById('am-cv');
+    if (cvInput) cvInput.value = '';
+
+    const currentCv     = document.getElementById('am-current-cv');
+    const currentCvLink = document.getElementById('am-current-cv-link');
+    if (applicant.cv_path && cvUrl) {
+        if (currentCvLink) currentCvLink.href = cvUrl;
+        if (currentCv) currentCv.classList.remove('hidden');
+    } else if (currentCv) {
+        currentCv.classList.add('hidden');
+    }
+    _renderCvPreview(cvUrl, applicant.cv_path || '');
+
+    // Referer
+    if (_refererTomSelect) {
+        _refererTomSelect.setValue(applicant.referer_user_id ? String(applicant.referer_user_id) : '');
+    }
+
+    // Tags
+    if (_tagsTomSelect) {
+        _tagsTomSelect.setValue((applicant.tags || []).map(String));
+    }
+
+    // Skills
+    const existingSkills = {};
+    (applicant.skills || []).forEach(function (s) {
+        existingSkills[s.id] = s.level;
+    });
+    if (typeof window.initSkillPicker === 'function') {
+        window.initSkillPicker(window.recruitmentSkillsByCategory || {}, existingSkills);
+    }
+
+    const modal = document.getElementById('recruitment-applicant-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+// Open the modal to edit an existing applicant (fetches full details).
+window.openApplicantEditModal = async function (id) {
+    try {
+        const resp = await fetch(`${window.recruitmentBaseUrl}/applicants/${id}`, {
+            headers: { 'Accept': 'application/json' },
+        });
+        if (!resp.ok) throw new Error('Server error ' + resp.status);
+
+        const data = await resp.json();
+        _openApplicantModal(data.applicant, data.cv_url, { isNew: false });
+    } catch (err) {
+        console.error('Load applicant failed', err);
+        alert('Không thể tải thông tin ứng viên. Vui lòng thử lại.');
+    }
+};
+
+window.closeApplicantModal = function () {
+    const modal = document.getElementById('recruitment-applicant-modal');
+    if (modal) modal.classList.add('hidden');
+    document.body.style.overflow = '';
+    _editApplicantId = null;
+};
+
+window.submitApplicantModal = async function () {
+    if (!_editApplicantId) { closeApplicantModal(); return; }
+
+    const name = document.getElementById('am-name')?.value.trim() || '';
+    if (!name) {
+        _showApplicantModalErrors({ name: ['Vui lòng nhập tên ứng viên.'] });
+        return;
+    }
+
+    const submitBtn = document.getElementById('am-submit-btn');
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Đang lưu…'; }
+    _clearApplicantModalErrors();
+
+    const formData = new FormData();
+    formData.append('_method', 'PUT');
+    formData.append('name', name);
+
+    const statusVal = document.getElementById('am-status')?.value;
+    if (statusVal !== undefined) formData.append('status', statusVal);
+
+    formData.append('notes', document.getElementById('am-notes')?.value || '');
+
+    const hrNoteEl = document.getElementById('am-hr-note');
+    if (hrNoteEl) formData.append('hr_note', hrNoteEl.value || '');
+
+    formData.append('evaluation', document.getElementById('evaluation-input')?.value || '0');
+    formData.append('email', document.getElementById('am-email')?.value || '');
+    formData.append('phone', document.getElementById('am-phone')?.value || '');
+    formData.append('profile_url', document.getElementById('am-profile-url')?.value || '');
+
+    const salaryEl = document.getElementById('am-salary-expectation');
+    if (salaryEl) formData.append('salary_expectation', salaryEl.value || '');
+
+    formData.append('available_date', document.getElementById('am-available-date')?.value || '');
+    formData.append('referer_user_id', _refererTomSelect ? (_refererTomSelect.getValue() || '') : '');
+
+    // Tags (TomSelect multi-select)
+    (_tagsTomSelect ? _tagsTomSelect.getValue() : []).forEach(function (tagId) {
+        formData.append('tags[]', tagId);
+    });
+
+    // Skills (hidden inputs synced by skill-picker.js)
+    document.querySelectorAll('#skills-inputs input').forEach(function (input) {
+        formData.append(input.name, input.value);
+    });
+
+    // CV file
+    const cvFile = document.getElementById('am-cv')?.files?.[0];
+    if (cvFile) formData.append('cv', cvFile);
+
+    try {
+        const resp = await fetch(`${window.recruitmentBaseUrl}/applicants/${_editApplicantId}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': _csrfToken(),
+                'Accept': 'application/json',
+            },
+            body: formData,
+        });
+
+        if (resp.status === 422) {
+            const data = await resp.json().catch(() => ({}));
+            _showApplicantModalErrors(data.errors);
+            return;
+        }
+
+        if (!resp.ok) {
+            const data = await resp.json().catch(() => ({}));
+            throw new Error(data.message || ('Server error ' + resp.status));
+        }
+
+        window.location.reload();
+    } catch (err) {
+        console.error('Update applicant failed', err);
+        _showApplicantModalErrors(null);
+        const el = document.getElementById('am-error');
+        if (el) { el.textContent = 'Không thể lưu thông tin. Vui lòng thử lại.'; el.classList.remove('hidden'); }
+    } finally {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Lưu'; }
+    }
+};
+
+window.deleteApplicantModal = async function () {
+    if (!_editApplicantId) return;
+    if (!confirm('Bạn có chắc muốn xóa ứng viên này? Hành động này không thể hoàn tác.')) return;
+
+    const deleteBtn = document.getElementById('am-delete-btn');
+    if (deleteBtn) deleteBtn.disabled = true;
+
+    try {
+        const resp = await fetch(`${window.recruitmentBaseUrl}/applicants/${_editApplicantId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': _csrfToken(),
+                'Accept': 'application/json',
+            },
+        });
+        if (!resp.ok) throw new Error('Server error ' + resp.status);
+
+        window.location.href = window.recruitmentBaseUrl;
+    } catch (err) {
+        console.error('Delete applicant failed', err);
+        alert('Không thể xóa ứng viên. Vui lòng thử lại.');
+        if (deleteBtn) deleteBtn.disabled = false;
+    }
+};
+
+// ─────────────────────────────────────────────────────────────────────────
+// CV import: drop a file → create the applicant immediately, then show the
+// edit modal (with a real CV preview) to confirm/fill in its details.
 // ─────────────────────────────────────────────────────────────────────────
 async function _importCvFile(file, status) {
     const formData = new FormData();
@@ -82,100 +368,12 @@ async function _importCvFile(file, status) {
             throw new Error(data.message || ('Server error ' + resp.status));
         }
 
-        openImportModal(data.applicant, data.cv_url, status);
+        _openApplicantModal(data.applicant, data.cv_url, { isNew: true });
     } catch (err) {
         console.error('Import applicant failed', err);
         alert('Không thể thêm ứng viên từ file này. Vui lòng thử lại.');
     }
 }
-
-window.openImportModal = function (applicant, cvUrl, status) {
-    _editApplicantId = applicant.id;
-
-    const nameInput  = document.getElementById('import-name');
-    const emailInput = document.getElementById('import-email');
-    const phoneInput = document.getElementById('import-phone');
-    const errorEl    = document.getElementById('import-error');
-    const labelEl    = document.getElementById('import-status-label');
-    const submitBtn  = document.getElementById('import-submit-btn');
-
-    if (nameInput)  nameInput.value  = applicant.name  || '';
-    if (emailInput) emailInput.value = applicant.email || '';
-    if (phoneInput) phoneInput.value = applicant.phone || '';
-    if (errorEl)   { errorEl.classList.add('hidden'); errorEl.textContent = ''; }
-    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Lưu'; }
-
-    const labels = window.recruitmentStatusLabels || {};
-    if (labelEl) labelEl.textContent = labels[status] || status || (applicant.status || '');
-
-    _renderCvPreview(cvUrl, applicant.cv_path || '');
-
-    const modal = document.getElementById('recruitment-import-modal');
-    if (modal) {
-        modal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-    }
-};
-
-window.closeImportModal = function () {
-    const modal = document.getElementById('recruitment-import-modal');
-    if (modal) modal.classList.add('hidden');
-    document.body.style.overflow = '';
-
-    const hadApplicant = _editApplicantId !== null;
-    _editApplicantId = null;
-
-    // The applicant was already created server-side as soon as the CV was
-    // dropped — refresh the board so the new card shows up in its column.
-    if (hadApplicant) {
-        window.location.reload();
-    }
-};
-
-window.submitImportModal = async function () {
-    if (!_editApplicantId) { closeImportModal(); return; }
-
-    const nameInput  = document.getElementById('import-name');
-    const emailInput = document.getElementById('import-email');
-    const phoneInput = document.getElementById('import-phone');
-    const errorEl    = document.getElementById('import-error');
-    const submitBtn  = document.getElementById('import-submit-btn');
-
-    const name  = nameInput  ? nameInput.value.trim()  : '';
-    const email = emailInput ? emailInput.value.trim() : '';
-    const phone = phoneInput ? phoneInput.value.trim() : '';
-
-    if (!name) {
-        if (errorEl) { errorEl.textContent = 'Vui lòng nhập tên ứng viên.'; errorEl.classList.remove('hidden'); }
-        return;
-    }
-
-    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Đang lưu…'; }
-    if (errorEl)   { errorEl.classList.add('hidden'); errorEl.textContent = ''; }
-
-    try {
-        const resp = await fetch(`${window.recruitmentBaseUrl}/applicants/${_editApplicantId}`, {
-            method: 'PUT',
-            headers: {
-                'X-CSRF-TOKEN': _csrfToken(),
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify({ name, email, phone }),
-        });
-
-        if (!resp.ok) {
-            const data = await resp.json().catch(() => ({}));
-            throw new Error(data.message || ('Server error ' + resp.status));
-        }
-
-        window.location.reload();
-    } catch (err) {
-        console.error('Update applicant failed', err);
-        if (errorEl) { errorEl.textContent = 'Không thể lưu thông tin. Vui lòng thử lại.'; errorEl.classList.remove('hidden'); }
-        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Lưu'; }
-    }
-};
 
 // ─────────────────────────────────────────────────────────────────────────
 // Add custom status
@@ -259,7 +457,7 @@ window.kanbanDrop = async function (e) {
     col.classList.remove('ring-2', 'ring-indigo-400', 'dark:ring-indigo-500');
 
     // Dropping a file from the OS → create the applicant immediately, then
-    // open a modal (with a real CV preview) to confirm/edit its details.
+    // open the edit modal (with a real CV preview) to confirm/fill in details.
     if (e.dataTransfer.types.includes('Files') && e.dataTransfer.files.length) {
         const file = e.dataTransfer.files[0];
         if (window.recruitmentCanEdit) {
@@ -388,8 +586,10 @@ window.deleteKanbanApplicant = async function (e, id) {
         });
         if (!resp.ok) throw new Error('Server error ' + resp.status);
 
-        const card = e.target.closest('.kanban-card');
-        const col  = e.target.closest('.kanban-col');
+        // The dropdown is teleported to <body>, so it's no longer inside
+        // the card's DOM tree — look the card up by its applicant id instead.
+        const card = document.querySelector(`.kanban-card[data-applicant-id="${id}"]`);
+        const col  = card ? card.closest('.kanban-col') : null;
         if (card) card.remove();
         if (col) {
             const countEl = col.querySelector('.kanban-col-count');
@@ -410,11 +610,46 @@ document.addEventListener('click', function (e) {
     window.location.href = card.dataset.applicantUrl;
 });
 
-// Escape key closes the import modal
+// Escape key closes the applicant edit modal
 document.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape') return;
-    const modal = document.getElementById('recruitment-import-modal');
+    const modal = document.getElementById('recruitment-applicant-modal');
     if (modal && !modal.classList.contains('hidden')) {
-        closeImportModal();
+        closeApplicantModal();
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────────────
+// One-time setup: TomSelect instances for the applicant edit modal + CV
+// file live preview. Run once the DOM (and the deferred TomSelect CDN
+// script) is ready.
+// ─────────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function () {
+    const refererSelect = document.getElementById('am-referer-select');
+    if (refererSelect && window.TomSelect) {
+        _refererTomSelect = new TomSelect(refererSelect, { maxOptions: null });
+    }
+
+    const tagsSelect = document.getElementById('am-tags-select');
+    if (tagsSelect && window.TomSelect) {
+        _tagsTomSelect = new TomSelect(tagsSelect, {
+            create: true,
+            createOnBlur: true,
+            persist: false,
+            maxOptions: null,
+            render: {
+                option_create: function (data, escape) {
+                    return '<div class="create">Create tag <strong>' + escape(data.input) + '</strong></div>';
+                }
+            }
+        });
+    }
+
+    const cvInput = document.getElementById('am-cv');
+    if (cvInput) {
+        cvInput.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) _previewLocalCvFile(file);
+        });
     }
 });

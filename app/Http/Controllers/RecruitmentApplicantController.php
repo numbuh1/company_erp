@@ -24,6 +24,30 @@ class RecruitmentApplicantController extends Controller
         return false; // is assigned but cannot fully edit
     }
 
+    /**
+     * Build the JSON representation of an applicant used to populate the
+     * edit modal (includes skills with pivot levels + tag ids, and strips
+     * `hr_note` for users without the "view recruitment hr note" permission).
+     */
+    private function _applicantToJson(RecruitmentApplicant $applicant): array
+    {
+        $applicant->loadMissing(['skills', 'tags']);
+
+        $data = $applicant->toArray();
+        $data['skills'] = $applicant->skills->map(fn($s) => [
+            'id'    => $s->id,
+            'level' => $s->pivot->level,
+        ])->values();
+        $data['tags'] = $applicant->tags->pluck('id')->values();
+        $data['available_date'] = $applicant->available_date?->format('Y-m-d');
+
+        if (!auth()->user()->can('view recruitment hr note')) {
+            unset($data['hr_note']);
+        }
+
+        return $data;
+    }
+
     public function create(RecruitmentPosition $recruitmentPosition)
     {
         $canFullEdit = $this->_authorizePosition($recruitmentPosition);
@@ -38,9 +62,17 @@ class RecruitmentApplicantController extends Controller
         ));
     }
 
-    public function show(RecruitmentPosition $recruitmentPosition, RecruitmentApplicant $recruitmentApplicant)
+    public function show(Request $request, RecruitmentPosition $recruitmentPosition, RecruitmentApplicant $recruitmentApplicant)
     {
         $this->_authorizePosition($recruitmentPosition);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success'   => true,
+                'applicant' => $this->_applicantToJson($recruitmentApplicant),
+                'cv_url'    => $recruitmentApplicant->cv_path ? Storage::disk('public')->url($recruitmentApplicant->cv_path) : null,
+            ]);
+        }
 
         $recruitmentApplicant->load(['skills', 'tags', 'referer', 'events.attendants']);
         $recruitmentPosition->load('assignedUsers');
@@ -61,6 +93,7 @@ class RecruitmentApplicantController extends Controller
             'name'   => 'required|string|max:255',
             'cv'     => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,gif,webp|max:10240',
             'notes'  => 'nullable|string|max:2000',
+            'hr_note' => 'nullable|string|max:2000',
             'status' => 'nullable|string|max:100',
             'evaluation'       => 'nullable|integer|min:0|max:3',
             'email'            => 'nullable|email|max:255',
@@ -73,6 +106,10 @@ class RecruitmentApplicantController extends Controller
             'skills.*'         => 'exists:skills,id',
             'tags'             => 'nullable|array',
         ]);
+
+        if (!auth()->user()->can('view recruitment hr note')) {
+            unset($data['hr_note']);
+        }
 
         $data['recruitment_position_id'] = $recruitmentPosition->id;
         $data['status'] = $data['status'] ?? 'Lọc CV';
@@ -98,7 +135,7 @@ class RecruitmentApplicantController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'success'   => true,
-                'applicant' => $applicant,
+                'applicant' => $this->_applicantToJson($applicant),
                 'cv_url'    => $applicant->cv_path ? Storage::disk('public')->url($applicant->cv_path) : null,
             ]);
         }
@@ -131,6 +168,7 @@ class RecruitmentApplicantController extends Controller
             'name'               => 'required|string|max:255',
             'cv'                 => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,gif,webp|max:10240',
             'notes'              => 'nullable|string|max:2000',
+            'hr_note'            => 'nullable|string|max:2000',
             'status'             => 'nullable|string|max:100',
             'evaluation'         => 'nullable|integer|min:0|max:3',
             'email'              => 'nullable|email|max:255',
@@ -143,6 +181,10 @@ class RecruitmentApplicantController extends Controller
             'skills.*'           => 'exists:skills,id',
             'tags'               => 'nullable|array',
         ]);
+
+        if (!auth()->user()->can('view recruitment hr note')) {
+            unset($data['hr_note']);
+        }
 
         if ($request->hasFile('cv')) {
             if ($recruitmentApplicant->cv_path) {
@@ -168,7 +210,7 @@ class RecruitmentApplicantController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'success'   => true,
-                'applicant' => $recruitmentApplicant,
+                'applicant' => $this->_applicantToJson($recruitmentApplicant),
                 'cv_url'    => $recruitmentApplicant->cv_path ? Storage::disk('public')->url($recruitmentApplicant->cv_path) : null,
             ]);
         }

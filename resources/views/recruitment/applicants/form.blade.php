@@ -122,13 +122,15 @@
 
                         <!-- Salary & Availability -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <x-input-label for="salary_expectation" value="Mức lương mong muốn" />
-                                <x-text-input id="salary_expectation" name="salary_expectation" type="number" min="0" step="100"
-                                    class="mt-1 block w-full"
-                                    value="{{ old('salary_expectation', $recruitmentApplicant->salary_expectation ?? '') }}" />
-                                @error('salary_expectation')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
-                            </div>
+                            @can('view recruitment salary')
+                                <div>
+                                    <x-input-label for="salary_expectation" value="Mức lương mong muốn" />
+                                    <x-text-input id="salary_expectation" name="salary_expectation" type="number" min="0" step="100"
+                                        class="mt-1 block w-full"
+                                        value="{{ old('salary_expectation', $recruitmentApplicant->salary_expectation ?? '') }}" />
+                                    @error('salary_expectation')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                                </div>
+                            @endcan
                             <div>
                                 <x-input-label for="available_date" value="Có hiệu lực từ" />
                                 <x-text-input id="available_date" name="available_date" type="date" class="mt-1 block w-full"

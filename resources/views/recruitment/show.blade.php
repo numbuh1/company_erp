@@ -108,16 +108,18 @@
                             </div>
                         @endif
 
-                        @if($recruitmentPosition->salary_min || $recruitmentPosition->salary_max)
-                            <div>
-                                <p class="text-xs text-gray-400 mb-0.5">Khoảng lương</p>
-                                <p class="text-sm text-gray-700 dark:text-gray-300">
-                                    {{ $recruitmentPosition->salary_min ? number_format($recruitmentPosition->salary_min) : '—' }}
-                                    –
-                                    {{ $recruitmentPosition->salary_max ? number_format($recruitmentPosition->salary_max) : '—' }}
-                                </p>
-                            </div>
-                        @endif
+                        @can('view recruitment salary')
+                            @if($recruitmentPosition->salary_min || $recruitmentPosition->salary_max)
+                                <div>
+                                    <p class="text-xs text-gray-400 mb-0.5">Khoảng lương</p>
+                                    <p class="text-sm text-gray-700 dark:text-gray-300">
+                                        {{ $recruitmentPosition->salary_min ? number_format($recruitmentPosition->salary_min) : '—' }}
+                                        –
+                                        {{ $recruitmentPosition->salary_max ? number_format($recruitmentPosition->salary_max) : '—' }}
+                                    </p>
+                                </div>
+                            @endif
+                        @endcan
 
                         @if($recruitmentPosition->tags->isNotEmpty())
                             <div>
@@ -239,9 +241,11 @@
                                             @endif
                                         </div>
                                         <div class="flex-1 space-y-1 mt-1 sm:mt-0">
-                                            @if($applicant->salary_expectation)
-                                                <div>💰 {{ number_format($applicant->salary_expectation) }}</div>
-                                            @endif
+                                            @can('view recruitment salary')
+                                                @if($applicant->salary_expectation)
+                                                    <div>💰 {{ number_format($applicant->salary_expectation) }}</div>
+                                                @endif
+                                            @endcan
                                             @if($applicant->available_date)
                                                 <div>📅 Available {{ $applicant->available_date->format('d/m/Y') }}</div>
                                             @endif
@@ -325,11 +329,11 @@
                                         <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Đặt lịch phỏng vấn</span>
                                     </button>
 
-                                    <a href="{{ route('recruitment.applicants.edit', [$recruitmentPosition, $applicant]) }}" title="Chỉnh sửa"
+                                    <button type="button" onclick="openApplicantEditModal({{ $applicant->id }})" title="Chỉnh sửa"
                                         class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-yellow-600 hover:border-yellow-400 bg-white dark:bg-gray-700 transition">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                         <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Chỉnh sửa</span>
-                                    </a>
+                                    </button>
 
                                     @if($canEdit)
                                         <form method="POST"
@@ -406,24 +410,36 @@
                                                             </span>
                                                         @endif
                                                         @if($canEdit)
-                                                            <div class="relative" x-data="{ open: false }">
-                                                                <button type="button" @click.stop="open = !open"
+                                                            <div class="relative" x-data="{
+                                                                    open: false,
+                                                                    menuStyle: '',
+                                                                    toggleMenu() {
+                                                                        if (this.open) { this.open = false; return; }
+                                                                        const rect = this.$refs.kebabBtn.getBoundingClientRect();
+                                                                        this.menuStyle = `top: ${rect.bottom + 4}px; left: ${Math.max(rect.right - 112, 4)}px;`;
+                                                                        this.open = true;
+                                                                    }
+                                                                }"
+                                                                @scroll.window.capture="open = false">
+                                                                <button type="button" x-ref="kebabBtn" @click.stop="toggleMenu()"
                                                                     class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 -m-1 p-1 rounded">
                                                                     <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
                                                                         <path d="M12 6a2 2 0 100-4 2 2 0 000 4zM12 14a2 2 0 100-4 2 2 0 000 4zM12 22a2 2 0 100-4 2 2 0 000 4z"/>
                                                                     </svg>
                                                                 </button>
-                                                                <div x-show="open" x-cloak @click.stop @click.outside="open = false"
-                                                                    class="absolute right-0 top-full mt-1 w-28 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-20 overflow-hidden text-xs">
-                                                                    <a href="{{ route('recruitment.applicants.edit', [$recruitmentPosition, $applicant]) }}"
-                                                                        class="block px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
-                                                                        Chỉnh sửa
-                                                                    </a>
-                                                                    <button type="button" onclick="deleteKanbanApplicant(event, {{ $applicant->id }})"
-                                                                        class="block w-full text-left px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
-                                                                        Xóa
-                                                                    </button>
-                                                                </div>
+                                                                <template x-teleport="body">
+                                                                    <div x-show="open" x-cloak :style="menuStyle" @click.stop @click.outside="open = false"
+                                                                        class="fixed w-28 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 overflow-hidden text-xs">
+                                                                        <button type="button" onclick="open = false; openApplicantEditModal({{ $applicant->id }})"
+                                                                            class="block w-full text-left px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                                                            Chỉnh sửa
+                                                                        </button>
+                                                                        <button type="button" onclick="deleteKanbanApplicant(event, {{ $applicant->id }})"
+                                                                            class="block w-full text-left px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
+                                                                            Xóa
+                                                                        </button>
+                                                                    </div>
+                                                                </template>
                                                             </div>
                                                         @endif
                                                     </div>
@@ -444,9 +460,14 @@
                                                     @if($applicant->email)
                                                         <div class="truncate">✉ {{ $applicant->email }}</div>
                                                     @endif
-                                                    @if($applicant->salary_expectation)
-                                                        <div>💰 {{ number_format($applicant->salary_expectation) }}</div>
+                                                    @if($applicant->phone)
+                                                        <div class="truncate">📞 {{ $applicant->phone }}</div>
                                                     @endif
+                                                    @can('view recruitment salary')
+                                                        @if($applicant->salary_expectation)
+                                                            <div>💰 {{ number_format($applicant->salary_expectation) }}</div>
+                                                        @endif
+                                                    @endcan
                                                 </div>
 
                                                 @if($applicant->events->isNotEmpty())
@@ -502,7 +523,7 @@
     </div>
 
     <x-event-modal />
-    <x-recruitment-import-modal />
+    <x-recruitment-applicant-modal :position="$recruitmentPosition" />
 
     @push('scripts')
     <script>

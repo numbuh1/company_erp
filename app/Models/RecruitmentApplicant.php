@@ -11,7 +11,7 @@ class RecruitmentApplicant extends Model
     use SoftDeletes, LogsActivity;
 
     protected $fillable = [
-        'recruitment_position_id', 'name', 'cv_path', 'notes', 'status',
+        'recruitment_position_id', 'name', 'cv_path', 'notes', 'hr_note', 'status',
         'evaluation', 'email', 'phone', 'profile_url',
         'salary_expectation', 'available_date', 'referer_user_id',
     ];

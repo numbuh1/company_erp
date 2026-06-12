@@ -39,10 +39,10 @@
                         Tải xuống CV
                     </a>
                 @endif
-                <a href="{{ route('recruitment.applicants.edit', [$recruitmentPosition, $recruitmentApplicant]) }}"
+                <button type="button" onclick="openApplicantEditModal({{ $recruitmentApplicant->id }})"
                     class="inline-flex items-center gap-1 px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:text-yellow-600 hover:border-yellow-400 text-sm font-medium rounded-lg bg-white dark:bg-gray-700 transition">
                     Chỉnh sửa
-                </a>
+                </button>
                 <a href="{{ route('recruitment.show', $recruitmentPosition) }}"
                     class="text-sm text-gray-500 dark:text-gray-400 hover:underline">← Back</a>
             </div>
@@ -89,12 +89,14 @@
                                     </a>
                                 </div>
                             @endif
-                            @if($recruitmentApplicant->salary_expectation)
-                                <div>
-                                    <p class="text-xs text-gray-400 mb-0.5">Mức lương mong muốn</p>
-                                    <p class="text-gray-700 dark:text-gray-300">{{ number_format($recruitmentApplicant->salary_expectation) }}</p>
-                                </div>
-                            @endif
+                            @can('view recruitment salary')
+                                @if($recruitmentApplicant->salary_expectation)
+                                    <div>
+                                        <p class="text-xs text-gray-400 mb-0.5">Mức lương mong muốn</p>
+                                        <p class="text-gray-700 dark:text-gray-300">{{ number_format($recruitmentApplicant->salary_expectation) }}</p>
+                                    </div>
+                                @endif
+                            @endcan
                             @if($recruitmentApplicant->available_date)
                                 <div>
                                     <p class="text-xs text-gray-400 mb-0.5">Có hiệu lực từ</p>
@@ -241,4 +243,11 @@
     </div>
 
     <x-event-modal />
+    <x-recruitment-applicant-modal :position="$recruitmentPosition" />
+
+    @push('scripts')
+    <script>
+        window.recruitmentBaseUrl = @js(route('recruitment.show', $recruitmentPosition));
+    </script>
+    @endpush
 </x-app-layout>

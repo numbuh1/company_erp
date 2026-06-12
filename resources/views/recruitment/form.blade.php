@@ -76,21 +76,23 @@
                         </div>
                     </div>
 
-                    <!-- Salary Range -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <x-input-label for="salary_min" value="Lương tối thiểu" />
-                            <x-text-input id="salary_min" name="salary_min" type="number" min="0" step="100" class="mt-1 block w-full"
-                                value="{{ old('salary_min', $recruitmentPosition->salary_min ?? '') }}" />
-                            @error('salary_min')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                    @can('view recruitment salary')
+                        <!-- Salary Range -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <x-input-label for="salary_min" value="Lương tối thiểu" />
+                                <x-text-input id="salary_min" name="salary_min" type="number" min="0" step="100" class="mt-1 block w-full"
+                                    value="{{ old('salary_min', $recruitmentPosition->salary_min ?? '') }}" />
+                                @error('salary_min')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                            </div>
+                            <div>
+                                <x-input-label for="salary_max" value="Lương tối đa" />
+                                <x-text-input id="salary_max" name="salary_max" type="number" min="0" step="100" class="mt-1 block w-full"
+                                    value="{{ old('salary_max', $recruitmentPosition->salary_max ?? '') }}" />
+                                @error('salary_max')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                            </div>
                         </div>
-                        <div>
-                            <x-input-label for="salary_max" value="Lương tối đa" />
-                            <x-text-input id="salary_max" name="salary_max" type="number" min="0" step="100" class="mt-1 block w-full"
-                                value="{{ old('salary_max', $recruitmentPosition->salary_max ?? '') }}" />
-                            @error('salary_max')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
-                        </div>
-                    </div>
+                    @endcan
 
                     <!-- Description -->
                     <div class="mb-4">

@@ -311,8 +311,10 @@ class PermissionSeeder extends Seeder
         );
 
         $recruitment_permissions = [
-            'module recruitment' => 'Enable',
-            'edit recruitment'   => 'Create / Edit / Delete Positions & Applicants',
+            'module recruitment'      => 'Enable',
+            'edit recruitment'        => 'Create / Edit / Delete Positions & Applicants',
+            'view recruitment salary' => 'View Salary Information',
+            'view recruitment hr note' => 'HR Private Note (View & Edit)',
         ];
 
         foreach ($recruitment_permissions as $name => $label) {
