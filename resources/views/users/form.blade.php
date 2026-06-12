@@ -550,19 +550,19 @@
 
                             @if($canEditPersonal)
                             {{-- Probation Time --}}
-                            <div class="mb-5 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                <x-input-label value="Thời gian thử việc" />
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-1">
+                            <div class="pt-4 {{ $canEditPersonal ? 'border-t border-gray-200 dark:border-gray-700' : '' }}">
+                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Thời gian thử việc</p>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
+                                        <x-input-label value="Ngày bắt đầu" />
                                         <x-text-input type="date" name="probation_start_date" class="w-full"
                                             value="{{ old('probation_start_date', isset($user) && $user->probation_start_date ? $user->probation_start_date->format('Y-m-d') : '') }}" />
-                                        <p class="text-xs text-gray-400 mt-1">Ngày bắt đầu</p>
                                         @error('probation_start_date')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                                     </div>
                                     <div>
+                                        <x-input-label value="Ngày kết thúc" />
                                         <x-text-input type="date" name="probation_end_date" class="w-full"
                                             value="{{ old('probation_end_date', isset($user) && $user->probation_end_date ? $user->probation_end_date->format('Y-m-d') : '') }}" />
-                                        <p class="text-xs text-gray-400 mt-1">Ngày kết thúc</p>
                                         @error('probation_end_date')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                                     </div>
                                 </div>
