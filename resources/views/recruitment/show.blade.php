@@ -68,7 +68,7 @@
 
     <div class="py-8" x-data="{ recruitView: localStorage.getItem('recruitView_{{ $recruitmentPosition->id }}') || 'list' }"
          x-init="$watch('recruitView', v => localStorage.setItem('recruitView_{{ $recruitmentPosition->id }}', v))">
-        <div class="max-w-9xl mx-auto space-y-6">
+        <div class="max-w-8xl mx-auto space-y-6">
 
             @if(session('success'))
                 <div class="p-3 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-sm">{{ session('success') }}</div>
