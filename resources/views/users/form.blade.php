@@ -233,25 +233,7 @@
                             </div>
 
                             {{-- Probation Time --}}
-                            @if($canEditPersonal)
-                                <div class="mb-6">
-                                    <x-input-label value="Thời gian thử việc" />
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-1">
-                                        <div>
-                                            <x-text-input type="date" name="probation_start_date" class="w-full"
-                                                value="{{ old('probation_start_date', $user->probation_start_date ? $user->probation_start_date->format('Y-m-d') : '') }}" />
-                                            <p class="text-xs text-gray-400 mt-1">Ngày bắt đầu</p>
-                                            @error('probation_start_date')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
-                                        </div>
-                                        <div>
-                                            <x-text-input type="date" name="probation_end_date" class="w-full"
-                                                value="{{ old('probation_end_date', $user->probation_end_date ? $user->probation_end_date->format('Y-m-d') : '') }}" />
-                                            <p class="text-xs text-gray-400 mt-1">Ngày kết thúc</p>
-                                            @error('probation_end_date')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
-                                        </div>
-                                    </div>
-                                </div>
-                            @elseif($user->probation_start_date || $user->probation_end_date)
+                            @if($user->probation_start_date || $user->probation_end_date)
                                 <div class="mb-6">
                                     <x-input-label value="Thời gian thử việc" />
                                     <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">
@@ -545,6 +527,47 @@
                                 </label>
                             </div>
 
+                            @endif {{-- canEditPersonal --}}
+
+                            {{-- Leave Balance — visible to leave balance managers --}}
+                            @if($canEditLeaveBalance)
+                            <div class="pt-4 {{ $canEditPersonal ? 'border-t border-gray-200 dark:border-gray-700' : '' }}">
+                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Số giờ phép</p>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <x-input-label value="Số giờ phép còn lại" />
+                                        <x-text-input type="number" step="0.5" name="leave_balance" class="w-full mt-1"
+                                            value="{{ old('leave_balance', $user->leave_balance ?? 112) }}" />
+                                    </div>
+                                    <div>
+                                        <x-input-label value="Lý do thay đổi" />
+                                        <x-text-input name="balance_reason" class="w-full mt-1"
+                                            value="{{ old('balance_reason') }}" />
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
+
+                            @if($canEditPersonal)
+                            {{-- Probation Time --}}
+                            <div class="mb-5 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                <x-input-label value="Thời gian thử việc" />
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-1">
+                                    <div>
+                                        <x-text-input type="date" name="probation_start_date" class="w-full"
+                                            value="{{ old('probation_start_date', isset($user) && $user->probation_start_date ? $user->probation_start_date->format('Y-m-d') : '') }}" />
+                                        <p class="text-xs text-gray-400 mt-1">Ngày bắt đầu</p>
+                                        @error('probation_start_date')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                                    </div>
+                                    <div>
+                                        <x-text-input type="date" name="probation_end_date" class="w-full"
+                                            value="{{ old('probation_end_date', isset($user) && $user->probation_end_date ? $user->probation_end_date->format('Y-m-d') : '') }}" />
+                                        <p class="text-xs text-gray-400 mt-1">Ngày kết thúc</p>
+                                        @error('probation_end_date')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                                    </div>
+                                </div>
+                            </div>
+
                             {{-- Salary --}}
                             <div class="mb-5 pt-4 border-t border-gray-200 dark:border-gray-700"
                                 x-data="{
@@ -636,25 +659,6 @@
                                 </div>
                             </div>
                             @endif {{-- canEditPersonal --}}
-
-                            {{-- Leave Balance — visible to leave balance managers --}}
-                            @if($canEditLeaveBalance)
-                            <div class="pt-4 {{ $canEditPersonal ? 'border-t border-gray-200 dark:border-gray-700' : '' }}">
-                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Số giờ phép</p>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <x-input-label value="Số giờ phép còn lại" />
-                                        <x-text-input type="number" step="0.5" name="leave_balance" class="w-full mt-1"
-                                            value="{{ old('leave_balance', $user->leave_balance ?? 112) }}" />
-                                    </div>
-                                    <div>
-                                        <x-input-label value="Lý do thay đổi" />
-                                        <x-text-input name="balance_reason" class="w-full mt-1"
-                                            value="{{ old('balance_reason') }}" />
-                                    </div>
-                                </div>
-                            </div>
-                            @endif
 
                         </div>
                         @endif
