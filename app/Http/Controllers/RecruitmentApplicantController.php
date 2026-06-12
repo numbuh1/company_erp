@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Helper\NotificationHelper;
 use App\Models\RecruitmentApplicant;
 use App\Models\RecruitmentPosition;
 use App\Models\RecruitmentTag;
@@ -46,6 +47,29 @@ class RecruitmentApplicantController extends Controller
         }
 
         return $data;
+    }
+
+    /**
+     * Send an in-app notification to every user assigned to $position,
+     * except the user currently performing the action.
+     */
+    private function _notifyAssignedUsers(RecruitmentPosition $position, string $title, string $description, string $url): void
+    {
+        $actor = auth()->user();
+
+        $position->loadMissing('assignedUsers');
+
+        foreach ($position->assignedUsers as $user) {
+            if ($user->id === $actor->id) continue;
+
+            NotificationHelper::send(
+                receivingUser: $user,
+                title: $title,
+                description: $description,
+                url: $url,
+                incomingUser: $actor,
+            );
+        }
     }
 
     public function create(RecruitmentPosition $recruitmentPosition)
@@ -131,6 +155,19 @@ class RecruitmentApplicantController extends Controller
 
         $tagIds = RecruitmentTag::resolveIds($request->input('tags', []), 'applicant');
         $applicant->tags()->sync($tagIds);
+
+        // Notify assigned users about the new applicant — unless this
+        // create is part of a CV-drop import (single or bulk), where the
+        // notification is sent separately (see `update()` and
+        // `notifyBulkAdded()`).
+        if (!$request->boolean('skip_notify')) {
+            $this->_notifyAssignedUsers(
+                $recruitmentPosition,
+                'Ứng viên mới',
+                $request->user()->name . ' đã thêm ứng viên "' . $applicant->name . '" vào vị trí ' . $recruitmentPosition->name . '.',
+                route('recruitment.applicants.show', [$recruitmentPosition, $applicant])
+            );
+        }
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -287,6 +324,18 @@ class RecruitmentApplicantController extends Controller
             $recruitmentApplicant->tags()->sync($tagIds);
         }
 
+        // For a single-CV-drop import, the applicant was created silently
+        // (without a notification). Once the user fills in the details and
+        // saves from the modal for the first time, notify assigned users now.
+        if ($request->boolean('notify_applicant_added')) {
+            $this->_notifyAssignedUsers(
+                $recruitmentPosition,
+                'Ứng viên mới',
+                $request->user()->name . ' đã thêm ứng viên "' . $recruitmentApplicant->name . '" vào vị trí ' . $recruitmentPosition->name . '.',
+                route('recruitment.applicants.show', [$recruitmentPosition, $recruitmentApplicant])
+            );
+        }
+
         if ($request->expectsJson()) {
             return response()->json([
                 'success'   => true,
@@ -401,6 +450,31 @@ class RecruitmentApplicantController extends Controller
         $recruitmentPosition->setStatusOrder($data['order']);
 
         return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Notify assigned users that several applicants were just added in
+     * one go (multi-CV drag & drop onto the Kanban board). Each applicant
+     * was created with `skip_notify=1`; this sends a single combined
+     * notification instead of one per applicant.
+     */
+    public function notifyBulkAdded(Request $request, RecruitmentPosition $recruitmentPosition)
+    {
+        $canFullEdit = $this->_authorizePosition($recruitmentPosition);
+        if (!$canFullEdit) abort(403);
+
+        $data = $request->validate([
+            'count' => 'required|integer|min:1',
+        ]);
+
+        $this->_notifyAssignedUsers(
+            $recruitmentPosition,
+            'Ứng viên mới',
+            $request->user()->name . ' đã thêm ' . $data['count'] . ' ứng viên vào vị trí ' . $recruitmentPosition->name . '.',
+            route('recruitment.show', $recruitmentPosition)
+        );
+
+        return response()->json(['success' => true]);
     }
 
 }

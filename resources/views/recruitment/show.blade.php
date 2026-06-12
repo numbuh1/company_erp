@@ -531,6 +531,7 @@
         window.recruitmentStoreUrl         = @js(route('recruitment.applicants.store', $recruitmentPosition));
         window.recruitmentAddStatusUrl     = @js(route('recruitment.applicants.statuses.add', $recruitmentPosition));
         window.recruitmentReorderStatusesUrl = @js(route('recruitment.applicants.statuses.reorder', $recruitmentPosition));
+        window.recruitmentNotifyBulkUrl    = @js(route('recruitment.applicants.notify-bulk', $recruitmentPosition));
         window.recruitmentStatusLabels     = @js($kanbanCols);
         window.recruitmentCanEdit          = @js($canEdit);
     </script>

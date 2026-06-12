@@ -53,6 +53,20 @@
                         <p id="am-error-name" class="hidden text-xs text-red-600 dark:text-red-400 mt-1"></p>
                     </div>
 
+                    <!-- Contact -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <x-input-label for="am-email" value="Email" />
+                            <x-text-input id="am-email" type="email" class="mt-1 block w-full" />
+                            <p id="am-error-email" class="hidden text-xs text-red-600 dark:text-red-400 mt-1"></p>
+                        </div>
+                        <div>
+                            <x-input-label for="am-phone" value="Điện thoại" />
+                            <x-text-input id="am-phone" type="text" class="mt-1 block w-full" />
+                            <p id="am-error-phone" class="hidden text-xs text-red-600 dark:text-red-400 mt-1"></p>
+                        </div>
+                    </div>
+
                     <!-- CV Upload -->
                     <div>
                         <x-input-label for="am-cv" value="Tệp CV" />
@@ -102,20 +116,6 @@
                         </div>
                         <input type="hidden" id="evaluation-input" value="0">
                         <p id="am-error-evaluation" class="hidden text-xs text-red-600 dark:text-red-400 mt-1"></p>
-                    </div>
-
-                    <!-- Contact -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <x-input-label for="am-email" value="Email" />
-                            <x-text-input id="am-email" type="email" class="mt-1 block w-full" />
-                            <p id="am-error-email" class="hidden text-xs text-red-600 dark:text-red-400 mt-1"></p>
-                        </div>
-                        <div>
-                            <x-input-label for="am-phone" value="Điện thoại" />
-                            <x-text-input id="am-phone" type="text" class="mt-1 block w-full" />
-                            <p id="am-error-phone" class="hidden text-xs text-red-600 dark:text-red-400 mt-1"></p>
-                        </div>
                     </div>
 
                     <!-- Profile URL -->

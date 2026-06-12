@@ -5,15 +5,20 @@
 // - drag & drop a CV file (from the OS) onto a column: immediately creates a
 //   new applicant (default name = filename) with the uploaded CV, then opens
 //   the applicant edit modal (with a real, full CV preview) to fill in details
+// - drag & drop *multiple* CV files at once: creates one applicant per file
+//   (name = filename, no modal), then shows a single combined notification
 // - inline "add custom status" form
 // - per-card dropdown menu: edit / delete applicant
 // - click a card to navigate to the applicant's page
-// - the applicant edit modal: full form (status, name, CV, HR note, notes,
-//   evaluation, contact info, salary/availability, referer, skills, tags),
+// - the applicant edit modal: full form (status, name, contact info, CV, HR
+//   note, notes, evaluation, salary/availability, referer, skills, tags),
 //   submitted via AJAX, with a "Xóa" (delete) button + confirmation
 // - "duplicate applicant" pop-up: when saving an applicant whose email/phone
 //   matches another applicant record, offers to import that record's data,
 //   delete this applicant, or keep the new data (remembered per-applicant)
+// - notifications: assigned users are notified when an applicant is added
+//   manually, when a single CV-drop applicant is saved from the modal for
+//   the first time, or as one combined notification after a multi-CV drop
 
 let _draggingCard = null;
 let _draggingColumn = null;
@@ -27,6 +32,11 @@ let _tagsTomSelect = null;
 // FormData for an applicant update that triggered the "duplicate
 // applicant" pop-up — re-submitted once the user picks an action.
 let _pendingApplicantFormData = null;
+
+// True when the applicant currently loaded in the edit modal was just
+// created from a single-CV drop and hasn't been saved from the modal yet —
+// the next save should notify assigned users about the new applicant.
+let _notifyOnNextSave = false;
 
 function _csrfToken() {
     const meta = document.querySelector('meta[name="csrf-token"]');
@@ -217,6 +227,7 @@ function _showApplicantModal() {
 function _openApplicantModal(applicant, cvUrl, opts) {
     opts = opts || {};
     _editApplicantId = applicant.id;
+    _notifyOnNextSave = !!opts.isNew;
 
     const titleEl    = document.getElementById('am-title');
     const subtitleEl = document.getElementById('am-subtitle');
@@ -250,6 +261,7 @@ window.openApplicantEditModal = async function (id) {
 // Open the modal to create a brand new applicant (blank form).
 window.openApplicantCreateModal = function () {
     _editApplicantId = null;
+    _notifyOnNextSave = false;
 
     const titleEl    = document.getElementById('am-title');
     const subtitleEl = document.getElementById('am-subtitle');
@@ -274,6 +286,7 @@ window.closeApplicantModal = function () {
     if (modal) modal.classList.add('hidden');
     document.body.style.overflow = '';
     _editApplicantId = null;
+    _notifyOnNextSave = false;
 };
 
 window.submitApplicantModal = async function () {
@@ -323,6 +336,12 @@ window.submitApplicantModal = async function () {
     // CV file
     const cvFile = document.getElementById('am-cv')?.files?.[0];
     if (cvFile) formData.append('cv', cvFile);
+
+    // First save of a single-CV-drop applicant — notify assigned users now.
+    if (!isCreate && _notifyOnNextSave) {
+        formData.append('notify_applicant_added', '1');
+        _notifyOnNextSave = false;
+    }
 
     await _submitApplicantFormData(formData);
 };
@@ -489,6 +508,9 @@ async function _importCvFile(file, status) {
     formData.append('name', file.name.replace(/\.[^/.]+$/, ''));
     if (status) formData.append('status', status);
     formData.append('cv', file);
+    // Notification is deferred until the modal is saved for the first time
+    // (see `submitApplicantModal` / `_notifyOnNextSave`).
+    formData.append('skip_notify', '1');
 
     try {
         const resp = await fetch(window.recruitmentStoreUrl, {
@@ -510,6 +532,63 @@ async function _importCvFile(file, status) {
     } catch (err) {
         console.error('Import applicant failed', err);
         alert('Không thể thêm ứng viên từ file này. Vui lòng thử lại.');
+    }
+}
+
+// Multi-CV import: drop several files at once → create one applicant per
+// file (name = filename, no extension), each with the dropped CV attached,
+// without opening the edit modal. Once all uploads finish, send a single
+// combined notification to assigned users and reload the board.
+async function _importCvFilesBulk(files, status) {
+    let successCount = 0;
+
+    for (const file of files) {
+        const formData = new FormData();
+        formData.append('name', file.name.replace(/\.[^/.]+$/, ''));
+        if (status) formData.append('status', status);
+        formData.append('cv', file);
+        formData.append('skip_notify', '1');
+
+        try {
+            const resp = await fetch(window.recruitmentStoreUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': _csrfToken(),
+                    'Accept': 'application/json',
+                },
+                body: formData,
+            });
+
+            const data = await resp.json().catch(() => ({}));
+            if (resp.ok && data.success) successCount++;
+        } catch (err) {
+            console.error('Import applicant failed', err);
+        }
+    }
+
+    if (successCount > 0 && window.recruitmentNotifyBulkUrl) {
+        try {
+            await fetch(window.recruitmentNotifyBulkUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': _csrfToken(),
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ count: successCount }),
+            });
+        } catch (err) {
+            console.error('Bulk-add notification failed', err);
+        }
+    }
+
+    if (successCount === files.length) {
+        window.location.reload();
+    } else if (successCount > 0) {
+        alert(`Đã thêm ${successCount}/${files.length} ứng viên. Một số file không thể nhập.`);
+        window.location.reload();
+    } else {
+        alert('Không thể thêm ứng viên từ các file này. Vui lòng thử lại.');
     }
 }
 
@@ -594,12 +673,18 @@ window.kanbanDrop = async function (e) {
     const col = e.currentTarget;
     col.classList.remove('ring-2', 'ring-indigo-400', 'dark:ring-indigo-500');
 
-    // Dropping a file from the OS → create the applicant immediately, then
-    // open the edit modal (with a real CV preview) to confirm/fill in details.
+    // Dropping file(s) from the OS → create applicant(s) immediately.
+    // A single file opens the edit modal (with a real CV preview) to
+    // confirm/fill in details. Multiple files each become an applicant
+    // named after their file, with no modal shown.
     if (e.dataTransfer.types.includes('Files') && e.dataTransfer.files.length) {
-        const file = e.dataTransfer.files[0];
         if (window.recruitmentCanEdit) {
-            _importCvFile(file, col.dataset.status);
+            const files = Array.from(e.dataTransfer.files);
+            if (files.length > 1) {
+                _importCvFilesBulk(files, col.dataset.status);
+            } else {
+                _importCvFile(files[0], col.dataset.status);
+            }
         }
         return;
     }
