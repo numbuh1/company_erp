@@ -209,12 +209,15 @@
                                 <div class="space-y-1.5">
                                     @foreach($onboardedUsers->take(5) as $ou)
                                         <div class="flex items-center justify-between text-sm border-l-2 border-emerald-300 pl-3 py-0.5">
-                                            <a href="{{ route('users.show', $ou) }}" class="font-medium text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400">
-                                                {{ $ou->name }}
-                                            </a>
-                                            @if($ou->position)
-                                                <span class="text-xs text-gray-400 ml-1.5">{{ $ou->position }}</span>
-                                            @endif
+                                            <div>
+                                                <a href="{{ route('users.show', $ou) }}" class="font-medium text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400">
+                                                    {{ $ou->name }}
+                                                </a>
+                                                @if($ou->position)
+                                                    <span class="text-xs text-gray-400 ml-1.5">{{ $ou->position }}</span>
+                                                @endif
+                                            </div>
+                                            <span class="text-xs text-gray-400 shrink-0 ml-2">{{ $ou->created_at->translatedFormat('d M') }}</span>
                                         </div>
                                     @endforeach
                                 </div>

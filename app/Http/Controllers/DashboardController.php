@@ -183,7 +183,11 @@ class DashboardController extends Controller
                 $probationQuery->whereIn('id', $teamUserIds);
             }
 
-            $onboardedUsers = $onboardQuery->latest('id')->get(['id', 'name', 'position', 'recruitment_applicant_id', 'created_at']);
+            $onboardedUsers = $onboardQuery
+                ->whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year)
+                ->latest('id')
+                ->get(['id', 'name', 'position', 'recruitment_applicant_id', 'created_at']);
 
             $probationEndingUsers = $probationQuery
                 ->where(function ($q) {
