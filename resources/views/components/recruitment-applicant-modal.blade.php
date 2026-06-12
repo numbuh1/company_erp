@@ -218,6 +218,34 @@
     </div>
 </div>
 
+<!-- "Duplicate applicant" pop-up: shown when the email/phone entered
+     above matches another applicant record (any position). -->
+<div id="recruitment-duplicate-modal"
+    class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+    onclick="if(event.target===this) cancelDuplicateModal()">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg max-h-[85vh] flex flex-col">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="font-semibold text-lg text-gray-800 dark:text-gray-100">Ứng viên đã tồn tại</h3>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                Email hoặc số điện thoại này đã tồn tại ở (các) vị trí tuyển dụng dưới đây.
+                Bạn có thể nhập lại thông tin cũ của ứng viên (giữ nguyên CV hiện tại), xóa ứng viên này,
+                hoặc giữ thông tin mới vừa nhập.
+            </p>
+        </div>
+        <div id="dup-list" class="overflow-y-auto flex-1 px-6 py-4 space-y-2"></div>
+        <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between gap-3">
+            <button type="button" onclick="deleteApplicantFromDuplicateModal()"
+                class="px-4 py-2 text-sm text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+                Xóa ứng viên này
+            </button>
+            <button type="button" onclick="dismissDuplicateModal()"
+                class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition">
+                Giữ thông tin mới
+            </button>
+        </div>
+    </div>
+</div>
+
 <x-skill-picker-modal />
 
 @push('scripts')

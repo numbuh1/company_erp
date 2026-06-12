@@ -11,6 +11,9 @@
 // - the applicant edit modal: full form (status, name, CV, HR note, notes,
 //   evaluation, contact info, salary/availability, referer, skills, tags),
 //   submitted via AJAX, with a "Xóa" (delete) button + confirmation
+// - "duplicate applicant" pop-up: when saving an applicant whose email/phone
+//   matches another applicant record, offers to import that record's data,
+//   delete this applicant, or keep the new data (remembered per-applicant)
 
 let _draggingCard = null;
 let _draggingColumn = null;
@@ -20,6 +23,10 @@ let _editApplicantId = null;
 
 let _refererTomSelect = null;
 let _tagsTomSelect = null;
+
+// FormData for an applicant update that triggered the "duplicate
+// applicant" pop-up — re-submitted once the user picks an action.
+let _pendingApplicantFormData = null;
 
 function _csrfToken() {
     const meta = document.querySelector('meta[name="csrf-token"]');
@@ -278,8 +285,6 @@ window.submitApplicantModal = async function () {
         return;
     }
 
-    const submitBtn = document.getElementById('am-submit-btn');
-    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Đang lưu…'; }
     _clearApplicantModalErrors();
 
     const formData = new FormData();
@@ -319,6 +324,18 @@ window.submitApplicantModal = async function () {
     const cvFile = document.getElementById('am-cv')?.files?.[0];
     if (cvFile) formData.append('cv', cvFile);
 
+    await _submitApplicantFormData(formData);
+};
+
+// Post the applicant create/update FormData to the server. Handles
+// validation errors, the "duplicate applicant" pop-up (re-submission is
+// driven by that pop-up's buttons), and the generic success/error paths.
+async function _submitApplicantFormData(formData) {
+    const isCreate = !_editApplicantId;
+
+    const submitBtn = document.getElementById('am-submit-btn');
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Đang lưu…'; }
+
     const url = isCreate
         ? window.recruitmentStoreUrl
         : `${window.recruitmentBaseUrl}/applicants/${_editApplicantId}`;
@@ -344,6 +361,14 @@ window.submitApplicantModal = async function () {
             throw new Error(data.message || ('Server error ' + resp.status));
         }
 
+        const data = await resp.json().catch(() => ({}));
+
+        if (data && data.duplicate) {
+            _pendingApplicantFormData = formData;
+            _showDuplicateModal(data.duplicates || []);
+            return;
+        }
+
         window.location.reload();
     } catch (err) {
         console.error('Save applicant failed', err);
@@ -353,6 +378,81 @@ window.submitApplicantModal = async function () {
     } finally {
         if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Lưu'; }
     }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// "Duplicate applicant" pop-up
+// ─────────────────────────────────────────────────────────────────────────
+function _escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+}
+
+function _showDuplicateModal(duplicates) {
+    const list = document.getElementById('dup-list');
+    if (!list) return;
+    list.innerHTML = '';
+
+    if (!duplicates.length) {
+        list.innerHTML = '<p class="text-sm text-gray-400">Không tìm thấy ứng viên trùng.</p>';
+    }
+
+    duplicates.forEach(function (d) {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700';
+        row.innerHTML = `
+            <div class="min-w-0">
+                <a href="${_escapeHtml(d.url)}" target="_blank" class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline truncate block">${_escapeHtml(d.name)}</a>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">${_escapeHtml(d.position_name || '')} · ${_escapeHtml(d.status_label || '')}</p>
+            </div>
+            <button type="button" class="shrink-0 px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition">Nhập thông tin cũ</button>
+        `;
+        row.querySelector('button').addEventListener('click', function () {
+            importDuplicateApplicant(d.id);
+        });
+        list.appendChild(row);
+    });
+
+    document.getElementById('recruitment-duplicate-modal')?.classList.remove('hidden');
+}
+
+// Close the pop-up without taking any action — the applicant edit modal
+// (with the data the user typed) stays open underneath.
+window.cancelDuplicateModal = function () {
+    document.getElementById('recruitment-duplicate-modal')?.classList.add('hidden');
+    _pendingApplicantFormData = null;
+};
+
+// "Giữ thông tin mới" — keep the newly entered data and remember not to
+// show this pop-up again (unless email/phone change again).
+window.dismissDuplicateModal = function () {
+    document.getElementById('recruitment-duplicate-modal')?.classList.add('hidden');
+    const formData = _pendingApplicantFormData;
+    _pendingApplicantFormData = null;
+    if (!formData) return;
+
+    formData.append('skip_duplicate_check', '1');
+    _submitApplicantFormData(formData);
+};
+
+// "Nhập thông tin cũ" — overwrite this applicant's data with the matched
+// past applicant's data (except the CV file).
+window.importDuplicateApplicant = function (id) {
+    document.getElementById('recruitment-duplicate-modal')?.classList.add('hidden');
+    const formData = _pendingApplicantFormData;
+    _pendingApplicantFormData = null;
+    if (!formData) return;
+
+    formData.append('import_from_applicant_id', id);
+    _submitApplicantFormData(formData);
+};
+
+// "Xóa ứng viên này" — delete the applicant currently being edited.
+window.deleteApplicantFromDuplicateModal = function () {
+    document.getElementById('recruitment-duplicate-modal')?.classList.add('hidden');
+    _pendingApplicantFormData = null;
+    deleteApplicantModal();
 };
 
 window.deleteApplicantModal = async function () {
@@ -648,9 +748,17 @@ document.addEventListener('click', function (e) {
     openApplicantEditModal(card.dataset.applicantId);
 });
 
-// Escape key closes the applicant edit modal
+// Escape key closes the duplicate-applicant pop-up (if open), otherwise
+// the applicant edit modal
 document.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape') return;
+
+    const dupModal = document.getElementById('recruitment-duplicate-modal');
+    if (dupModal && !dupModal.classList.contains('hidden')) {
+        cancelDuplicateModal();
+        return;
+    }
+
     const modal = document.getElementById('recruitment-applicant-modal');
     if (modal && !modal.classList.contains('hidden')) {
         closeApplicantModal();

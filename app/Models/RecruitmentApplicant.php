@@ -115,8 +115,9 @@ class RecruitmentApplicant extends Model
     protected function casts(): array
     {
         return [
-            'available_date' => 'date',
-            'evaluation'     => 'integer',
+            'available_date'             => 'date',
+            'evaluation'                 => 'integer',
+            'duplicate_check_dismissed'  => 'boolean',
         ];
     }
 

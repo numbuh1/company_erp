@@ -186,6 +186,62 @@ class RecruitmentApplicantController extends Controller
             unset($data['hr_note']);
         }
 
+        $norm = fn($v) => ($v === '' || $v === null) ? null : $v;
+
+        // -----------------------------------------------------------
+        // Duplicate applicant detection (by email/phone). Skipped when
+        // the client has already confirmed how to proceed (either
+        // importing past data, or choosing to keep the new data).
+        // -----------------------------------------------------------
+        $importFromId       = $request->input('import_from_applicant_id');
+        $skipDuplicateCheck = $request->boolean('skip_duplicate_check');
+        $importSource       = null;
+
+        if ($request->expectsJson() && !$importFromId && !$skipDuplicateCheck) {
+            $newEmail = $norm($data['email'] ?? null);
+            $newPhone = $norm($data['phone'] ?? null);
+
+            $emailChanged = $newEmail !== $norm($recruitmentApplicant->email);
+            $phoneChanged = $newPhone !== $norm($recruitmentApplicant->phone);
+            $shouldCheck  = $emailChanged || $phoneChanged || !$recruitmentApplicant->duplicate_check_dismissed;
+
+            if ($shouldCheck && ($newEmail || $newPhone)) {
+                $duplicates = $this->_findDuplicateApplicants($recruitmentApplicant, $newEmail, $newPhone);
+
+                if ($duplicates->isNotEmpty()) {
+                    return response()->json([
+                        'success'    => false,
+                        'duplicate'  => true,
+                        'duplicates' => $duplicates,
+                    ]);
+                }
+            }
+        }
+
+        // -----------------------------------------------------------
+        // Import past data from another applicant record. Overwrites
+        // all "info" fields with the past record's data — except the
+        // CV file (kept from the current record).
+        // -----------------------------------------------------------
+        if ($importFromId) {
+            $importSource = RecruitmentApplicant::with(['skills', 'tags'])->find($importFromId);
+
+            if ($importSource) {
+                $data['name']               = $importSource->name;
+                $data['notes']              = $importSource->notes;
+                if (array_key_exists('hr_note', $data)) {
+                    $data['hr_note'] = $importSource->hr_note;
+                }
+                $data['evaluation']         = $importSource->evaluation;
+                $data['email']              = $importSource->email;
+                $data['phone']              = $importSource->phone;
+                $data['profile_url']        = $importSource->profile_url;
+                $data['salary_expectation'] = $importSource->salary_expectation;
+                $data['available_date']     = $importSource->available_date;
+                $data['referer_user_id']    = $importSource->referer_user_id;
+            }
+        }
+
         if ($request->hasFile('cv')) {
             if ($recruitmentApplicant->cv_path) {
                 Storage::disk('public')->delete($recruitmentApplicant->cv_path);
@@ -195,17 +251,41 @@ class RecruitmentApplicantController extends Controller
             );
         }
 
-        $recruitmentApplicant->update($data);
-        $skillsData = [];
-        foreach ($request->input('skills', []) as $skillId) {
-            $skillsData[(int)$skillId] = [
-                'level' => $request->input('skill_levels.' . $skillId, 'beginner'),
-            ];
-        }
-        $recruitmentApplicant->skills()->sync($skillsData);
+        $contactChanged = $norm($data['email'] ?? null) !== $norm($recruitmentApplicant->email)
+            || $norm($data['phone'] ?? null) !== $norm($recruitmentApplicant->phone);
 
-        $tagIds = RecruitmentTag::resolveIds($request->input('tags', []), 'applicant');
-        $recruitmentApplicant->tags()->sync($tagIds);
+        $recruitmentApplicant->update($data);
+
+        // Persist the "don't show the duplicate pop-up again" choice. If
+        // the user picked import/skip, remember that. If email/phone just
+        // changed (and weren't part of an import/skip), re-arm the check
+        // so a *new* duplicate match on the new value(s) is still caught.
+        if ($importFromId || $skipDuplicateCheck) {
+            $recruitmentApplicant->duplicate_check_dismissed = true;
+            $recruitmentApplicant->save();
+        } elseif ($contactChanged) {
+            $recruitmentApplicant->duplicate_check_dismissed = false;
+            $recruitmentApplicant->save();
+        }
+
+        if ($importSource) {
+            $skillsData = $importSource->skills->mapWithKeys(fn($s) => [
+                $s->id => ['level' => $s->pivot->level],
+            ])->toArray();
+            $recruitmentApplicant->skills()->sync($skillsData);
+            $recruitmentApplicant->tags()->sync($importSource->tags->pluck('id')->toArray());
+        } else {
+            $skillsData = [];
+            foreach ($request->input('skills', []) as $skillId) {
+                $skillsData[(int)$skillId] = [
+                    'level' => $request->input('skill_levels.' . $skillId, 'beginner'),
+                ];
+            }
+            $recruitmentApplicant->skills()->sync($skillsData);
+
+            $tagIds = RecruitmentTag::resolveIds($request->input('tags', []), 'applicant');
+            $recruitmentApplicant->tags()->sync($tagIds);
+        }
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -216,6 +296,33 @@ class RecruitmentApplicantController extends Controller
         }
 
         return redirect()->route('recruitment.show', $recruitmentPosition)->with('success', 'Applicant updated.');
+    }
+
+    /**
+     * Find other (non-trashed) applicants — across any recruitment
+     * position — whose email or phone matches the given values,
+     * excluding $current itself. Returns data for the "duplicate
+     * applicant" pop-up: name, status, position name/link, etc.
+     */
+    private function _findDuplicateApplicants(RecruitmentApplicant $current, ?string $email, ?string $phone)
+    {
+        return RecruitmentApplicant::with('position')
+            ->where('id', '!=', $current->id)
+            ->where(function ($q) use ($email, $phone) {
+                if ($email) $q->orWhere('email', $email);
+                if ($phone) $q->orWhere('phone', $phone);
+            })
+            ->get()
+            ->map(fn($d) => [
+                'id'            => $d->id,
+                'name'          => $d->name,
+                'status'        => $d->status,
+                'status_label'  => RecruitmentApplicant::statusLabel($d->status),
+                'position_id'   => $d->recruitment_position_id,
+                'position_name' => $d->position?->name,
+                'url'           => route('recruitment.applicants.show', [$d->recruitment_position_id, $d->id]),
+            ])
+            ->values();
     }
 
     public function destroy(Request $request, RecruitmentPosition $recruitmentPosition, RecruitmentApplicant $recruitmentApplicant)

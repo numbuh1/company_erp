@@ -173,6 +173,24 @@
                         @error('tags')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                     </div>
 
+                    @if(!isset($recruitmentPosition))
+                        <!-- Import potential CV -->
+                        <div class="mb-6">
+                            <x-input-label value="Import ứng viên tiềm năng" />
+                            <p class="text-xs text-gray-400 mb-2">
+                                Các ứng viên ở trạng thái "Tiềm năng" từ những vị trí được chọn sẽ được nhập vào vị trí mới này với trạng thái "Lọc CV".
+                                Nếu email hoặc số điện thoại trùng nhau, chỉ ứng viên được cập nhật gần nhất mới được nhập.
+                            </p>
+                            <select name="import_potential_from[]" id="import-potential-select" data-multi-select
+                                    data-placeholder="Chọn vị trí tuyển dụng…" class="mt-1 block w-full" multiple>
+                                @foreach($pastPositions as $p)
+                                    <option value="{{ $p->id }}">{{ $p->name }} - {{ ($p->search_start_date ?? $p->created_at)->format('d/m/Y') }}</option>
+                                @endforeach
+                            </select>
+                            @error('import_potential_from')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                        </div>
+                    @endif
+
                     <div class="flex items-center gap-3">
                         <x-primary-button>{{ isset($recruitmentPosition) ? 'Lưu' : 'Tạo' }}</x-primary-button>
                         <a href="{{ isset($recruitmentPosition) ? route('recruitment.show', $recruitmentPosition) : route('recruitment.index') }}">
