@@ -1,3 +1,37 @@
+@push('styles')
+    <style>
+        /* Always show the horizontal scrollbar on the Kanban board so it's
+           clear the columns can be scrolled, even when content fits. */
+        .kanban-scroll {
+            overflow-x: scroll;
+            scrollbar-width: thin;
+        }
+        .kanban-scroll::-webkit-scrollbar {
+            height: 10px;
+        }
+        .kanban-scroll::-webkit-scrollbar-track {
+            background: rgb(243 244 246);
+            border-radius: 9999px;
+        }
+        .kanban-scroll::-webkit-scrollbar-thumb {
+            background-color: rgb(203 213 225);
+            border-radius: 9999px;
+        }
+        .kanban-scroll::-webkit-scrollbar-thumb:hover {
+            background-color: rgb(148 163 184);
+        }
+        .dark .kanban-scroll::-webkit-scrollbar-track {
+            background: rgb(31 41 55);
+        }
+        .dark .kanban-scroll::-webkit-scrollbar-thumb {
+            background-color: rgb(75 85 99);
+        }
+        .dark .kanban-scroll::-webkit-scrollbar-thumb:hover {
+            background-color: rgb(107 114 128);
+        }
+    </style>
+@endpush
+
 <x-app-layout>
     @php
         $posStatusColor = fn($s) => match($s) {
@@ -34,7 +68,7 @@
 
     <div class="py-8" x-data="{ recruitView: localStorage.getItem('recruitView_{{ $recruitmentPosition->id }}') || 'list' }"
          x-init="$watch('recruitView', v => localStorage.setItem('recruitView_{{ $recruitmentPosition->id }}', v))">
-        <div class="max-w-7xl mx-auto space-y-6">
+        <div class="max-w-9xl mx-auto space-y-6">
 
             @if(session('success'))
                 <div class="p-3 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-sm">{{ session('success') }}</div>
@@ -358,7 +392,7 @@
 
                 {{-- ── KANBAN VIEW ───────────────────────────────────────────── --}}
                 <div x-show="recruitView === 'kanban'" x-cloak class="p-4">
-                    <div class="overflow-x-auto pb-2">
+                    <div class="kanban-scroll pb-2">
                         <div class="flex gap-3" style="min-width: max-content;">
                             @php
                                 $kanbanCols = $recruitmentPosition->allStatuses();

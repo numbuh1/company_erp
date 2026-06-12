@@ -52,6 +52,13 @@
                 @csrf
                 @if(isset($user)) @method('PUT') @endif
 
+                {{-- Keep the originating recruitment applicant linked when
+                     creating a user via "Begin Onboard" --}}
+                @if(!isset($user) && (old('recruitment_applicant_id') || ($prefill['recruitment_applicant_id'] ?? null)))
+                    <input type="hidden" name="recruitment_applicant_id"
+                        value="{{ old('recruitment_applicant_id', $prefill['recruitment_applicant_id'] ?? '') }}">
+                @endif
+
                 @if($errors->any())
                     <div class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded text-sm text-red-700 dark:text-red-300">
                         <ul class="list-disc list-inside space-y-1">
@@ -115,7 +122,7 @@
                             <div>
                                 <x-input-label value="Tên *" />
                                 <x-text-input name="name" class="w-full mt-1"
-                                    value="{{ old('name', $user->name ?? '') }}" required />
+                                    value="{{ old('name', $prefill['name'] ?? $user->name ?? '') }}" required />
                                 @error('name')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                             </div>
                             <div>
@@ -127,7 +134,7 @@
                             <div>
                                 <x-input-label value="Chức vụ" />
                                 <x-text-input name="position" class="w-full mt-1"
-                                    value="{{ old('position', $user->position ?? '') }}" />
+                                    value="{{ old('position', $prefill['position'] ?? $user->position ?? '') }}" />
                             </div>
                             <div>
                                 <x-input-label value="Cấp bậc" />
@@ -224,6 +231,51 @@
                                     </p>
                                 </div>
                             </div>
+
+                            {{-- Probation Time --}}
+                            @if($canEditPersonal)
+                                <div class="mb-6">
+                                    <x-input-label value="Thời gian thử việc" />
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-1">
+                                        <div>
+                                            <x-text-input type="date" name="probation_start_date" class="w-full"
+                                                value="{{ old('probation_start_date', $user->probation_start_date ? $user->probation_start_date->format('Y-m-d') : '') }}" />
+                                            <p class="text-xs text-gray-400 mt-1">Ngày bắt đầu</p>
+                                            @error('probation_start_date')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                                        </div>
+                                        <div>
+                                            <x-text-input type="date" name="probation_end_date" class="w-full"
+                                                value="{{ old('probation_end_date', $user->probation_end_date ? $user->probation_end_date->format('Y-m-d') : '') }}" />
+                                            <p class="text-xs text-gray-400 mt-1">Ngày kết thúc</p>
+                                            @error('probation_end_date')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                                        </div>
+                                    </div>
+                                </div>
+                            @elseif($user->probation_start_date || $user->probation_end_date)
+                                <div class="mb-6">
+                                    <x-input-label value="Thời gian thử việc" />
+                                    <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">
+                                        {{ $user->probation_start_date ? $user->probation_start_date->format('d/m/Y') : '—' }}
+                                        –
+                                        {{ $user->probation_end_date ? $user->probation_end_date->format('d/m/Y') : '—' }}
+                                    </p>
+                                </div>
+                            @endif
+
+                            {{-- Onboarded from recruitment applicant --}}
+                            @if($user->recruitment_applicant_id && $user->recruitmentApplicant)
+                                @can('module recruitment')
+                                    <div class="mb-6">
+                                        <x-input-label value="Ứng viên gốc" />
+                                        <p class="mt-1 text-sm">
+                                            <a href="{{ route('recruitment.applicants.show', [$user->recruitmentApplicant->recruitment_position_id, $user->recruitmentApplicant->id]) }}"
+                                                class="text-indigo-600 dark:text-indigo-400 hover:underline">
+                                                {{ $user->recruitmentApplicant->name }}
+                                            </a>
+                                        </p>
+                                    </div>
+                                @endcan
+                            @endif
 
                             {{-- Supervisors --}}
                             <div class="mb-6">
@@ -335,9 +387,15 @@
                             @if($canEditPersonal)
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
+                                        <x-input-label value="Email liên hệ" />
+                                        <x-text-input name="contact_email" type="email" class="w-full mt-1"
+                                            value="{{ old('contact_email', $prefill['contact_email'] ?? $user->contact_email ?? '') }}" />
+                                        @error('contact_email')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                                    </div>
+                                    <div>
                                         <x-input-label value="Số điện thoại" />
                                         <x-text-input name="phone_number" type="tel" class="w-full mt-1"
-                                            value="{{ old('phone_number', $user->phone_number ?? '') }}" />
+                                            value="{{ old('phone_number', $prefill['phone_number'] ?? $user->phone_number ?? '') }}" />
                                     </div>
                                     <div class="sm:col-span-2">
                                         <x-input-label value="Địa chỉ nhà" />
@@ -347,6 +405,7 @@
                                 </div>
                             @else
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                                    <div><x-input-label value="Email liên hệ" /><p class="mt-1 text-gray-800 dark:text-gray-200">{{ isset($user) ? ($user->contact_email ?: '—') : '—' }}</p></div>
                                     <div><x-input-label value="Số điện thoại" /><p class="mt-1 text-gray-800 dark:text-gray-200">{{ isset($user) ? ($user->phone_number ?: '—') : '—' }}</p></div>
                                     <div class="sm:col-span-2"><x-input-label value="Địa chỉ nhà" /><p class="mt-1 text-gray-800 dark:text-gray-200">{{ isset($user) ? ($user->home_address ?: '—') : '—' }}</p></div>
                                 </div>
@@ -427,16 +486,18 @@
                         <div x-show="activeTab === 'hr'" x-cloak>
 
                             @if($canEditPersonal)
-                            {{-- Active Status --}}
+                            {{-- Employment / Active Status --}}
                             <div class="mb-5">
-                                <x-input-label value="Trạng thái tài khoản" />
-                                <label class="inline-flex items-center gap-2 mt-2 cursor-pointer">
-                                    <input type="hidden" name="is_active" value="0">
-                                    <input type="checkbox" name="is_active" value="1"
-                                        class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
-                                        {{ old('is_active', $user->is_active ?? true) ? 'checked' : '' }}>
-                                    <span class="text-sm text-gray-700 dark:text-gray-300">Đang hoạt động (có thể đăng nhập)</span>
-                                </label>
+                                <x-input-label value="Trạng thái làm việc" />
+                                <select name="employment_status"
+                                    class="mt-1 block border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
+                                    @foreach(\App\Models\User::$employmentStatuses as $value => $label)
+                                        <option value="{{ $value }}" {{ old('employment_status', $user->employment_status ?? 'active') === $value ? 'selected' : '' }}>
+                                            {{ $label }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <p class="text-xs text-gray-400 mt-1">"Không hoạt động" sẽ chặn người dùng đăng nhập.</p>
                             </div>
 
                             {{-- Roles --}}

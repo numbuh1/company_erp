@@ -167,6 +167,36 @@ class DashboardController extends Controller
             ->orderByRaw('DAY(contract_expiry)')
             ->get(['id', 'name', 'position', 'contract_expiry']);
 
+        // ── Onboarding widgets (Team Leads / HR with "view all user") ─────
+        $canViewOnboarding = $user->can('view all user') || $user->teams()->wherePivot('is_leader', true)->exists();
+
+        $onboardedUsers       = collect();
+        $probationEndingUsers = collect();
+
+        if ($canViewOnboarding) {
+            $onboardQuery   = User::whereNotNull('recruitment_applicant_id')->with('recruitmentApplicant.position');
+            $probationQuery = User::whereNotNull('probation_end_date');
+
+            if (!$user->can('view all user')) {
+                $teamUserIds = $user->teamMembers()->pluck('id')->toArray();
+                $onboardQuery->whereIn('id', $teamUserIds);
+                $probationQuery->whereIn('id', $teamUserIds);
+            }
+
+            $onboardedUsers = $onboardQuery->latest('id')->get(['id', 'name', 'position', 'recruitment_applicant_id', 'created_at']);
+
+            $probationEndingUsers = $probationQuery
+                ->where(function ($q) {
+                    $q->where('probation_end_date', '<', now()->toDateString())
+                      ->orWhere(function ($q2) {
+                          $q2->whereMonth('probation_end_date', now()->month)
+                             ->whereYear('probation_end_date', now()->year);
+                      });
+                })
+                ->orderBy('probation_end_date')
+                ->get(['id', 'name', 'position', 'probation_end_date']);
+        }
+
         // ── Public holidays this month ─────────────────────────────
         $monthHolidays = PublicHoliday::getHolidaysForRange(
             Carbon::now()->startOfMonth(),
@@ -204,7 +234,8 @@ class DashboardController extends Controller
             'attendanceStats',
             'todayEvents', 'weekEvents',
             'upcomingBirthdays', 'monthHolidays',
-            'contractExpiryUsers'
+            'contractExpiryUsers',
+            'canViewOnboarding', 'onboardedUsers', 'probationEndingUsers'
         ));
     }
 }

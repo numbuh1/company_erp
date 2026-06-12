@@ -238,10 +238,16 @@
                 class="px-4 py-2 text-sm text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition">
                 Xóa ứng viên này
             </button>
-            <button type="button" onclick="dismissDuplicateModal()"
-                class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition">
-                Giữ thông tin mới
-            </button>
+            <div class="flex items-center gap-3">
+                <button type="button" onclick="cancelDuplicateModal()"
+                    class="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                    Hủy
+                </button>
+                <button type="button" onclick="dismissDuplicateModal()"
+                    class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition">
+                    Giữ thông tin mới
+                </button>
+            </div>
         </div>
     </div>
 </div>

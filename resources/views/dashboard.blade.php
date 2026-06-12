@@ -195,6 +195,56 @@
                         </div>
                     @endif
 
+                    {{-- Onboarding (Team Lead / HR) --}}
+                    @if($canViewOnboarding && ($onboardedUsers->isNotEmpty() || $probationEndingUsers->isNotEmpty()))
+                        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
+                            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-1">
+                                Onboarding
+                            </h3>
+
+                            @if($onboardedUsers->isNotEmpty())
+                                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mt-3 mb-2">
+                                    🆕 Đã Onboard <span class="font-normal normal-case">({{ $onboardedUsers->count() }})</span>
+                                </p>
+                                <div class="space-y-1.5">
+                                    @foreach($onboardedUsers->take(5) as $ou)
+                                        <div class="flex items-center justify-between text-sm border-l-2 border-emerald-300 pl-3 py-0.5">
+                                            <a href="{{ route('users.show', $ou) }}" class="font-medium text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400">
+                                                {{ $ou->name }}
+                                            </a>
+                                            @if($ou->position)
+                                                <span class="text-xs text-gray-400 ml-1.5">{{ $ou->position }}</span>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            @if($probationEndingUsers->isNotEmpty())
+                                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mt-4 mb-2">⏳ Hết thử việc</p>
+                                <div class="space-y-1.5">
+                                    @foreach($probationEndingUsers as $pu)
+                                        @php
+                                            $daysLeft = (int) now()->startOfDay()->diffInDays($pu->probation_end_date->copy()->startOfDay(), false);
+                                        @endphp
+                                        <div class="flex items-center justify-between text-sm border-l-2 border-amber-300 pl-3 py-0.5">
+                                            <div>
+                                                <a href="{{ route('users.show', $pu) }}" class="font-medium text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400">{{ $pu->name }}</a>
+                                                @if($pu->position)
+                                                    <span class="text-xs text-gray-400 ml-1.5">{{ $pu->position }}</span>
+                                                @endif
+                                                <span class="text-xs text-gray-400 ml-1.5">{{ $pu->probation_end_date->translatedFormat('d M') }}</span>
+                                            </div>
+                                            <span class="text-xs shrink-0 ml-2 {{ $daysLeft < 0 ? 'text-red-500 font-semibold' : ($daysLeft <= 7 ? 'text-orange-500 font-semibold' : 'text-yellow-600') }}">
+                                                {{ $daysLeft < 0 ? 'Đã hết hạn' : ($daysLeft === 0 ? 'Hôm nay' : 'in ' . $daysLeft . 'd') }}
+                                            </span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                    @endif
+
                     {{-- Upcoming Approved Leaves --}}
                     <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
                         <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-3">

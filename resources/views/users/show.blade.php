@@ -128,6 +128,33 @@
                             </div>
                         </div>
 
+                        {{-- Probation Time --}}
+                        @if($user->probation_start_date || $user->probation_end_date)
+                            <div class="mb-6">
+                                <x-input-label value="Thời gian thử việc" />
+                                <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">
+                                    {{ $user->probation_start_date ? $user->probation_start_date->format('d/m/Y') : '—' }}
+                                    –
+                                    {{ $user->probation_end_date ? $user->probation_end_date->format('d/m/Y') : '—' }}
+                                </p>
+                            </div>
+                        @endif
+
+                        {{-- Onboarded from recruitment applicant --}}
+                        @if($user->recruitment_applicant_id && $user->recruitmentApplicant)
+                            @can('module recruitment')
+                                <div class="mb-6">
+                                    <x-input-label value="Ứng viên gốc" />
+                                    <p class="mt-1 text-sm">
+                                        <a href="{{ route('recruitment.applicants.show', [$user->recruitmentApplicant->recruitment_position_id, $user->recruitmentApplicant->id]) }}"
+                                            class="text-indigo-600 dark:text-indigo-400 hover:underline">
+                                            {{ $user->recruitmentApplicant->name }}
+                                        </a>
+                                    </p>
+                                </div>
+                            @endcan
+                        @endif
+
                         {{-- Supervisors --}}
                         <div class="mb-6">
                             <x-input-label value="Người giám sát" />
@@ -218,6 +245,10 @@
                     {{-- ── Contact Info ────────────────────── --}}
                     <div x-show="activeTab === 'contact'" x-cloak>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <x-input-label value="Email liên hệ" />
+                                <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">{{ $user->contact_email ?: '—' }}</p>
+                            </div>
                             <div>
                                 <x-input-label value="Số điện thoại" />
                                 <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">{{ $user->phone_number ?: '—' }}</p>

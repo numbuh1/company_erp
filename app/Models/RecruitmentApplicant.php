@@ -142,4 +142,12 @@ class RecruitmentApplicant extends Model
         return $this->belongsToMany(Event::class, 'event_recruitment_applicant');
     }
 
+    /**
+     * The user account created via "Begin Onboard" for this applicant (if any).
+     */
+    public function onboardedUser()
+    {
+        return $this->hasOne(User::class, 'recruitment_applicant_id');
+    }
+
 }

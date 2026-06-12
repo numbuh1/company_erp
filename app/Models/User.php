@@ -31,6 +31,7 @@ class User extends Authenticatable
         'name',
         'full_name',
         'email',
+        'contact_email',
         'password',
         'leave_balance',
         'salary',
@@ -45,7 +46,21 @@ class User extends Authenticatable
         'birthday',
         'contract_expiry',
         'is_active',
+        'employment_status',
+        'probation_start_date',
+        'probation_end_date',
+        'recruitment_applicant_id',
         'wfh_without_approval',
+    ];
+
+    /**
+     * Employment status options shown on the HR tab of the user form.
+     * Key = value stored in DB. Value = label shown to the user.
+     */
+    public static array $employmentStatuses = [
+        'active'       => 'Đang làm việc',
+        'on_probation' => 'Đang thử việc',
+        'inactive'     => 'Không hoạt động',
     ];
 
     /**
@@ -62,6 +77,8 @@ class User extends Authenticatable
             'wfh_without_approval' => 'boolean',
             'birthday'        => 'date',
             'contract_expiry' => 'date',
+            'probation_start_date' => 'date',
+            'probation_end_date'   => 'date',
         ];
     }
 
@@ -173,6 +190,15 @@ class User extends Authenticatable
         return $this->belongsToMany(
             User::class, 'user_supervisors', 'supervisor_id', 'user_id'
         );
+    }
+
+    /**
+     * The recruitment applicant this user was onboarded from (if any),
+     * set via the "Begin Onboard" flow on the recruitment module.
+     */
+    public function recruitmentApplicant()
+    {
+        return $this->belongsTo(RecruitmentApplicant::class);
     }
 
     // Log Functions

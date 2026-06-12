@@ -39,6 +39,34 @@
                         Tải xuống CV
                     </a>
                 @endif
+                @if($recruitmentApplicant->status === 'Đã tuyển')
+                    @php
+                        $onboardedUser = $recruitmentApplicant->onboardedUser;
+                    @endphp
+                    @if($onboardedUser)
+                        <a href="{{ route('users.show', $onboardedUser) }}"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                            </svg>
+                            Xem hồ sơ nhân viên
+                        </a>
+                    @elseif(auth()->user()->can('create all user'))
+                        <a href="{{ route('users.create', [
+                                'name'                     => $recruitmentApplicant->name,
+                                'contact_email'            => $recruitmentApplicant->email,
+                                'phone_number'             => $recruitmentApplicant->phone,
+                                'position'                 => $recruitmentPosition->name,
+                                'recruitment_applicant_id' => $recruitmentApplicant->id,
+                            ]) }}"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM3 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 019.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
+                            </svg>
+                            Begin Onboard
+                        </a>
+                    @endif
+                @endif
                 <button type="button" onclick="openApplicantEditModal({{ $recruitmentApplicant->id }})"
                     class="inline-flex items-center gap-1 px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:text-yellow-600 hover:border-yellow-400 text-sm font-medium rounded-lg bg-white dark:bg-gray-700 transition">
                     Chỉnh sửa

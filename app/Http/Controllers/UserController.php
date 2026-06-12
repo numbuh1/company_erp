@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Helper\NotificationHelper;
 use App\Mail\WelcomeUserMail;
+use App\Models\RecruitmentApplicant;
 use App\Models\Team;
 use App\Models\User;
 use App\Models\UserPreference;
@@ -23,11 +25,22 @@ class UserController extends Controller
         return view('users.index', compact('users', 'canViewSalary', 'canViewPersonal'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $roles            = Role::all();
         $supervisorOptions = User::orderBy('name')->get(['id', 'name', 'position']);
-        return view('users.form', compact('roles', 'supervisorOptions'));
+
+        // Pre-fill values when arriving from the "Begin Onboard" action
+        // on a hired recruitment applicant.
+        $prefill = [
+            'name'                     => $request->query('name'),
+            'contact_email'            => $request->query('contact_email'),
+            'phone_number'             => $request->query('phone_number'),
+            'position'                 => $request->query('position'),
+            'recruitment_applicant_id' => $request->query('recruitment_applicant_id'),
+        ];
+
+        return view('users.form', compact('roles', 'supervisorOptions', 'prefill'));
     }
 
     public function store(Request $request)
@@ -36,6 +49,7 @@ class UserController extends Controller
             'name'                 => 'required',
             'full_name'            => 'nullable|string|max:255',
             'email'                => 'required|email|unique:users',
+            'contact_email'        => 'nullable|email|max:255',
             'password'             => 'required|min:6|confirmed',
             'position'             => 'nullable|string|max:255',
             'grade'                => 'nullable|string|max:255',
@@ -48,6 +62,10 @@ class UserController extends Controller
             'home_address'         => 'nullable|string',
             'tax_code'             => 'nullable|string|max:20',
             'social_insurance_id'  => 'nullable|string|max:20',
+            'employment_status'    => 'nullable|in:active,on_probation,inactive',
+            'probation_start_date' => 'nullable|date',
+            'probation_end_date'   => 'nullable|date',
+            'recruitment_applicant_id' => 'nullable|exists:recruitment_applicants,id',
             'roles'                => 'array',
             // Salary table fields
             'allowance_adjustment' => 'nullable|integer',
@@ -67,6 +85,9 @@ class UserController extends Controller
         if (auth()->user()->can('edit all user')) {
             $user->syncRoles($request->roles ?? []);
             $user->supervisors()->sync($request->input('supervisors', []));
+
+            $employmentStatus = $request->input('employment_status', 'active');
+
             $user->update([
                 'wfh_without_approval' => $request->boolean('wfh_without_approval'),
                 'salary'               => $request->input('salary') ?: null,
@@ -76,6 +97,10 @@ class UserController extends Controller
                 'home_address'         => $request->input('home_address'),
                 'tax_code'             => $request->input('tax_code'),
                 'social_insurance_id'  => $request->input('social_insurance_id'),
+                'employment_status'    => $employmentStatus,
+                'is_active'            => $employmentStatus !== 'inactive',
+                'probation_start_date' => $request->input('probation_start_date') ?: null,
+                'probation_end_date'   => $request->input('probation_end_date') ?: null,
             ]);
             $user->salaryRecord()->updateOrCreate([], [
                 'salary'               => $request->input('salary') ?: null,
@@ -109,6 +134,25 @@ class UserController extends Controller
             logger()->error("Welcome email failed for user {$user->id}: " . $e->getMessage());
         }
 
+        // Notify the recruitment position's assigned members that this
+        // applicant has been onboarded as a new user.
+        if (!empty($data['recruitment_applicant_id'])) {
+            $applicant = RecruitmentApplicant::with('position.assignedUsers')->find($data['recruitment_applicant_id']);
+            if ($applicant && $applicant->position) {
+                $actor = auth()->user();
+                foreach ($applicant->position->assignedUsers as $assignedUser) {
+                    if ($assignedUser->id === $actor->id) continue;
+                    NotificationHelper::send(
+                        receivingUser: $assignedUser,
+                        title: 'Ứng viên đã được onboard',
+                        description: "{$actor->name} đã tạo hồ sơ nhân viên cho ứng viên \"{$applicant->name}\" ({$applicant->position->name}).",
+                        url: route('users.show', $user),
+                        incomingUser: $actor,
+                    );
+                }
+            }
+        }
+
         return redirect()->route('users.index')->with('success', 'User created');
     }
 
@@ -116,7 +160,7 @@ class UserController extends Controller
     {
         $roles             = Role::all();
         $supervisorOptions = User::where('id', '!=', $user->id)->orderBy('name')->get(['id', 'name', 'position']);
-        $user->load(['supervisors', 'salaryRecord', 'preferences', 'teams']);
+        $user->load(['supervisors', 'salaryRecord', 'preferences', 'teams', 'recruitmentApplicant']);
         $spentBalance = $this->_spentLeaveBalance($user);
         return view('users.form', compact('user', 'roles', 'supervisorOptions', 'spentBalance'));
     }
@@ -244,7 +288,7 @@ class UserController extends Controller
 
     public function show(User $user)
     {
-        $user->load(['roles', 'teams', 'supervisors']);
+        $user->load(['roles', 'teams', 'supervisors', 'recruitmentApplicant']);
         $isOwnProfile    = auth()->id() === $user->id;
         $canViewSalary   = $isOwnProfile || auth()->user()->canAny(['view salary', 'edit all user']);
         $canViewPersonal = $isOwnProfile || auth()->user()->canAny(['view all user personal info', 'edit all user']);
@@ -267,6 +311,7 @@ class UserController extends Controller
             'name'                 => 'required',
             'full_name'            => 'nullable|string|max:255',
             'email'                => 'required|email|unique:users,email,' . $user->id,
+            'contact_email'        => 'nullable|email|max:255',
             'password'             => 'nullable|min:6|confirmed',
             'position'             => 'nullable|string|max:255',
             'grade'                => 'nullable|string|max:255',
@@ -279,6 +324,9 @@ class UserController extends Controller
             'home_address'         => 'nullable|string',
             'tax_code'             => 'nullable|string|max:20',
             'social_insurance_id'  => 'nullable|string|max:20',
+            'employment_status'    => 'nullable|in:active,on_probation,inactive',
+            'probation_start_date' => 'nullable|date',
+            'probation_end_date'   => 'nullable|date',
             'roles'                => 'array',
             // Salary table fields
             'allowance_adjustment' => 'nullable|integer',
@@ -292,7 +340,7 @@ class UserController extends Controller
 
         // HR-only fields: strip from data when caller isn't an admin
         if (!auth()->user()->can('edit all user')) {
-            foreach (['contract_expiry','phone_number','citizen_id','home_address','tax_code','social_insurance_id','salary','salary_type'] as $f) {
+            foreach (['contract_expiry','phone_number','citizen_id','home_address','tax_code','social_insurance_id','salary','salary_type','contact_email','employment_status','probation_start_date','probation_end_date'] as $f) {
                 unset($data[$f]);
             }
         }
@@ -304,9 +352,6 @@ class UserController extends Controller
         }
 
         $user->update($data);
-        if (auth()->user()->can('edit all user')) {
-            $user->update(['is_active' => $request->boolean('is_active')]);
-        }
 
         if ($request->filled('profile_picture_cropped')) {
             // Decode base64 and save
@@ -330,8 +375,12 @@ class UserController extends Controller
         if (auth()->user()->can('edit all user')) {
             $user->syncRoles($request->roles ?? []);
             $user->supervisors()->sync($request->input('supervisors', []));
+
+            $employmentStatus = $request->input('employment_status', $user->employment_status ?? 'active');
+
             $user->update([
-                'is_active'            => $request->boolean('is_active'),
+                'is_active'            => $employmentStatus !== 'inactive',
+                'employment_status'    => $employmentStatus,
                 'wfh_without_approval' => $request->boolean('wfh_without_approval'),
                 'salary'               => $request->input('salary') ?: null,
                 'salary_type'          => $request->input('salary_type') ?: null,
@@ -340,6 +389,9 @@ class UserController extends Controller
                 'home_address'         => $request->input('home_address'),
                 'tax_code'             => $request->input('tax_code'),
                 'social_insurance_id'  => $request->input('social_insurance_id'),
+                'contact_email'        => $request->input('contact_email'),
+                'probation_start_date' => $request->input('probation_start_date') ?: null,
+                'probation_end_date'   => $request->input('probation_end_date') ?: null,
             ]);
             $user->salaryRecord()->updateOrCreate([], [
                 'salary'               => $request->input('salary') ?: null,
