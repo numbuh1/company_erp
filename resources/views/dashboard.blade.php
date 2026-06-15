@@ -57,7 +57,7 @@
                     <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
-                                Thông báo mới nhất
+                                Thông báo
                             </h3>
                             @can('edit announcements')
                                 <a href="{{ route('announcements.create') }}"
@@ -88,84 +88,37 @@
                         @else
                             <p class="text-sm text-gray-400">Chưa có thông báo.</p>
                         @endif
-                    </div>
 
-                    @if($previousAnnouncements->isNotEmpty())
-                        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
-                            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-3">
-                                Thông báo cũ
-                            </h3>
-                            <ul class="space-y-2">
-                                @foreach($previousAnnouncements as $prev)
-                                    <li class="text-sm">
-                                        <a href="{{ route('announcements.show', $prev) }}"
-                                            class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline">
-                                            {{ $prev->title }}
-                                        </a>
-                                        <span class="text-xs text-gray-400 ml-1">
-                                            {{ $prev->created_at->format('d/m/Y') }}
-                                        </span>
-                                    </li>
-                                @endforeach
-                            </ul>
-                            <a href="{{ route('announcements.index') }}"
-                                class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline mt-3 inline-block">
-                                Tất cả Thông báo →
-                            </a>
-                        </div>
-                    @else
-                        <div class="text-right">
-                            <a href="{{ route('announcements.index') }}"
-                                class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">
-                                Tất cả Thông báo →
-                            </a>
-                        </div>
-                    @endif
+                        @if($previousAnnouncements->isNotEmpty())
+                            <div class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700">
+                                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                                    Thông báo khác
+                                </h4>
+                                <ul class="space-y-2">
+                                    @foreach($previousAnnouncements as $prev)
+                                        <li class="text-sm">
+                                            <a href="{{ route('announcements.show', $prev) }}"
+                                                class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline">
+                                                {{ $prev->title }}
+                                            </a>
+                                            <span class="text-xs text-gray-400 ml-1">
+                                                {{ $prev->created_at->format('d/m/Y') }}
+                                            </span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
+                        <a href="{{ route('announcements.index') }}"
+                            class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline mt-3 inline-block">
+                            Tất cả Thông báo →
+                        </a>
+                    </div>
                 </div>
 
                 {{-- ── Right: Notifications ───────────────────────────────── --}}
                 <div class="lg:col-span-3 space-y-4">
-                    {{-- Today's Attendance --}}
-                    @if($attendanceStats)
-                        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
-                            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-4">
-                                Bảng chấm công
-                                <span class="font-normal text-gray-400 normal-case">— {{ $attendanceStats['label'] }}</span>
-                            </h3>
-
-                            <div class="grid grid-cols-2 gap-3 mb-4">
-                                <div class="text-center bg-gray-50 dark:bg-gray-700 rounded-lg py-3">
-                                    <p class="text-2xl font-bold text-green-600 dark:text-green-400">{{ $attendanceStats['present'] }}</p>
-                                    <p class="text-xs text-gray-500 mt-0.5">Có mặt</p>
-                                </div>
-                                <!-- <div class="text-center bg-green-50 dark:bg-green-900/20 rounded-lg py-3">
-                                    <p class="text-2xl font-bold text-gray-700 dark:text-gray-200">{{ $attendanceStats['total'] }}</p>
-                                    <p class="text-xs text-gray-500 mt-0.5">Tổng</p>
-                                </div> -->
-                                <div class="text-center bg-yellow-50 dark:bg-yellow-900/20 rounded-lg py-3">
-                                    <p class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{{ $attendanceStats['on_leave'] }}</p>
-                                    <p class="text-xs text-gray-500 mt-0.5">Đang nghỉ phép</p>
-                                </div>
-                            </div>
-
-                            @if($attendanceStats['on_leave_users']->isNotEmpty())
-                                <div class="border-t border-gray-100 dark:border-gray-700 pt-3">
-                                    <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Nghỉ phép hôm nay</p>
-                                    <div class="flex flex-wrap gap-1.5">
-                                        @foreach($attendanceStats['on_leave_users'] as $ou)
-                                            <span class="inline-flex items-center gap-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 text-xs px-2 py-0.5 rounded">
-                                                {{ $ou->name }}
-                                                @if($ou->position)
-                                                    <span class="text-yellow-600 dark:text-yellow-400 opacity-70">· {{ $ou->position }}</span>
-                                                @endif
-                                            </span>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            @endif
-                        </div>
-                    @endif
-
                     {{-- Pending request counts (approvers only) --}}
                     @if($pendingLeavesCount !== null || $pendingOTCount !== null)
                         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
@@ -217,7 +170,7 @@
                                                     <span class="text-xs text-gray-400 ml-1.5">{{ $ou->position }}</span>
                                                 @endif
                                             </div>
-                                            <span class="text-xs text-gray-400 shrink-0 ml-2">{{ $ou->created_at->translatedFormat('d M') }}</span>
+                                            <span class="text-xs text-gray-400 shrink-0 ml-2">{{ $ou->probation_start_date->translatedFormat('d M') }}</span>
                                         </div>
                                     @endforeach
                                 </div>

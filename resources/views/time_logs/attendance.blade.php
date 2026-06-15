@@ -131,19 +131,11 @@
         {{-- ── Legend ──────────────────────────────────────────────────── --}}
         <div class="flex flex-wrap gap-3 text-xs text-gray-600 dark:text-gray-400">
             <span class="flex items-center gap-1.5">
-                <span class="w-3 h-3 rounded bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700"></span>
-                Đủ 8h
-            </span>
-            <span class="flex items-center gap-1.5">
-                <span class="w-3 h-3 rounded bg-orange-200 dark:bg-orange-900/50 border border-orange-400 dark:border-orange-600"></span>
-                Quá 8h
-            </span>
-            <span class="flex items-center gap-1.5">
-                <span class="w-3 h-3 rounded bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"></span>
+                <span class="w-3 h-3 rounded bg-red-200 dark:bg-red-900/50 border border-red-400 dark:border-red-600"></span>
                 Không chấm công
             </span>
             <span class="flex items-center gap-1.5">
-                <span class="w-3 h-3 rounded bg-pink-100 dark:bg-pink-900/30 border border-pink-300 dark:border-pink-700"></span>
+                <span class="w-3 h-3 rounded bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700"></span>
                 Dưới 8h
             </span>
             <span class="flex items-center gap-1.5">
@@ -274,11 +266,10 @@
                                 // 1. Off day with no data           → gray
                                 // 2. Only leave (no work, no OT)    → yellow (any day)
                                 // 3. Only OT   (no work, no leave)  → orange (any day)
-                                // 4. Past weekday, total > 8        → orange (overwork)
-                                // 5. Past weekday, total = 8        → green (full day)
-                                // 6. Past weekday, total = 0        → red
-                                // 7. Past weekday, 0 < total < 8    → pink
-                                // 8. Otherwise                      → white
+                                // 4. Past weekday, total >= 8       → white (full day / overwork)
+                                // 5. Past weekday, total = 0        → red (vibrant)
+                                // 6. Past weekday, 0 < total < 8    → red (vibrant, lighter)
+                                // 7. Otherwise                      → white
                                 if ($isOff && !$hasAny) {
                                     $cellBg = 'bg-gray-100 dark:bg-gray-700/40';
                                 } elseif ($leave > 0 && $work == 0 && $ot == 0) {
@@ -286,16 +277,12 @@
                                 } elseif ($ot > 0 && $work == 0 && $leave == 0) {
                                     $cellBg = 'bg-orange-100 dark:bg-orange-900/30';
                                 } elseif ($isPast && !$isOff) {
-                                    if ($total > 8) {
-                                        $cellBg = 'bg-orange-200 dark:bg-orange-900/50';   // overwork (NT + Leave > 8h)
-                                    } elseif ($total == 8) {
-                                        $cellBg = 'bg-green-100 dark:bg-green-900/30';     // full day (NT + Leave = 8h)
+                                    if ($total >= 8) {
+                                        $cellBg = '';                                        // full day / overwork (NT + Leave >= 8h)
                                     } elseif ($total == 0) {
-                                        $cellBg = 'bg-red-50 dark:bg-red-900/20';           // no hours at all
-                                    } elseif ($total < 8) {
-                                        $cellBg = 'bg-pink-100 dark:bg-pink-900/30';        // short day
+                                        $cellBg = 'bg-red-200 dark:bg-red-900/50';           // no hours at all
                                     } else {
-                                        $cellBg = '';                                        // covered by leave
+                                        $cellBg = 'bg-red-100 dark:bg-red-900/30';           // short day (NT + Leave < 8h)
                                     }
                                 } else {
                                     $cellBg = '';

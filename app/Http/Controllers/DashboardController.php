@@ -73,49 +73,6 @@ class DashboardController extends Controller
 
         $upcomingLeaves = $leaveQuery->get();
 
-        // ── Today's Attendance ─────────────────────────────────────
-        $today = now()->toDateString();
-        $attendanceStats = null;
-
-        if ($user->can('view all user') || $user->can('edit all user')) {
-            $scopedUserIds   = \App\Models\User::where('is_active', true)->pluck('id');
-            $attendanceLabel = 'Toàn công ty';
-        } elseif ($user->canAny(['view team user', 'edit team user'])) {
-            $teamUserIds   = $user->teamMembers()->pluck('id')->toArray();
-            $teamUserIds[] = $user->id;
-            $scopedUserIds = \App\Models\User::whereIn('id', array_unique($teamUserIds))
-                ->where('is_active', true)->pluck('id');
-            $attendanceLabel = 'Team của bạn';
-        } else {
-            $scopedUserIds   = null;
-            $attendanceLabel = null;
-        }
-
-        if ($scopedUserIds !== null && $scopedUserIds->isNotEmpty()) {
-            $onLeaveIds = LeaveRequest::where('status', 'approved')
-                ->whereDate('start_at', '<=', $today)
-                ->whereDate('end_at',   '>=', $today)
-                ->whereIn('user_id', $scopedUserIds)
-                ->distinct()
-                ->pluck('user_id');
-
-            $onLeaveCount = $onLeaveIds->count();
-            $totalCount   = $scopedUserIds->count();
-            $presentCount = $totalCount - $onLeaveCount;
-
-            $onLeaveUsers = \App\Models\User::whereIn('id', $onLeaveIds)
-                ->orderBy('name')
-                ->get(['id', 'name', 'position']);
-
-            $attendanceStats = [
-                'total'          => $totalCount,
-                'present'        => $presentCount,
-                'on_leave'       => $onLeaveCount,
-                'on_leave_users' => $onLeaveUsers,
-                'label'          => $attendanceLabel,
-            ];
-        }
-
         // ── In Progress tasks nearing deadline (≤ 5 days) ─────────
         $deadlineQuery = Task::with(['project', 'assignees'])
             ->whereNot('status', 'Đã xong')
@@ -184,10 +141,11 @@ class DashboardController extends Controller
             }
 
             $onboardedUsers = $onboardQuery
-                ->whereMonth('created_at', now()->month)
-                ->whereYear('created_at', now()->year)
-                ->latest('id')
-                ->get(['id', 'name', 'position', 'recruitment_applicant_id', 'created_at']);
+                ->whereNotNull('probation_start_date')
+                ->whereMonth('probation_start_date', now()->month)
+                ->whereYear('probation_start_date', now()->year)
+                ->orderBy('probation_start_date')
+                ->get(['id', 'name', 'position', 'recruitment_applicant_id', 'probation_start_date']);
 
             $probationEndingUsers = $probationQuery
                 ->where(function ($q) {
@@ -235,7 +193,6 @@ class DashboardController extends Controller
             'weekTimeLogs', 'monthTimeLogs', 'monthOTHours',
             'upcomingLeaves', 'deadlineTasks',
             'pendingLeavesCount', 'pendingOTCount',
-            'attendanceStats',
             'todayEvents', 'weekEvents',
             'upcomingBirthdays', 'monthHolidays',
             'contractExpiryUsers',

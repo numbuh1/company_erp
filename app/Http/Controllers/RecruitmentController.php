@@ -172,6 +172,7 @@ class RecruitmentController extends Controller
                 'salary_expectation' => $applicant->salary_expectation,
                 'available_date'     => $applicant->available_date,
                 'referer_user_id'    => $applicant->referer_user_id,
+                'duplicate_check_dismissed' => true,
             ]);
 
             $skillsData = $applicant->skills->mapWithKeys(fn($s) => [
