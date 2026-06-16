@@ -86,7 +86,7 @@
                                     @if($ot->project)
                                         <a href="{{ route('projects.show', $ot->project) }}"
                                             class="text-indigo-600 dark:text-indigo-400 hover:underline">
-                                            <span class="font-mono text-xs font-semibold">PJ-{{ $ot->project_id }}</span>
+                                            <span class="font-mono text-xs font-semibold">{{ $ot->project->project_code }}</span>
                                             <span class="ml-1">{{ $ot->project->name }}</span>
                                         </a>
                                     @else
@@ -97,7 +97,7 @@
                                     @if($ot->task)
                                         <a href="{{ route('tasks.show', $ot->task) }}"
                                             class="text-indigo-600 dark:text-indigo-400 hover:underline">
-                                            <span class="font-mono text-xs font-semibold">TK-{{ $ot->task_id }}</span>
+                                            <span class="font-mono text-xs font-semibold">{{ $ot->task->task_code }}</span>
                                             <span class="ml-1">{{ $ot->task->name }}</span>
                                         </a>
                                     @else

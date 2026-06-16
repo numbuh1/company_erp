@@ -15,6 +15,25 @@
                 <div class="p-3 bg-green-100 text-green-800 rounded">{{ session('success') }}</div>
             @endif
 
+            {{-- Search --}}
+            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-4">
+                <form method="GET" action="{{ route('announcements.index') }}" class="flex gap-2">
+                    <input type="text" name="search" value="{{ request('search') }}"
+                           placeholder="Tìm kiếm theo tiêu đề hoặc nội dung…"
+                           class="block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 rounded-md shadow-sm text-sm px-3 py-1.5 focus:ring-indigo-500 focus:border-indigo-500">
+                    <button type="submit"
+                            class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md shadow-sm transition shrink-0">
+                        Tìm
+                    </button>
+                    @if(request('search'))
+                        <a href="{{ route('announcements.index') }}"
+                           class="px-4 py-1.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition shrink-0">
+                            Đặt lại
+                        </a>
+                    @endif
+                </form>
+            </div>
+
             @forelse($announcements as $announcement)
                 <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
                     <div class="flex justify-between items-start">
@@ -61,7 +80,7 @@
                 </div>
             @empty
                 <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6 text-center text-gray-500">
-                    Chưa có thông báo.
+                    {{ request('search') ? 'Không tìm thấy thông báo nào khớp với tìm kiếm.' : 'Chưa có thông báo.' }}
                 </div>
             @endforelse
 

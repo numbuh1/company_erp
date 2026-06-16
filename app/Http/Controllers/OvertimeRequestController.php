@@ -285,11 +285,11 @@ class OvertimeRequestController extends Controller
         $projects = Project::where(function ($q) use ($userId) {
             $q->whereHas('users', fn($q2) => $q2->where('users.id', $userId))
               ->orWhereHas('teams', fn($q2) => $q2->whereHas('users', fn($q3) => $q3->where('users.id', $userId)));
-        })->orderBy('name')->get(['id', 'name']);
+        })->orderBy('name')->get(['id', 'name', 'project_code']);
 
         $tasks = Task::whereHas('assignees', fn($q) => $q->where('users.id', $userId))
             ->orderBy('name')
-            ->get(['id', 'name', 'project_id']);
+            ->get(['id', 'name', 'project_id', 'task_code']);
 
         return compact('projects', 'tasks');
     }

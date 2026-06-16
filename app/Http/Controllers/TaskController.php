@@ -106,11 +106,13 @@ class TaskController extends Controller
                 ->merge($p->teams->flatMap->users->pluck('id'))
                 ->unique()->values()->toArray()
         ]);
+        $nextTaskId = (Task::withTrashed()->max('id') ?? 0) + 1;
         return view('tasks.form', [
             'projects'           => $projects,
             'users'              => User::orderBy('name')->get(),
             'projectMembers'     => $projectMembers,
             'default_project_id' => request('project_id'),
+            'predicted_task_code' => 'TK-' . $nextTaskId,
         ]);
     }
 
@@ -124,6 +126,7 @@ class TaskController extends Controller
         $data = $request->validate([
             'project_id'        => 'nullable|integer|exists:projects,id',
             'name'              => 'required|string|max:255',
+            'task_code'         => 'nullable|string|max:50|unique:tasks,task_code',
             'description'       => 'nullable|string',
             'progress'          => 'nullable|integer|min:0|max:100',
             'budget_hours'      => 'nullable|numeric|min:0',
@@ -134,7 +137,14 @@ class TaskController extends Controller
             'status'            => 'nullable|string',
         ]);
 
-        $task = Task::create($data);
+        if (empty($data['task_code'])) {
+            unset($data['task_code']);
+            $task = Task::create($data);
+            $task->update(['task_code' => 'TK-' . $task->id]);
+        } else {
+            $task = Task::create($data);
+        }
+
         $task->assignees()->sync($request->assignees ?? []);
 
         return redirect()->route('tasks.show', $task)->with('success', 'Task created.');
@@ -323,6 +333,7 @@ class TaskController extends Controller
         $data = $request->validate([
             'project_id'        => 'nullable|integer|exists:projects,id',
             'name'              => 'required|string|max:255',
+            'task_code'         => 'nullable|string|max:50|unique:tasks,task_code,' . $task->id,
             'description'       => 'nullable|string',
             'progress'          => 'nullable|integer|min:0|max:100',
             'budget_hours'      => 'nullable|numeric|min:0',
@@ -332,6 +343,8 @@ class TaskController extends Controller
             'assignees'         => 'nullable|array',
             'status'            => 'nullable|string',
         ]);
+
+        $data['task_code'] = $data['task_code'] ?: ('TK-' . $task->id);
 
         $task->update($data);
         $task->assignees()->sync($request->assignees ?? []);
@@ -366,11 +379,11 @@ class TaskController extends Controller
         $tasks = $query
             ->orderBy('name')
             ->limit(20)
-            ->get(['id', 'name', 'project_id']);
+            ->get(['id', 'name', 'project_id', 'task_code']);
 
         return response()->json($tasks->map(fn($t) => [
             'id'   => $t->id,
-            'text' => 'TK-' . $t->id . ' ' . $t->name,
+            'text' => $t->task_code . ' ' . $t->name,
         ]));
     }
 

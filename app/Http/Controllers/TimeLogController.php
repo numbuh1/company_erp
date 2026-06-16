@@ -417,8 +417,8 @@ class TimeLogController extends Controller
             : ($saved['show_project'] ?? '1')) !== '0';
 
         // Dropdown options
-        $availableProjects = Project::orderBy('name')->get(['id', 'name']);
-        $availableTasks    = Task::orderBy('name')->get(['id', 'name']);
+        $availableProjects = Project::orderBy('name')->get(['id', 'name', 'project_code']);
+        $availableTasks    = Task::orderBy('name')->get(['id', 'name', 'task_code']);
 
         // ── Build the log query ────────────────────────────────────────────
         $logsQuery = TimeLog::whereBetween('date', [$weekStart->toDateString(), $weekEnd->toDateString()])
@@ -446,12 +446,12 @@ class TimeLogController extends Controller
             // — By Context (task / project-only / other) —
             if ($log->task_id) {
                 $cKey  = 'task_' . $log->task_id;
-                $label = 'TK-' . $log->task_id . ($log->task ? ' · ' . $log->task->name : ' (deleted)');
+                $label = ($log->task ? $log->task->task_code : 'TK-' . $log->task_id) . ($log->task ? ' · ' . $log->task->name : ' (deleted)');
                 $link  = $log->task ? route('tasks.show', $log->task_id) : null;
                 $cType = 'task';
             } elseif ($log->project_id) {
                 $cKey  = 'project_' . $log->project_id;
-                $label = 'PJ-' . $log->project_id . ($log->project ? ' · ' . $log->project->name : ' (deleted)');
+                $label = ($log->project ? $log->project->project_code : 'PJ-' . $log->project_id) . ($log->project ? ' · ' . $log->project->name : ' (deleted)');
                 $link  = $log->project ? route('projects.show', $log->project_id) : null;
                 $cType = 'project';
             } else {
@@ -474,7 +474,7 @@ class TimeLogController extends Controller
             // — By Project —
             if ($log->project_id) {
                 $pKey   = 'project_' . $log->project_id;
-                $pLabel = 'PJ-' . $log->project_id . ($log->project ? ' · ' . $log->project->name : ' (deleted)');
+                $pLabel = ($log->project ? $log->project->project_code : 'PJ-' . $log->project_id) . ($log->project ? ' · ' . $log->project->name : ' (deleted)');
                 $pLink  = $log->project ? route('projects.show', $log->project_id) : null;
             } else {
                 $pKey   = 'no_project';
@@ -804,8 +804,8 @@ class TimeLogController extends Controller
         }
 
         // ── Filter dropdown options ────────────────────────────────────────
-        $availableProjects = Project::orderBy('name')->get(['id', 'name']);
-        $availableTasks    = Task::whereNotNull('project_id')->orderBy('name')->get(['id', 'name', 'project_id']);
+        $availableProjects = Project::orderBy('name')->get(['id', 'name', 'project_code']);
+        $availableTasks    = Task::whereNotNull('project_id')->orderBy('name')->get(['id', 'name', 'project_id', 'task_code']);
         $availableUsers    = null;
         if ($viewableIds === null) {
             $availableUsers = User::orderBy('name')->get(['id', 'name', 'position']);

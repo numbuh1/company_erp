@@ -41,17 +41,17 @@
                     <p class="mt-1 text-sm text-gray-700 dark:text-gray-300">
                         @if($timeLog->task)
                             <a href="{{ route('tasks.show', $timeLog->task) }}" class="text-indigo-600 hover:underline">
-                                <span class="font-mono font-semibold">TK-{{ $timeLog->task_id }}</span> {{ $timeLog->task->name }}
+                                <span class="font-mono font-semibold">{{ $timeLog->task->task_code }}</span> {{ $timeLog->task->name }}
                             </a>
                             @if($timeLog->project)
                                 <span class="text-gray-400 mx-1">trong</span>
                                 <a href="{{ route('projects.show', $timeLog->project) }}" class="text-indigo-600 hover:underline">
-                                    <span class="font-mono font-semibold">PJ-{{ $timeLog->project_id }}</span> {{ $timeLog->project->name }}
+                                    <span class="font-mono font-semibold">{{ $timeLog->project->project_code }}</span> {{ $timeLog->project->name }}
                                 </a>
                             @endif
                         @elseif($timeLog->project)
                             <a href="{{ route('projects.show', $timeLog->project) }}" class="text-indigo-600 hover:underline">
-                                <span class="font-mono font-semibold">PJ-{{ $timeLog->project_id }}</span> {{ $timeLog->project->name }}
+                                <span class="font-mono font-semibold">{{ $timeLog->project->project_code }}</span> {{ $timeLog->project->name }}
                             </a>
                         @else
                             <span class="text-gray-400">Khác (không có dự án hoặc công việc)</span>

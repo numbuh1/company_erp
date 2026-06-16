@@ -136,7 +136,7 @@
                             @foreach($availableProjects as $ap)
                                 <option value="{{ $ap->id }}"
                                     {{ in_array($ap->id, $filterProjectIds) ? 'selected' : '' }}>
-                                    PJ-{{ $ap->id }} · {{ $ap->name }}
+                                    {{ $ap->project_code }} · {{ $ap->name }}
                                 </option>
                             @endforeach
                         </select>
@@ -152,7 +152,7 @@
                             @foreach($availableTasks as $at)
                                 <option value="{{ $at->id }}"
                                     {{ in_array($at->id, $filterTaskIds) ? 'selected' : '' }}>
-                                    TK-{{ $at->id }} · {{ $at->name }}
+                                    {{ $at->task_code }} · {{ $at->name }}
                                 </option>
                             @endforeach
                         </select>

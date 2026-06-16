@@ -45,12 +45,14 @@ class ProjectController extends Controller
     {
         if (!auth()->user()->can('edit projects')) abort(403);
         $teams = Team::with('users')->orderBy('name')->get();
+        $nextProjectId = (Project::withTrashed()->max('id') ?? 0) + 1;
         return view('projects.form', [
-            'teams'       => $teams,
-            'users'       => User::orderBy('name')->get(),
-            'teamMembers' => $teams->mapWithKeys(fn($t) => [
+            'teams'                  => $teams,
+            'users'                  => User::orderBy('name')->get(),
+            'teamMembers'            => $teams->mapWithKeys(fn($t) => [
                 $t->id => $t->users->pluck('id')->toArray()
             ]),
+            'predicted_project_code' => 'PJ-' . $nextProjectId,
         ]);
     }
 
@@ -63,6 +65,7 @@ class ProjectController extends Controller
 
         $data = $request->validate([
             'name'              => 'required|string|max:255',
+            'project_code'      => 'nullable|string|max:50|unique:projects,project_code',
             'description'       => 'nullable|string',
             'start_date'        => 'nullable|date',
             'expected_end_date' => 'nullable|date',
@@ -73,7 +76,14 @@ class ProjectController extends Controller
             'budget_hours'      => 'nullable|numeric|min:0',
         ]);
 
-        $project = Project::create($data);
+        if (empty($data['project_code'])) {
+            unset($data['project_code']);
+            $project = Project::create($data);
+            $project->update(['project_code' => 'PJ-' . $project->id]);
+        } else {
+            $project = Project::create($data);
+        }
+
         $project->teams()->sync($request->teams ?? []);
         $project->users()->sync($request->members ?? []);
 
@@ -254,7 +264,7 @@ class ProjectController extends Controller
                 $tsTaskRows[$taskKey] = [
                     'task' => $task, 'task_id' => $log->task_id,
                     'label' => $log->task_id
-                        ? 'TK-' . $log->task_id . ($task ? ' · ' . $task->name : '')
+                        ? ($task ? $task->task_code . ' · ' . $task->name : 'TK-' . $log->task_id)
                         : '(Không có công việc)',
                     'days' => [], 'total_hours' => 0, 'total_ot' => 0, 'total_cost' => 0, 'total_ot_cost' => 0,
                 ];
@@ -282,7 +292,7 @@ class ProjectController extends Controller
                 $tsTaskRows[$taskKey] = [
                     'task' => $task, 'task_id' => $ot->task_id,
                     'label' => $ot->task_id
-                        ? 'TK-' . $ot->task_id . ($task ? ' · ' . $task->name : '')
+                        ? ($task ? $task->task_code . ' · ' . $task->name : 'TK-' . $ot->task_id)
                         : '(Không có công việc)',
                     'days' => [], 'total_hours' => 0, 'total_ot' => 0, 'total_cost' => 0, 'total_ot_cost' => 0,
                 ];
@@ -474,6 +484,7 @@ class ProjectController extends Controller
 
         $data = $request->validate([
             'name'              => 'required|string|max:255',
+            'project_code'      => 'nullable|string|max:50|unique:projects,project_code,' . $project->id,
             'description'       => 'nullable|string',
             'start_date'        => 'nullable|date',
             'expected_end_date' => 'nullable|date',
@@ -483,6 +494,8 @@ class ProjectController extends Controller
             'status'            => 'nullable|string',
             'budget_hours'      => 'nullable|numeric|min:0',
         ]);
+
+        $data['project_code'] = $data['project_code'] ?: ('PJ-' . $project->id);
 
         $project->update($data);
         $project->teams()->sync($request->teams ?? []);
@@ -588,11 +601,11 @@ class ProjectController extends Controller
             ->where('name', 'like', "%{$q}%")
             ->orderBy('name')
             ->limit(20)
-            ->get(['id', 'name']);
+            ->get(['id', 'name', 'project_code']);
 
         return response()->json($projects->map(fn($p) => [
             'id'   => $p->id,
-            'text' => 'PJ-' . $p->id . ' ' . $p->name,
+            'text' => $p->project_code . ' ' . $p->name,
         ]));
     }
 

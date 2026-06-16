@@ -407,7 +407,7 @@
                                     <div class="flex items-center gap-3 p-2 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                                         <a href="{{ route('tasks.show', $task) }}"
                                             class="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400 shrink-0">
-                                            TK-{{ $task->id }}
+                                            {{ $task->task_code }}
                                         </a>
                                         <div class="flex-1 min-w-0">
                                             <a href="{{ route('tasks.show', $task) }}"
@@ -416,7 +416,7 @@
                                             </a>
                                             @if($task->project)
                                                 <span class="text-xs text-gray-400">
-                                                    <span class="font-mono">PJ-{{ $task->project_id }}</span>
+                                                    <span class="font-mono">{{ $task->project->project_code }}</span>
                                                     {{ $task->project->name }}
                                                 </span>
                                             @endif

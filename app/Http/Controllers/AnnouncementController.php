@@ -27,13 +27,20 @@ class AnnouncementController extends Controller
         });
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $user  = auth()->user();
         $query = Announcement::with(['author', 'teams'])->latest();
         $this->_visibilityScope($query, $user);
 
-        $announcements = $query->paginate(15);
+        if ($search = trim($request->input('search', ''))) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('content', 'like', "%{$search}%");
+            });
+        }
+
+        $announcements = $query->paginate(15)->withQueryString();
         return view('announcements.index', compact('announcements'));
     }
 

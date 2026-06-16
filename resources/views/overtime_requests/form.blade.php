@@ -163,7 +163,7 @@
                                 <option value="">— Không có —</option>
                                 @foreach($projects as $p)
                                     <option value="{{ $p->id }}" {{ $selProject == $p->id ? 'selected' : '' }}>
-                                        PJ-{{ $p->id }} · {{ $p->name }}
+                                        {{ $p->project_code }} · {{ $p->name }}
                                     </option>
                                 @endforeach
                             </select>
@@ -177,7 +177,7 @@
                                     <option value="{{ $t->id }}"
                                         data-project="{{ $t->project_id ?? '' }}"
                                         {{ $selTask == $t->id ? 'selected' : '' }}>
-                                        TK-{{ $t->id }} · {{ $t->name }}
+                                        {{ $t->task_code }} · {{ $t->name }}
                                     </option>
                                 @endforeach
                             </select>
@@ -253,7 +253,7 @@
         @php
             $taskJson = $tasks->map(fn($t) => [
                 'value'     => (string) $t->id,
-                'text'      => 'TK-' . $t->id . ' · ' . $t->name,
+                'text'      => $t->task_code . ' · ' . $t->name,
                 'projectId' => $t->project_id ? (string) $t->project_id : '',
             ])->values();
         @endphp

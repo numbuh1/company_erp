@@ -54,7 +54,7 @@
                                 <td class="px-4 py-4">
                                     <a href="{{ route('projects.show', $project) }}"
                                         class="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline whitespace-nowrap">
-                                        PJ-{{ $project->id }}
+                                        {{ $project->project_code }}
                                     </a>
                                 </td>
                                 <td class="px-4 py-4 font-medium text-gray-900 dark:text-gray-100">{{ $project->name }}</td>

@@ -37,7 +37,7 @@
                         <select id="project_id" name="project_id" placeholder="Tìm kiếm dự án...">
                             <option value="">— None —</option>
                             @if($initProject)
-                                <option value="{{ $initProject->id }}" selected>PJ-{{ $initProject->id }} {{ $initProject->name }}</option>
+                                <option value="{{ $initProject->id }}" selected>{{ $initProject->project_code }} {{ $initProject->name }}</option>
                             @endif
                         </select>
                         <x-input-error :messages="$errors->get('project_id')" class="mt-1" />
@@ -49,7 +49,7 @@
                         <select id="task_id" name="task_id" placeholder="Tìm kiếm công việc...">
                             <option value="">— None —</option>
                             @if($initTask)
-                                <option value="{{ $initTask->id }}" selected>TK-{{ $initTask->id }} {{ $initTask->name }}</option>
+                                <option value="{{ $initTask->id }}" selected>{{ $initTask->task_code }} {{ $initTask->name }}</option>
                             @endif
                         </select>
                         <x-input-error :messages="$errors->get('task_id')" class="mt-1" />

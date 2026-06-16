@@ -40,10 +40,10 @@
     $tlDisplay   = number_format($tlTotal, 1) . 'h';
 
     // Projects and tasks for the quick-log form
-    $tlProjects = \App\Models\Project::orderBy('name')->get(['id', 'name']);
+    $tlProjects = \App\Models\Project::orderBy('name')->get(['id', 'name', 'project_code']);
     $tlTasks    = \App\Models\Task::whereNotNull('project_id')
         ->orderBy('name')
-        ->get(['id', 'name', 'project_id']);
+        ->get(['id', 'name', 'project_id', 'task_code']);
 
     // Users for the "log for someone else" dropdown (null = current user only)
     $fabAuthUser = auth()->user();
@@ -358,7 +358,7 @@ document.addEventListener('DOMContentLoaded', function () {
 {{-- Pass task array via a script global to avoid @json / " breaking
      Alpine's JS object-literal parser when embedded in x-data="..." --}}
 <script>
-window._tlFabTasks        = {!! json_encode($tlTasks->map(fn($t) => ['id' => $t->id, 'name' => $t->name, 'pid' => $t->project_id])->values()->all(), JSON_HEX_TAG) !!};
+window._tlFabTasks        = {!! json_encode($tlTasks->map(fn($t) => ['id' => $t->id, 'name' => $t->name, 'pid' => $t->project_id, 'code' => $t->task_code])->values()->all(), JSON_HEX_TAG) !!};
 window._tlFabDefaultHours = {{ $tlLeft > 0 ? (float) min($tlLeft, 8) : 1 }};
 window._tlFabDayHoursUrl  = '{{ route('timesheets.day-hours') }}';
 window._tlFabCurrentUser  = {{ auth()->id() }};
@@ -571,7 +571,7 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
                     <select id="fab-project-ts">
                         <option value="">— Không có dự án —</option>
                         @foreach($tlProjects as $p)
-                            <option value="{{ $p->id }}">PJ-{{ $p->id }} · {{ $p->name }}</option>
+                            <option value="{{ $p->id }}">{{ $p->project_code }} · {{ $p->name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -696,7 +696,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const list = projectId
             ? allTasks.filter(t => String(t.pid) === String(projectId))
             : allTasks;
-        return list.map(t => ({ value: String(t.id), text: 'TK-' + t.id + ' · ' + t.name, pid: String(t.pid || '') }));
+        return list.map(t => ({ value: String(t.id), text: t.code + ' · ' + t.name, pid: String(t.pid || '') }));
     }
 
     // ── Task TomSelect (initialised first so projTs.onChange can reference it) ──

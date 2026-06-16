@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <span class="font-mono text-sm font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">TK-{{ $task->id }}</span>
+                <span class="font-mono text-sm font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">{{ $task->task_code }}</span>
                 <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">{{ $task->name }}</h2>
             </div>
             <div class="flex gap-2">
@@ -58,7 +58,7 @@
                     <x-input-label value="Linked Project" />
                     <p class="mt-1 text-sm text-gray-700 dark:text-gray-300">
                         @if($task->project)
-                            <span class="font-mono text-xs font-semibold text-gray-500 dark:text-gray-400">PJ-{{ $task->project->id }}</span>
+                            <span class="font-mono text-xs font-semibold text-gray-500 dark:text-gray-400">{{ $task->project->project_code }}</span>
                             <a href="{{ route('projects.show', $task->project) }}" class="ml-1 text-blue-600 hover:underline">{{ $task->project->name }}</a>
                         @else
                             <span class="text-gray-400">— (standalone task)</span>

@@ -92,7 +92,7 @@
                         <option value="">Tất cả dự án</option>
                         @foreach($projects as $project)
                             <option value="{{ $project->id }}" {{ request('project_id') == $project->id ? 'selected' : '' }}>
-                                PJ-{{ $project->id }} {{ $project->name }}
+                                {{ $project->project_code }} {{ $project->name }}
                             </option>
                         @endforeach
                     </select>
@@ -103,7 +103,7 @@
                         <option value="">Tất cả công việc</option>
                         @foreach($tasks as $task)
                             <option value="{{ $task->id }}" {{ request('task_id') == $task->id ? 'selected' : '' }}>
-                                TK-{{ $task->id }} {{ $task->name }}
+                                {{ $task->task_code }} {{ $task->name }}
                             </option>
                         @endforeach
                     </select>
@@ -149,12 +149,12 @@
                                             <span class="text-xs font-semibold px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400 shrink-0">OT</span>
                                             @if($model->task)
                                                 <a href="{{ route('tasks.show', $model->task) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
-                                                    <span class="font-mono text-xs font-semibold">TK-{{ $model->task_id }}</span>
+                                                    <span class="font-mono text-xs font-semibold">{{ $model->task->task_code }}</span>
                                                     <span class="ml-1">{{ $model->task->name }}</span>
                                                 </a>
                                             @elseif($model->project)
                                                 <a href="{{ route('projects.show', $model->project) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
-                                                    <span class="font-mono text-xs font-semibold">PJ-{{ $model->project_id }}</span>
+                                                    <span class="font-mono text-xs font-semibold">{{ $model->project->project_code }}</span>
                                                     <span class="ml-1">{{ $model->project->name }}</span>
                                                 </a>
                                             @endif
@@ -162,12 +162,12 @@
                                     @else
                                         @if($model->task)
                                             <a href="{{ route('tasks.show', $model->task) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
-                                                <span class="font-mono text-xs font-semibold">TK-{{ $model->task_id }}</span>
+                                                <span class="font-mono text-xs font-semibold">{{ $model->task->task_code }}</span>
                                                 <span class="ml-1">{{ $model->task->name }}</span>
                                             </a>
                                         @elseif($model->project)
                                             <a href="{{ route('projects.show', $model->project) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
-                                                <span class="font-mono text-xs font-semibold">PJ-{{ $model->project_id }}</span>
+                                                <span class="font-mono text-xs font-semibold">{{ $model->project->project_code }}</span>
                                                 <span class="ml-1">{{ $model->project->name }}</span>
                                             </a>
                                         @else

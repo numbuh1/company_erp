@@ -110,7 +110,7 @@
                         class="w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md text-sm">
                         @foreach($availableProjects as $p)
                             <option value="{{ $p->id }}" {{ in_array($p->id, $filterProjectIds) ? 'selected' : '' }}>
-                                PJ-{{ $p->id }} · {{ $p->name }}
+                                {{ $p->project_code }} · {{ $p->name }}
                             </option>
                         @endforeach
                     </select>
@@ -125,7 +125,7 @@
                         class="w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md text-sm">
                         @foreach($availableTasks as $t)
                             <option value="{{ $t->id }}" {{ in_array($t->id, $filterTaskIds) ? 'selected' : '' }}>
-                                TK-{{ $t->id }} · {{ $t->name }}
+                                {{ $t->task_code }} · {{ $t->name }}
                             </option>
                         @endforeach
                     </select>
@@ -242,7 +242,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
                                     </svg>
                                 </button>
-                                <span class="font-mono text-[10px] font-bold text-indigo-500 dark:text-indigo-400 shrink-0">PJ-{{ $pId }}</span>
+                                <span class="font-mono text-[10px] font-bold text-indigo-500 dark:text-indigo-400 shrink-0">{{ $pg['project']?->project_code ?? 'PJ-' . $pId }}</span>
                                 @if($pLink)
                                     <a href="{{ $pLink }}" class="font-semibold text-indigo-700 dark:text-indigo-300 hover:underline truncate">{{ $pName }}</a>
                                 @else
@@ -307,7 +307,7 @@
                                     <span class="shrink-0 w-3.5 h-3.5"></span>
                                     @endif
                                     @if($tId)
-                                        <span class="font-mono text-[10px] font-semibold text-gray-500 dark:text-gray-400 shrink-0">TK-{{ $tId }}</span>
+                                        <span class="font-mono text-[10px] font-semibold text-gray-500 dark:text-gray-400 shrink-0">{{ $tg['task']?->task_code ?? 'TK-' . $tId }}</span>
                                     @endif
                                     @if($tLink)
                                         <a href="{{ $tLink }}" class="font-medium text-gray-800 dark:text-gray-200 hover:underline truncate">{{ $tLabel }}</a>

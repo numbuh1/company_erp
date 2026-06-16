@@ -63,7 +63,7 @@
                         <select id="task-project-select" name="project_id">
                             <option value="">— Tất cả —</option>
                             @foreach($projects as $p)
-                                <option value="{{ $p->id }}" @selected(request('project_id') == $p->id)>PJ-{{ $p->id }} {{ $p->name }}</option>
+                                <option value="{{ $p->id }}" @selected(request('project_id') == $p->id)>{{ $p->project_code }} {{ $p->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -71,7 +71,7 @@
 
                     {{-- Assignee --}}
                     <div class="min-w-[180px]">
-                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Người phân công</label>
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Người làm</label>
                         <select id="task-assignee-select" name="assignee_id">
                             <option value="">— Tất cả —</option>
                             @foreach($users as $u)
@@ -131,7 +131,7 @@
                                 <input type="checkbox" x-model="cols.status"     @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Trạng thái
                             </label>
                             <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400">
-                                <input type="checkbox" x-model="cols.assignees"  @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Người phân công
+                                <input type="checkbox" x-model="cols.assignees"  @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Người làm
                             </label>
                             <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400">
                                 <input type="checkbox" x-model="cols.budget"     @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Budget Time
@@ -157,7 +157,7 @@
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Tên</th>
                                 <th :class="{ 'hidden': !cols.project }"    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Dự án</th>
                                 <th :class="{ 'hidden': !cols.status }"     class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Trạng thái</th>
-                                <th :class="{ 'hidden': !cols.assignees }"  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Người phân công</th>
+                                <th :class="{ 'hidden': !cols.assignees }"  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Người làm</th>
                                 <th :class="{ 'hidden': !cols.budget }"    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Budget Time</th>
                                 <th :class="{ 'hidden': !cols.start_date }" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Bắt đầu</th>
                                 <th :class="{ 'hidden': !cols.due_date }"   class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">End (EST)</th>
@@ -179,7 +179,7 @@
                                     <td class="px-4 py-3 whitespace-nowrap">
                                         <a href="{{ route('tasks.show', $task) }}"
                                            class="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
-                                            TK-{{ $task->id }}
+                                            {{ $task->task_code }}
                                         </a>
                                     </td>
 
@@ -196,7 +196,7 @@
                                         @if($task->project)
                                             <a href="{{ route('projects.show', $task->project) }}"
                                                class="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
-                                                PJ-{{ $task->project->id }}
+                                                {{ $task->project->project_code }}
                                             </a>
                                             <span class="text-xs text-gray-500 dark:text-gray-400 ml-1">{{ $task->project->name }}</span>
                                         @else
@@ -234,28 +234,25 @@
                                     {{-- Budget / Time Spent --}}
                                     <td :class="{ 'hidden': !cols.budget }" class="px-4 py-3">
                                         @php
-                                            $budgetH  = $task->budget_hours;
-                                            $ntH      = $timeSpentMap[$task->id] ?? 0;
-                                            $otH      = $otTimeMap[$task->id] ?? 0;
-                                            $actualH  = $ntH + $otH;
-                                            $isDone   = $task->status === 'Đã xong';
-                                            $percent  = $budgetH > 0 ? round($actualH / $budgetH * 100) : null;
-                                            $isOver   = $budgetH > 0 && $actualH > $budgetH;
-                                            $barColor = $isOver
+                                            $budgetH   = $task->budget_hours;
+                                            $ntH       = $timeSpentMap[$task->id] ?? 0;
+                                            $otH       = $otTimeMap[$task->id] ?? 0;
+                                            $actualH   = $ntH + $otH;
+                                            $isDone    = $task->status === 'Đã xong';
+                                            $percent   = $budgetH > 0 ? round($actualH / $budgetH * 100) : 0;
+                                            $isOver    = $budgetH > 0 && $actualH > $budgetH;
+                                            $barColor  = $isOver
                                                 ? ($isDone ? 'bg-amber-700 dark:bg-amber-600' : 'bg-red-500')
                                                 : ($isDone ? 'bg-green-500' : 'bg-blue-500');
+                                            $textColor = $isOver
+                                                ? ($isDone ? 'text-amber-700 dark:text-amber-500' : 'text-red-600 dark:text-red-400')
+                                                : ($isDone ? 'text-green-600 dark:text-green-400' : 'text-gray-500');
                                         @endphp
                                         <div class="flex items-center gap-2 min-w-[120px]">
-                                            @if($budgetH > 0)
-                                                <div class="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden">
-                                                    <div class="{{ $barColor }} h-2 rounded-full" style="width: {{ min($percent, 100) }}%"></div>
-                                                </div>
-                                                <span class="text-xs tabular-nums {{ $isOver ? 'font-semibold' : '' }} {{ $isOver ? ($isDone ? 'text-amber-700 dark:text-amber-500' : 'text-red-600 dark:text-red-400') : ($isDone ? 'text-green-600 dark:text-green-400' : 'text-gray-500') }} w-9 text-right shrink-0">{{ $percent }}%</span>
-                                            @elseif($actualH > 0)
-                                                <span class="text-xs text-gray-500 tabular-nums">{{ number_format($actualH, 1) }}h</span>
-                                            @else
-                                                <span class="text-xs text-gray-400">—</span>
-                                            @endif
+                                            <div class="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden">
+                                                <div class="{{ $barColor }} h-2 rounded-full" style="width: {{ min($percent, 100) }}%"></div>
+                                            </div>
+                                            <span class="text-xs tabular-nums {{ $isOver ? 'font-semibold' : '' }} {{ $textColor }} text-right shrink-0 whitespace-nowrap">{{ number_format($actualH, 1) }}h / {{ $budgetH > 0 ? number_format($budgetH, 1) . 'h' : '—' }}</span>
                                         </div>
                                     </td>
 

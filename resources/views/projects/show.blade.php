@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <span class="font-mono text-sm font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">PJ-{{ $project->id }}</span>
+                <span class="font-mono text-sm font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">{{ $project->project_code }}</span>
                 <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">{{ $project->name }}</h2>
             </div>
             <div class="flex gap-2">
@@ -247,7 +247,7 @@
 
                             {{-- Assignee --}}
                             <div class="min-w-[160px]">
-                                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Người phân công</label>
+                                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Người làm</label>
                                 <select id="proj-task-assignee-select" name="assignee_id">
                                     <option value="">— Tất cả —</option>
                                     @foreach($taskAssignees as $u)
@@ -303,7 +303,7 @@
                                         <input type="checkbox" x-model="cols.status"     @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Trạng thái
                                     </label>
                                     <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400">
-                                        <input type="checkbox" x-model="cols.assignees"  @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Người phân công
+                                        <input type="checkbox" x-model="cols.assignees"  @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Người làm
                                     </label>
                                     <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400">
                                         <input type="checkbox" x-model="cols.budget"     @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Budget Time
@@ -332,7 +332,7 @@
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">ID</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Tên</th>
                                     <th :class="{ 'hidden': !cols.status }"     class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Trạng thái</th>
-                                    <th :class="{ 'hidden': !cols.assignees }"  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Người phân công</th>
+                                    <th :class="{ 'hidden': !cols.assignees }"  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Người làm</th>
                                     <th :class="{ 'hidden': !cols.budget }"    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Budget Time</th>
                                     <th :class="{ 'hidden': !cols.start_date }" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Bắt đầu</th>
                                     <th :class="{ 'hidden': !cols.due_date }"   class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">End (EST)</th>
@@ -354,7 +354,7 @@
                                         <td class="px-4 py-3 whitespace-nowrap">
                                             <a href="{{ route('tasks.show', $task) }}"
                                                class="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
-                                                TK-{{ $task->id }}
+                                                {{ $task->task_code }}
                                             </a>
                                         </td>
 
@@ -401,7 +401,7 @@
                                                 $tOtH      = $taskOtMap[$task->id] ?? 0;
                                                 $tActualH  = $tNtH + $tOtH;
                                                 $tIsDone   = $task->status === 'Đã xong';
-                                                $tPct      = $tBudgetH > 0 ? round($tActualH / $tBudgetH * 100) : null;
+                                                $tPct      = $tBudgetH > 0 ? round($tActualH / $tBudgetH * 100) : 0;
                                                 $tOver     = $tBudgetH > 0 && $tActualH > $tBudgetH;
                                                 $tBarColor = $tOver
                                                     ? ($tIsDone ? 'bg-amber-700 dark:bg-amber-600' : 'bg-red-500')
@@ -411,16 +411,10 @@
                                                     : ($tIsDone ? 'text-green-600 dark:text-green-400' : 'text-gray-500');
                                             @endphp
                                             <div class="flex items-center gap-2 min-w-[120px]">
-                                                @if($tBudgetH > 0)
-                                                    <div class="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden">
-                                                        <div class="{{ $tBarColor }} h-2 rounded-full" style="width: {{ min($tPct, 100) }}%"></div>
-                                                    </div>
-                                                    <span class="text-xs tabular-nums {{ $tOver ? 'font-semibold' : '' }} {{ $tPctColor }} w-9 text-right shrink-0">{{ $tPct }}%</span>
-                                                @elseif($tActualH > 0)
-                                                    <span class="text-xs text-gray-500 tabular-nums">{{ number_format($tActualH, 1) }}h</span>
-                                                @else
-                                                    <span class="text-xs text-gray-400">—</span>
-                                                @endif
+                                                <div class="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden">
+                                                    <div class="{{ $tBarColor }} h-2 rounded-full" style="width: {{ min($tPct, 100) }}%"></div>
+                                                </div>
+                                                <span class="text-xs tabular-nums {{ $tOver ? 'font-semibold' : '' }} {{ $tPctColor }} text-right shrink-0 whitespace-nowrap">{{ number_format($tActualH, 1) }}h / {{ $tBudgetH > 0 ? number_format($tBudgetH, 1) . 'h' : '—' }}</span>
                                             </div>
                                         </td>
 
@@ -648,7 +642,7 @@
                                         <td class="{{ $tdC1 }}" title="{{ $row['task']?->name ?? $row['label'] }}">
                                             @if($row['task'])
                                                 <a href="{{ route('tasks.show', $row['task_id']) }}"
-                                                    class="font-mono text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">TK-{{ $row['task_id'] }}</a>
+                                                    class="font-mono text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">{{ $row['task']->task_code }}</a>
                                                 <span class="ml-1 text-gray-700 dark:text-gray-300">{{ $row['task']->name }}</span>
                                             @else
                                                 <span class="text-gray-400 italic">{{ $row['label'] }}</span>
