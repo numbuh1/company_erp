@@ -137,6 +137,16 @@
                                     <p class="text-gray-700 dark:text-gray-300">{{ $recruitmentApplicant->referer->name }}</p>
                                 </div>
                             @endif
+                            <div>
+                                <p class="text-xs text-gray-400 mb-0.5">Ngày nộp hồ sơ</p>
+                                <p class="text-gray-700 dark:text-gray-300">{{ $recruitmentApplicant->created_at->format('d/m/Y H:i') }}</p>
+                            </div>
+                            @if($cvUploadedAt)
+                                <div>
+                                    <p class="text-xs text-gray-400 mb-0.5">Ngày tải CV</p>
+                                    <p class="text-gray-700 dark:text-gray-300">{{ $cvUploadedAt->format('d/m/Y H:i') }}</p>
+                                </div>
+                            @endif
                         </div>
 
                         @if($recruitmentApplicant->notes)
@@ -226,6 +236,47 @@
                         @empty
                             <div class="px-5 py-8 text-center text-sm text-gray-400">Chưa có lịch phỏng vấn.</div>
                         @endforelse
+                    </div>
+
+                    {{-- Activity Log --}}
+                    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
+                        <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+                            <h3 class="font-semibold text-sm text-gray-700 dark:text-gray-200">Nhật ký hoạt động</h3>
+                        </div>
+                        <div class="px-5 py-4">
+                            @if($activities->isEmpty())
+                                <p class="text-sm text-gray-400">Chưa có hoạt động nào.</p>
+                            @else
+                                <div class="space-y-3">
+                                    @foreach($activities as $activity)
+                                        <div class="flex gap-4 text-sm border-l-2 border-indigo-300 pl-4 py-1">
+                                            <div class="text-gray-400 whitespace-nowrap w-32 shrink-0">
+                                                {{ $activity->created_at->format('d/m/y H:i') }}
+                                            </div>
+                                            <div>
+                                                <span class="font-medium text-gray-800 dark:text-gray-200">{{ $activity->causer?->name ?? 'System' }}</span>
+                                                <span class="text-gray-500 ml-1">{{ $activity->description }}</span>
+                                                @php $changes = $activity->properties['attributes'] ?? []; @endphp
+                                                @if(count($changes))
+                                                    <div class="mt-1 space-y-0.5">
+                                                        @foreach($changes as $key => $newVal)
+                                                            @php $oldVal = $activity->properties['old'][$key] ?? null; @endphp
+                                                            <div class="text-xs text-gray-500">
+                                                                <span class="font-medium">{{ str_replace('_', ' ', $key) }}</span>:
+                                                                @if($oldVal !== null)
+                                                                    <span class="line-through text-red-400">{{ is_array($oldVal) ? json_encode($oldVal) : $oldVal }}</span> →
+                                                                @endif
+                                                                <span class="text-green-600">{{ is_array($newVal) ? json_encode($newVal) : $newVal }}</span>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
                     </div>
 
                 </div>

@@ -9,6 +9,7 @@ use App\Models\Skill;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Spatie\Activitylog\Models\Activity;
 
 class RecruitmentApplicantController extends Controller
 {
@@ -103,8 +104,18 @@ class RecruitmentApplicantController extends Controller
 
         $canEdit = auth()->user()->can('edit recruitment');
 
+        $activities = Activity::where('subject_type', RecruitmentApplicant::class)
+            ->where('subject_id', $recruitmentApplicant->id)
+            ->with('causer')
+            ->latest()
+            ->get();
+
+        $cvUploadedAt = $recruitmentApplicant->cv_path
+            ? $activities->first(fn($a) => isset($a->properties['attributes']['cv_path']))?->created_at
+            : null;
+
         return view('recruitment.applicants.show', compact(
-            'recruitmentPosition', 'recruitmentApplicant', 'canEdit'
+            'recruitmentPosition', 'recruitmentApplicant', 'canEdit', 'activities', 'cvUploadedAt'
         ));
     }
 

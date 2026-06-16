@@ -333,7 +333,8 @@
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Tên</th>
                                     <th :class="{ 'hidden': !cols.status }"     class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Trạng thái</th>
                                     <th :class="{ 'hidden': !cols.assignees }"  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Người làm</th>
-                                    <th :class="{ 'hidden': !cols.budget }"    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Budget Time</th>
+                                    <th :class="{ 'hidden': !cols.budget }" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Budget</th>
+                                    <th :class="{ 'hidden': !cols.budget }" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Thời gian</th>
                                     <th :class="{ 'hidden': !cols.start_date }" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Bắt đầu</th>
                                     <th :class="{ 'hidden': !cols.due_date }"   class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">End (EST)</th>
                                     <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Thao tác</th>
@@ -393,7 +394,7 @@
                                             </div>
                                         </td>
 
-                                        {{-- Budget / Time Spent --}}
+                                        {{-- Budget: progress bar --}}
                                         <td :class="{ 'hidden': !cols.budget }" class="px-4 py-3">
                                             @php
                                                 $tBudgetH  = $task->budget_hours;
@@ -410,12 +411,13 @@
                                                     ? ($tIsDone ? 'text-amber-700 dark:text-amber-500' : 'text-red-600 dark:text-red-400')
                                                     : ($tIsDone ? 'text-green-600 dark:text-green-400' : 'text-gray-500');
                                             @endphp
-                                            <div class="flex items-center gap-2 min-w-[120px]">
-                                                <div class="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden">
-                                                    <div class="{{ $tBarColor }} h-2 rounded-full" style="width: {{ min($tPct, 100) }}%"></div>
-                                                </div>
-                                                <span class="text-xs tabular-nums {{ $tOver ? 'font-semibold' : '' }} {{ $tPctColor }} text-right shrink-0 whitespace-nowrap">{{ number_format($tActualH, 1) }}h / {{ $tBudgetH > 0 ? number_format($tBudgetH, 1) . 'h' : '—' }}</span>
+                                            <div class="w-24 bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden">
+                                                <div class="{{ $tBarColor }} h-2 rounded-full" style="width: {{ min($tPct, 100) }}%"></div>
                                             </div>
+                                        </td>
+                                        {{-- Budget: spent / budget text --}}
+                                        <td :class="{ 'hidden': !cols.budget }" class="px-4 py-3 whitespace-nowrap">
+                                            <span class="text-xs tabular-nums {{ $tOver ? 'font-semibold' : '' }} {{ $tPctColor }}">{{ number_format($tActualH, 1) }}h / {{ $tBudgetH > 0 ? number_format($tBudgetH, 1) . 'h' : '—' }}</span>
                                         </td>
 
                                         {{-- Start --}}
