@@ -174,6 +174,8 @@
     var CSRF    = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     var AUTH_ID = {{ $lrmAuth?->id ?? 'null' }};
     var CAN_TEAM_OR_ALL = {{ $lrmCanTeamOrAll ? 'true' : 'false' }};
+    var _LR_URL  = '{{ url("leave-requests") }}';
+    var _USR_URL = '{{ url("users") }}';
     var HAS_SELECT = {{ ($lrmCanTeamOrAll && $lrmUsers->count() > 1) ? 'true' : 'false' }};
     var HOLIDAYS    = {!! json_encode($lrmHolidays, JSON_HEX_TAG) !!};
     var LUNCH_S     = '{{ $lrmLunchStart }}';
@@ -207,7 +209,7 @@
         _showOverlay();
         show($g('lrm-loading')); _hideBody();
         $g('lrm-btn-area').innerHTML = '';
-        fetch('/leave-requests/' + id, { headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF } })
+        fetch(_LR_URL + '/' + id, { headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF } })
             .then(function(r){ return r.json(); })
             .then(function(d){ hide($g('lrm-loading')); _data = d; _populateView(d); })
             .catch(function(){ hide($g('lrm-loading')); $g('lrm-btn-area').innerHTML = _btn('Đóng','closeLR()','secondary'); });
@@ -244,7 +246,7 @@
             hours:           $g('lrm-hours').value,
             description:     $g('lrm-description').value,
         };
-        var url    = _mode === 'create' ? '/leave-requests'          : '/leave-requests/' + _id;
+        var url    = _mode === 'create' ? _LR_URL : _LR_URL + '/' + _id;
         var method = _mode === 'create' ? 'POST'                     : 'PUT';
         fetch(url, {
             method: method,
@@ -257,7 +259,7 @@
     };
 
     window._lrmApprove = function () {
-        fetch('/leave-requests/' + _id + '/approve', {
+        fetch(_LR_URL + '/' + _id + '/approve', {
             method: 'POST', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF }
         })
         .then(function(r){ return r.json(); })
@@ -273,7 +275,7 @@
     window._lrmConfirmReject = function () {
         var reason = $g('lrm-reject-input').value.trim();
         if (!reason) { $g('lrm-reject-input').focus(); return; }
-        fetch('/leave-requests/' + _id + '/reject', {
+        fetch(_LR_URL + '/' + _id + '/reject', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
             body: JSON.stringify({ reject_reason: reason }),
@@ -286,8 +288,7 @@
 
     function _showOverlay() {
         var ov = $g('lrm-overlay');
-        ov.classList.remove('hidden');
-        ov.style.display = 'flex';
+        if (ov) ov.classList.remove('hidden');
     }
 
     function _populateCreate() {
@@ -399,7 +400,7 @@
 
     function _fetchBalance(userId) {
         if (!userId) return;
-        fetch('/users/' + userId + '/request-info', { headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF } })
+        fetch(_USR_URL + '/' + userId + '/request-info', { headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF } })
             .then(function(r){ return r.json(); })
             .then(function(d){ _balance = d.leave_balance; _updateBalancePreview(); });
     }

@@ -171,6 +171,8 @@
     var CSRF         = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     var AUTH_ID      = {{ $otmAuth?->id ?? 'null' }};
     var HAS_SEL      = {{ ($otmCanTeamOrAll && $otmUsers->count() > 1) ? 'true' : 'false' }};
+    var _OT_URL      = '{{ url("overtime-requests") }}';
+    var _OTM_USR_URL = '{{ url("users") }}';
     var HOLIDAYS     = {!! json_encode($otmHolidays, JSON_HEX_TAG) !!};
     var ALL_TASKS    = {!! $otmTasks->map(fn($t) => ['id' => (string)$t->id, 'text' => $t->task_code . ' · ' . $t->name, 'proj' => (string)($t->project_id ?? '')])->values()->toJson() !!};
 
@@ -206,7 +208,7 @@
         _mode='view'; _id=id; _data=null;
         _showOverlay(); show($g('otm-loading')); _hideBody();
         $g('otm-btn-area').innerHTML='';
-        fetch('/overtime-requests/'+id, { headers:{'Accept':'application/json','X-CSRF-TOKEN':CSRF} })
+        fetch(_OT_URL+'/'+id, { headers:{'Accept':'application/json','X-CSRF-TOKEN':CSRF} })
             .then(function(r){ return r.json(); })
             .then(function(d){ hide($g('otm-loading')); _data=d; _populateView(d); })
             .catch(function(){ hide($g('otm-loading')); $g('otm-btn-area').innerHTML=_btn('Đóng','closeOtModal()','secondary'); });
@@ -238,7 +240,7 @@
             task_id:     _tsTask ? _tsTask.getValue() : $g('otm-task-select').value,
             description: $g('otm-description').value,
         };
-        var url    = _mode==='create' ? '/overtime-requests'            : '/overtime-requests/'+_id;
+        var url    = _mode==='create' ? _OT_URL : _OT_URL+'/'+_id;
         var method = _mode==='create' ? 'POST'                         : 'PUT';
         fetch(url,{
             method:method,
@@ -251,7 +253,7 @@
     };
 
     window._otmApprove = function () {
-        fetch('/overtime-requests/'+_id+'/approve',{method:'POST',headers:{'Accept':'application/json','X-CSRF-TOKEN':CSRF}})
+        fetch(_OT_URL+'/'+_id+'/approve',{method:'POST',headers:{'Accept':'application/json','X-CSRF-TOKEN':CSRF}})
         .then(function(r){ return r.json(); })
         .then(function(d){ if(d.success){ closeOtModal(); location.reload(); } });
     };
@@ -261,7 +263,7 @@
     window._otmConfirmReject=function(){
         var reason=$g('otm-reject-input').value.trim();
         if(!reason){ $g('otm-reject-input').focus(); return; }
-        fetch('/overtime-requests/'+_id+'/reject',{
+        fetch(_OT_URL+'/'+_id+'/reject',{
             method:'POST',
             headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':CSRF},
             body:JSON.stringify({reject_reason:reason}),
@@ -273,7 +275,7 @@
     // ── Private ───────────────────────────────────────────────────────
 
     function _showOverlay(){
-        var ov=$g('otm-overlay'); ov.classList.remove('hidden'); ov.style.display='flex';
+        var ov=$g('otm-overlay'); if(ov) ov.classList.remove('hidden');
     }
 
     function _populateCreate(){
@@ -400,7 +402,7 @@
 
     function _fetchOtTotal(userId){
         if(!userId) return;
-        fetch('/users/'+userId+'/request-info',{headers:{'Accept':'application/json','X-CSRF-TOKEN':CSRF}})
+        fetch(_OTM_USR_URL+'/'+userId+'/request-info',{headers:{'Accept':'application/json','X-CSRF-TOKEN':CSRF}})
         .then(function(r){ return r.json(); })
         .then(function(d){
             _otTotal=parseFloat(d.ot_year_total)||0;
