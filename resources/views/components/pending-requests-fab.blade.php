@@ -64,6 +64,7 @@
             else window.openOtModal && openOtModal(item.id);
         }
     }"
+    x-init="load()"
     class="fixed bottom-6 left-6 z-40 flex flex-col items-start"
 >
     {{-- Expandable panel --}}
@@ -139,7 +140,9 @@
                             </div>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="item.user.position"></p>
                             <p class="text-xs text-gray-600 dark:text-gray-300 mt-0.5" x-text="item.start_at_text + ' → ' + item.end_at_text"></p>
-                            <p class="text-xs font-medium text-gray-700 dark:text-gray-300 mt-0.5" x-text="item.hours + 'h'"></p>
+                            <span class="inline-block mt-1 text-xs font-bold px-1.5 py-0.5 rounded"
+                                :class="item.type_key === 'ot' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'"
+                                x-text="item.hours + 'h'"></span>
                             <p x-show="item.description" class="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate" x-text="item.description"></p>
                         </div>
                     </div>
