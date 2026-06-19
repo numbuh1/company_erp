@@ -96,16 +96,7 @@
                                     </div>
                                 </td>
                                 <td class="px-4 py-4">
-                                    <div class="flex flex-wrap gap-1">
-                                        @forelse($position->assignedUsers->take(3) as $u)
-                                            <x-user-status :user="$u" :show-name="false" />
-                                        @empty
-                                            <span class="text-xs text-gray-400">—</span>
-                                        @endforelse
-                                        @if($position->assignedUsers->count() > 3)
-                                            <span class="text-xs text-gray-500">+{{ $position->assignedUsers->count() - 3 }}</span>
-                                        @endif
-                                    </div>
+                                    <x-assignees :users="$position->assignedUsers" :max="4" />
                                 </td>
                                 <td class="px-4 py-4 text-right">
                                     <div class="flex items-center justify-end gap-1">

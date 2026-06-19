@@ -75,21 +75,7 @@
                                     </div>
                                 </td>
                                 <td class="px-4 py-4">
-                                    @php
-                                        $directMembers = $project->users->take(4);
-                                        $extra = max(0, $project->users->count() - 4);
-                                    @endphp
-                                    <div class="flex items-center flex-wrap gap-1">
-                                        @foreach($directMembers as $member)
-                                            <x-user-status :user="$member" :show-name="false" />
-                                        @endforeach
-                                        @if($extra > 0)
-                                            <span class="text-xs text-gray-500 dark:text-gray-400 ml-1">+{{ $extra }}</span>
-                                        @endif
-                                        @if($project->users->isEmpty())
-                                            <span class="text-gray-400 text-xs">—</span>
-                                        @endif
-                                    </div>
+                                    <x-assignees :users="$project->users" />
                                 </td>
                                 <td class="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">{{ $project->start_date?->format('d/m/Y') ?? '—' }}</td>
                                 <td class="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">{{ $project->expected_end_date?->format('d/m/Y') ?? '—' }}</td>

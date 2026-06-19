@@ -260,14 +260,16 @@
                                                 @if(count($changes))
                                                     <div class="mt-1 space-y-0.5">
                                                         @foreach($changes as $key => $newVal)
-                                                            @php $oldVal = $activity->properties['old'][$key] ?? null; @endphp
-                                                            <div class="text-xs text-gray-500">
-                                                                <span class="font-medium">{{ str_replace('_', ' ', $key) }}</span>:
-                                                                @if($oldVal !== null)
-                                                                    <span class="line-through text-red-400">{{ is_array($oldVal) ? json_encode($oldVal) : $oldVal }}</span> →
-                                                                @endif
-                                                                <span class="text-green-600">{{ is_array($newVal) ? json_encode($newVal) : $newVal }}</span>
-                                                            </div>
+                                                            @if($canViewHrNote || !in_array($key, ['salary_expectation', 'hr_note']))
+                                                                @php $oldVal = $activity->properties['old'][$key] ?? null; @endphp
+                                                                <div class="text-xs text-gray-500">
+                                                                    <span class="font-medium">{{ str_replace('_', ' ', $key) }}</span>:
+                                                                    @if($oldVal !== null)
+                                                                        <span class="line-through text-red-400">{{ is_array($oldVal) ? json_encode($oldVal) : $oldVal }}</span> →
+                                                                    @endif
+                                                                    <span class="text-green-600">{{ is_array($newVal) ? json_encode($newVal) : $newVal }}</span>
+                                                                </div>
+                                                            @endif
                                                         @endforeach
                                                     </div>
                                                 @endif

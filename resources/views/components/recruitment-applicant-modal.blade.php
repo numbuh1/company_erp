@@ -73,6 +73,7 @@
                         <div id="am-current-cv" class="hidden mt-1 mb-2 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                             <span>📄 Current CV:</span>
                             <a id="am-current-cv-link" href="#" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">Tải xuống</a>
+                            <span id="am-cv-uploaded-at" class="text-xs text-gray-400"></span>
                         </div>
                         <input id="am-cv" type="file"
                             class="mt-1 block w-full text-sm text-gray-500 dark:text-gray-400
@@ -190,6 +191,14 @@
                 <div>
                     <x-input-label value="Xem trước CV" />
                     <div id="am-cv-preview" class="mt-1"></div>
+                </div>
+            </div>
+
+            <!-- Activity Log -->
+            <div class="mt-6 pt-5 border-t border-gray-100 dark:border-gray-700">
+                <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Nhật ký hoạt động</h4>
+                <div id="am-activity-log" class="space-y-3 max-h-56 overflow-y-auto pr-1">
+                    <p class="text-sm text-gray-400">Đang tải…</p>
                 </div>
             </div>
         </div>

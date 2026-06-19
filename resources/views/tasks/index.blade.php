@@ -212,24 +212,7 @@
 
                                     {{-- Assignees --}}
                                     <td :class="{ 'hidden': !cols.assignees }" class="px-4 py-3">
-                                        <div class="flex flex-col gap-1">
-                                            @forelse($task->assignees as $assignee)
-                                                <a href="{{ route('users.show', $assignee) }}"
-                                                   class="flex items-center gap-1.5 hover:opacity-80 transition min-w-max">
-                                                    @if($assignee->profile_picture)
-                                                        <img src="{{ asset('storage/profile_pictures/' . $assignee->profile_picture) }}"
-                                                             class="w-5 h-5 rounded-full object-cover shrink-0" alt="">
-                                                    @else
-                                                        <div class="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center shrink-0">
-                                                            <span class="text-indigo-600 dark:text-indigo-400 font-semibold text-[9px]">{{ mb_strtoupper(mb_substr($assignee->name, 0, 1)) }}</span>
-                                                        </div>
-                                                    @endif
-                                                    <span class="text-xs text-gray-700 dark:text-gray-300">{{ $assignee->name }}</span>
-                                                </a>
-                                            @empty
-                                                <span class="text-gray-400 text-xs">—</span>
-                                            @endforelse
-                                        </div>
+                                        <x-assignees :users="$task->assignees" />
                                     </td>
 
                                     {{-- Budget: progress bar --}}

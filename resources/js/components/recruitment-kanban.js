@@ -222,6 +222,45 @@ function _showApplicantModal() {
     }
 }
 
+function _fillActivityLog(activities, cvUploadedAt) {
+    const cvDate = document.getElementById('am-cv-uploaded-at');
+    if (cvDate) {
+        cvDate.textContent = cvUploadedAt ? '(Tải lên: ' + cvUploadedAt + ')' : '';
+    }
+
+    const container = document.getElementById('am-activity-log');
+    if (!container) return;
+
+    if (!activities || activities.length === 0) {
+        container.innerHTML = '<p class="text-sm text-gray-400">Chưa có hoạt động nào.</p>';
+        return;
+    }
+
+    container.innerHTML = activities.map(function (a) {
+        var changesHtml = '';
+        if (a.changes && a.changes.length > 0) {
+            changesHtml = '<div class="mt-1 space-y-0.5">'
+                + a.changes.map(function (c) {
+                    var oldPart = (c.old !== null && c.old !== undefined)
+                        ? '<span class="line-through text-red-400">' + _escapeHtml(String(c.old)) + '</span> → '
+                        : '';
+                    return '<div class="text-xs text-gray-500"><span class="font-medium">' + _escapeHtml(c.label) + '</span>: '
+                        + oldPart
+                        + '<span class="text-green-600">' + _escapeHtml(String(c['new'] ?? '')) + '</span></div>';
+                }).join('')
+                + '</div>';
+        }
+        return '<div class="flex gap-4 text-sm border-l-2 border-indigo-300 pl-4 py-1">'
+            + '<div class="text-gray-400 whitespace-nowrap w-32 shrink-0">' + _escapeHtml(a.created_at) + '</div>'
+            + '<div>'
+            + '<span class="font-medium text-gray-800 dark:text-gray-200">' + _escapeHtml(a.causer_name) + '</span>'
+            + '<span class="text-gray-500 ml-1">' + _escapeHtml(a.description) + '</span>'
+            + changesHtml
+            + '</div>'
+            + '</div>';
+    }).join('');
+}
+
 // Populate and show the modal to edit an existing applicant (object
 // returned by the store/update/show endpoints' `_applicantToJson()`).
 function _openApplicantModal(applicant, cvUrl, opts) {
@@ -236,6 +275,7 @@ function _openApplicantModal(applicant, cvUrl, opts) {
 
     _clearApplicantModalErrors();
     _fillApplicantFields(applicant, cvUrl);
+    _fillActivityLog(opts.activities || [], opts.cvUploadedAt || null);
 
     document.getElementById('am-delete-btn')?.classList.remove('hidden');
 
@@ -251,7 +291,11 @@ window.openApplicantEditModal = async function (id) {
         if (!resp.ok) throw new Error('Server error ' + resp.status);
 
         const data = await resp.json();
-        _openApplicantModal(data.applicant, data.cv_url, { isNew: false });
+        _openApplicantModal(data.applicant, data.cv_url, {
+            isNew: false,
+            activities: data.activities || [],
+            cvUploadedAt: data.cv_uploaded_at || null,
+        });
     } catch (err) {
         console.error('Load applicant failed', err);
         alert('Không thể tải thông tin ứng viên. Vui lòng thử lại.');
@@ -275,6 +319,7 @@ window.openApplicantCreateModal = function () {
         salary_expectation: '', available_date: '', evaluation: 0,
         cv_path: null, referer_user_id: null, skills: [], tags: [],
     }, null);
+    _fillActivityLog([], null);
 
     document.getElementById('am-delete-btn')?.classList.add('hidden');
 

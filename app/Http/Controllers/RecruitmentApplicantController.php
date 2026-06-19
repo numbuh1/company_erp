@@ -91,11 +91,41 @@ class RecruitmentApplicantController extends Controller
     {
         $this->_authorizePosition($recruitmentPosition);
 
+        $canViewHrNote = auth()->user()->can('view recruitment hr note');
+        $canViewSalary = auth()->user()->can('view recruitment salary');
+        $hiddenFields  = $canViewHrNote ? [] : ['salary_expectation', 'hr_note'];
+
         if ($request->expectsJson()) {
+            $activities = Activity::where('subject_type', RecruitmentApplicant::class)
+                ->where('subject_id', $recruitmentApplicant->id)
+                ->with('causer')
+                ->latest()
+                ->get();
+
+            $cvUploadedAt = $recruitmentApplicant->cv_path
+                ? $activities->first(fn($a) => isset($a->properties['attributes']['cv_path']))?->created_at
+                : null;
+
+            $activitiesData = $activities->map(fn($a) => [
+                'created_at'  => $a->created_at->format('d/m/y H:i'),
+                'causer_name' => $a->causer?->name ?? 'System',
+                'description' => $a->description,
+                'changes'     => collect($a->properties['attributes'] ?? [])
+                    ->filter(fn($v, $k) => !in_array($k, $hiddenFields))
+                    ->map(fn($newVal, $key) => [
+                        'key'   => $key,
+                        'label' => str_replace('_', ' ', $key),
+                        'old'   => $a->properties['old'][$key] ?? null,
+                        'new'   => $newVal,
+                    ])->values(),
+            ]);
+
             return response()->json([
-                'success'   => true,
-                'applicant' => $this->_applicantToJson($recruitmentApplicant),
-                'cv_url'    => $recruitmentApplicant->cv_path ? Storage::disk('public')->url($recruitmentApplicant->cv_path) : null,
+                'success'        => true,
+                'applicant'      => $this->_applicantToJson($recruitmentApplicant),
+                'cv_url'         => $recruitmentApplicant->cv_path ? Storage::disk('public')->url($recruitmentApplicant->cv_path) : null,
+                'cv_uploaded_at' => $cvUploadedAt?->format('d/m/Y H:i'),
+                'activities'     => $activitiesData,
             ]);
         }
 
@@ -115,7 +145,8 @@ class RecruitmentApplicantController extends Controller
             : null;
 
         return view('recruitment.applicants.show', compact(
-            'recruitmentPosition', 'recruitmentApplicant', 'canEdit', 'activities', 'cvUploadedAt'
+            'recruitmentPosition', 'recruitmentApplicant', 'canEdit', 'activities', 'cvUploadedAt',
+            'canViewHrNote', 'canViewSalary'
         ));
     }
 
