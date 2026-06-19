@@ -30,14 +30,10 @@
                     Xuất
                 </a>
                 @can('module leaves')
-                <button onclick="openLeaveCreate()">
-                    <x-primary-button>+ Leave</x-primary-button>
-                </button>
+                <x-primary-button onclick="openLeaveCreate()" type="button">+ Leave</x-primary-button>
                 @endcan
                 @can('module ot')
-                <button onclick="openOtCreate()">
-                    <x-primary-button>+ OT</x-primary-button>
-                </button>
+                <x-primary-button onclick="openOtCreate()" type="button">+ OT</x-primary-button>
                 @endcan
             </div>
         </div>

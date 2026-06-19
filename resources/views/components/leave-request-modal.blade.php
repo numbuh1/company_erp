@@ -524,6 +524,7 @@
 
     // ── Overlay backdrop click ────────────────────────────────────────
 
-    $g('lrm-overlay').addEventListener('click', function(e){ if (e.target===this) closeLR(); });
+    var _ov = $g('lrm-overlay');
+    if (_ov) _ov.addEventListener('click', function(e){ if (e.target===this) closeLR(); });
 })();
 </script>

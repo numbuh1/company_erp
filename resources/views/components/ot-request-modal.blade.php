@@ -521,6 +521,7 @@
         return '<button onclick="'+fn+'" class="'+cls+'">'+label+'</button>';
     }
 
-    $g('otm-overlay').addEventListener('click',function(e){ if(e.target===this) closeOtModal(); });
+    var _otov = $g('otm-overlay');
+    if (_otov) _otov.addEventListener('click',function(e){ if(e.target===this) closeOtModal(); });
 })();
 </script>
