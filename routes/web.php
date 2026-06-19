@@ -22,6 +22,7 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\PublicHolidayController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\PendingApprovalsController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -79,6 +80,9 @@ Route::middleware('auth')->group(function () {
         ->name('users.reset-password');
     Route::get('/profile', [UserController::class, 'profile'])->name('users.profile');
     Route::post('/user/column-preferences', [UserController::class, 'updateColumnPreferences'])->name('user.column-preferences');
+    Route::get('/users/{user}/request-info', [UserController::class, 'requestInfo'])->name('users.request-info');
+
+    Route::get('/pending-approvals', [PendingApprovalsController::class, 'index'])->name('pending-approvals.index');
 
     Route::resource('teams', TeamController::class);
     Route::post('/teams/{team}/assign-user', [TeamUserController::class, 'store']);

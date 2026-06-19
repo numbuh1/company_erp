@@ -74,6 +74,9 @@
         </div>
 
         @include('layouts.checkin-fab')
+        <x-leave-request-modal />
+        <x-ot-request-modal />
+        <x-pending-requests-fab />
 
         <script>
             function toggleDarkMode() {

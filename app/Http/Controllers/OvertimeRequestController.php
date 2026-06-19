@@ -108,16 +108,66 @@ class OvertimeRequestController extends Controller
         ]);
         NotificationHelper::sendNewRequestNotification($otRequest, 'ot');
 
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'id' => $otRequest->id]);
+        }
+
         return redirect()->route('requests.index', ['type' => 'ot'])->with('success', 'Tạo yêu cầu tăng ca thành công.');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(OvertimeRequest $overtimeRequest)
+    public function show(Request $request, OvertimeRequest $overtimeRequest)
     {
         Helper::authorizeRequest('view all ot', 'view team ot', $overtimeRequest);
-        $overtimeRequest->load('project', 'task');
+        $overtimeRequest->load('user', 'approver', 'project', 'task');
+
+        if ($request->expectsJson()) {
+            $user      = auth()->user();
+            $canEdit   = ($user->can('edit all ot') || $user->can('edit team ot') || ($user->can('edit own ot') && $overtimeRequest->user_id === $user->id))
+                && !in_array($overtimeRequest->status, ['approved', 'rejected']);
+            $canApprove = ($user->can('approve all ot') || $user->can('approve team ot'))
+                && $overtimeRequest->status === 'pending';
+
+            $otYearTotal = OvertimeRequest::where('user_id', $overtimeRequest->user_id)
+                ->where('status', 'approved')
+                ->whereYear('start_at', now()->year)
+                ->sum('hours');
+
+            ['projects' => $projects, 'tasks' => $tasks] = $this->_getProjectsAndTasksFor($overtimeRequest->user);
+
+            return response()->json([
+                'ot' => [
+                    'id'           => $overtimeRequest->id,
+                    'user_id'      => $overtimeRequest->user_id,
+                    'user_name'    => $overtimeRequest->user->name,
+                    'type'         => $overtimeRequest->type,
+                    'status'       => $overtimeRequest->status,
+                    'hours'        => $overtimeRequest->hours,
+                    'description'  => $overtimeRequest->description,
+                    'reject_reason'=> $overtimeRequest->reject_reason,
+                    'approver_name'=> $overtimeRequest->approver?->name,
+                    'ot_date'      => $overtimeRequest->start_at->format('Y-m-d'),
+                    'start_time'   => $overtimeRequest->start_at->format('H:i'),
+                    'end_time'     => $overtimeRequest->end_at->format('H:i'),
+                    'project_id'   => $overtimeRequest->project_id,
+                    'task_id'      => $overtimeRequest->task_id,
+                    'project_name' => $overtimeRequest->project?->name,
+                    'project_code' => $overtimeRequest->project?->project_code,
+                    'task_name'    => $overtimeRequest->task?->name,
+                    'task_code'    => $overtimeRequest->task?->task_code,
+                    'start_at_text'=> $overtimeRequest->start_at->translatedFormat('D, d/m/y H:i'),
+                    'end_at_text'  => $overtimeRequest->end_at->translatedFormat('D, d/m/y H:i'),
+                ],
+                'ot_year_total'  => (float) $otYearTotal,
+                'can_edit'       => $canEdit,
+                'can_approve'    => $canApprove,
+                'holiday_dates'  => $this->_holidayDateRange(),
+                'projects'       => $projects->map(fn($p) => ['id' => $p->id, 'text' => $p->project_code . ' · ' . $p->name]),
+                'tasks'          => $tasks->map(fn($t) => ['id' => $t->id, 'text' => $t->task_code . ' · ' . $t->name, 'project_id' => $t->project_id]),
+            ]);
+        }
 
         return view('overtime_requests.form', [
             'ot'           => $overtimeRequest,
@@ -185,6 +235,10 @@ class OvertimeRequestController extends Controller
             'description' => $data['description'] ?? null,
         ]);
 
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true]);
+        }
+
         return redirect()->route('requests.index', ['type' => 'ot'])->with('success', 'Cập nhật yêu cầu tăng ca thành công.');
     }
 
@@ -219,6 +273,10 @@ class OvertimeRequestController extends Controller
 
         NotificationHelper::sendRequestApprovalNotification($overtimeRequest, 'ot');
 
+        if (request()->expectsJson()) {
+            return response()->json(['success' => true]);
+        }
+
         return back()->with('success', 'OT request approved.');
     }
 
@@ -239,6 +297,10 @@ class OvertimeRequestController extends Controller
         ]);
 
         NotificationHelper::sendRequestApprovalNotification($overtimeRequest, 'ot');
+
+        if (request()->expectsJson()) {
+            return response()->json(['success' => true]);
+        }
 
         return back()->with('success', 'OT request rejected.');
     }
