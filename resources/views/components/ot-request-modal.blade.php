@@ -105,7 +105,7 @@
                 <div class="flex items-center gap-2 flex-wrap text-sm">
                     <span class="text-gray-500 dark:text-gray-400">Tăng ca năm nay:</span>
                     <span id="otm-ot-total" class="font-semibold text-orange-700 dark:text-orange-300"></span>
-                    <span id="otm-ot-arrow" class="hidden text-gray-400">→ Nếu được duyệt:</span>
+                    <span id="otm-ot-arrow" class="hidden text-gray-400">→ </span>
                     <span id="otm-ot-after" class="hidden font-semibold text-green-600 dark:text-green-400"></span>
                 </div>
             </div>

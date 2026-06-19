@@ -119,34 +119,6 @@
 
                 {{-- ── Right: Notifications ───────────────────────────────── --}}
                 <div class="lg:col-span-3 space-y-4">
-                    {{-- Pending request counts (approvers only) --}}
-                    @if($pendingLeavesCount !== null || $pendingOTCount !== null)
-                        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
-                            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-3">
-                                Yêu cầu đang chờ duyệt
-                            </h3>
-                            <div class="flex flex-wrap gap-3">
-                                @if($pendingLeavesCount !== null)
-                                    <a href="{{ route('leave-requests.index', ['status' => 'pending']) }}"
-                                        class="flex items-center gap-2 px-3 py-2 rounded-lg {{ $pendingLeavesCount > 0 ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700' : 'bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600' }} text-sm hover:opacity-80 transition">
-                                        <span class="text-xl font-bold {{ $pendingLeavesCount > 0 ? 'text-yellow-600' : 'text-gray-400' }}">
-                                            {{ $pendingLeavesCount }}
-                                        </span>
-                                        <span class="text-gray-600 dark:text-gray-300">Yêu cầu nghỉ phép đang chờ</span>
-                                    </a>
-                                @endif
-                                @if($pendingOTCount !== null)
-                                    <a href="{{ route('overtime-requests.index', ['status' => 'pending']) }}"
-                                        class="flex items-center gap-2 px-3 py-2 rounded-lg {{ $pendingOTCount > 0 ? 'bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700' : 'bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600' }} text-sm hover:opacity-80 transition">
-                                        <span class="text-xl font-bold {{ $pendingOTCount > 0 ? 'text-orange-600' : 'text-gray-400' }}">
-                                            {{ $pendingOTCount }}
-                                        </span>
-                                        <span class="text-gray-600 dark:text-gray-300">Yêu cầu tăng ca đang chờ</span>
-                                    </a>
-                                @endif
-                            </div>
-                        </div>
-                    @endif
 
                     {{-- Onboarding (Team Lead / HR) --}}
                     @if($canViewOnboarding && ($onboardedUsers->isNotEmpty() || $probationEndingUsers->isNotEmpty()))

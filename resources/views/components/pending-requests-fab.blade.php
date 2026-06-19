@@ -31,7 +31,7 @@
         load() {
             this.loading = true;
             const csrf = document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || '';
-            fetch('/pending-approvals', { headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf } })
+            fetch('{{ url("pending-approvals") }}', { headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf } })
                 .then(r => r.json())
                 .then(d => { this.items = d; this.loading = false; })
                 .catch(() => { this.loading = false; });
