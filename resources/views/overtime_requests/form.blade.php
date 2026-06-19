@@ -74,21 +74,15 @@
                             </p>
                         </div>
                     @else
-                        <div class="grid grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <x-input-label for="start_time" value="Giờ bắt đầu" />
-                                <input type="time" name="start_time" id="start_time"
-                                    value="{{ old('start_time', isset($ot) ? $ot->start_at->format('H:i') : '') }}"
-                                    class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
-                                @error('start_time')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
-                            </div>
-                            <div>
-                                <x-input-label for="end_time" value="Giờ kết thúc" />
-                                <input type="time" name="end_time" id="end_time"
-                                    value="{{ old('end_time', isset($ot) ? $ot->end_at->format('H:i') : '') }}"
-                                    class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
-                                @error('end_time')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
-                            </div>
+                        <div class="mb-4">
+                            <x-input-label for="start_time" value="Thời gian" />
+                            <input type="time" name="start_time" id="start_time" lang="en-GB"
+                                value="{{ old('start_time', isset($ot) ? $ot->start_at->format('H:i') : '') }}"
+                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
+                            <input type="hidden" name="end_time" id="end_time"
+                                value="{{ old('end_time', isset($ot) ? $ot->end_at->format('H:i') : '') }}">
+                            @error('start_time')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                            @error('end_time')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                         </div>
                     @endif
 
@@ -293,6 +287,27 @@
                         if (stillVisible) taskTs.setValue(selTask, true);
                     }
                 },
+            });
+        });
+        </script>
+        @endpush
+        @push('scripts')
+        <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var form = document.querySelector('form[action*="overtime-requests"]');
+            if (!form) return;
+            form.addEventListener('submit', function () {
+                var s = document.getElementById('start_time');
+                var e = document.getElementById('end_time');
+                var h = document.getElementById('ot_hours');
+                if (!s || !e || !s.value) return;
+                if (e.value) return; // already set (edit mode)
+                var hrs = parseFloat(h ? h.value : 0) || 0;
+                var sm = parseInt(s.value.split(':')[0]) * 60 + parseInt(s.value.split(':')[1] || 0);
+                var em = sm + Math.round(hrs * 60);
+                var eh = Math.floor((em % 1440) / 60);
+                var emm = em % 60;
+                e.value = String(eh).padStart(2, '0') + ':' + String(emm).padStart(2, '0');
             });
         });
         </script>

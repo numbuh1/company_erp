@@ -70,18 +70,12 @@
                 <input id="otm-ot-date" type="date" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
             </div>
 
-            {{-- Start / End time --}}
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Giờ bắt đầu</label>
-                    <p id="otm-time-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
-                    <input id="otm-start-time" type="time" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Giờ kết thúc</label>
-                    <p id="otm-time-display2" class="hidden"></p>
-                    <input id="otm-end-time" type="time" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
-                </div>
+            {{-- Start time --}}
+            <div>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Thời gian</label>
+                <p id="otm-time-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
+                <input id="otm-start-time" type="time" lang="en-GB" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
+                <input id="otm-end-time" type="hidden">
             </div>
 
             {{-- OT Type badge --}}
@@ -193,7 +187,7 @@
 
     function _hideBody(){
         ['otm-status-banner','otm-user-display','otm-user-select','otm-date-display','otm-ot-date',
-         'otm-time-display','otm-time-display2','otm-start-time','otm-end-time',
+         'otm-time-display','otm-start-time',
          'otm-hours-display','otm-hours','otm-ot-preview','otm-ot-arrow','otm-ot-after',
          'otm-project-display','otm-project-select','otm-task-display','otm-task-select',
          'otm-desc-display','otm-description','otm-reject-display','otm-reject-section',
@@ -240,6 +234,12 @@
             task_id:     _tsTask ? _tsTask.getValue() : $g('otm-task-select').value,
             description: $g('otm-description').value,
         };
+        var startTime = $g('otm-start-time').value;
+        var hrs = parseFloat($g('otm-hours').value) || 0;
+        var endMins = _toMins(startTime) + Math.round(hrs * 60);
+        var endH = Math.floor((endMins % 1440) / 60); var endM = endMins % 60;
+        payload.end_time = String(endH).padStart(2,'0') + ':' + String(endM).padStart(2,'0');
+
         var url    = _mode==='create' ? _OT_URL : _OT_URL+'/'+_id;
         var method = _mode==='create' ? 'POST'                         : 'PUT';
         fetch(url,{
@@ -281,7 +281,7 @@
     function _populateCreate(){
         show($g('otm-user-row'));
         if(HAS_SEL){ show($g('otm-user-select')); _initUserTs(); }
-        show($g('otm-ot-date')); show($g('otm-start-time')); show($g('otm-end-time'));
+        show($g('otm-ot-date')); show($g('otm-start-time'));
         show($g('otm-hours')); show($g('otm-description'));
         show($g('otm-project-select')); show($g('otm-task-select'));
         show($g('otm-type-auto-note'));
@@ -356,7 +356,7 @@
         $g('otm-title').textContent='Chỉnh sửa yêu cầu tăng ca';
 
         hide($g('otm-date-display'));   show($g('otm-ot-date'));
-        hide($g('otm-time-display'));   show($g('otm-start-time')); show($g('otm-end-time'));
+        hide($g('otm-time-display'));   show($g('otm-start-time'));
         hide($g('otm-hours-display')); show($g('otm-hours'));
         hide($g('otm-desc-display'));  show($g('otm-description'));
         hide($g('otm-project-display')); show($g('otm-project-select'));
@@ -446,18 +446,9 @@
 
     function _bindListeners(){
         if(_lBound) return; _lBound=true;
-        var d=$g('otm-ot-date'); var s=$g('otm-start-time'); var e=$g('otm-end-time'); var h=$g('otm-hours');
-        d?.addEventListener('change',function(){ _resetTypeBadge(_getOtType(d.value)); _calcHours(); });
-        s?.addEventListener('change',_calcHours); e?.addEventListener('change',_calcHours);
-        h?.addEventListener('input',function(){ _manualH=true; _updateOtPreview(); });
-    }
-
-    function _calcHours(){
-        var s=$g('otm-start-time'); var e=$g('otm-end-time'); var h=$g('otm-hours');
-        if(_manualH||!s||!e||!s.value||!e.value||!h) return;
-        var sm=_toMins(s.value); var em=_toMins(e.value);
-        var diff=em-sm;
-        if(diff>0){ h.value=(diff/60).toFixed(2).replace(/\.?0+$/,''); _updateOtPreview(); }
+        var d=$g('otm-ot-date'); var h=$g('otm-hours');
+        d?.addEventListener('change',function(){ _resetTypeBadge(_getOtType(d.value)); });
+        h?.addEventListener('input',function(){ _updateOtPreview(); });
     }
 
     function _toMins(t){ var p=t.split(':').map(Number); return p[0]*60+p[1]; }

@@ -189,14 +189,14 @@
                                 <div class="grid grid-cols-2 gap-4 max-w-xs">
                                     <div>
                                         <x-input-label value="Bắt đầu nghỉ trưa" />
-                                        <input type="time" name="lunch_break_start"
+                                        <input type="time" name="lunch_break_start" lang="en-GB"
                                             value="{{ old('lunch_break_start', $settings['lunch_break_start']) }}"
                                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
                                         @error('lunch_break_start')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                                     </div>
                                     <div>
                                         <x-input-label value="Kết thúc nghỉ trưa" />
-                                        <input type="time" name="lunch_break_end"
+                                        <input type="time" name="lunch_break_end" lang="en-GB"
                                             value="{{ old('lunch_break_end', $settings['lunch_break_end']) }}"
                                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
                                         @error('lunch_break_end')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror

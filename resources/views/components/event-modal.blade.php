@@ -91,7 +91,7 @@
                     </div>
                     <div>
                         <x-input-label for="event-time" value="Time *" />
-                        <x-text-input id="event-time" name="time" type="time" class="mt-1 block w-full"
+                        <x-text-input id="event-time" name="time" type="time" lang="en-GB" class="mt-1 block w-full"
                             value="{{ old('time') }}" required />
                     </div>
                     <div>
