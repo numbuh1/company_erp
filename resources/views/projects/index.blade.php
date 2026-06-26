@@ -10,7 +10,7 @@
         </div>
     </x-slot>
 
-    <div class="py-12" x-data="{
+    <div class="max-w-full mx-auto sm:px-6 lg:px-8 py-4" x-data="{
         teamModal: false,
         teamName: '',
         activeTeamId: null,
@@ -20,25 +20,24 @@
             this.teamModal = true;
         }
     }">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
-            {{-- Tabs --}}
-            <div class="border-b border-gray-200 dark:border-gray-700 mb-4">
-                <nav class="flex gap-1">
-                    @php $tabBase = 'px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition'; $tabOn = 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400'; $tabOff = 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'; @endphp
-                    <a href="{{ route('projects.index') }}"      class="{{ $tabBase }} {{ $tabOn }}">Dự án</a>
-                    <a href="{{ route('tasks.index') }}"         class="{{ $tabBase }} {{ $tabOff }}">Công việc</a>
-                    @canany(['view project timesheet', 'view all timesheet'])
-                        <a href="{{ route('timesheets.project') }}"  class="{{ $tabBase }} {{ $tabOff }}">Timesheet</a>
-                    @endcanany
-                </nav>
-            </div>
+        {{-- Tabs --}}
+        <div class="border-b border-gray-200 dark:border-gray-700 mb-4">
+            <nav class="flex gap-1">
+                @php $tabBase = 'px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition'; $tabOn = 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400'; $tabOff = 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'; @endphp
+                <a href="{{ route('projects.index') }}"      class="{{ $tabBase }} {{ $tabOn }}">Dự án</a>
+                <a href="{{ route('tasks.index') }}"         class="{{ $tabBase }} {{ $tabOff }}">Công việc</a>
+                @canany(['view project timesheet', 'view all timesheet'])
+                    <a href="{{ route('timesheets.project') }}"  class="{{ $tabBase }} {{ $tabOff }}">Timesheet</a>
+                @endcanany
+            </nav>
+        </div>
 
-            @if(session('success'))
-                <div class="mb-4 p-3 bg-green-100 text-green-800 rounded">{{ session('success') }}</div>
-            @endif
+        @if(session('success'))
+            <div class="mb-4 p-3 bg-green-100 text-green-800 rounded">{{ session('success') }}</div>
+        @endif
 
-            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-hidden">
+        <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-hidden">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
@@ -148,7 +147,6 @@
                 </table>
                 <div class="p-4">{{ $projects->links() }}</div>
             </div>
-        </div>
 
         {{-- Team Members Modal --}}
         @php $allTeams = $projects->getCollection()->flatMap(fn($p) => $p->teams)->unique('id'); @endphp

@@ -5,8 +5,7 @@
         </div>
     </x-slot>
 
-    <div>
-        <div class="max-w-full mx-auto sm:px-6 lg:px-8 space-y-4">
+    <div class="max-w-full mx-auto sm:px-6 lg:px-8 space-y-4 py-4">
 
             {{-- Tabs --}}
             <div class="border-b border-gray-200 dark:border-gray-700">
@@ -297,6 +296,5 @@
                 @endwhile
             </div>
 
-        </div>
     </div>
 </x-app-layout>

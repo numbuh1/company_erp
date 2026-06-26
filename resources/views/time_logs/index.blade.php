@@ -19,8 +19,7 @@
         </div>
     </x-slot>
 
-    <div>
-        <div class="max-w-full mx-auto sm:px-6 lg:px-8 space-y-4">
+    <div class="max-w-full mx-auto sm:px-6 lg:px-8 space-y-4 py-4">
 
             @if(session('success'))
                 <div class="p-3 bg-green-100 text-green-800 rounded">{{ session('success') }}</div>
@@ -223,7 +222,6 @@
                 </table>
                 <div class="p-4">{{ $logs->links() }}</div>
             </div>
-        </div>
     </div>
 
     @push('scripts')

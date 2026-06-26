@@ -29,6 +29,15 @@ class AnnouncementController extends Controller
 
     public function index(Request $request)
     {
+        return $this->_renderMailView($request, null);
+    }
+
+    /**
+     * Build the paginated, search-filtered announcement list shared by the
+     * index and show actions, and render the email-style two-pane layout.
+     */
+    private function _renderMailView(Request $request, ?Announcement $selected)
+    {
         $user  = auth()->user();
         $query = Announcement::with(['author', 'teams'])->latest();
         $this->_visibilityScope($query, $user);
@@ -41,7 +50,13 @@ class AnnouncementController extends Controller
         }
 
         $announcements = $query->paginate(15)->withQueryString();
-        return view('announcements.index', compact('announcements'));
+
+        // Default to the newest announcement in the list when none is selected
+        if (!$selected) {
+            $selected = $announcements->first();
+        }
+
+        return view('announcements.index', compact('announcements', 'selected'));
     }
 
     public function create()
@@ -73,7 +88,7 @@ class AnnouncementController extends Controller
         return redirect()->route('announcements.show', $announcement)->with('success', 'Announcement published.');
     }
 
-    public function show(Announcement $announcement)
+    public function show(Request $request, Announcement $announcement)
     {
         $user = auth()->user();
         $announcement->load('teams');
@@ -88,7 +103,7 @@ class AnnouncementController extends Controller
             }
         }
 
-        return view('announcements.show', compact('announcement'));
+        return $this->_renderMailView($request, $announcement);
     }
 
     public function edit(Announcement $announcement)
