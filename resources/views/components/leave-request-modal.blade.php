@@ -127,12 +127,18 @@
             </div>
 
             {{-- Balance preview --}}
-            <div id="lrm-balance-preview" class="hidden p-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 rounded-lg">
+            <div id="lrm-balance-preview" class="hidden p-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 rounded-lg space-y-1">
                 <div class="flex items-center gap-2 flex-wrap text-sm">
-                    <span class="text-gray-500 dark:text-gray-400">Số dư phép:</span>
+                    <span class="text-gray-500 dark:text-gray-400">Giờ phép còn lại:</span>
                     <span id="lrm-balance-current" class="font-semibold text-indigo-700 dark:text-indigo-300"></span>
                     <span id="lrm-balance-arrow" class="hidden text-gray-400">→</span>
                     <span id="lrm-balance-after" class="hidden font-semibold"></span>
+                </div>
+                <div class="flex items-center gap-2 flex-wrap text-sm">
+                    <span class="text-gray-500 dark:text-gray-400">Ngày phép còn lại:</span>
+                    <span id="lrm-balance-current-days" class="font-semibold text-indigo-700 dark:text-indigo-300"></span>
+                    <span id="lrm-balance-arrow-days" class="hidden text-gray-400">→</span>
+                    <span id="lrm-balance-after-days" class="hidden font-semibold"></span>
                 </div>
             </div>
 
@@ -198,7 +204,8 @@
          'lrm-breakdown','lrm-balance-preview','lrm-reject-display','lrm-reject-section',
          'lrm-type-display','lrm-type','lrm-start-display','lrm-start-at',
          'lrm-end-display','lrm-end-at','lrm-hours-display','lrm-hours',
-         'lrm-desc-display','lrm-description','lrm-balance-arrow','lrm-balance-after']
+         'lrm-desc-display','lrm-description','lrm-balance-arrow','lrm-balance-after',
+         'lrm-balance-arrow-days','lrm-balance-after-days']
         .forEach(function(id) { hide($g(id)); });
     }
 
@@ -343,12 +350,17 @@
         show($g('lrm-hours-display'));
 
         if (lr.type === 'annual' && lr.status !== 'approved' && d.leave_balance !== null) {
-            $g('lrm-balance-current').textContent = parseFloat(d.leave_balance).toFixed(2).replace(/\.?0+$/,'') + 'h';
-            var after = (parseFloat(d.leave_balance) - parseFloat(lr.hours));
+            var curBal = parseFloat(d.leave_balance);
+            $g('lrm-balance-current').textContent = curBal.toFixed(2).replace(/\.?0+$/,'') + 'h';
+            $g('lrm-balance-current-days').textContent = (curBal/8).toFixed(2).replace(/\.?0+$/,'') + ' ngày';
+            var after = (curBal - parseFloat(lr.hours));
             var afterStr = after.toFixed(2).replace(/\.?0+$/,'') + 'h';
             $g('lrm-balance-after').textContent = afterStr;
             $g('lrm-balance-after').className = 'hidden font-semibold ' + (after < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400');
+            $g('lrm-balance-after-days').textContent = (after/8).toFixed(2).replace(/\.?0+$/,'') + ' ngày';
+            $g('lrm-balance-after-days').className = 'hidden font-semibold ' + (after < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400');
             show($g('lrm-balance-arrow')); show($g('lrm-balance-after'));
+            show($g('lrm-balance-arrow-days')); show($g('lrm-balance-after-days'));
             show($g('lrm-balance-preview'));
         }
 
@@ -409,14 +421,20 @@
         var type  = $g('lrm-type') && !$g('lrm-type').classList.contains('hidden') ? $g('lrm-type').value : null;
         var hours = parseFloat($g('lrm-hours')?.value) || 0;
         if (type !== 'annual' || _balance === null) { hide($g('lrm-balance-preview')); return; }
-        $g('lrm-balance-current').textContent = parseFloat(_balance).toFixed(2).replace(/\.?0+$/,'') + 'h';
+        var curBal = parseFloat(_balance);
+        $g('lrm-balance-current').textContent = curBal.toFixed(2).replace(/\.?0+$/,'') + 'h';
+        $g('lrm-balance-current-days').textContent = (curBal/8).toFixed(2).replace(/\.?0+$/,'') + ' ngày';
         if (hours > 0) {
-            var after = parseFloat(_balance) - hours;
+            var after = curBal - hours;
             $g('lrm-balance-after').textContent = after.toFixed(2).replace(/\.?0+$/,'') + 'h';
             $g('lrm-balance-after').className = 'font-semibold ' + (after < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400');
+            $g('lrm-balance-after-days').textContent = (after/8).toFixed(2).replace(/\.?0+$/,'') + ' ngày';
+            $g('lrm-balance-after-days').className = 'font-semibold ' + (after < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400');
             show($g('lrm-balance-arrow')); show($g('lrm-balance-after'));
+            show($g('lrm-balance-arrow-days')); show($g('lrm-balance-after-days'));
         } else {
             hide($g('lrm-balance-arrow')); hide($g('lrm-balance-after'));
+            hide($g('lrm-balance-arrow-days')); hide($g('lrm-balance-after-days'));
         }
         show($g('lrm-balance-preview'));
     }

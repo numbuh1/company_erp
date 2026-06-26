@@ -72,7 +72,6 @@
                 <nav class="flex gap-1">
                     @php $tabBase = 'px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition'; $tabOn = 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400'; $tabOff = 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'; @endphp
                     <a href="{{ route('time-logs.index') }}"       class="{{ $tabBase }} {{ $tabOff }}">Danh sách</a>
-                    <a href="{{ route('timesheets.project') }}"    class="{{ $tabBase }} {{ $tabOff }}">Dự án</a>
                     <a href="{{ route('timesheets.attendance') }}" class="{{ $tabBase }} {{ $tabOff }}">Chấm công</a>
                     <a href="{{ route('timesheets.calendar') }}"   class="{{ $tabBase }} {{ $tabOff }}">Lịch</a>
                 </nav>

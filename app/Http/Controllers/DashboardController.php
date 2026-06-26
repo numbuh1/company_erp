@@ -124,8 +124,8 @@ class DashboardController extends Controller
             ->orderByRaw('DAY(contract_expiry)')
             ->get(['id', 'name', 'position', 'contract_expiry']);
 
-        // ── Onboarding widgets (Team Leads / HR with "view all user") ─────
-        $canViewOnboarding = $user->can('view all user') || $user->teams()->wherePivot('is_leader', true)->exists();
+        // ── Onboarding widgets (Team Leads, or anyone with "view teams") ─────
+        $canViewOnboarding = $user->can('view teams') || $user->teams()->wherePivot('is_leader', true)->exists();
 
         $onboardedUsers       = collect();
         $probationEndingUsers = collect();
@@ -134,7 +134,7 @@ class DashboardController extends Controller
             $onboardQuery   = User::whereNotNull('recruitment_applicant_id')->with('recruitmentApplicant.position');
             $probationQuery = User::whereNotNull('probation_end_date');
 
-            if (!$user->can('view all user')) {
+            if (!$user->can('view teams')) {
                 $teamUserIds = $user->teamMembers()->pluck('id')->toArray();
                 $onboardQuery->whereIn('id', $teamUserIds);
                 $probationQuery->whereIn('id', $teamUserIds);
