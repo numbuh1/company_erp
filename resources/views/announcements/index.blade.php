@@ -87,41 +87,45 @@
             </div>
 
             {{-- ── Right: content pane ──────────────────────────────────── --}}
-            <div class="flex-1 min-w-0 p-6 overflow-y-auto" style="max-height: 80vh;">
+            <div class="flex-1 min-w-0 flex flex-col" style="max-height: 75vh;">
                 @if($selected)
-                    <div class="flex justify-between items-start gap-4 mb-1">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $selected->title }}</h3>
-                        <div class="flex gap-2 shrink-0">
-                            @can('edit announcements')
-                                <a href="{{ route('announcements.edit', $selected) }}">
-                                    <x-secondary-button>Chỉnh sửa</x-secondary-button>
-                                </a>
-                            @endcan
-                            @can('delete announcements')
-                                <form method="POST" action="{{ route('announcements.destroy', $selected) }}">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" onclick="return confirm('Delete this announcement?')"
-                                        class="inline-flex items-center px-3 py-1.5 text-sm text-red-600 border border-red-300 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition">
-                                        Xóa
-                                    </button>
-                                </form>
-                            @endcan
+                    <div class="p-6 pb-0 shrink-0">
+                        <div class="flex justify-between items-start gap-4 mb-1">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $selected->title }}</h3>
+                            <div class="flex gap-2 shrink-0">
+                                @can('edit announcements')
+                                    <a href="{{ route('announcements.edit', $selected) }}">
+                                        <x-secondary-button>Chỉnh sửa</x-secondary-button>
+                                    </a>
+                                @endcan
+                                @can('delete announcements')
+                                    <form method="POST" action="{{ route('announcements.destroy', $selected) }}">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" onclick="return confirm('Delete this announcement?')"
+                                            class="inline-flex items-center px-3 py-1.5 text-sm text-red-600 border border-red-300 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+                                            Xóa
+                                        </button>
+                                    </form>
+                                @endcan
+                            </div>
                         </div>
+                        <p class="text-xs text-gray-400 mb-6">
+                            {{ $selected->author?->name ?? 'System' }}
+                            · {{ $selected->created_at->format('d/m/Y H:i') }}
+                            @if($selected->updated_at->ne($selected->created_at))
+                                · <span class="italic">đã sửa {{ $selected->updated_at->format('d/m/Y H:i') }}</span>
+                            @endif
+                        </p>
                     </div>
-                    <p class="text-xs text-gray-400 mb-6">
-                        {{ $selected->author?->name ?? 'System' }}
-                        · {{ $selected->created_at->format('d/m/Y H:i') }}
-                        @if($selected->updated_at->ne($selected->created_at))
-                            · <span class="italic">đã sửa {{ $selected->updated_at->format('d/m/Y H:i') }}</span>
-                        @endif
-                    </p>
-                    <div class="ql-container ql-snow">
-                        <div class="ql-editor text-gray-800 dark:text-gray-200">
-                            {!! $selected->content !!}
+                    <div class="flex-1 overflow-y-auto px-6 pb-6">
+                        <div class="ql-container ql-snow">
+                            <div class="ql-editor text-gray-800 dark:text-gray-200">
+                                {!! $selected->content !!}
+                            </div>
                         </div>
                     </div>
                 @else
-                    <div class="flex items-center justify-center h-full text-gray-400 text-sm">
+                    <div class="flex-1 flex items-center justify-center text-gray-400 text-sm">
                         Chưa có thông báo nào.
                     </div>
                 @endif

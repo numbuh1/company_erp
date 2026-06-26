@@ -56,7 +56,7 @@
             </div>
 
             <div class="mt-4">
-                <a href="{{ route('users.index') }}">
+                <a href="{{ url()->previous() }}">
                     <x-secondary-button>Quay lại</x-secondary-button>
                 </a>
             </div>

@@ -27,25 +27,22 @@
                     </p>
                 </div>
                 <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4">
-                    <p class="text-xs text-gray-500 uppercase font-medium">Tuần này</p>
+                    <p class="text-xs text-gray-500 uppercase font-medium">Giờ công tuần này</p>
                     <p class="mt-1 text-2xl font-bold text-indigo-600 dark:text-indigo-400">
                         {{ \App\Models\TimeLog::formatTime($weekTimeLogs) }}
                     </p>
-                    <p class="text-xs text-gray-400">giờ công</p>
                 </div>
                 <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4">
-                    <p class="text-xs text-gray-500 uppercase font-medium">Tháng này</p>
+                    <p class="text-xs text-gray-500 uppercase font-medium">Giờ công tháng này</p>
                     <p class="mt-1 text-2xl font-bold text-indigo-600 dark:text-indigo-400">
                         {{ \App\Models\TimeLog::formatTime($monthTimeLogs) }}
                     </p>
-                    <p class="text-xs text-gray-400">giờ công</p>
                 </div>
                 <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4">
                     <p class="text-xs text-gray-500 uppercase font-medium">Tăng ca tháng này</p>
                     <p class="mt-1 text-2xl font-bold text-green-600 dark:text-green-400">
                         {{ rtrim(rtrim(number_format($monthOTHours, 2), '0'), '.') }} giờ
                     </p>
-                    <p class="text-xs text-gray-400">giờ OT được duyệt</p>
                 </div>
             </div>
 
@@ -369,7 +366,7 @@
                             <span class="font-normal text-gray-400 normal-case">(trước ngày kết thúc dự kiến 5 ngày)</span>
                         </h3>
                         @if($deadlineTasks->isEmpty())
-                            <p class="text-sm text-gray-400">Không có công việc khẩn cấp.</p>
+                            <p class="text-sm text-gray-400">Không có công việc sắp tới hạn nào.</p>
                         @else
                             <div class="space-y-2">
                                 @foreach($deadlineTasks as $task)

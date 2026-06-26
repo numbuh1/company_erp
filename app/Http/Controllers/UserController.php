@@ -160,9 +160,13 @@ class UserController extends Controller
     {
         $roles             = Role::all();
         $supervisorOptions = User::where('id', '!=', $user->id)->orderBy('name')->get(['id', 'name', 'position']);
-        $user->load(['supervisors', 'salaryRecord', 'preferences', 'teams', 'recruitmentApplicant']);
+        $user->load(['supervisors', 'salaryRecord', 'preferences', 'teams', 'recruitmentApplicant.position.assignedUsers']);
         $spentBalance = $this->_spentLeaveBalance($user);
-        return view('users.form', compact('user', 'roles', 'supervisorOptions', 'spentBalance'));
+        $canViewOriginalApplicant = $user->recruitment_applicant_id
+            && $user->recruitmentApplicant
+            && (auth()->user()->can('view recruitment hr note')
+                || $user->recruitmentApplicant->position?->assignedUsers->contains(auth()->id()));
+        return view('users.form', compact('user', 'roles', 'supervisorOptions', 'spentBalance', 'canViewOriginalApplicant'));
     }
 
     public function profile()
@@ -288,12 +292,16 @@ class UserController extends Controller
 
     public function show(User $user)
     {
-        $user->load(['roles', 'teams', 'supervisors', 'recruitmentApplicant']);
+        $user->load(['roles', 'teams', 'supervisors', 'recruitmentApplicant.position.assignedUsers']);
         $isOwnProfile    = auth()->id() === $user->id;
         $canViewSalary   = $isOwnProfile || auth()->user()->canAny(['view salary', 'edit all user']);
         $canViewPersonal = $isOwnProfile || auth()->user()->canAny(['view all user personal info', 'edit all user']);
         $spentBalance    = $this->_spentLeaveBalance($user);
-        return view('users.show', compact('user', 'canViewSalary', 'canViewPersonal', 'spentBalance'));
+        $canViewOriginalApplicant = $user->recruitment_applicant_id
+            && $user->recruitmentApplicant
+            && (auth()->user()->can('view recruitment hr note')
+                || $user->recruitmentApplicant->position?->assignedUsers->contains(auth()->id()));
+        return view('users.show', compact('user', 'canViewSalary', 'canViewPersonal', 'spentBalance', 'canViewOriginalApplicant'));
     }
 
     /**

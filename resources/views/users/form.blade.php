@@ -245,18 +245,17 @@
                             @endif
 
                             {{-- Onboarded from recruitment applicant --}}
-                            @if($user->recruitment_applicant_id && $user->recruitmentApplicant)
-                                @can('module recruitment')
-                                    <div class="mb-6">
-                                        <x-input-label value="Ứng viên gốc" />
-                                        <p class="mt-1 text-sm">
-                                            <a href="{{ route('recruitment.applicants.show', [$user->recruitmentApplicant->recruitment_position_id, $user->recruitmentApplicant->id]) }}"
-                                                class="text-indigo-600 dark:text-indigo-400 hover:underline">
-                                                {{ $user->recruitmentApplicant->name }}
-                                            </a>
-                                        </p>
-                                    </div>
-                                @endcan
+                            @if($canViewOriginalApplicant ?? false)
+                                <div class="mb-6">
+                                    <x-input-label value="Ứng viên gốc" />
+                                    <p class="mt-1 text-sm">
+                                        <a href="{{ route('recruitment.applicants.show', [$user->recruitmentApplicant->recruitment_position_id, $user->recruitmentApplicant->id]) }}"
+                                            class="text-indigo-600 dark:text-indigo-400 hover:underline">
+                                            {{ $user->recruitmentApplicant->name }}
+                                        </a>
+                                    </p>
+                                </div>
+                            @endif
                             @endif
 
                             {{-- Supervisors --}}
