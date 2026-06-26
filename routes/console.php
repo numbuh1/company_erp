@@ -16,6 +16,15 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 /*
+ * Monthly leave policy — resets balances in the configured reset month and
+ * applies the configured monthly accrual to every user.
+ */
+Schedule::command('leave:monthly-policy')
+    ->monthlyOn(1, '00:10')
+    ->name('monthly-leave-policy')
+    ->withoutOverlapping();
+
+/*
  * Weekly approval reminder — runs every weekday at 15:00.
  * Only actually sends emails on the last non-holiday working day of the week
  * (Friday, or Thursday/Wednesday if Friday/Thursday is a holiday).

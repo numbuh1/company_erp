@@ -1,14 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const dateEl  = document.getElementById('ot_date');
-    const startEl = document.getElementById('start_time');
-    const endEl   = document.getElementById('end_time');
-    const hoursEl = document.getElementById('hours');
+    const dateEl    = document.getElementById('ot_date');
+    const startEl   = document.getElementById('start_time');
+    const endEl     = document.getElementById('end_time');
+    const hoursEl   = document.getElementById('hours');
+    const typeSel   = document.getElementById('ot_type_select');
+    const warningEl = document.getElementById('hours_warning');
 
     // Not an editable form (readonly view has none of these)
     if (!dateEl || !startEl || !endEl) return;
 
     const holidayDates = window._otHolidayDates || [];
-    let manualHours    = false;
+    let manualHours     = false;
 
     // ── Type helpers ────────────────────────────────────────────────
     function getOtType(dateStr) {
@@ -18,43 +20,45 @@ document.addEventListener('DOMContentLoaded', () => {
         return day === 0 ? 'OT x2' : 'OT x1.5';
     }
 
-    function typeBadgeCls(type) {
-        if (type === 'OT x3') return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
-        if (type === 'OT x2') return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
-        return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
-    }
-
     function updateType() {
-        const type      = getOtType(dateEl.value);
-        const hiddenEl  = document.getElementById('ot_type_hidden');
-        const displayEl = document.getElementById('ot_type_display');
-        if (hiddenEl)  hiddenEl.value = type;
-        if (displayEl) {
-            displayEl.textContent = type;
-            displayEl.className   =
-                'inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ' +
-                typeBadgeCls(type);
-        }
+        if (typeSel) typeSel.value = getOtType(dateEl.value);
     }
 
-    // ── Hours auto-calc ─────────────────────────────────────────────
+    // ── Hours auto-calc (supports overnight rollover) ──────────────
+    function toMins(t) {
+        const p = t.split(':').map(Number);
+        return p[0] * 60 + (p[1] || 0);
+    }
+
+    function computeHours(s, e) {
+        if (!s || !e) return 0;
+        let sm = toMins(s);
+        let em = toMins(e);
+        if (em <= sm) em += 1440; // overnight: end time rolls into the next day
+        return (em - sm) / 60;
+    }
+
+    function checkWarning() {
+        if (!warningEl || !hoursEl) return;
+        const h = parseFloat(hoursEl.value) || 0;
+        warningEl.classList.toggle('hidden', h <= 8);
+    }
+
     function calcHours() {
         if (manualHours || !startEl.value || !endEl.value || !hoursEl) return;
-        const [sh, sm] = startEl.value.split(':').map(Number);
-        const [eh, em] = endEl.value.split(':').map(Number);
-        const diff = (eh * 60 + em) - (sh * 60 + sm);
-        if (diff > 0) {
-            hoursEl.value = (diff / 60).toFixed(2).replace(/\.?0+$/, '');
-        }
+        const hrs = computeHours(startEl.value, endEl.value);
+        hoursEl.value = hrs.toFixed(2).replace(/\.?0+$/, '');
+        checkWarning();
     }
 
     // ── Listeners ───────────────────────────────────────────────────
-    hoursEl?.addEventListener('input', () => { manualHours = true; });
+    hoursEl?.addEventListener('input', () => { manualHours = true; checkWarning(); });
     dateEl.addEventListener('change',  updateType);
     startEl.addEventListener('change', calcHours);
     endEl.addEventListener('change',   calcHours);
 
     // Init on page load (handles edit form pre-filled values)
-    updateType();
+    if (typeSel && !typeSel.value) updateType();
     calcHours();
+    checkWarning();
 });

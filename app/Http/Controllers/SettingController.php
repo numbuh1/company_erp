@@ -21,6 +21,8 @@ class SettingController extends Controller
             'office_radius_km'   => AppSetting::get('office_radius_km', '0.2'),
             'lunch_break_start'  => AppSetting::get('lunch_break_start', '12:00'),
             'lunch_break_end'    => AppSetting::get('lunch_break_end', '13:00'),
+            'leave_balance_monthly_increase' => AppSetting::get('leave_balance_monthly_increase', '0'),
+            'leave_balance_reset_month'       => AppSetting::get('leave_balance_reset_month', ''),
         ];
 
         return view('admin.settings', compact('settings'));
@@ -41,6 +43,8 @@ class SettingController extends Controller
             'office_radius_km'  => 'nullable|numeric|min:0.05|max:50',
             'lunch_break_start' => 'nullable|date_format:H:i',
             'lunch_break_end'   => 'nullable|date_format:H:i',
+            'leave_balance_monthly_increase' => 'nullable|numeric|min:0',
+            'leave_balance_reset_month'       => 'nullable|integer|between:1,12',
         ]);
 
         foreach ($data as $key => $value) {

@@ -65,7 +65,7 @@
                         @endif
                     </div>
 
-                    {{-- ── Start / End Time ───────────────────────────────────────── --}}
+                    {{-- ── From / To Time ─────────────────────────────────────────── --}}
                     @if($readonly)
                         <div class="mb-4">
                             <x-input-label value="Thời gian" />
@@ -75,18 +75,27 @@
                         </div>
                     @else
                         <div class="mb-4">
-                            <x-input-label for="start_time" value="Thời gian" />
-                            <input type="time" name="start_time" id="start_time" lang="en-GB"
-                                value="{{ old('start_time', isset($ot) ? $ot->start_at->format('H:i') : '') }}"
-                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
-                            <input type="hidden" name="end_time" id="end_time"
-                                value="{{ old('end_time', isset($ot) ? $ot->end_at->format('H:i') : '') }}">
-                            @error('start_time')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
-                            @error('end_time')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                            <x-input-label value="Thời gian" />
+                            <div class="grid grid-cols-2 gap-4 mt-1">
+                                <div>
+                                    <label class="block text-xs text-gray-400 dark:text-gray-500 mb-1">Từ</label>
+                                    <input type="time" name="start_time" id="start_time" lang="en-GB"
+                                        value="{{ old('start_time', isset($ot) ? $ot->start_at->format('H:i') : '') }}"
+                                        class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
+                                    @error('start_time')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-400 dark:text-gray-500 mb-1">Đến</label>
+                                    <input type="time" name="end_time" id="end_time" lang="en-GB"
+                                        value="{{ old('end_time', isset($ot) ? $ot->end_at->format('H:i') : '') }}"
+                                        class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
+                                    @error('end_time')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                                </div>
+                            </div>
                         </div>
                     @endif
 
-                    {{-- ── OT Type (auto-selected) ────────────────────────────────── --}}
+                    {{-- ── OT Type (auto-selected, editable) ──────────────────────── --}}
                     <div class="mb-4">
                         <x-input-label value="Loại tăng ca" />
                         @if($readonly)
@@ -101,26 +110,19 @@
                                 {{ $ot->type }}
                             </span>
                         @else
-                            @php
-                                $currentType = old('type', $ot->type ?? 'OT x1.5');
-                                $typeCls = match($currentType) {
-                                    'OT x3' => 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-                                    'OT x2' => 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-                                    default  => 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-                                };
-                            @endphp
-                            <div class="mt-1 flex items-center gap-3">
-                                <span id="ot_type_display"
-                                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold {{ $typeCls }}">
-                                    {{ $currentType }}
-                                </span>
-                                <span class="text-xs text-gray-400 dark:text-gray-500">Tự động xác định theo ngày</span>
-                            </div>
-                            <input type="hidden" name="type" id="ot_type_hidden" value="{{ $currentType }}">
+                            @php $currentType = old('type', $ot->type ?? ''); @endphp
+                            <select name="type" id="ot_type_select"
+                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
+                                <option value="" @selected($currentType === '')>— Tự động theo ngày —</option>
+                                <option value="OT x1.5" @selected($currentType === 'OT x1.5')>OT x1.5</option>
+                                <option value="OT x2" @selected($currentType === 'OT x2')>OT x2</option>
+                                <option value="OT x3" @selected($currentType === 'OT x3')>OT x3</option>
+                            </select>
+                            <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Tự động chọn theo ngày, có thể thay đổi.</p>
                         @endif
                     </div>
 
-                    {{-- ── Hours ──────────────────────────────────────────────────── --}}
+                    {{-- ── Hours (auto-calculated) ──────────────────────────────────── --}}
                     <div class="mb-4">
                         <x-input-label value="Số giờ" />
                         @if($readonly)
@@ -130,6 +132,10 @@
                                 value="{{ old('hours', $ot->hours ?? '') }}"
                                 class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
                             @error('hours')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                            <p id="hours_warning" class="hidden mt-1.5 text-xs text-amber-600 dark:text-amber-400 flex items-start gap-1">
+                                <span>⚠️</span>
+                                <span>Số giờ tăng ca khá cao. Vui lòng kiểm tra lại giờ bắt đầu/kết thúc.</span>
+                            </p>
                         @endif
                     </div>
 
@@ -287,27 +293,6 @@
                         if (stillVisible) taskTs.setValue(selTask, true);
                     }
                 },
-            });
-        });
-        </script>
-        @endpush
-        @push('scripts')
-        <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var form = document.querySelector('form[action*="overtime-requests"]');
-            if (!form) return;
-            form.addEventListener('submit', function () {
-                var s = document.getElementById('start_time');
-                var e = document.getElementById('end_time');
-                var h = document.getElementById('ot_hours');
-                if (!s || !e || !s.value) return;
-                if (e.value) return; // already set (edit mode)
-                var hrs = parseFloat(h ? h.value : 0) || 0;
-                var sm = parseInt(s.value.split(':')[0]) * 60 + parseInt(s.value.split(':')[1] || 0);
-                var em = sm + Math.round(hrs * 60);
-                var eh = Math.floor((em % 1440) / 60);
-                var emm = em % 60;
-                e.value = String(eh).padStart(2, '0') + ':' + String(emm).padStart(2, '0');
             });
         });
         </script>

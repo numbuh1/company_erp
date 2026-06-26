@@ -70,20 +70,33 @@
                 <input id="otm-ot-date" type="date" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
             </div>
 
-            {{-- Start time --}}
+            {{-- From / To time --}}
             <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Thời gian</label>
                 <p id="otm-time-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
-                <input id="otm-start-time" type="time" lang="en-GB" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
-                <input id="otm-end-time" type="hidden">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-gray-400 dark:text-gray-500 mb-1">Từ</label>
+                        <input id="otm-start-time" type="time" lang="en-GB" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 dark:text-gray-500 mb-1">Đến</label>
+                        <input id="otm-end-time" type="time" lang="en-GB" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
+                    </div>
+                </div>
             </div>
 
-            {{-- OT Type badge --}}
+            {{-- OT Type --}}
             <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Loại tăng ca</label>
-                <span id="otm-type-badge" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">OT x1.5</span>
-                <span id="otm-type-auto-note" class="hidden ml-2 text-xs text-gray-400">Tự động xác định theo ngày</span>
-                <input type="hidden" id="otm-type-hidden" value="OT x1.5">
+                <p id="otm-type-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
+                <select id="otm-type-select" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
+                    <option value="">— Tự động theo ngày —</option>
+                    <option value="OT x1.5">OT x1.5</option>
+                    <option value="OT x2">OT x2</option>
+                    <option value="OT x3">OT x3</option>
+                </select>
+                <p id="otm-type-auto-note" class="hidden mt-1 text-xs text-gray-400">Tự động chọn theo ngày, có thể thay đổi.</p>
             </div>
 
             {{-- Hours --}}
@@ -92,14 +105,24 @@
                 <p id="otm-hours-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
                 <input id="otm-hours" type="number" step="0.25" min="0.25" placeholder="0"
                     class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
+                <p id="otm-hours-warning" class="hidden mt-1.5 text-xs text-amber-600 dark:text-amber-400 flex items-start gap-1">
+                    <span>⚠️</span>
+                    <span>Số giờ tăng ca khá cao. Vui lòng kiểm tra lại giờ bắt đầu/kết thúc.</span>
+                </p>
             </div>
 
-            {{-- OT year preview --}}
-            <div id="otm-ot-preview" class="hidden p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg">
+            {{-- OT month / year preview --}}
+            <div id="otm-ot-preview" class="hidden p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg space-y-1">
+                <div class="flex items-center gap-2 flex-wrap text-sm">
+                    <span class="text-gray-500 dark:text-gray-400">Tăng ca tháng này:</span>
+                    <span id="otm-ot-month-total" class="font-semibold text-orange-700 dark:text-orange-300"></span>
+                    <span id="otm-ot-month-arrow" class="hidden text-gray-400">→</span>
+                    <span id="otm-ot-month-after" class="hidden font-semibold text-green-600 dark:text-green-400"></span>
+                </div>
                 <div class="flex items-center gap-2 flex-wrap text-sm">
                     <span class="text-gray-500 dark:text-gray-400">Tăng ca năm nay:</span>
                     <span id="otm-ot-total" class="font-semibold text-orange-700 dark:text-orange-300"></span>
-                    <span id="otm-ot-arrow" class="hidden text-gray-400">→ </span>
+                    <span id="otm-ot-arrow" class="hidden text-gray-400">→</span>
                     <span id="otm-ot-after" class="hidden font-semibold text-green-600 dark:text-green-400"></span>
                 </div>
             </div>
@@ -173,7 +196,8 @@
     var _mode   = 'create';
     var _id     = null;
     var _data   = null;
-    var _otTotal = 0;
+    var _otTotal      = 0;
+    var _otMonthTotal = 0;
     var _tsUser  = null;
     var _tsPrj   = null;
     var _tsTask  = null;
@@ -187,11 +211,12 @@
 
     function _hideBody(){
         ['otm-status-banner','otm-user-display','otm-user-select','otm-date-display','otm-ot-date',
-         'otm-time-display','otm-start-time',
-         'otm-hours-display','otm-hours','otm-ot-preview','otm-ot-arrow','otm-ot-after',
+         'otm-time-display','otm-start-time','otm-end-time',
+         'otm-type-display','otm-type-select','otm-type-auto-note',
+         'otm-hours-display','otm-hours','otm-hours-warning',
+         'otm-ot-preview','otm-ot-arrow','otm-ot-after','otm-ot-month-arrow','otm-ot-month-after',
          'otm-project-display','otm-project-select','otm-task-display','otm-task-select',
-         'otm-desc-display','otm-description','otm-reject-display','otm-reject-section',
-         'otm-type-auto-note']
+         'otm-desc-display','otm-description','otm-reject-display','otm-reject-section']
         .forEach(function(id){ hide($g(id)); });
         show($g('otm-user-row')); show($g('otm-project-row')); show($g('otm-task-row'));
     }
@@ -209,7 +234,7 @@
     };
 
     window.openOtCreate = function () {
-        _mode='create'; _id=null; _data=null; _otTotal=0; _manualH=false;
+        _mode='create'; _id=null; _data=null; _otTotal=0; _otMonthTotal=0; _manualH=false;
         _showOverlay(); hide($g('otm-loading')); _hideBody();
         $g('otm-title').textContent='Tạo yêu cầu tăng ca';
         _populateCreate();
@@ -223,22 +248,19 @@
     window._otmSwitchToEdit = function () { _mode='edit'; _populateEdit(); };
 
     window._otmSubmit = function () {
-        var userId = (_mode==='edit'&&_data) ? _data.ot.user_id : _tsUserVal();
+        var userId  = (_mode==='edit'&&_data) ? _data.ot.user_id : _tsUserVal();
+        var otDate  = $g('otm-ot-date').value;
+        var typeVal = $g('otm-type-select').value || _getOtType(otDate);
         var payload = {
             user_id:     userId,
-            ot_date:     $g('otm-ot-date').value,
+            ot_date:     otDate,
             start_time:  $g('otm-start-time').value,
             end_time:    $g('otm-end-time').value,
-            hours:       $g('otm-hours').value,
+            type:        typeVal,
             project_id:  _tsPrj ? _tsPrj.getValue() : $g('otm-project-select').value,
             task_id:     _tsTask ? _tsTask.getValue() : $g('otm-task-select').value,
             description: $g('otm-description').value,
         };
-        var startTime = $g('otm-start-time').value;
-        var hrs = parseFloat($g('otm-hours').value) || 0;
-        var endMins = _toMins(startTime) + Math.round(hrs * 60);
-        var endH = Math.floor((endMins % 1440) / 60); var endM = endMins % 60;
-        payload.end_time = String(endH).padStart(2,'0') + ':' + String(endM).padStart(2,'0');
 
         var url    = _mode==='create' ? _OT_URL : _OT_URL+'/'+_id;
         var method = _mode==='create' ? 'POST'                         : 'PUT';
@@ -281,13 +303,13 @@
     function _populateCreate(){
         show($g('otm-user-row'));
         if(HAS_SEL){ show($g('otm-user-select')); _initUserTs(); }
-        show($g('otm-ot-date')); show($g('otm-start-time'));
+        show($g('otm-ot-date')); show($g('otm-start-time')); show($g('otm-end-time'));
+        show($g('otm-type-select')); show($g('otm-type-auto-note'));
         show($g('otm-hours')); show($g('otm-description'));
         show($g('otm-project-select')); show($g('otm-task-select'));
-        show($g('otm-type-auto-note'));
         $g('otm-ot-date').value=''; $g('otm-start-time').value=''; $g('otm-end-time').value='';
-        $g('otm-hours').value=''; $g('otm-description').value='';
-        _resetTypeBadge('OT x1.5');
+        $g('otm-type-select').value=''; $g('otm-hours').value=''; $g('otm-description').value='';
+        hide($g('otm-hours-warning'));
         _fetchOtTotal(AUTH_ID);
         _bindListeners();
         _initProjectTaskTs();
@@ -298,6 +320,7 @@
         var ot=d.ot;
         $g('otm-title').textContent='Yêu cầu tăng ca';
         _otTotal=d.ot_year_total||0;
+        _otMonthTotal=d.ot_month_total||0;
 
         var banner=$g('otm-status-banner');
         var labels={pending:'Đang chờ duyệt',approved:'Đã duyệt',rejected:'Đã từ chối'};
@@ -319,7 +342,7 @@
         $g('otm-time-display').textContent=ot.start_time+' – '+ot.end_time;
         show($g('otm-time-display'));
 
-        _resetTypeBadge(ot.type);
+        $g('otm-type-display').textContent=ot.type; show($g('otm-type-display'));
 
         $g('otm-hours-display').textContent=ot.hours+'h'; show($g('otm-hours-display'));
 
@@ -327,6 +350,13 @@
             $g('otm-ot-total').textContent=_otTotal+'h';
             $g('otm-ot-after').textContent=(_otTotal+parseFloat(ot.hours))+'h';
             show($g('otm-ot-arrow')); show($g('otm-ot-after'));
+            $g('otm-ot-month-total').textContent=_otMonthTotal+'h';
+            $g('otm-ot-month-after').textContent=(_otMonthTotal+parseFloat(ot.hours))+'h';
+            show($g('otm-ot-month-arrow')); show($g('otm-ot-month-after'));
+            show($g('otm-ot-preview'));
+        } else {
+            $g('otm-ot-total').textContent=_otTotal+'h';
+            $g('otm-ot-month-total').textContent=_otMonthTotal+'h';
             show($g('otm-ot-preview'));
         }
 
@@ -356,20 +386,20 @@
         $g('otm-title').textContent='Chỉnh sửa yêu cầu tăng ca';
 
         hide($g('otm-date-display'));   show($g('otm-ot-date'));
-        hide($g('otm-time-display'));   show($g('otm-start-time'));
+        hide($g('otm-time-display'));   show($g('otm-start-time')); show($g('otm-end-time'));
+        hide($g('otm-type-display'));   show($g('otm-type-select')); show($g('otm-type-auto-note'));
         hide($g('otm-hours-display')); show($g('otm-hours'));
         hide($g('otm-desc-display'));  show($g('otm-description'));
         hide($g('otm-project-display')); show($g('otm-project-select'));
         hide($g('otm-task-display'));    show($g('otm-task-select'));
-        show($g('otm-type-auto-note'));
 
         $g('otm-ot-date').value   =ot.ot_date;
         $g('otm-start-time').value=ot.start_time;
         $g('otm-end-time').value  =ot.end_time;
+        $g('otm-type-select').value=ot.type||'';
         $g('otm-hours').value     =ot.hours;
         $g('otm-description').value=ot.description||'';
         _manualH=false;
-        _resetTypeBadge(ot.type);
 
         // Populate selects with data from API
         var projects=_data.projects||[];
@@ -391,9 +421,12 @@
 
         // OT preview
         $g('otm-ot-total').textContent=_otTotal+'h';
+        $g('otm-ot-month-total').textContent=_otMonthTotal+'h';
         hide($g('otm-ot-arrow')); hide($g('otm-ot-after'));
+        hide($g('otm-ot-month-arrow')); hide($g('otm-ot-month-after'));
         show($g('otm-ot-preview'));
         _updateOtPreview();
+        _checkHoursWarning();
 
         $g('otm-btn-area').innerHTML=_btn('Bỏ','closeOtModal()','secondary')+_btn('Lưu','_otmSubmit()','primary');
     }
@@ -406,7 +439,9 @@
         .then(function(r){ return r.json(); })
         .then(function(d){
             _otTotal=parseFloat(d.ot_year_total)||0;
+            _otMonthTotal=parseFloat(d.ot_month_total)||0;
             $g('otm-ot-total').textContent=_otTotal+'h';
+            $g('otm-ot-month-total').textContent=_otMonthTotal+'h';
             show($g('otm-ot-preview'));
             _updateOtPreview();
         });
@@ -417,23 +452,20 @@
         if(h>0){
             $g('otm-ot-after').textContent=(_otTotal+h).toFixed(2).replace(/\.?0+$/,'')+'h';
             show($g('otm-ot-arrow')); show($g('otm-ot-after'));
+            $g('otm-ot-month-after').textContent=(_otMonthTotal+h).toFixed(2).replace(/\.?0+$/,'')+'h';
+            show($g('otm-ot-month-arrow')); show($g('otm-ot-month-after'));
         } else {
             hide($g('otm-ot-arrow')); hide($g('otm-ot-after'));
+            hide($g('otm-ot-month-arrow')); hide($g('otm-ot-month-after'));
         }
     }
 
-    // ── Type badge ────────────────────────────────────────────────────
-
-    function _resetTypeBadge(type){
-        var badge=$g('otm-type-badge'); var hidden=$g('otm-type-hidden');
-        if(hidden) hidden.value=type||'OT x1.5';
-        if(!badge) return;
-        var cls='inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ';
-        if(type==='OT x3') cls+='bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
-        else if(type==='OT x2') cls+='bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
-        else cls+='bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
-        badge.className=cls; badge.textContent=type||'OT x1.5';
+    function _checkHoursWarning(){
+        var h=parseFloat($g('otm-hours')?.value)||0;
+        if(h>8) show($g('otm-hours-warning')); else hide($g('otm-hours-warning'));
     }
+
+    // ── OT type ───────────────────────────────────────────────────────
 
     function _getOtType(dateStr){
         if(!dateStr) return 'OT x1.5';
@@ -442,16 +474,35 @@
         return day===0?'OT x2':'OT x1.5';
     }
 
+    // ── Hours calculation (supports overnight rollover) ────────────────
+
+    function _toMins(t){ var p=t.split(':').map(Number); return p[0]*60+(p[1]||0); }
+
+    function _computeHours(s, e){
+        if(!s||!e) return 0;
+        var sm=_toMins(s); var em=_toMins(e);
+        if(em<=sm) em+=1440; // overnight: end time is on the next day
+        return (em-sm)/60;
+    }
+
+    function _calcHours(){
+        var s=$g('otm-start-time'); var e=$g('otm-end-time'); var h=$g('otm-hours');
+        if(_manualH||!s||!e||!s.value||!e.value||!h) return;
+        var hrs=_computeHours(s.value, e.value);
+        h.value=hrs.toFixed(2).replace(/\.?0+$/,'');
+        _updateOtPreview();
+        _checkHoursWarning();
+    }
+
     // ── Listeners ─────────────────────────────────────────────────────
 
     function _bindListeners(){
         if(_lBound) return; _lBound=true;
-        var d=$g('otm-ot-date'); var h=$g('otm-hours');
-        d?.addEventListener('change',function(){ _resetTypeBadge(_getOtType(d.value)); });
-        h?.addEventListener('input',function(){ _updateOtPreview(); });
+        var d=$g('otm-ot-date'); var s=$g('otm-start-time'); var e=$g('otm-end-time'); var h=$g('otm-hours');
+        d?.addEventListener('change',function(){ $g('otm-type-select').value=_getOtType(d.value); });
+        s?.addEventListener('change',_calcHours); e?.addEventListener('change',_calcHours);
+        h?.addEventListener('input',function(){ _manualH=true; _updateOtPreview(); _checkHoursWarning(); });
     }
-
-    function _toMins(t){ var p=t.split(':').map(Number); return p[0]*60+p[1]; }
 
     // ── TomSelect ─────────────────────────────────────────────────────
 

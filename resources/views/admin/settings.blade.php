@@ -11,6 +11,7 @@
         $tabs = [
             ['key' => 'company', 'label' => 'Company'],
             ['key' => 'policy',  'label' => 'Office Policy'],
+            ['key' => 'leave',   'label' => 'Leave Policies'],
         ];
     @endphp
 
@@ -201,6 +202,42 @@
                                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
                                         @error('lunch_break_end')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- ── Leave Policies ─────────────────────────── --}}
+                        <div x-show="activeTab === 'leave'" x-cloak>
+                            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-1">
+                                🗓️ Chính sách nghỉ phép
+                            </h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
+                                Cấu hình tích lũy và đặt lại số dư phép hàng năm cho toàn bộ nhân viên. Việc xử lý diễn ra tự động vào đầu mỗi tháng.
+                            </p>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg">
+                                <div>
+                                    <x-input-label value="Số giờ phép tăng mỗi tháng" />
+                                    <x-text-input name="leave_balance_monthly_increase" type="number" step="0.25" min="0"
+                                        class="w-full mt-1"
+                                        value="{{ old('leave_balance_monthly_increase', $settings['leave_balance_monthly_increase']) }}"
+                                        placeholder="VD: 8" />
+                                    <p class="text-xs text-gray-400 mt-1">Số giờ phép cộng thêm cho mỗi nhân viên vào đầu mỗi tháng. Để 0 để tắt.</p>
+                                    @error('leave_balance_monthly_increase')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                                </div>
+                                <div>
+                                    <x-input-label value="Tháng đặt lại số dư phép" />
+                                    <select name="leave_balance_reset_month"
+                                        class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                        <option value="">— Không đặt lại —</option>
+                                        @foreach(range(1, 12) as $m)
+                                            <option value="{{ $m }}" @selected((string) old('leave_balance_reset_month', $settings['leave_balance_reset_month']) === (string) $m)>
+                                                Tháng {{ $m }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <p class="text-xs text-gray-400 mt-1">Vào đầu tháng này mỗi năm, số dư phép của tất cả nhân viên sẽ được đặt lại về 0 trước khi cộng số giờ tăng hàng tháng.</p>
+                                    @error('leave_balance_reset_month')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                                 </div>
                             </div>
                         </div>

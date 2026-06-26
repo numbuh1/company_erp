@@ -495,9 +495,16 @@ class UserController extends Controller
             ->whereYear('start_at', now()->year)
             ->sum('hours');
 
+        $otMonthTotal = \App\Models\OvertimeRequest::where('user_id', $user->id)
+            ->where('status', 'approved')
+            ->whereYear('start_at', now()->year)
+            ->whereMonth('start_at', now()->month)
+            ->sum('hours');
+
         return response()->json([
-            'leave_balance' => $user->leave_balance,
-            'ot_year_total' => (float) $otYearTotal,
+            'leave_balance'  => $user->leave_balance,
+            'ot_year_total'  => (float) $otYearTotal,
+            'ot_month_total' => (float) $otMonthTotal,
         ]);
     }
 

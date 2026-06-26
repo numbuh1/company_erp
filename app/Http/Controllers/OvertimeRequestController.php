@@ -81,15 +81,13 @@ class OvertimeRequestController extends Controller
             'ot_date'     => 'required|date',
             'start_time'  => 'required|date_format:H:i',
             'end_time'    => 'required|date_format:H:i',
-            'hours'       => 'required|numeric|min:0.25',
+            'type'        => 'nullable|in:OT x1.5,OT x2,OT x3',
             'description' => 'nullable|string',
             'project_id'  => 'nullable|exists:projects,id',
             'task_id'     => 'nullable|exists:tasks,id',
         ]);
 
-        if ($this->_timeToMins($data['end_time']) <= $this->_timeToMins($data['start_time'])) {
-            return back()->withErrors(['end_time' => 'Giờ kết thúc phải sau giờ bắt đầu.'])->withInput();
-        }
+        [$start, $end, $hours] = $this->_resolveOtSpan($data['ot_date'], $data['start_time'], $data['end_time']);
 
         $user   = auth()->user();
         $userId = ($user->can('edit team ot') || $user->can('edit all ot'))
@@ -100,10 +98,10 @@ class OvertimeRequestController extends Controller
             'user_id'     => $userId,
             'project_id'  => $data['project_id'] ?: null,
             'task_id'     => $data['task_id']     ?: null,
-            'start_at'    => $data['ot_date'] . ' ' . $data['start_time'],
-            'end_at'      => $data['ot_date'] . ' ' . $data['end_time'],
-            'hours'       => $data['hours'],
-            'type'        => $this->_determineOtType($data['ot_date']),
+            'start_at'    => $start,
+            'end_at'      => $end,
+            'hours'       => $hours,
+            'type'        => $data['type'] ?: $this->_determineOtType($data['ot_date']),
             'description' => $data['description'] ?? null,
         ]);
         NotificationHelper::sendNewRequestNotification($otRequest, 'ot');
@@ -135,6 +133,12 @@ class OvertimeRequestController extends Controller
                 ->whereYear('start_at', now()->year)
                 ->sum('hours');
 
+            $otMonthTotal = OvertimeRequest::where('user_id', $overtimeRequest->user_id)
+                ->where('status', 'approved')
+                ->whereYear('start_at', now()->year)
+                ->whereMonth('start_at', now()->month)
+                ->sum('hours');
+
             ['projects' => $projects, 'tasks' => $tasks] = $this->_getProjectsAndTasksFor($overtimeRequest->user);
 
             return response()->json([
@@ -161,6 +165,7 @@ class OvertimeRequestController extends Controller
                     'end_at_text'  => $overtimeRequest->end_at->translatedFormat('D, d/m/y H:i'),
                 ],
                 'ot_year_total'  => (float) $otYearTotal,
+                'ot_month_total' => (float) $otMonthTotal,
                 'can_edit'       => $canEdit,
                 'can_approve'    => $canApprove,
                 'holiday_dates'  => $this->_holidayDateRange(),
@@ -214,24 +219,22 @@ class OvertimeRequestController extends Controller
             'ot_date'     => 'required|date',
             'start_time'  => 'required|date_format:H:i',
             'end_time'    => 'required|date_format:H:i',
-            'hours'       => 'required|numeric|min:0.25',
+            'type'        => 'nullable|in:OT x1.5,OT x2,OT x3',
             'description' => 'nullable|string',
             'project_id'  => 'nullable|exists:projects,id',
             'task_id'     => 'nullable|exists:tasks,id',
         ]);
 
-        if ($this->_timeToMins($data['end_time']) <= $this->_timeToMins($data['start_time'])) {
-            return back()->withErrors(['end_time' => 'Giờ kết thúc phải sau giờ bắt đầu.'])->withInput();
-        }
+        [$start, $end, $hours] = $this->_resolveOtSpan($data['ot_date'], $data['start_time'], $data['end_time']);
 
         $overtimeRequest->update([
             'user_id'     => $data['user_id'],
             'project_id'  => $data['project_id'] ?: null,
             'task_id'     => $data['task_id']     ?: null,
-            'start_at'    => $data['ot_date'] . ' ' . $data['start_time'],
-            'end_at'      => $data['ot_date'] . ' ' . $data['end_time'],
-            'hours'       => $data['hours'],
-            'type'        => $this->_determineOtType($data['ot_date']),
+            'start_at'    => $start,
+            'end_at'      => $end,
+            'hours'       => $hours,
+            'type'        => $data['type'] ?: $this->_determineOtType($data['ot_date']),
             'description' => $data['description'] ?? null,
         ]);
 
@@ -318,12 +321,19 @@ class OvertimeRequestController extends Controller
     }
 
     /**
-     * Convert "HH:MM" to total minutes.
+     * Resolve start/end Carbon instances and computed hours for an OT span.
+     * If end <= start, the OT is assumed to roll over into the next day (overnight shift).
      */
-    private function _timeToMins(string $time): int
+    private function _resolveOtSpan(string $date, string $startTime, string $endTime): array
     {
-        [$h, $m] = array_map('intval', explode(':', $time));
-        return $h * 60 + $m;
+        $start = Carbon::parse($date . ' ' . $startTime);
+        $end   = Carbon::parse($date . ' ' . $endTime);
+        if ($end->lessThanOrEqualTo($start)) {
+            $end->addDay();
+        }
+        $hours = round($start->diffInMinutes($end) / 60, 2);
+
+        return [$start, $end, $hours];
     }
 
     /**
