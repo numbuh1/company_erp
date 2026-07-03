@@ -14,57 +14,53 @@ class LeaveRequestsImport implements ToCollection, WithHeadings
     public int   $created = 0;
     public int   $skipped = 0;
     public array $errors  = [];
+    public array $rows    = [];
 
-    private const VALID_TYPES   = ['annual', 'sick', 'unpaid'];
+    private const VALID_TYPES    = ['annual', 'sick', 'unpaid'];
     private const VALID_STATUSES = ['pending', 'approved', 'rejected'];
 
     public function collection(Collection $rows): void
     {
         foreach ($rows as $i => $row) {
             $rowNum = $i + 2;
-            $row    = $row->toArray();
+            $data   = array_map('trim', $row->toArray());
 
-            $userRaw     = trim($row['user']         ?? '');
-            $type        = strtolower(trim($row['type']        ?? ''));
-            $startRaw    = trim($row['start_at']     ?? '');
-            $endRaw      = trim($row['end_at']       ?? '');
-            $hours       = trim($row['hours']        ?? '');
-            $description = trim($row['description']  ?? '') ?: null;
-            $status      = strtolower(trim($row['status'] ?? 'pending'));
-            $approverRaw = trim($row['approved_by']  ?? '');
-            $rejectReason= trim($row['reject_reason'] ?? '') ?: null;
+            $userRaw      = $data['user']          ?? '';
+            $type         = strtolower($data['type'] ?? '');
+            $startRaw     = $data['start_at']      ?? '';
+            $endRaw       = $data['end_at']        ?? '';
+            $hours        = $data['hours']         ?? '';
+            $description  = $data['description']   ?: null;
+            $status       = strtolower($data['status'] ?? 'pending');
+            $approverRaw  = $data['approved_by']   ?? '';
+            $rejectReason = $data['reject_reason'] ?: null;
 
             if (!$userRaw) {
-                $this->errors[] = "Row {$rowNum}: user is required.";
-                $this->skipped++;
+                $this->_skip($rowNum, "row {$rowNum}", 'user is required.');
                 continue;
             }
 
             $userId = $this->resolveUser($userRaw);
             if (!$userId) {
-                $this->errors[] = "Row {$rowNum}: user '{$userRaw}' not found.";
-                $this->skipped++;
+                $this->_skip($rowNum, $userRaw, "user '{$userRaw}' not found.");
                 continue;
             }
+            $userName = User::find($userId)?->name ?? $userRaw;
 
             if (!in_array($type, self::VALID_TYPES, true)) {
-                $this->errors[] = "Row {$rowNum}: type must be one of: " . implode(', ', self::VALID_TYPES) . ".";
-                $this->skipped++;
+                $this->_skip($rowNum, $userName, 'type must be: annual, sick, or unpaid.');
                 continue;
             }
 
             $startAt = $this->parseDate($startRaw);
             $endAt   = $this->parseDate($endRaw);
-
             if (!$startAt || !$endAt) {
-                $this->errors[] = "Row {$rowNum}: invalid start_at or end_at (use d/m/Y H:i).";
-                $this->skipped++;
+                $this->_skip($rowNum, $userName, 'invalid start_at or end_at (use d/m/Y H:i).');
                 continue;
             }
 
             if (!is_numeric($hours) || (float) $hours <= 0) {
-                $this->errors[] = "Row {$rowNum}: hours must be a positive number.";
-                $this->skipped++;
+                $this->_skip($rowNum, $userName, 'hours must be a positive number.');
                 continue;
             }
 
@@ -73,9 +69,10 @@ class LeaveRequestsImport implements ToCollection, WithHeadings
             }
 
             $approverId = $approverRaw !== '' ? $this->resolveUser($approverRaw) : null;
+            $approverName = $approverId ? (User::find($approverId)?->name ?? $approverRaw) : null;
 
             try {
-                LeaveRequest::create([
+                $fields = [
                     'user_id'       => $userId,
                     'type'          => $type,
                     'start_at'      => $startAt,
@@ -85,12 +82,27 @@ class LeaveRequestsImport implements ToCollection, WithHeadings
                     'status'        => $status,
                     'approved_by'   => $approverId,
                     'reject_reason' => $rejectReason,
-                ]);
+                ];
+                LeaveRequest::create($fields);
 
+                $this->rows[] = [
+                    'row'        => $rowNum,
+                    'action'     => 'created',
+                    'identifier' => $userName,
+                    'changes'    => [
+                        'user'         => $userName,
+                        'type'         => $type,
+                        'start_at'     => $startAt->format('d/m/Y H:i'),
+                        'end_at'       => $endAt->format('d/m/Y H:i'),
+                        'hours'        => (float) $hours,
+                        'status'       => $status,
+                        'approved_by'  => $approverName,
+                        'description'  => $description,
+                    ],
+                ];
                 $this->created++;
             } catch (\Throwable $e) {
-                $this->errors[] = "Row {$rowNum}: " . $e->getMessage();
-                $this->skipped++;
+                $this->_skip($rowNum, $userName, $e->getMessage());
             }
         }
     }
@@ -112,14 +124,20 @@ class LeaveRequestsImport implements ToCollection, WithHeadings
     {
         if ($val === '') return null;
         foreach (['d/m/Y H:i', 'd/m/Y H:i:s', 'Y-m-d H:i:s', 'Y-m-d H:i'] as $fmt) {
-            try {
-                return Carbon::createFromFormat($fmt, $val);
-            } catch (\Throwable) {}
+            try { return Carbon::createFromFormat($fmt, $val); } catch (\Throwable) {}
         }
-        try {
-            return Carbon::parse($val);
-        } catch (\Throwable) {
-            return null;
-        }
+        try { return Carbon::parse($val); } catch (\Throwable) { return null; }
+    }
+
+    private function _skip(int $rowNum, string $identifier, string $message): void
+    {
+        $this->errors[] = "Row {$rowNum}: {$message}";
+        $this->rows[]   = [
+            'row'        => $rowNum,
+            'action'     => 'skipped',
+            'identifier' => $identifier,
+            'error'      => $message,
+        ];
+        $this->skipped++;
     }
 }

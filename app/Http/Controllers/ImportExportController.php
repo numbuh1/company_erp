@@ -11,6 +11,7 @@ use App\Imports\LeaveRequestsImport;
 use App\Imports\OvertimeRequestsImport;
 use App\Imports\TeamsImport;
 use App\Imports\UsersImport;
+use App\Models\ImportLog;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -21,7 +22,12 @@ class ImportExportController extends Controller
     public function index()
     {
         if (!auth()->user()->can('module import_export')) abort(403);
-        return view('import-export.index');
+
+        $logs = ImportLog::with('user')
+            ->latest()
+            ->paginate(20);
+
+        return view('import-export.index', compact('logs'));
     }
 
     public function export(string $type)
@@ -45,8 +51,26 @@ class ImportExportController extends Controller
 
         [$headers, $sample] = match($type) {
             'users' => [
-                ['name', 'email', 'password', 'position', 'grade', 'leave_balance', 'roles'],
-                ['Nguyen Van A', 'vana@company.com', 'password123', 'Developer', 'Junior', '8', 'Staff|Manager'],
+                [
+                    'name', 'email', 'password',
+                    'full_name', 'contact_email', 'position', 'grade',
+                    'phone_number', 'citizen_id', 'tax_code', 'social_insurance_id',
+                    'home_address', 'birthday', 'contract_expiry',
+                    'probation_start_date', 'probation_end_date',
+                    'employment_status', 'is_active', 'wfh_without_approval',
+                    'leave_balance', 'salary', 'salary_type',
+                    'roles',
+                ],
+                [
+                    'Nguyen Van A', 'vana@company.com', 'password123',
+                    'Nguyễn Văn A', '', 'Developer', 'Junior',
+                    '0901234567', '', '', '',
+                    '', '01/01/1995', '31/12/2027',
+                    '01/03/2026', '31/05/2026',
+                    'active', '1', '0',
+                    '8', '', '',
+                    'Staff',
+                ],
             ],
             'teams' => [
                 ['name', 'leaders', 'members'],
@@ -90,13 +114,26 @@ class ImportExportController extends Controller
             return back()->with('import_error', 'Import failed: ' . $e->getMessage());
         }
 
-        $results = [
-            'created' => $import->created,
-            'updated' => $import->updated ?? 0,
-            'skipped' => $import->skipped,
-            'errors'  => $import->errors,
-        ];
+        // Persist the log
+        $log = ImportLog::create([
+            'user_id'       => auth()->id(),
+            'type'          => $type,
+            'filename'      => $request->file('file')->getClientOriginalName(),
+            'created_count' => $import->created,
+            'updated_count' => $import->updated ?? 0,
+            'skipped_count' => $import->skipped,
+            'rows'          => $import->rows,
+        ]);
 
-        return back()->with('import_results', $results)->with('import_type', $type);
+        return redirect()
+            ->route('import-export.log.show', $log)
+            ->with('import_just_done', true);
+    }
+
+    public function logShow(ImportLog $log)
+    {
+        if (!auth()->user()->can('module import_export')) abort(403);
+        $log->load('user');
+        return view('import-export.log-show', compact('log'));
     }
 }
