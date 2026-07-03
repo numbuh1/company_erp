@@ -7,10 +7,10 @@ use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\ToCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Spatie\Permission\Models\Role;
 
-class UsersImport implements ToCollection, WithHeadings
+class UsersImport implements ToCollection, WithHeadingRow
 {
     public int   $created = 0;
     public int   $updated = 0;
@@ -153,20 +153,6 @@ class UsersImport implements ToCollection, WithHeadings
                 $this->_skip($rowNum, $email, $e->getMessage());
             }
         }
-    }
-
-    public function headings(): array
-    {
-        return [
-            'name', 'email', 'password',
-            'full_name', 'contact_email', 'position', 'grade',
-            'phone_number', 'citizen_id', 'tax_code', 'social_insurance_id',
-            'home_address', 'birthday', 'contract_expiry',
-            'probation_start_date', 'probation_end_date',
-            'employment_status', 'is_active', 'wfh_without_approval',
-            'leave_balance', 'salary', 'salary_type',
-            'roles',
-        ];
     }
 
     private function _skip(int $rowNum, string $identifier, string $message): void

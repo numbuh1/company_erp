@@ -9,9 +9,9 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
-class OvertimeRequestsImport implements ToCollection, WithHeadings
+class OvertimeRequestsImport implements ToCollection, WithHeadingRow
 {
     public int   $created = 0;
     public int   $skipped = 0;
@@ -110,11 +110,6 @@ class OvertimeRequestsImport implements ToCollection, WithHeadings
                 $this->_skip($rowNum, $userName, $e->getMessage());
             }
         }
-    }
-
-    public function headings(): array
-    {
-        return ['user', 'type', 'start_at', 'end_at', 'hours', 'project', 'task', 'description', 'status', 'approved_by', 'reject_reason'];
     }
 
     private function resolveUser(string $val): ?int

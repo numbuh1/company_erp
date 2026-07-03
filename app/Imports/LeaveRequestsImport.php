@@ -7,9 +7,9 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
-class LeaveRequestsImport implements ToCollection, WithHeadings
+class LeaveRequestsImport implements ToCollection, WithHeadingRow
 {
     public int   $created = 0;
     public int   $skipped = 0;
@@ -95,11 +95,6 @@ class LeaveRequestsImport implements ToCollection, WithHeadings
                 $this->_skip($rowNum, $userName, $e->getMessage());
             }
         }
-    }
-
-    public function headings(): array
-    {
-        return ['user', 'type', 'start_at', 'end_at', 'hours', 'description', 'status', 'approved_by', 'reject_reason'];
     }
 
     private function resolveUser(string $val): ?int

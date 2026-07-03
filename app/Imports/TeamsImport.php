@@ -6,9 +6,9 @@ use App\Models\Team;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
-class TeamsImport implements ToCollection, WithHeadings
+class TeamsImport implements ToCollection, WithHeadingRow
 {
     public int   $created = 0;
     public int   $updated = 0;
@@ -120,11 +120,6 @@ class TeamsImport implements ToCollection, WithHeadings
                 $this->_skip($rowNum, $name, $e->getMessage());
             }
         }
-    }
-
-    public function headings(): array
-    {
-        return ['name', 'leaders', 'members'];
     }
 
     private function resolveUser(string $val): ?int
