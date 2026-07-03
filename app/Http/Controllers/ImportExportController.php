@@ -12,7 +12,10 @@ use App\Imports\OvertimeRequestsImport;
 use App\Imports\TeamsImport;
 use App\Imports\UsersImport;
 use App\Models\ImportLog;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ImportExportController extends Controller
@@ -91,15 +94,65 @@ class ImportExportController extends Controller
         return Excel::download(new ImportTemplateExport($headers, $sample), $filename);
     }
 
-    public function import(Request $request, string $type)
+    public function preview(Request $request, string $type): JsonResponse
     {
         if (!auth()->user()->can('module import_export')) abort(403);
-
         if (!in_array($type, self::TYPES, true)) abort(404);
 
         $request->validate([
             'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
         ]);
+
+        $ext      = $request->file('file')->getClientOriginalExtension();
+        $tempName = Str::uuid() . '.' . strtolower($ext);
+        $tempPath = $request->file('file')->storeAs('import_temp', $tempName);
+
+        $import = match($type) {
+            'users'          => new UsersImport(dryRun: true),
+            'teams'          => new TeamsImport(dryRun: true),
+            'leave-requests' => new LeaveRequestsImport(dryRun: true),
+            'ot-requests'    => new OvertimeRequestsImport(dryRun: true),
+        };
+
+        try {
+            Excel::import($import, Storage::path($tempPath));
+        } catch (\Throwable $e) {
+            Storage::delete($tempPath);
+            return response()->json(['error' => 'Không thể đọc file: ' . $e->getMessage()], 422);
+        }
+
+        return response()->json([
+            'temp_path'     => $tempPath,
+            'filename'      => $request->file('file')->getClientOriginalName(),
+            'created_count' => $import->created,
+            'updated_count' => $import->updated ?? 0,
+            'skipped_count' => $import->skipped,
+            'rows'          => $import->rows,
+        ]);
+    }
+
+    public function import(Request $request, string $type)
+    {
+        if (!auth()->user()->can('module import_export')) abort(403);
+        if (!in_array($type, self::TYPES, true)) abort(404);
+
+        $useTempFile = $request->filled('temp_path');
+
+        if ($useTempFile) {
+            $tempPath = $request->input('temp_path');
+            if (!preg_match('/^import_temp\/[a-f0-9\-]+\.(xlsx|xls|csv)$/i', $tempPath)) {
+                abort(422, 'Invalid temp_path.');
+            }
+            if (!Storage::exists($tempPath)) {
+                return back()->with('import_error', 'File tạm không tìm thấy. Vui lòng tải lại file và thử lại.');
+            }
+            $originalName = $request->input('filename', basename($tempPath));
+        } else {
+            $request->validate([
+                'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+            ]);
+            $originalName = $request->file('file')->getClientOriginalName();
+        }
 
         $import = match($type) {
             'users'          => new UsersImport,
@@ -109,16 +162,23 @@ class ImportExportController extends Controller
         };
 
         try {
-            Excel::import($import, $request->file('file'));
+            if ($useTempFile) {
+                Excel::import($import, Storage::path($tempPath));
+            } else {
+                Excel::import($import, $request->file('file'));
+            }
         } catch (\Throwable $e) {
-            return back()->with('import_error', 'Import failed: ' . $e->getMessage());
+            return back()->with('import_error', 'Import thất bại: ' . $e->getMessage());
         }
 
-        // Persist the log
+        if ($useTempFile) {
+            Storage::delete($tempPath);
+        }
+
         $log = ImportLog::create([
             'user_id'       => auth()->id(),
             'type'          => $type,
-            'filename'      => $request->file('file')->getClientOriginalName(),
+            'filename'      => $originalName,
             'created_count' => $import->created,
             'updated_count' => $import->updated ?? 0,
             'skipped_count' => $import->skipped,

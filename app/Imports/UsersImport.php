@@ -16,9 +16,8 @@ class UsersImport implements ToCollection, WithHeadings
     public int   $updated = 0;
     public int   $skipped = 0;
     public array $errors  = [];
-    public array $rows    = [];  // per-row log entries
+    public array $rows    = [];
 
-    /** Scalar columns directly writable; excludes password, roles, handled separately */
     private const SCALAR_COLUMNS = [
         'name', 'full_name', 'contact_email',
         'position', 'grade', 'phone_number',
@@ -33,6 +32,8 @@ class UsersImport implements ToCollection, WithHeadings
 
     private const BOOL_COLUMNS = ['is_active', 'wfh_without_approval'];
 
+    public function __construct(private bool $dryRun = false) {}
+
     public function collection(Collection $rows): void
     {
         foreach ($rows as $i => $row) {
@@ -42,7 +43,6 @@ class UsersImport implements ToCollection, WithHeadings
             $email = strtolower($data['email'] ?? '');
             $name  = $data['name'] ?? '';
 
-            // ── Validate required ──────────────────────────────
             if (!$name || !$email) {
                 $this->_skip($rowNum, $email ?: "row {$rowNum}", 'name and email are required.');
                 continue;
@@ -52,85 +52,66 @@ class UsersImport implements ToCollection, WithHeadings
                 continue;
             }
 
-            // ── Build scalar updates ───────────────────────────
-            $updates = [];
+            // Build scalar updates
+            $updates = ['name' => $name];
             foreach (self::SCALAR_COLUMNS as $col) {
-                if (($data[$col] ?? '') !== '') {
-                    $updates[$col] = $data[$col];
-                }
+                if (($data[$col] ?? '') !== '') $updates[$col] = $data[$col];
             }
-            // email always comes from the row (it's the lookup key)
-            $updates['name'] = $name;
-
-            // Dates
             foreach (self::DATE_COLUMNS as $col) {
                 if (($data[$col] ?? '') !== '') {
                     $parsed = $this->parseDate($data[$col]);
-                    if ($parsed) {
-                        $updates[$col] = $parsed->toDateString();
-                    }
+                    if ($parsed) $updates[$col] = $parsed->toDateString();
                 }
             }
-
-            // Booleans
             foreach (self::BOOL_COLUMNS as $col) {
                 if (($data[$col] ?? '') !== '') {
                     $updates[$col] = in_array(strtolower($data[$col]), ['1', 'true', 'yes'], true) ? 1 : 0;
                 }
             }
-
-            // leave_balance
             if (($data['leave_balance'] ?? '') !== '') {
                 $updates['leave_balance'] = (float) $data['leave_balance'];
             }
-
-            // salary
             if (($data['salary'] ?? '') !== '') {
                 $updates['salary']      = (float) $data['salary'];
                 $updates['salary_type'] = $data['salary_type'] ?? 'monthly';
             }
 
-            // Roles
-            $rolesRaw  = $data['roles'] ?? '';
-            $roleNames = $rolesRaw !== ''
-                ? array_filter(array_map('trim', explode('|', $rolesRaw)))
-                : [];
-            $validRoles = $roleNames
-                ? Role::whereIn('name', $roleNames)->pluck('name')->toArray()
-                : [];
-
-            // Password
+            $rolesRaw   = $data['roles'] ?? '';
+            $roleNames  = $rolesRaw !== '' ? array_filter(array_map('trim', explode('|', $rolesRaw))) : [];
+            $validRoles = $roleNames ? Role::whereIn('name', $roleNames)->pluck('name')->toArray() : [];
             $plainPassword = trim($data['password'] ?? '');
 
             try {
                 $existing = User::withTrashed()->where('email', $email)->first();
 
                 if ($existing) {
-                    // ── UPDATE ─────────────────────────────────
-                    $before = $existing->only(array_keys($updates));
-
-                    if ($plainPassword !== '') {
-                        $updates['password'] = bcrypt($plainPassword);
-                    }
-
-                    $existing->update($updates);
-
-                    // Roles diff
+                    // Compute diff without writing
+                    $before      = $existing->only(array_keys($updates));
                     $rolesBefore = $existing->roles->pluck('name')->sort()->values()->all();
-                    if (!empty($validRoles)) {
-                        $existing->syncRoles($validRoles);
-                        $existing->refresh();
+                    $rolesAfter  = !empty($validRoles)
+                        ? collect($validRoles)->sort()->values()->all()
+                        : $rolesBefore;
+
+                    if (!$this->dryRun) {
+                        if ($plainPassword !== '') $updates['password'] = bcrypt($plainPassword);
+                        $existing->update($updates);
+                        if (!empty($validRoles)) {
+                            $existing->syncRoles($validRoles);
+                            $existing->refresh();
+                        }
+                        $rolesAfter = $existing->roles->pluck('name')->sort()->values()->all();
                     }
-                    $rolesAfter = $existing->roles->pluck('name')->sort()->values()->all();
 
                     $diff = [];
                     foreach ($updates as $key => $newVal) {
                         if ($key === 'password') continue;
                         $oldVal = $before[$key] ?? null;
-                        // Cast both to string for comparison to handle type differences
                         if ((string) $oldVal !== (string) $newVal) {
                             $diff[$key] = ['from' => $oldVal, 'to' => $newVal];
                         }
+                    }
+                    if ($plainPassword !== '') {
+                        $diff['password'] = ['from' => '***', 'to' => '(set)'];
                     }
                     if ($rolesBefore !== $rolesAfter) {
                         $diff['roles'] = [
@@ -147,27 +128,24 @@ class UsersImport implements ToCollection, WithHeadings
                     ];
                     $this->updated++;
                 } else {
-                    // ── CREATE ─────────────────────────────────
-                    $password = $plainPassword ?: Str::random(12);
-                    $user = User::create(array_merge($updates, [
-                        'email'    => $email,
-                        'password' => bcrypt($password),
-                    ]));
-
-                    if (!empty($validRoles)) {
-                        $user->syncRoles($validRoles);
+                    if (!$this->dryRun) {
+                        $password = $plainPassword ?: Str::random(12);
+                        $user = User::create(array_merge($updates, [
+                            'email'    => $email,
+                            'password' => bcrypt($password),
+                        ]));
+                        if (!empty($validRoles)) $user->syncRoles($validRoles);
                     }
 
-                    // Log all non-null, non-password fields that were set
-                    $created = array_diff_key($updates, ['password' => true]);
-                    $created['email'] = $email;
-                    if (!empty($validRoles)) $created['roles'] = implode('|', $validRoles);
+                    $logged = array_diff_key($updates, ['password' => true]);
+                    $logged['email'] = $email;
+                    if (!empty($validRoles)) $logged['roles'] = implode('|', $validRoles);
 
                     $this->rows[] = [
                         'row'        => $rowNum,
                         'action'     => 'created',
                         'identifier' => $email,
-                        'changes'    => $created,
+                        'changes'    => $logged,
                     ];
                     $this->created++;
                 }
@@ -194,12 +172,7 @@ class UsersImport implements ToCollection, WithHeadings
     private function _skip(int $rowNum, string $identifier, string $message): void
     {
         $this->errors[] = "Row {$rowNum}: {$message}";
-        $this->rows[]   = [
-            'row'        => $rowNum,
-            'action'     => 'skipped',
-            'identifier' => $identifier,
-            'error'      => $message,
-        ];
+        $this->rows[]   = ['row' => $rowNum, 'action' => 'skipped', 'identifier' => $identifier, 'error' => $message];
         $this->skipped++;
     }
 

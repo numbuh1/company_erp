@@ -213,6 +213,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/data-transfer',                       [ImportExportController::class, 'index'])   ->name('import-export.index');
     Route::get('/data-transfer/export/{type}',         [ImportExportController::class, 'export'])  ->name('import-export.export');
     Route::get('/data-transfer/template/{type}',       [ImportExportController::class, 'template'])->name('import-export.template');
+    Route::post('/data-transfer/preview/{type}',       [ImportExportController::class, 'preview']) ->name('import-export.preview');
     Route::post('/data-transfer/import/{type}',        [ImportExportController::class, 'import'])  ->name('import-export.import');
     Route::get('/data-transfer/logs/{log}',            [ImportExportController::class, 'logShow']) ->name('import-export.log.show');
 

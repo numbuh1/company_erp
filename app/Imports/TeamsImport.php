@@ -16,6 +16,8 @@ class TeamsImport implements ToCollection, WithHeadings
     public array $errors  = [];
     public array $rows    = [];
 
+    public function __construct(private bool $dryRun = false) {}
+
     public function collection(Collection $rows): void
     {
         foreach ($rows as $i => $row) {
@@ -32,10 +34,17 @@ class TeamsImport implements ToCollection, WithHeadings
             }
 
             try {
-                $team  = Team::firstOrCreate(['name' => $name]);
-                $isNew = $team->wasRecentlyCreated;
+                // Read-only check: does the team already exist?
+                $existing = Team::where('name', $name)->first();
+                $isNew    = $existing === null;
 
-                // Build pivot data from members column first
+                if (!$this->dryRun) {
+                    $team = $existing ?? Team::create(['name' => $name]);
+                } else {
+                    $team = $existing; // may be null in dry-run create case
+                }
+
+                // Build pivot data
                 $pivot = [];
                 if ($membersRaw !== '') {
                     foreach (array_filter(array_map('trim', explode('|', $membersRaw))) as $entry) {
@@ -44,8 +53,6 @@ class TeamsImport implements ToCollection, WithHeadings
                         if ($uid) $pivot[$uid] = ['is_leader' => false];
                     }
                 }
-
-                // Override is_leader from leaders column
                 if ($leadersRaw !== '') {
                     foreach (array_filter(array_map('trim', explode('|', $leadersRaw))) as $entry) {
                         $entry = preg_replace('/\s*\(Leader\)\s*$/i', '', $entry);
@@ -54,16 +61,16 @@ class TeamsImport implements ToCollection, WithHeadings
                     }
                 }
 
-                // Capture member state before sync for diff
+                // Capture existing members for diff
                 $membersBefore = [];
-                if (!$isNew) {
+                if (!$isNew && $team) {
                     $team->load('users');
                     foreach ($team->users as $u) {
-                        $membersBefore[$u->id] = $u->pivot->is_leader;
+                        $membersBefore[$u->id] = (bool) $u->pivot->is_leader;
                     }
                 }
 
-                if (!empty($pivot)) {
+                if (!$this->dryRun && $team && !empty($pivot)) {
                     $team->users()->sync($pivot);
                 }
 
@@ -78,35 +85,29 @@ class TeamsImport implements ToCollection, WithHeadings
                         'row'        => $rowNum,
                         'action'     => 'created',
                         'identifier' => $name,
-                        'changes'    => [
-                            'name'    => $name,
-                            'members' => implode(', ', $memberNames),
-                        ],
+                        'changes'    => ['name' => $name, 'members' => implode(', ', $memberNames)],
                     ];
                     $this->created++;
                 } else {
                     $diff = [];
                     foreach ($pivot as $uid => $p) {
                         $wasLeader = $membersBefore[$uid] ?? null;
+                        $uname     = User::find($uid)?->name ?? "ID:{$uid}";
                         if ($wasLeader === null) {
-                            $uname = User::find($uid)?->name ?? "ID:{$uid}";
                             $diff["member:{$uid}"] = ['from' => null, 'to' => $uname . ($p['is_leader'] ? ' (Leader)' : '')];
-                        } elseif ((bool) $wasLeader !== $p['is_leader']) {
-                            $uname = User::find($uid)?->name ?? "ID:{$uid}";
+                        } elseif ($wasLeader !== $p['is_leader']) {
                             $diff["member:{$uid}"] = [
                                 'from' => $uname . ($wasLeader ? ' (Leader)' : ''),
                                 'to'   => $uname . ($p['is_leader'] ? ' (Leader)' : ''),
                             ];
                         }
                     }
-                    // Members removed (in before but not in new pivot)
                     foreach (array_keys($membersBefore) as $uid) {
                         if (!isset($pivot[$uid])) {
                             $uname = User::find($uid)?->name ?? "ID:{$uid}";
                             $diff["member:{$uid}"] = ['from' => $uname, 'to' => null];
                         }
                     }
-
                     $this->rows[] = [
                         'row'        => $rowNum,
                         'action'     => 'updated',
@@ -141,12 +142,7 @@ class TeamsImport implements ToCollection, WithHeadings
     private function _skip(int $rowNum, string $identifier, string $message): void
     {
         $this->errors[] = "Row {$rowNum}: {$message}";
-        $this->rows[]   = [
-            'row'        => $rowNum,
-            'action'     => 'skipped',
-            'identifier' => $identifier,
-            'error'      => $message,
-        ];
+        $this->rows[]   = ['row' => $rowNum, 'action' => 'skipped', 'identifier' => $identifier, 'error' => $message];
         $this->skipped++;
     }
 }

@@ -21,6 +21,8 @@ class OvertimeRequestsImport implements ToCollection, WithHeadings
     private const VALID_TYPES    = ['OT x1.5', 'OT x2', 'OT x3'];
     private const VALID_STATUSES = ['pending', 'approved', 'rejected'];
 
+    public function __construct(private bool $dryRun = false) {}
+
     public function collection(Collection $rows): void
     {
         foreach ($rows as $i => $row) {
@@ -39,63 +41,52 @@ class OvertimeRequestsImport implements ToCollection, WithHeadings
             $approverRaw  = $data['approved_by']   ?? '';
             $rejectReason = $data['reject_reason'] ?: null;
 
-            if (!$userRaw) {
-                $this->_skip($rowNum, "row {$rowNum}", 'user is required.');
-                continue;
-            }
+            if (!$userRaw) { $this->_skip($rowNum, "row {$rowNum}", 'user is required.'); continue; }
 
             $userId = $this->resolveUser($userRaw);
-            if (!$userId) {
-                $this->_skip($rowNum, $userRaw, "user '{$userRaw}' not found.");
-                continue;
-            }
+            if (!$userId) { $this->_skip($rowNum, $userRaw, "user '{$userRaw}' not found."); continue; }
             $userName = User::find($userId)?->name ?? $userRaw;
 
             $startAt = $this->parseDate($startRaw);
             $endAt   = $this->parseDate($endRaw);
-            if (!$startAt || !$endAt) {
-                $this->_skip($rowNum, $userName, 'invalid start_at or end_at (use d/m/Y H:i).');
-                continue;
-            }
+            if (!$startAt || !$endAt) { $this->_skip($rowNum, $userName, 'invalid start_at or end_at.'); continue; }
 
             if (!is_numeric($hours) || (float) $hours <= 0) {
-                $this->_skip($rowNum, $userName, 'hours must be a positive number.');
-                continue;
+                $this->_skip($rowNum, $userName, 'hours must be a positive number.'); continue;
             }
 
             // Normalize type
             $typeNorm = null;
             if ($type !== '') {
-                $matched = array_filter(self::VALID_TYPES, fn ($t) => strcasecmp($t, $type) === 0);
+                $matched  = array_filter(self::VALID_TYPES, fn ($t) => strcasecmp($t, $type) === 0);
                 $typeNorm = $matched ? reset($matched) : null;
             }
 
-            if (!in_array($status, self::VALID_STATUSES, true)) {
-                $status = 'pending';
-            }
+            if (!in_array($status, self::VALID_STATUSES, true)) $status = 'pending';
 
-            $approverId  = $approverRaw !== '' ? $this->resolveUser($approverRaw) : null;
-            $projectId   = $projectRaw  !== '' ? $this->resolveProject($projectRaw) : null;
-            $taskId      = $taskRaw     !== '' ? $this->resolveTask($taskRaw) : null;
-
+            $approverId   = $approverRaw !== '' ? $this->resolveUser($approverRaw) : null;
+            $projectId    = $projectRaw  !== '' ? $this->resolveProject($projectRaw) : null;
+            $taskId       = $taskRaw     !== '' ? $this->resolveTask($taskRaw) : null;
             $approverName = $approverId ? (User::find($approverId)?->name ?? $approverRaw) : null;
             $projectName  = $projectId  ? (Project::find($projectId)?->name ?? $projectRaw) : null;
             $taskName     = $taskId     ? (Task::find($taskId)?->name ?? $taskRaw) : null;
 
             try {
-                OvertimeRequest::create([
-                    'user_id'       => $userId,
-                    'type'          => $typeNorm,
-                    'start_at'      => $startAt,
-                    'end_at'        => $endAt,
-                    'hours'         => (float) $hours,
-                    'project_id'    => $projectId,
-                    'task_id'       => $taskId,
-                    'description'   => $description,
-                    'status'        => $status,
-                    'approved_by'   => $approverId,
-                    'reject_reason' => $rejectReason,
-                ]);
+                if (!$this->dryRun) {
+                    OvertimeRequest::create([
+                        'user_id'       => $userId,
+                        'type'          => $typeNorm,
+                        'start_at'      => $startAt,
+                        'end_at'        => $endAt,
+                        'hours'         => (float) $hours,
+                        'project_id'    => $projectId,
+                        'task_id'       => $taskId,
+                        'description'   => $description,
+                        'status'        => $status,
+                        'approved_by'   => $approverId,
+                        'reject_reason' => $rejectReason,
+                    ]);
+                }
 
                 $this->rows[] = [
                     'row'        => $rowNum,
@@ -162,12 +153,7 @@ class OvertimeRequestsImport implements ToCollection, WithHeadings
     private function _skip(int $rowNum, string $identifier, string $message): void
     {
         $this->errors[] = "Row {$rowNum}: {$message}";
-        $this->rows[]   = [
-            'row'        => $rowNum,
-            'action'     => 'skipped',
-            'identifier' => $identifier,
-            'error'      => $message,
-        ];
+        $this->rows[]   = ['row' => $rowNum, 'action' => 'skipped', 'identifier' => $identifier, 'error' => $message];
         $this->skipped++;
     }
 }

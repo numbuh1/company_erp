@@ -3,15 +3,13 @@
         <h2 class="text-xl font-semibold">Nhập / Xuất dữ liệu</h2>
     </x-slot>
 
+    @push('styles')
+    <style>[x-cloak] { display: none !important; }</style>
+    @endpush
+
     <div class="py-6">
         <div class="max-w-5xl mx-auto sm:px-6 lg:px-8 space-y-6"
-             x-data="{
-                 tab: '{{ session('import_just_done') ? 'history' : 'export' }}',
-                 importType: 'users',
-                 templateUrl() {
-                     return '{{ url('data-transfer/template') }}/' + this.importType;
-                 }
-             }">
+             x-data="importPageData('{{ session('import_just_done') ? 'history' : 'export' }}')">
 
             {{-- Tab bar --}}
             <div class="flex gap-1 border-b border-gray-200 dark:border-gray-700">
@@ -24,7 +22,7 @@
                     class="px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors">
                     Xuất dữ liệu
                 </button>
-                <button type="button" @click="tab = 'import'"
+                <button type="button" @click="tab = 'import'; cancelPreview()"
                     :class="tab === 'import' ? '{{ $tabOn }}' : '{{ $tabOff }}'"
                     class="px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors">
                     Nhập dữ liệu
@@ -98,17 +96,20 @@
             {{-- ═══════════ IMPORT TAB ═══════════ --}}
             <div x-show="tab === 'import'" x-cloak>
 
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6">
-                    <form method="POST"
-                          :action="'{{ url('data-transfer/import') }}/' + importType"
-                          enctype="multipart/form-data"
-                          class="space-y-5">
-                        @csrf
+                {{-- Error banner --}}
+                <div x-show="previewError" x-cloak class="mb-4 rounded-lg border border-red-300 bg-red-50 dark:bg-red-900/20 p-4">
+                    <p class="text-sm text-red-700 dark:text-red-400" x-text="previewError"></p>
+                </div>
+
+                {{-- ── STEP: File selection (idle + loading) ── --}}
+                <div x-show="importStep !== 'preview'">
+
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 space-y-5">
 
                         {{-- Type selector --}}
                         <div>
                             <x-input-label value="Loại dữ liệu" />
-                            <select x-model="importType"
+                            <select x-model="importType" @change="cancelPreview()"
                                     class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
                                 <option value="users">Người dùng</option>
                                 <option value="teams">Nhóm</option>
@@ -171,43 +172,180 @@
                             </template>
                         </div>
 
-                        {{-- File upload --}}
+                        {{-- File input --}}
                         <div>
                             <x-input-label value="File (.xlsx, .xls, .csv)" />
-                            <input type="file" name="file" accept=".xlsx,.xls,.csv"
+                            <input type="file" id="importFile" accept=".xlsx,.xls,.csv"
                                    class="mt-1 block w-full text-sm text-gray-700 dark:text-gray-300
                                           file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0
                                           file:text-sm file:font-medium
                                           file:bg-indigo-50 file:text-indigo-700
                                           dark:file:bg-indigo-900/30 dark:file:text-indigo-300
                                           hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900/50 cursor-pointer">
-                            @error('file')
-                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                            @enderror
                         </div>
 
+                        {{-- Preview button --}}
                         <div class="flex items-center gap-3 pt-1">
-                            <button type="submit"
-                                    class="inline-flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                                </svg>
-                                Bắt đầu nhập
+                            <button type="button" @click="doPreview()" :disabled="importStep === 'loading'"
+                                    class="inline-flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                                <template x-if="importStep === 'loading'">
+                                    <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                    </svg>
+                                </template>
+                                <template x-if="importStep !== 'loading'">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                </template>
+                                <span x-text="importStep === 'loading' ? 'Đang phân tích...' : 'Xem trước thay đổi'"></span>
                             </button>
-                            <p class="text-xs text-gray-400">Tối đa 10 MB. Sau khi nhập sẽ chuyển sang trang chi tiết kết quả.</p>
+                            <p class="text-xs text-gray-400">Tối đa 10 MB. File sẽ được phân tích trước khi nhập thật.</p>
                         </div>
-                    </form>
+                    </div>
+
+                    <div class="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-xs text-amber-700 dark:text-amber-300 space-y-1">
+                        <p class="font-semibold">Lưu ý khi nhập dữ liệu:</p>
+                        <ul class="list-disc list-inside space-y-0.5">
+                            <li>Hàng đầu tiên phải là tên cột (header). Hàng in nghiêng màu vàng trong file mẫu là ví dụ — xoá trước khi nhập thật.</li>
+                            <li>Người dùng: khớp theo email → cập nhật nếu đã tồn tại, tạo mới nếu chưa có.</li>
+                            <li>Nhóm: khớp theo tên → cập nhật thành viên nếu đã tồn tại, tạo mới nếu chưa có.</li>
+                            <li>Yêu cầu nghỉ phép / OT: luôn tạo mới, không kiểm tra trùng.</li>
+                            <li>Nhấn "Xem trước thay đổi" để xem dữ liệu sẽ được nhập trước khi xác nhận.</li>
+                        </ul>
+                    </div>
                 </div>
 
-                <div class="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-xs text-amber-700 dark:text-amber-300 space-y-1">
-                    <p class="font-semibold">Lưu ý khi nhập dữ liệu:</p>
-                    <ul class="list-disc list-inside space-y-0.5">
-                        <li>Hàng đầu tiên phải là tên cột (header). Hàng in nghiêng màu vàng trong file mẫu là ví dụ — xoá trước khi nhập thật.</li>
-                        <li>Người dùng: khớp theo email → cập nhật nếu đã tồn tại, tạo mới nếu chưa có.</li>
-                        <li>Nhóm: khớp theo tên → cập nhật thành viên nếu đã tồn tại, tạo mới nếu chưa có.</li>
-                        <li>Yêu cầu nghỉ phép / OT: luôn tạo mới, không kiểm tra trùng.</li>
-                        <li>Không có thao tác hoàn tác — hãy kiểm tra file mẫu trước khi nhập thật.</li>
-                    </ul>
+                {{-- ── STEP: Preview ── --}}
+                <div x-show="importStep === 'preview'" x-cloak class="space-y-4">
+
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="font-semibold text-gray-800 dark:text-gray-100">Xem trước kết quả nhập</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                                File: <span class="font-mono" x-text="previewData?.filename ?? ''"></span>
+                            </p>
+                        </div>
+                    </div>
+
+                    {{-- Summary cards --}}
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl ring-1 ring-green-200 dark:ring-green-800 p-4 text-center">
+                            <p class="text-2xl font-bold text-green-600 dark:text-green-400"
+                               x-text="'+' + (previewData?.created_count ?? 0)"></p>
+                            <p class="text-xs text-gray-500 mt-0.5">Sẽ tạo mới</p>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 rounded-xl ring-1 ring-blue-200 dark:ring-blue-800 p-4 text-center">
+                            <p class="text-2xl font-bold text-blue-600 dark:text-blue-400"
+                               x-text="previewData?.updated_count ?? 0"></p>
+                            <p class="text-xs text-gray-500 mt-0.5">Sẽ cập nhật</p>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 rounded-xl ring-1 p-4 text-center"
+                             :class="(previewData?.skipped_count ?? 0) > 0 ? 'ring-amber-200 dark:ring-amber-800' : 'ring-gray-200 dark:ring-gray-700'">
+                            <p class="text-2xl font-bold" x-text="previewData?.skipped_count ?? 0"
+                               :class="(previewData?.skipped_count ?? 0) > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400'"></p>
+                            <p class="text-xs text-gray-500 mt-0.5">Sẽ bỏ qua</p>
+                        </div>
+                    </div>
+
+                    {{-- Filter buttons --}}
+                    <div class="flex flex-wrap gap-2" x-show="(previewData?.rows?.length ?? 0) > 0">
+                        <button type="button" @click="previewFilter = 'all'"
+                                :class="previewFilter === 'all'
+                                    ? 'ring-2 ring-offset-1 ring-gray-400 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200'
+                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'"
+                                class="px-3 py-1 text-xs font-medium rounded-full transition-all">
+                            Tất cả (<span x-text="previewData?.rows?.length ?? 0"></span>)
+                        </button>
+                        <button type="button" x-show="(previewData?.created_count ?? 0) > 0"
+                                @click="previewFilter = 'created'"
+                                :class="previewFilter === 'created'
+                                    ? 'ring-2 ring-offset-1 ring-green-400 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
+                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'"
+                                class="px-3 py-1 text-xs font-medium rounded-full transition-all">
+                            Tạo mới (<span x-text="previewData?.created_count ?? 0"></span>)
+                        </button>
+                        <button type="button" x-show="(previewData?.updated_count ?? 0) > 0"
+                                @click="previewFilter = 'updated'"
+                                :class="previewFilter === 'updated'
+                                    ? 'ring-2 ring-offset-1 ring-blue-400 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
+                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'"
+                                class="px-3 py-1 text-xs font-medium rounded-full transition-all">
+                            Cập nhật (<span x-text="previewData?.updated_count ?? 0"></span>)
+                        </button>
+                        <button type="button" x-show="(previewData?.skipped_count ?? 0) > 0"
+                                @click="previewFilter = 'skipped'"
+                                :class="previewFilter === 'skipped'
+                                    ? 'ring-2 ring-offset-1 ring-amber-400 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'
+                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'"
+                                class="px-3 py-1 text-xs font-medium rounded-full transition-all">
+                            Bỏ qua (<span x-text="previewData?.skipped_count ?? 0"></span>)
+                        </button>
+                    </div>
+
+                    {{-- Rows table --}}
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden">
+                        <div x-show="(previewData?.rows?.length ?? 0) === 0"
+                             class="p-8 text-center text-gray-400 dark:text-gray-500 text-sm">
+                            File không có dữ liệu hợp lệ.
+                        </div>
+                        <template x-if="(previewData?.rows?.length ?? 0) > 0">
+                            <table class="min-w-full divide-y divide-gray-100 dark:divide-gray-700 text-sm">
+                                <thead class="bg-gray-50 dark:bg-gray-700/50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-16">Dòng</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-24">Hành động</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bản ghi</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Chi tiết thay đổi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                                    <template x-for="row in filteredRows" :key="row.row">
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors align-top">
+                                            <td class="px-4 py-3 text-gray-400 font-mono text-xs" x-text="row.row"></td>
+                                            <td class="px-4 py-3">
+                                                <span class="text-xs font-medium px-2 py-0.5 rounded"
+                                                      :class="actionBadge(row.action)"
+                                                      x-text="actionLabel(row.action)"></span>
+                                            </td>
+                                            <td class="px-4 py-3 text-gray-700 dark:text-gray-300 font-medium" x-text="row.identifier"></td>
+                                            <td class="px-4 py-3" x-html="renderChanges(row)"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </template>
+                    </div>
+
+                    {{-- Action bar --}}
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <form :action="confirmUrl()" method="POST" class="inline">
+                            @csrf
+                            <input type="hidden" name="temp_path" :value="previewData?.temp_path">
+                            <input type="hidden" name="filename" :value="previewData?.filename">
+                            <button type="submit"
+                                    class="inline-flex items-center gap-2 px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                Xác nhận nhập dữ liệu
+                            </button>
+                        </form>
+                        <button type="button" @click="cancelPreview()"
+                                class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                            </svg>
+                            Chọn file khác
+                        </button>
+                    </div>
+
+                    <div class="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-xs text-blue-700 dark:text-blue-300">
+                        Đây là xem trước — dữ liệu <strong>chưa được thay đổi</strong>. Nhấn "Xác nhận nhập dữ liệu" để thực hiện các thay đổi trên.
+                    </div>
+
                 </div>
             </div>
 
@@ -300,4 +438,139 @@
 
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+    function importPageData(initialTab) {
+        return {
+            tab: initialTab,
+            importType: 'users',
+            importStep: 'idle',
+            previewData: null,
+            previewError: null,
+            previewFilter: 'all',
+
+            templateUrl() {
+                return '{{ url('data-transfer/template') }}/' + this.importType;
+            },
+
+            previewUrl() {
+                return '{{ url('data-transfer/preview') }}/' + this.importType;
+            },
+
+            confirmUrl() {
+                return '{{ url('data-transfer/import') }}/' + this.importType;
+            },
+
+            cancelPreview() {
+                this.importStep = 'idle';
+                this.previewData = null;
+                this.previewError = null;
+                const fi = document.getElementById('importFile');
+                if (fi) fi.value = '';
+            },
+
+            async doPreview() {
+                const fileInput = document.getElementById('importFile');
+                if (!fileInput || !fileInput.files.length) {
+                    this.previewError = 'Vui lòng chọn file trước.';
+                    return;
+                }
+                this.importStep = 'loading';
+                this.previewError = null;
+
+                const fd = new FormData();
+                fd.append('file', fileInput.files[0]);
+                fd.append('_token', document.querySelector('meta[name=csrf-token]').content);
+
+                try {
+                    const res = await fetch(this.previewUrl(), { method: 'POST', body: fd });
+                    const json = await res.json();
+                    if (!res.ok) {
+                        if (json.errors) {
+                            this.previewError = Object.values(json.errors).flat().join(' ');
+                        } else {
+                            this.previewError = json.error || json.message || 'Có lỗi xảy ra khi phân tích file.';
+                        }
+                        this.importStep = 'idle';
+                        return;
+                    }
+                    this.previewData = json;
+                    this.previewFilter = 'all';
+                    this.importStep = 'preview';
+                } catch (e) {
+                    this.previewError = 'Không thể kết nối máy chủ. Vui lòng thử lại.';
+                    this.importStep = 'idle';
+                }
+            },
+
+            get filteredRows() {
+                if (!this.previewData) return [];
+                if (this.previewFilter === 'all') return this.previewData.rows;
+                return this.previewData.rows.filter(r => r.action === this.previewFilter);
+            },
+
+            actionLabel(action) {
+                return ({ created: 'Tạo mới', updated: 'Cập nhật', skipped: 'Bỏ qua' })[action] || action;
+            },
+
+            actionBadge(action) {
+                return ({
+                    created: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+                    updated: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+                    skipped: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+                })[action] || 'bg-gray-100 text-gray-600';
+            },
+
+            renderChanges(row) {
+                const esc = s => {
+                    const d = document.createElement('div');
+                    d.appendChild(document.createTextNode(s == null ? '' : String(s)));
+                    return d.innerHTML;
+                };
+
+                if (row.action === 'skipped') {
+                    return '<span class="text-xs text-amber-600 dark:text-amber-400">' + esc(row.error) + '</span>';
+                }
+
+                if (row.action === 'created') {
+                    const chips = Object.entries(row.changes || {})
+                        .filter(([, v]) => v !== null && v !== '')
+                        .map(([k, v]) =>
+                            '<span class="inline-flex items-center gap-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded">' +
+                            '<span class="font-medium text-gray-500 dark:text-gray-400">' + esc(k) + ':</span> ' + esc(v) + '</span>'
+                        ).join('');
+                    return '<div class="flex flex-wrap gap-1.5">' + chips + '</div>';
+                }
+
+                if (row.action === 'updated') {
+                    const changes = row.changes || {};
+                    if (!Object.keys(changes).length) {
+                        return '<span class="text-xs text-gray-400">Không có thay đổi</span>';
+                    }
+                    const items = Object.entries(changes).map(([k, v]) => {
+                        if (v && typeof v === 'object' && 'from' in v) {
+                            return '<div class="flex items-start gap-1.5 text-xs">' +
+                                '<span class="font-mono font-medium text-gray-500 dark:text-gray-400 shrink-0">' + esc(k) + ':</span>' +
+                                '<span class="text-red-500 dark:text-red-400 line-through">' + (v.from !== null ? esc(String(v.from)) : 'trống') + '</span>' +
+                                '<svg class="w-3 h-3 text-gray-400 shrink-0 mt-px" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                                    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>' +
+                                '</svg>' +
+                                '<span class="text-green-600 dark:text-green-400">' + (v.to !== null ? esc(String(v.to)) : 'trống') + '</span>' +
+                                '</div>';
+                        }
+                        return '<div class="flex items-start gap-1.5 text-xs">' +
+                            '<span class="font-mono font-medium text-gray-500 dark:text-gray-400 shrink-0">' + esc(k) + ':</span> ' +
+                            '<span class="text-gray-600 dark:text-gray-300">' + esc(String(v)) + '</span>' +
+                            '</div>';
+                    }).join('');
+                    return '<div class="space-y-1">' + items + '</div>';
+                }
+
+                return '';
+            },
+        };
+    }
+    </script>
+    @endpush
 </x-app-layout>
