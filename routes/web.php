@@ -23,6 +23,7 @@ use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\PublicHolidayController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\PendingApprovalsController;
+use App\Http\Controllers\ImportExportController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -207,6 +208,12 @@ Route::middleware('auth')->group(function () {
             [RecruitmentApplicantController::class, 'notifyBulkAdded'])
             ->name('applicants.notify-bulk');
     });
+
+    // Import / Export
+    Route::get('/data-transfer',                  [ImportExportController::class, 'index'])   ->name('import-export.index');
+    Route::get('/data-transfer/export/{type}',    [ImportExportController::class, 'export'])  ->name('import-export.export');
+    Route::get('/data-transfer/template/{type}',  [ImportExportController::class, 'template'])->name('import-export.template');
+    Route::post('/data-transfer/import/{type}',   [ImportExportController::class, 'import'])  ->name('import-export.import');
 
     // Holidays
     Route::resource('admin/public-holidays', PublicHolidayController::class)

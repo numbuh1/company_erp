@@ -341,5 +341,16 @@ class PermissionSeeder extends Seeder
                 ['display_name' => $label, 'parent_id' => $calendar_parent->id]
             );
         }
+
+        // IMPORT / EXPORT
+        $import_export_parent = Permission::updateOrCreate(
+            ['name' => 'import_export'],
+            ['display_name' => 'Import / Export', 'parent_id' => null]
+        );
+
+        Permission::firstOrCreate(
+            ['name' => 'module import_export'],
+            ['display_name' => 'Enable Import / Export', 'parent_id' => $import_export_parent->id]
+        );
     }
 }
