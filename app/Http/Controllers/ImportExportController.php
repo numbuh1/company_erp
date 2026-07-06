@@ -11,6 +11,7 @@ use App\Imports\LeaveRequestsImport;
 use App\Imports\OvertimeRequestsImport;
 use App\Imports\TeamsImport;
 use App\Imports\UsersImport;
+use App\Jobs\ProcessImport;
 use App\Models\ImportLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -151,43 +152,55 @@ class ImportExportController extends Controller
             $request->validate([
                 'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
             ]);
+            $ext          = $request->file('file')->getClientOriginalExtension();
+            $tempName     = Str::uuid() . '.' . strtolower($ext);
+            $tempPath     = $request->file('file')->storeAs('import_temp', $tempName);
             $originalName = $request->file('file')->getClientOriginalName();
-        }
-
-        $import = match($type) {
-            'users'          => new UsersImport,
-            'teams'          => new TeamsImport,
-            'leave-requests' => new LeaveRequestsImport,
-            'ot-requests'    => new OvertimeRequestsImport,
-        };
-
-        try {
-            if ($useTempFile) {
-                Excel::import($import, Storage::path($tempPath));
-            } else {
-                Excel::import($import, $request->file('file'));
-            }
-        } catch (\Throwable $e) {
-            return back()->with('import_error', 'Import thất bại: ' . $e->getMessage());
-        }
-
-        if ($useTempFile) {
-            Storage::delete($tempPath);
         }
 
         $log = ImportLog::create([
             'user_id'       => auth()->id(),
             'type'          => $type,
             'filename'      => $originalName,
-            'created_count' => $import->created,
-            'updated_count' => $import->updated ?? 0,
-            'skipped_count' => $import->skipped,
-            'rows'          => $import->rows,
+            'status'        => 'in_progress',
+            'created_count' => 0,
+            'updated_count' => 0,
+            'skipped_count' => 0,
+            'rows'          => [],
         ]);
 
-        return redirect()
-            ->route('import-export.log.show', $log)
-            ->with('import_just_done', true);
+        ProcessImport::dispatch($log->id, $type, $tempPath);
+
+        return redirect()->route('import-export.progress', $log);
+    }
+
+    public function progressPage(ImportLog $log)
+    {
+        if (!auth()->user()->can('module import_export')) abort(403);
+        $log->load('user');
+        return view('import-export.progress', compact('log'));
+    }
+
+    public function progressData(ImportLog $log): JsonResponse
+    {
+        if (!auth()->user()->can('module import_export')) abort(403);
+
+        $log->refresh();
+        $total     = $log->total_rows     ?? 0;
+        $processed = $log->processed_rows ?? 0;
+
+        return response()->json([
+            'status'         => $log->status,
+            'total_rows'     => $total,
+            'processed_rows' => $processed,
+            'percentage'     => $total > 0
+                ? min(100, (int) ($processed / $total * 100))
+                : ($log->status === 'done' ? 100 : 0),
+            'created_count'  => $log->created_count,
+            'updated_count'  => $log->updated_count,
+            'skipped_count'  => $log->skipped_count,
+            'error_message'  => $log->error_message,
+        ]);
     }
 
     public function logShow(ImportLog $log)

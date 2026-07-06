@@ -214,8 +214,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/data-transfer/export/{type}',         [ImportExportController::class, 'export'])  ->name('import-export.export');
     Route::get('/data-transfer/template/{type}',       [ImportExportController::class, 'template'])->name('import-export.template');
     Route::post('/data-transfer/preview/{type}',       [ImportExportController::class, 'preview']) ->name('import-export.preview');
-    Route::post('/data-transfer/import/{type}',        [ImportExportController::class, 'import'])  ->name('import-export.import');
-    Route::get('/data-transfer/logs/{log}',            [ImportExportController::class, 'logShow']) ->name('import-export.log.show');
+    Route::post('/data-transfer/import/{type}',        [ImportExportController::class, 'import'])       ->name('import-export.import');
+    Route::get('/data-transfer/logs/{log}/progress',      [ImportExportController::class, 'progressPage']) ->name('import-export.progress');
+    Route::get('/data-transfer/logs/{log}/progress-data', [ImportExportController::class, 'progressData']) ->name('import-export.progress-data');
+    Route::get('/data-transfer/logs/{log}',            [ImportExportController::class, 'logShow'])      ->name('import-export.log.show');
 
     // Holidays
     Route::resource('admin/public-holidays', PublicHolidayController::class)

@@ -2,7 +2,12 @@
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <div>
-                <h2 class="text-xl font-semibold">Chi tiết lần nhập</h2>
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xl font-semibold">Chi tiết lần nhập</h2>
+                    <span class="text-xs font-medium px-2 py-0.5 rounded {{ $log->statusBadge() }}">
+                        {{ $log->statusLabel() }}
+                    </span>
+                </div>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                     {{ $log->typeLabel() }} &mdash; {{ $log->created_at->format('d/m/Y H:i') }}
                     &mdash; bởi {{ $log->user?->name ?? '—' }}
@@ -24,6 +29,24 @@
     <div class="py-6">
         <div class="max-w-5xl mx-auto sm:px-6 lg:px-8 space-y-6"
              x-data="{ filter: 'all' }">
+
+            {{-- ── Error banner (status = error) ──────────────── --}}
+            @if($log->status === 'error')
+            <div class="rounded-xl border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 p-4 flex gap-3">
+                <svg class="w-5 h-5 text-red-500 dark:text-red-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div>
+                    <p class="text-sm font-semibold text-red-700 dark:text-red-300">Import thất bại</p>
+                    @if($log->error_message)
+                        <p class="mt-1 text-xs text-red-600 dark:text-red-400 font-mono break-all">{{ $log->error_message }}</p>
+                    @endif
+                    <p class="mt-1.5 text-xs text-red-500 dark:text-red-500">
+                        Các dòng bên dưới là dữ liệu đã được xử lý trước khi xảy ra lỗi (nếu có).
+                    </p>
+                </div>
+            </div>
+            @endif
 
             {{-- ── Summary cards ─────────────────────────────── --}}
             <div class="grid grid-cols-3 gap-4">

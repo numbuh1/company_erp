@@ -235,18 +235,18 @@
                         <div class="bg-white dark:bg-gray-800 rounded-xl ring-1 ring-green-200 dark:ring-green-800 p-4 text-center">
                             <p class="text-2xl font-bold text-green-600 dark:text-green-400"
                                x-text="'+' + (previewData?.created_count ?? 0)"></p>
-                            <p class="text-xs text-gray-500 mt-0.5">Sẽ tạo mới</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Tạo mới</p>
                         </div>
                         <div class="bg-white dark:bg-gray-800 rounded-xl ring-1 ring-blue-200 dark:ring-blue-800 p-4 text-center">
                             <p class="text-2xl font-bold text-blue-600 dark:text-blue-400"
                                x-text="previewData?.updated_count ?? 0"></p>
-                            <p class="text-xs text-gray-500 mt-0.5">Sẽ cập nhật</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Cập nhật</p>
                         </div>
                         <div class="bg-white dark:bg-gray-800 rounded-xl ring-1 p-4 text-center"
                              :class="(previewData?.skipped_count ?? 0) > 0 ? 'ring-amber-200 dark:ring-amber-800' : 'ring-gray-200 dark:ring-gray-700'">
                             <p class="text-2xl font-bold" x-text="previewData?.skipped_count ?? 0"
                                :class="(previewData?.skipped_count ?? 0) > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400'"></p>
-                            <p class="text-xs text-gray-500 mt-0.5">Sẽ bỏ qua</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Bỏ qua</p>
                         </div>
                     </div>
 
@@ -297,7 +297,7 @@
                                     <tr>
                                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-16">Dòng</th>
                                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-24">Hành động</th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bản ghi</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dữ liệu</th>
                                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Chi tiết thay đổi</th>
                                     </tr>
                                 </thead>
@@ -362,6 +362,7 @@
                                 <tr>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Thời gian</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Loại</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Trạng thái</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">File</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Người nhập</th>
                                     <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wide">Tạo mới</th>
@@ -388,6 +389,11 @@
                                         @endphp
                                         <span class="text-xs font-medium px-2 py-0.5 rounded {{ $badge }}">
                                             {{ $log->typeLabel() }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="text-xs font-medium px-2 py-0.5 rounded {{ $log->statusBadge() }}">
+                                            {{ $log->statusLabel() }}
                                         </span>
                                     </td>
                                     <td class="px-4 py-3 text-gray-500 dark:text-gray-400 max-w-[160px] truncate" title="{{ $log->filename }}">
