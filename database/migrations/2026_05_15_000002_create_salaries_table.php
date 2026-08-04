@@ -34,7 +34,7 @@ return new class extends Migration
         // Migrate existing salary data from users table
         DB::statement("
             INSERT INTO salaries (user_id, salary, salary_type, created_at, updated_at)
-            SELECT id, salary, salary_type, NOW(), NOW()
+            SELECT id, salary, salary_type, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
             FROM users
             WHERE salary IS NOT NULL
         ");
