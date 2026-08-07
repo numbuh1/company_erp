@@ -615,7 +615,7 @@
                             Giờ vào <span class="text-red-500">*</span>
                         </label>
                         <div class="flex items-center gap-3">
-                            <input type="time" id="checkin-time" name="check_in_time"
+                            <input type="time" id="checkin-time" name="check_in_time" lang="en-GB"
                                    x-model="editCheckIn" required
                                    class="block border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 rounded-md shadow-sm text-sm px-3 py-1.5 focus:ring-indigo-500 focus:border-indigo-500">
                             <div class="flex gap-3 shrink-0">
@@ -640,7 +640,7 @@
                             <span class="text-xs font-normal text-gray-400">(tùy chọn)</span>
                         </label>
                         <div class="flex items-center gap-3">
-                            <input type="time" id="checkout-time" name="check_out_time"
+                            <input type="time" id="checkout-time" name="check_out_time" lang="en-GB"
                                    x-model="editCheckOut"
                                    class="block border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 rounded-md shadow-sm text-sm px-3 py-1.5 focus:ring-indigo-500 focus:border-indigo-500">
                             <div class="flex gap-3 shrink-0">

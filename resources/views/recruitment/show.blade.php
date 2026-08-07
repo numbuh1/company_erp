@@ -1,3 +1,37 @@
+@push('styles')
+    <style>
+        /* Always show the horizontal scrollbar on the Kanban board so it's
+           clear the columns can be scrolled, even when content fits. */
+        .kanban-scroll {
+            overflow-x: scroll;
+            scrollbar-width: thin;
+        }
+        .kanban-scroll::-webkit-scrollbar {
+            height: 10px;
+        }
+        .kanban-scroll::-webkit-scrollbar-track {
+            background: rgb(243 244 246);
+            border-radius: 9999px;
+        }
+        .kanban-scroll::-webkit-scrollbar-thumb {
+            background-color: rgb(203 213 225);
+            border-radius: 9999px;
+        }
+        .kanban-scroll::-webkit-scrollbar-thumb:hover {
+            background-color: rgb(148 163 184);
+        }
+        .dark .kanban-scroll::-webkit-scrollbar-track {
+            background: rgb(31 41 55);
+        }
+        .dark .kanban-scroll::-webkit-scrollbar-thumb {
+            background-color: rgb(75 85 99);
+        }
+        .dark .kanban-scroll::-webkit-scrollbar-thumb:hover {
+            background-color: rgb(107 114 128);
+        }
+    </style>
+@endpush
+
 <x-app-layout>
     @php
         $posStatusColor = fn($s) => match($s) {
@@ -34,7 +68,7 @@
 
     <div class="py-8" x-data="{ recruitView: localStorage.getItem('recruitView_{{ $recruitmentPosition->id }}') || 'list' }"
          x-init="$watch('recruitView', v => localStorage.setItem('recruitView_{{ $recruitmentPosition->id }}', v))">
-        <div class="max-w-7xl mx-auto space-y-6">
+        <div class="max-w-8xl mx-auto space-y-6">
 
             @if(session('success'))
                 <div class="p-3 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-sm">{{ session('success') }}</div>
@@ -108,16 +142,18 @@
                             </div>
                         @endif
 
-                        @if($recruitmentPosition->salary_min || $recruitmentPosition->salary_max)
-                            <div>
-                                <p class="text-xs text-gray-400 mb-0.5">Khoảng lương</p>
-                                <p class="text-sm text-gray-700 dark:text-gray-300">
-                                    {{ $recruitmentPosition->salary_min ? number_format($recruitmentPosition->salary_min) : '—' }}
-                                    –
-                                    {{ $recruitmentPosition->salary_max ? number_format($recruitmentPosition->salary_max) : '—' }}
-                                </p>
-                            </div>
-                        @endif
+                        @can('view recruitment salary')
+                            @if($recruitmentPosition->salary_min || $recruitmentPosition->salary_max)
+                                <div>
+                                    <p class="text-xs text-gray-400 mb-0.5">Khoảng lương</p>
+                                    <p class="text-sm text-gray-700 dark:text-gray-300">
+                                        {{ $recruitmentPosition->salary_min ? number_format($recruitmentPosition->salary_min) : '—' }}
+                                        –
+                                        {{ $recruitmentPosition->salary_max ? number_format($recruitmentPosition->salary_max) : '—' }}
+                                    </p>
+                                </div>
+                            @endif
+                        @endcan
 
                         @if($recruitmentPosition->tags->isNotEmpty())
                             <div>
@@ -179,10 +215,10 @@
                             </button>
                         </div>
                         @if($canEdit)
-                            <a href="{{ route('recruitment.applicants.create', $recruitmentPosition) }}"
+                            <button type="button" onclick="openApplicantCreateModal()"
                                 class="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition">
                                 + Tạo Ứng Viên
-                            </a>
+                            </button>
                         @endif
                     </div>
                 </div>
@@ -239,9 +275,11 @@
                                             @endif
                                         </div>
                                         <div class="flex-1 space-y-1 mt-1 sm:mt-0">
-                                            @if($applicant->salary_expectation)
-                                                <div>💰 {{ number_format($applicant->salary_expectation) }}</div>
-                                            @endif
+                                            @can('view recruitment salary')
+                                                @if($applicant->salary_expectation)
+                                                    <div>💰 {{ number_format($applicant->salary_expectation) }}</div>
+                                                @endif
+                                            @endcan
                                             @if($applicant->available_date)
                                                 <div>📅 Available {{ $applicant->available_date->format('d/m/Y') }}</div>
                                             @endif
@@ -325,11 +363,11 @@
                                         <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Đặt lịch phỏng vấn</span>
                                     </button>
 
-                                    <a href="{{ route('recruitment.applicants.edit', [$recruitmentPosition, $applicant]) }}" title="Chỉnh sửa"
+                                    <button type="button" onclick="openApplicantEditModal({{ $applicant->id }})" title="Chỉnh sửa"
                                         class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-yellow-600 hover:border-yellow-400 bg-white dark:bg-gray-700 transition">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                         <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Chỉnh sửa</span>
-                                    </a>
+                                    </button>
 
                                     @if($canEdit)
                                         <form method="POST"
@@ -354,14 +392,17 @@
 
                 {{-- ── KANBAN VIEW ───────────────────────────────────────────── --}}
                 <div x-show="recruitView === 'kanban'" x-cloak class="p-4">
-                    <div class="overflow-x-auto pb-2">
+                    <div class="kanban-scroll pb-2">
                         <div class="flex gap-3" style="min-width: max-content;">
                             @php
-                                $kanbanCols = \App\Models\RecruitmentApplicant::kanbanCols();
+                                $kanbanCols = $recruitmentPosition->allStatuses();
                             @endphp
 
-                            @foreach($kanbanCols as $status => $col)
-                                @php $colApplicants = $recruitmentPosition->applicants->where('status', $status)->values(); @endphp
+                            @foreach($kanbanCols as $status => $label)
+                                @php
+                                    $colApplicants = $recruitmentPosition->applicants->where('status', $status)->values();
+                                    $col = \App\Models\RecruitmentApplicant::kanbanColConfig($status);
+                                @endphp
                                 <div class="kanban-col w-60 shrink-0 flex flex-col rounded-xl bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700"
                                      data-status="{{ $status }}"
                                      ondragover="kanbanDragOver(event)"
@@ -369,10 +410,15 @@
                                      ondrop="kanbanDrop(event)">
 
                                     {{-- Column Header --}}
-                                    <div class="px-3 py-2.5 rounded-t-xl {{ $col['header'] }} flex items-center justify-between shrink-0">
+                                    <div class="px-3 py-2.5 rounded-t-xl {{ $col['header'] }} flex items-center justify-between shrink-0 {{ $canEdit ? 'cursor-move' : '' }}"
+                                         @if($canEdit)
+                                            draggable="true"
+                                            ondragstart="kanbanColDragStart(event)"
+                                            ondragend="kanbanColDragEnd(event)"
+                                         @endif>
                                         <div class="flex items-center gap-2">
                                             <span class="w-2 h-2 rounded-full {{ $col['dot'] }} shrink-0"></span>
-                                            <span class="text-xs font-semibold">{{ \App\Models\RecruitmentApplicant::statusLabel($status) }}</span>
+                                            <span class="text-xs font-semibold">{{ $label }}</span>
                                         </div>
                                         <span class="kanban-col-count text-xs font-medium opacity-60 tabular-nums">{{ $colApplicants->count() }}</span>
                                     </div>
@@ -391,11 +437,46 @@
 
                                                 <div class="flex items-start justify-between gap-1 mb-1.5">
                                                     <span class="font-medium text-sm text-gray-800 dark:text-gray-100 leading-tight">{{ $applicant->name }}</span>
-                                                    @if($applicant->evaluation > 0)
-                                                        <span class="text-amber-400 text-xs shrink-0 leading-none pt-0.5">
-                                                            @for($i = 1; $i <= 3; $i++){{ $i <= $applicant->evaluation ? '★' : '☆' }}@endfor
-                                                        </span>
-                                                    @endif
+                                                    <div class="flex items-center gap-1 shrink-0">
+                                                        @if($applicant->evaluation > 0)
+                                                            <span class="text-amber-400 text-xs leading-none pt-0.5">
+                                                                @for($i = 1; $i <= 3; $i++){{ $i <= $applicant->evaluation ? '★' : '☆' }}@endfor
+                                                            </span>
+                                                        @endif
+                                                        @if($canEdit)
+                                                            <div class="relative" x-data="{
+                                                                    open: false,
+                                                                    menuStyle: '',
+                                                                    toggleMenu() {
+                                                                        if (this.open) { this.open = false; return; }
+                                                                        const rect = this.$refs.kebabBtn.getBoundingClientRect();
+                                                                        this.menuStyle = `top: ${rect.bottom + 4}px; left: ${Math.max(rect.right - 112, 4)}px;`;
+                                                                        this.open = true;
+                                                                    }
+                                                                }"
+                                                                @scroll.window.capture="open = false">
+                                                                <button type="button" x-ref="kebabBtn" @click.stop="toggleMenu()"
+                                                                    class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 -m-1 p-1 rounded">
+                                                                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                                                                        <path d="M12 6a2 2 0 100-4 2 2 0 000 4zM12 14a2 2 0 100-4 2 2 0 000 4zM12 22a2 2 0 100-4 2 2 0 000 4z"/>
+                                                                    </svg>
+                                                                </button>
+                                                                <template x-teleport="body">
+                                                                    <div x-show="open" x-cloak :style="menuStyle" @click.stop @click.outside="open = false"
+                                                                        class="fixed w-28 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 overflow-hidden text-xs">
+                                                                        <a href="{{ $applicantUrl }}"
+                                                                            class="block px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                                                            Xem
+                                                                        </a>
+                                                                        <button type="button" onclick="deleteKanbanApplicant(event, {{ $applicant->id }})"
+                                                                            class="block w-full text-left px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
+                                                                            Xóa
+                                                                        </button>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        @endif
+                                                    </div>
                                                 </div>
 
                                                 @if($applicant->tags->isNotEmpty())
@@ -413,9 +494,14 @@
                                                     @if($applicant->email)
                                                         <div class="truncate">✉ {{ $applicant->email }}</div>
                                                     @endif
-                                                    @if($applicant->salary_expectation)
-                                                        <div>💰 {{ number_format($applicant->salary_expectation) }}</div>
+                                                    @if($applicant->phone)
+                                                        <div class="truncate">📞 {{ $applicant->phone }}</div>
                                                     @endif
+                                                    @can('view recruitment salary')
+                                                        @if($applicant->salary_expectation)
+                                                            <div>💰 {{ number_format($applicant->salary_expectation) }}</div>
+                                                        @endif
+                                                    @endcan
                                                 </div>
 
                                                 @if($applicant->events->isNotEmpty())
@@ -432,6 +518,35 @@
                                     </div>
                                 </div>
                             @endforeach
+
+                            @if($canEdit)
+                                <div class="kanban-col w-60 shrink-0 flex flex-col">
+                                    <div id="add-status-display" class="rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 p-3 flex items-center justify-center h-12">
+                                        <button type="button" onclick="openAddStatusForm()"
+                                            class="text-sm text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition flex items-center gap-1.5">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                            </svg>
+                                            Thêm trạng thái
+                                        </button>
+                                    </div>
+                                    <div id="add-status-form" class="hidden rounded-xl border border-gray-300 dark:border-gray-600 p-3 space-y-2 bg-gray-50 dark:bg-gray-900/50">
+                                        <input type="text" id="add-status-input" maxlength="100" placeholder="Tên trạng thái"
+                                            class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
+                                        <p id="add-status-error" class="hidden text-xs text-red-600 dark:text-red-400"></p>
+                                        <div class="flex items-center gap-2">
+                                            <button type="button" onclick="submitAddStatus()"
+                                                class="px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition">
+                                                Thêm
+                                            </button>
+                                            <button type="button" onclick="cancelAddStatus()"
+                                                class="px-3 py-1.5 text-xs text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                                                Hủy
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -442,82 +557,17 @@
     </div>
 
     <x-event-modal />
+    <x-recruitment-applicant-modal :position="$recruitmentPosition" />
 
     @push('scripts')
     <script>
-    (function () {
-        let _dragging = null;
-
-        window.kanbanDragStart = function (e) {
-            _dragging = e.currentTarget;
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', _dragging.dataset.applicantId);
-            requestAnimationFrame(() => _dragging.classList.add('opacity-40', 'scale-95'));
-        };
-
-        window.kanbanDragOver = function (e) {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            e.currentTarget.classList.add('ring-2', 'ring-indigo-400', 'dark:ring-indigo-500');
-        };
-
-        window.kanbanDragLeave = function (e) {
-            if (!e.currentTarget.contains(e.relatedTarget)) {
-                e.currentTarget.classList.remove('ring-2', 'ring-indigo-400', 'dark:ring-indigo-500');
-            }
-        };
-
-        window.kanbanDrop = async function (e) {
-            e.preventDefault();
-            const col = e.currentTarget;
-            col.classList.remove('ring-2', 'ring-indigo-400', 'dark:ring-indigo-500');
-            if (!_dragging) return;
-
-            _dragging.classList.remove('opacity-40', 'scale-95');
-            const newStatus    = col.dataset.status;
-            const applicantId  = _dragging.dataset.applicantId;
-            const cardsArea    = col.querySelector('.kanban-cards');
-
-            // Move card in DOM
-            cardsArea.appendChild(_dragging);
-
-            // Update all column count badges
-            document.querySelectorAll('.kanban-col').forEach(c => {
-                c.querySelector('.kanban-col-count').textContent =
-                    c.querySelectorAll('.kanban-card').length;
-            });
-
-            _dragging = null;
-
-            // Persist via AJAX
-            try {
-                const resp = await fetch(
-                    `/recruitment/{{ $recruitmentPosition->id }}/applicants/${applicantId}/status`,
-                    {
-                        method: 'PATCH',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                        },
-                        body: JSON.stringify({ status: newStatus }),
-                    }
-                );
-                if (!resp.ok) throw new Error('Server error ' + resp.status);
-            } catch (err) {
-                console.error('Kanban status update failed', err);
-            }
-        };
-
-        // Click card → navigate to applicant show page
-        document.addEventListener('click', function (e) {
-            const card = e.target.closest('.kanban-card');
-            if (!card) return;
-            // Don't navigate if user was dragging
-            if (card.classList.contains('opacity-40')) return;
-            window.location.href = card.dataset.applicantUrl;
-        });
-    })();
+        window.recruitmentBaseUrl          = @js(route('recruitment.show', $recruitmentPosition));
+        window.recruitmentStoreUrl         = @js(route('recruitment.applicants.store', $recruitmentPosition));
+        window.recruitmentAddStatusUrl     = @js(route('recruitment.applicants.statuses.add', $recruitmentPosition));
+        window.recruitmentReorderStatusesUrl = @js(route('recruitment.applicants.statuses.reorder', $recruitmentPosition));
+        window.recruitmentNotifyBulkUrl    = @js(route('recruitment.applicants.notify-bulk', $recruitmentPosition));
+        window.recruitmentStatusLabels     = @js($kanbanCols);
+        window.recruitmentCanEdit          = @js($canEdit);
     </script>
     @endpush
 

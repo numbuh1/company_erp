@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\OvertimeRequest;
 use App\Models\Project;
+use App\Models\PublicHoliday;
 use App\Models\Task;
 use App\Models\User;
 use App\Helper\Helper;
 use App\Helper\NotificationHelper;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class OvertimeRequestController extends Controller
@@ -63,10 +65,11 @@ class OvertimeRequestController extends Controller
             $query->where('id', $user->id);
         }
 
-        $users = $query->get();
+        $users        = $query->get();
         ['projects' => $projects, 'tasks' => $tasks] = $this->_getProjectsAndTasksFor($user);
+        $holidayDates = $this->_holidayDateRange();
 
-        return view('overtime_requests.form', compact('users', 'projects', 'tasks'));
+        return view('overtime_requests.form', compact('users', 'projects', 'tasks', 'holidayDates'));
     }
 
     /**
@@ -74,26 +77,38 @@ class OvertimeRequestController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'start_at'    => 'required|date',
-            'end_at'      => 'required|date|after_or_equal:start_at',
-            'hours'       => 'required|numeric|min:0',
-            'type'        => 'required|string',
+        $data = $request->validate([
+            'ot_date'     => 'required|date',
+            'start_time'  => 'required|date_format:H:i',
+            'end_time'    => 'required|date_format:H:i',
+            'type'        => 'nullable|in:OT x1.5,OT x2,OT x3',
             'description' => 'nullable|string',
             'project_id'  => 'nullable|exists:projects,id',
             'task_id'     => 'nullable|exists:tasks,id',
         ]);
 
-        $user = auth()->user();
-        if (!$user->can('edit team ot') && !$user->can('edit all ot')) {
-            $request->merge(['user_id' => $user->id]);
-        }
+        [$start, $end, $hours] = $this->_resolveOtSpan($data['ot_date'], $data['start_time'], $data['end_time']);
 
-        $otRequest = OvertimeRequest::create($request->only([
-            'user_id', 'project_id', 'task_id',
-            'start_at', 'end_at', 'hours', 'type', 'description',
-        ]));
+        $user   = auth()->user();
+        $userId = ($user->can('edit team ot') || $user->can('edit all ot'))
+            ? ($request->user_id ?: $user->id)
+            : $user->id;
+
+        $otRequest = OvertimeRequest::create([
+            'user_id'     => $userId,
+            'project_id'  => $data['project_id'] ?: null,
+            'task_id'     => $data['task_id']     ?: null,
+            'start_at'    => $start,
+            'end_at'      => $end,
+            'hours'       => $hours,
+            'type'        => $data['type'] ?: $this->_determineOtType($data['ot_date']),
+            'description' => $data['description'] ?? null,
+        ]);
         NotificationHelper::sendNewRequestNotification($otRequest, 'ot');
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'id' => $otRequest->id]);
+        }
 
         return redirect()->route('requests.index', ['type' => 'ot'])->with('success', 'Tạo yêu cầu tăng ca thành công.');
     }
@@ -101,17 +116,71 @@ class OvertimeRequestController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(OvertimeRequest $overtimeRequest)
+    public function show(Request $request, OvertimeRequest $overtimeRequest)
     {
         Helper::authorizeRequest('view all ot', 'view team ot', $overtimeRequest);
-        $overtimeRequest->load('project', 'task');
+        $overtimeRequest->load('user', 'approver', 'project', 'task');
+
+        if ($request->expectsJson()) {
+            $user      = auth()->user();
+            $canEdit   = ($user->can('edit all ot') || $user->can('edit team ot') || ($user->can('edit own ot') && $overtimeRequest->user_id === $user->id))
+                && !in_array($overtimeRequest->status, ['approved', 'rejected']);
+            $canApprove = ($user->can('approve all ot') || $user->can('approve team ot'))
+                && $overtimeRequest->status === 'pending';
+
+            $otYearTotal = OvertimeRequest::where('user_id', $overtimeRequest->user_id)
+                ->where('status', 'approved')
+                ->whereYear('start_at', now()->year)
+                ->sum('hours');
+
+            $otMonthTotal = OvertimeRequest::where('user_id', $overtimeRequest->user_id)
+                ->where('status', 'approved')
+                ->whereYear('start_at', now()->year)
+                ->whereMonth('start_at', now()->month)
+                ->sum('hours');
+
+            ['projects' => $projects, 'tasks' => $tasks] = $this->_getProjectsAndTasksFor($overtimeRequest->user);
+
+            return response()->json([
+                'ot' => [
+                    'id'           => $overtimeRequest->id,
+                    'user_id'      => $overtimeRequest->user_id,
+                    'user_name'    => $overtimeRequest->user->name,
+                    'type'         => $overtimeRequest->type,
+                    'status'       => $overtimeRequest->status,
+                    'hours'        => $overtimeRequest->hours,
+                    'description'  => $overtimeRequest->description,
+                    'reject_reason'=> $overtimeRequest->reject_reason,
+                    'approver_name'=> $overtimeRequest->approver?->name,
+                    'ot_date'      => $overtimeRequest->start_at->format('Y-m-d'),
+                    'start_time'   => $overtimeRequest->start_at->format('H:i'),
+                    'end_time'     => $overtimeRequest->end_at->format('H:i'),
+                    'project_id'   => $overtimeRequest->project_id,
+                    'task_id'      => $overtimeRequest->task_id,
+                    'project_name' => $overtimeRequest->project?->name,
+                    'project_code' => $overtimeRequest->project?->project_code,
+                    'task_name'    => $overtimeRequest->task?->name,
+                    'task_code'    => $overtimeRequest->task?->task_code,
+                    'start_at_text'=> $overtimeRequest->start_at->translatedFormat('D, d/m/y H:i'),
+                    'end_at_text'  => $overtimeRequest->end_at->translatedFormat('D, d/m/y H:i'),
+                ],
+                'ot_year_total'  => (float) $otYearTotal,
+                'ot_month_total' => (float) $otMonthTotal,
+                'can_edit'       => $canEdit,
+                'can_approve'    => $canApprove,
+                'holiday_dates'  => $this->_holidayDateRange(),
+                'projects'       => $projects->map(fn($p) => ['id' => $p->id, 'text' => $p->project_code . ' · ' . $p->name]),
+                'tasks'          => $tasks->map(fn($t) => ['id' => $t->id, 'text' => $t->task_code . ' · ' . $t->name, 'project_id' => $t->project_id]),
+            ]);
+        }
 
         return view('overtime_requests.form', [
-            'ot'       => $overtimeRequest,
-            'readonly' => true,
-            'users'    => collect([$overtimeRequest->user]),
-            'projects' => collect(),
-            'tasks'    => collect(),
+            'ot'           => $overtimeRequest,
+            'readonly'     => true,
+            'users'        => collect([$overtimeRequest->user]),
+            'projects'     => collect(),
+            'tasks'        => collect(),
+            'holidayDates' => [],
         ]);
     }
 
@@ -130,10 +199,11 @@ class OvertimeRequestController extends Controller
         ['projects' => $projects, 'tasks' => $tasks] = $this->_getProjectsAndTasksFor($overtimeRequest->user);
 
         return view('overtime_requests.form', [
-            'ot'       => $overtimeRequest,
-            'users'    => collect([$overtimeRequest->user]),
-            'projects' => $projects,
-            'tasks'    => $tasks,
+            'ot'           => $overtimeRequest,
+            'users'        => collect([$overtimeRequest->user]),
+            'projects'     => $projects,
+            'tasks'        => $tasks,
+            'holidayDates' => $this->_holidayDateRange(),
         ]);
     }
 
@@ -146,16 +216,31 @@ class OvertimeRequestController extends Controller
 
         $data = $request->validate([
             'user_id'     => 'required|exists:users,id',
-            'type'        => 'required|string',
-            'start_at'    => 'required|date',
-            'end_at'      => 'required|date|after:start_at',
-            'hours'       => 'required|numeric|min:0',
+            'ot_date'     => 'required|date',
+            'start_time'  => 'required|date_format:H:i',
+            'end_time'    => 'required|date_format:H:i',
+            'type'        => 'nullable|in:OT x1.5,OT x2,OT x3',
             'description' => 'nullable|string',
             'project_id'  => 'nullable|exists:projects,id',
             'task_id'     => 'nullable|exists:tasks,id',
         ]);
 
-        $overtimeRequest->update($data);
+        [$start, $end, $hours] = $this->_resolveOtSpan($data['ot_date'], $data['start_time'], $data['end_time']);
+
+        $overtimeRequest->update([
+            'user_id'     => $data['user_id'],
+            'project_id'  => $data['project_id'] ?: null,
+            'task_id'     => $data['task_id']     ?: null,
+            'start_at'    => $start,
+            'end_at'      => $end,
+            'hours'       => $hours,
+            'type'        => $data['type'] ?: $this->_determineOtType($data['ot_date']),
+            'description' => $data['description'] ?? null,
+        ]);
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true]);
+        }
 
         return redirect()->route('requests.index', ['type' => 'ot'])->with('success', 'Cập nhật yêu cầu tăng ca thành công.');
     }
@@ -191,6 +276,10 @@ class OvertimeRequestController extends Controller
 
         NotificationHelper::sendRequestApprovalNotification($overtimeRequest, 'ot');
 
+        if (request()->expectsJson()) {
+            return response()->json(['success' => true]);
+        }
+
         return back()->with('success', 'OT request approved.');
     }
 
@@ -212,7 +301,50 @@ class OvertimeRequestController extends Controller
 
         NotificationHelper::sendRequestApprovalNotification($overtimeRequest, 'ot');
 
+        if (request()->expectsJson()) {
+            return response()->json(['success' => true]);
+        }
+
         return back()->with('success', 'OT request rejected.');
+    }
+
+    /**
+     * Determine OT type based on date: holiday → x3, Sunday → x2, else → x1.5
+     */
+    private function _determineOtType(string $date): string
+    {
+        $carbon   = Carbon::parse($date);
+        $holidays = PublicHoliday::getHolidayDates($carbon->copy(), $carbon->copy());
+        if (!empty($holidays)) return 'OT x3';
+        if ($carbon->isSunday()) return 'OT x2';
+        return 'OT x1.5';
+    }
+
+    /**
+     * Resolve start/end Carbon instances and computed hours for an OT span.
+     * If end <= start, the OT is assumed to roll over into the next day (overnight shift).
+     */
+    private function _resolveOtSpan(string $date, string $startTime, string $endTime): array
+    {
+        $start = Carbon::parse($date . ' ' . $startTime);
+        $end   = Carbon::parse($date . ' ' . $endTime);
+        if ($end->lessThanOrEqualTo($start)) {
+            $end->addDay();
+        }
+        $hours = round($start->diffInMinutes($end) / 60, 2);
+
+        return [$start, $end, $hours];
+    }
+
+    /**
+     * Holiday dates for a ~3-year window (past year → next 2 years).
+     */
+    private function _holidayDateRange(): array
+    {
+        return PublicHoliday::getHolidayDates(
+            Carbon::now()->subYear(),
+            Carbon::now()->addYears(2)
+        );
     }
 
     /**
@@ -225,11 +357,11 @@ class OvertimeRequestController extends Controller
         $projects = Project::where(function ($q) use ($userId) {
             $q->whereHas('users', fn($q2) => $q2->where('users.id', $userId))
               ->orWhereHas('teams', fn($q2) => $q2->whereHas('users', fn($q3) => $q3->where('users.id', $userId)));
-        })->orderBy('name')->get(['id', 'name']);
+        })->orderBy('name')->get(['id', 'name', 'project_code']);
 
         $tasks = Task::whereHas('assignees', fn($q) => $q->where('users.id', $userId))
             ->orderBy('name')
-            ->get(['id', 'name', 'project_id']);
+            ->get(['id', 'name', 'project_id', 'task_code']);
 
         return compact('projects', 'tasks');
     }

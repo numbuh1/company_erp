@@ -40,6 +40,18 @@
     }">
         <div class="space-y-4">
 
+            {{-- Tabs --}}
+            <div class="border-b border-gray-200 dark:border-gray-700">
+                <nav class="flex gap-1">
+                    @php $tabBase = 'px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition'; $tabOn = 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400'; $tabOff = 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'; @endphp
+                    <a href="{{ route('projects.index') }}"      class="{{ $tabBase }} {{ $tabOff }}">Dự án</a>
+                    <a href="{{ route('tasks.index') }}"         class="{{ $tabBase }} {{ $tabOn }}">Công việc</a>
+                    @canany(['view project timesheet', 'view all timesheet'])
+                        <a href="{{ route('timesheets.project') }}"  class="{{ $tabBase }} {{ $tabOff }}">Timesheet</a>
+                    @endcanany
+                </nav>
+            </div>
+
             @if(session('success'))
                 <div class="p-3 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-lg text-sm">{{ session('success') }}</div>
             @endif
@@ -63,7 +75,7 @@
                         <select id="task-project-select" name="project_id">
                             <option value="">— Tất cả —</option>
                             @foreach($projects as $p)
-                                <option value="{{ $p->id }}" @selected(request('project_id') == $p->id)>PJ-{{ $p->id }} {{ $p->name }}</option>
+                                <option value="{{ $p->id }}" @selected(request('project_id') == $p->id)>{{ $p->project_code }} {{ $p->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -71,7 +83,7 @@
 
                     {{-- Assignee --}}
                     <div class="min-w-[180px]">
-                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Người phân công</label>
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Người làm</label>
                         <select id="task-assignee-select" name="assignee_id">
                             <option value="">— Tất cả —</option>
                             @foreach($users as $u)
@@ -131,7 +143,7 @@
                                 <input type="checkbox" x-model="cols.status"     @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Trạng thái
                             </label>
                             <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400">
-                                <input type="checkbox" x-model="cols.assignees"  @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Người phân công
+                                <input type="checkbox" x-model="cols.assignees"  @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Người làm
                             </label>
                             <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400">
                                 <input type="checkbox" x-model="cols.budget"     @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Budget Time
@@ -157,8 +169,9 @@
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Tên</th>
                                 <th :class="{ 'hidden': !cols.project }"    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Dự án</th>
                                 <th :class="{ 'hidden': !cols.status }"     class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Trạng thái</th>
-                                <th :class="{ 'hidden': !cols.assignees }"  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Người phân công</th>
-                                <th :class="{ 'hidden': !cols.budget }"    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Budget Time</th>
+                                <th :class="{ 'hidden': !cols.assignees }"  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Người làm</th>
+                                <th :class="{ 'hidden': !cols.budget }" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Budget</th>
+                                <th :class="{ 'hidden': !cols.budget }" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Thời gian</th>
                                 <th :class="{ 'hidden': !cols.start_date }" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Bắt đầu</th>
                                 <th :class="{ 'hidden': !cols.due_date }"   class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">End (EST)</th>
                                 <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Thao tác</th>
@@ -179,7 +192,7 @@
                                     <td class="px-4 py-3 whitespace-nowrap">
                                         <a href="{{ route('tasks.show', $task) }}"
                                            class="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
-                                            TK-{{ $task->id }}
+                                            {{ $task->task_code }}
                                         </a>
                                     </td>
 
@@ -196,7 +209,7 @@
                                         @if($task->project)
                                             <a href="{{ route('projects.show', $task->project) }}"
                                                class="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
-                                                PJ-{{ $task->project->id }}
+                                                {{ $task->project->project_code }}
                                             </a>
                                             <span class="text-xs text-gray-500 dark:text-gray-400 ml-1">{{ $task->project->name }}</span>
                                         @else
@@ -211,46 +224,33 @@
 
                                     {{-- Assignees --}}
                                     <td :class="{ 'hidden': !cols.assignees }" class="px-4 py-3">
-                                        <div class="flex flex-col gap-1">
-                                            @forelse($task->assignees as $assignee)
-                                                <a href="{{ route('users.show', $assignee) }}"
-                                                   class="flex items-center gap-1.5 hover:opacity-80 transition min-w-max">
-                                                    @if($assignee->profile_picture)
-                                                        <img src="{{ asset('storage/profile_pictures/' . $assignee->profile_picture) }}"
-                                                             class="w-5 h-5 rounded-full object-cover shrink-0" alt="">
-                                                    @else
-                                                        <div class="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center shrink-0">
-                                                            <span class="text-indigo-600 dark:text-indigo-400 font-semibold text-[9px]">{{ mb_strtoupper(mb_substr($assignee->name, 0, 1)) }}</span>
-                                                        </div>
-                                                    @endif
-                                                    <span class="text-xs text-gray-700 dark:text-gray-300">{{ $assignee->name }}</span>
-                                                </a>
-                                            @empty
-                                                <span class="text-gray-400 text-xs">—</span>
-                                            @endforelse
-                                        </div>
+                                        <x-assignees :users="$task->assignees" />
                                     </td>
 
-                                    {{-- Budget / Time Spent --}}
+                                    {{-- Budget: progress bar --}}
                                     <td :class="{ 'hidden': !cols.budget }" class="px-4 py-3">
                                         @php
-                                            $budgetH = $task->budget_hours;
-                                            $spentH  = $timeSpentMap[$task->id] ?? 0;
-                                            $percent = $budgetH > 0 ? round($spentH / $budgetH * 100) : null;
-                                            $isOver  = $budgetH > 0 && $spentH > $budgetH;
+                                            $budgetH   = $task->budget_hours;
+                                            $ntH       = $timeSpentMap[$task->id] ?? 0;
+                                            $otH       = $otTimeMap[$task->id] ?? 0;
+                                            $actualH   = $ntH + $otH;
+                                            $isDone    = $task->status === 'Đã xong';
+                                            $percent   = $budgetH > 0 ? round($actualH / $budgetH * 100) : 0;
+                                            $isOver    = $budgetH > 0 && $actualH > $budgetH;
+                                            $barColor  = $isOver
+                                                ? ($isDone ? 'bg-amber-700 dark:bg-amber-600' : 'bg-red-500')
+                                                : ($isDone ? 'bg-green-500' : 'bg-blue-500');
+                                            $textColor = $isOver
+                                                ? ($isDone ? 'text-amber-700 dark:text-amber-500' : 'text-red-600 dark:text-red-400')
+                                                : ($isDone ? 'text-green-600 dark:text-green-400' : 'text-gray-500');
                                         @endphp
-                                        <div class="flex items-center gap-2 min-w-[120px]">
-                                            @if($budgetH)
-                                                <div class="flex-1 bg-white dark:bg-gray-900 rounded h-2 border border-gray-300 dark:border-gray-600 overflow-hidden">
-                                                    <div class="{{ $isOver ? 'bg-red-500' : 'bg-gray-800 dark:bg-gray-100' }} h-2" style="width: {{ min($percent, 100) }}%"></div>
-                                                </div>
-                                                <span class="text-xs {{ $isOver ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-500' }} w-8 text-right shrink-0">{{ $percent }}%</span>
-                                            @elseif($spentH > 0)
-                                                <span class="text-xs text-gray-500">{{ number_format($spentH, 1) }}h</span>
-                                            @else
-                                                <span class="text-xs text-gray-400">—</span>
-                                            @endif
+                                        <div class="w-24 bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden">
+                                            <div class="{{ $barColor }} h-2 rounded-full" style="width: {{ min($percent, 100) }}%"></div>
                                         </div>
+                                    </td>
+                                    {{-- Budget: spent / budget text --}}
+                                    <td :class="{ 'hidden': !cols.budget }" class="px-4 py-3 whitespace-nowrap">
+                                        <span class="text-xs tabular-nums {{ $isOver ? 'font-semibold' : '' }} {{ $textColor }}">{{ number_format($actualH, 1) }}h / {{ $budgetH > 0 ? number_format($budgetH, 1) . 'h' : '—' }}</span>
                                     </td>
 
                                     {{-- Start --}}
@@ -294,7 +294,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="10" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400 text-sm">
+                                    <td colspan="11" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400 text-sm">
                                         Không tìm thấy công việc nào.
                                     </td>
                                 </tr>

@@ -4,7 +4,7 @@
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
                 {{ isset($task) ? 'Chỉnh sửa Công việc' : 'Tạo Công việc' }}
             </h2>
-            <a href="{{ route('tasks.index') }}"><x-secondary-button>Quay lại</x-secondary-button></a>
+            <a href="javascript:history.back()"><x-secondary-button>Quay lại</x-secondary-button></a>
         </div>
     </x-slot>
 
@@ -21,6 +21,16 @@
                         <x-text-input id="name" name="name" type="text" class="mt-1 block w-full"
                             value="{{ old('name', $task->name ?? '') }}" required />
                         <x-input-error :messages="$errors->get('name')" class="mt-1" />
+                    </div>
+
+                    {{-- Task Code --}}
+                    <div class="mb-4">
+                        <x-input-label for="task_code" value="Mã công việc" />
+                        <x-text-input id="task_code" name="task_code" type="text" class="mt-1 block w-full sm:max-w-xs font-mono"
+                            value="{{ old('task_code', $task->task_code ?? $predicted_task_code ?? '') }}"
+                            placeholder="TK-..." />
+                        <p class="mt-1 text-xs text-gray-400">Để trống để dùng mã mặc định.</p>
+                        <x-input-error :messages="$errors->get('task_code')" class="mt-1" />
                     </div>
 
                     {{-- Project --}}
@@ -107,7 +117,7 @@
                     </div>
 
                     <div class="flex justify-end gap-2">
-                        <a href="{{ route('tasks.index') }}"><x-secondary-button type="button">Hủy</x-secondary-button></a>
+                        <a href="javascript:history.back()"><x-secondary-button type="button">Hủy</x-secondary-button></a>
                         <x-primary-button type="submit">{{ isset($task) ? 'Update Task' : 'Create Task' }}</x-primary-button>
                     </div>
                 </form>

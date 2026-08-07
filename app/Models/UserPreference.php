@@ -10,6 +10,8 @@ class UserPreference extends Model
         'user_id',
         'task_list_column_preferences',
         'project_task_column_preferences',
+        'email_notifications',
+        'timesheet_weekly_filters',
     ];
 
     protected function casts(): array
@@ -17,6 +19,8 @@ class UserPreference extends Model
         return [
             'task_list_column_preferences'    => 'array',
             'project_task_column_preferences' => 'array',
+            'email_notifications'             => 'array',
+            'timesheet_weekly_filters'        => 'array',
         ];
     }
 

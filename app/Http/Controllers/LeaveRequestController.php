@@ -91,10 +91,13 @@ class LeaveRequestController extends Controller
         }
 
         $request->validate([
-            'start_at'    => 'required|date',
-            'end_at'      => 'required|date|after_or_equal:start_at',
-            'type'        => 'required|string',
-            'description' => 'nullable|string',
+            'start_at'        => 'required|date',
+            'end_at'          => 'required|date|after_or_equal:start_at',
+            'type'            => 'required|string',
+            'hours'           => 'nullable|numeric|min:0',
+            'start_day_hours' => 'nullable|numeric|min:0|max:24',
+            'end_day_hours'   => 'nullable|numeric|min:0|max:24',
+            'description'     => 'nullable|string',
         ]);
 
         $requestedUserId = $request->user_id;
@@ -114,16 +117,51 @@ class LeaveRequestController extends Controller
         $leaveRequest = LeaveRequest::create($request->all());
         NotificationHelper::sendNewRequestNotification($leaveRequest, 'leave');
 
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'id' => $leaveRequest->id]);
+        }
+
         return redirect()->route('requests.index', ['type' => 'leave']);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(LeaveRequest $leaveRequest)
+    public function show(Request $request, LeaveRequest $leaveRequest)
     {
         $user = auth()->user();
         Helper::authorizeRequest('view all leaves', 'view team leaves', $leaveRequest);
+
+        if ($request->expectsJson()) {
+            $leaveRequest->load('user', 'approver');
+            $canEdit = ($user->can('edit all leaves') || $user->can('edit team leaves') || ($user->can('edit own leaves') && $leaveRequest->user_id === $user->id))
+                && !in_array($leaveRequest->status, ['approved', 'rejected']);
+            $canApprove = ($user->can('approve all leaves') || $user->can('approve team leaves'))
+                && $leaveRequest->status === 'pending';
+
+            return response()->json([
+                'leave' => [
+                    'id'               => $leaveRequest->id,
+                    'user_id'          => $leaveRequest->user_id,
+                    'user_name'        => $leaveRequest->user->name,
+                    'type'             => $leaveRequest->type,
+                    'status'           => $leaveRequest->status,
+                    'hours'            => $leaveRequest->hours,
+                    'start_day_hours'  => $leaveRequest->start_day_hours,
+                    'end_day_hours'    => $leaveRequest->end_day_hours,
+                    'description'      => $leaveRequest->description,
+                    'reject_reason'    => $leaveRequest->reject_reason,
+                    'approver_name'    => $leaveRequest->approver?->name,
+                    'start_at_input'   => $leaveRequest->start_at->format('Y-m-d\TH:i'),
+                    'end_at_input'     => $leaveRequest->end_at->format('Y-m-d\TH:i'),
+                    'start_at_text'    => $leaveRequest->start_at->translatedFormat('D, d/m/y H:i'),
+                    'end_at_text'      => $leaveRequest->end_at->translatedFormat('D, d/m/y H:i'),
+                ],
+                'leave_balance' => $leaveRequest->user->leave_balance,
+                'can_edit'      => $canEdit,
+                'can_approve'   => $canApprove,
+            ]);
+        }
 
         $user_show = User::where('id', $leaveRequest->user_id)->get();
 
@@ -183,15 +221,21 @@ class LeaveRequestController extends Controller
         }
 
         $data = $request->validate([
-            'user_id'     => 'required|exists:users,id',
-            'type'        => 'required|string',
-            'start_at'    => 'required|date',
-            'end_at'      => 'required|date|after:start_at',
-            'hours'       => 'required|numeric|min:0',
-            'description' => 'nullable|string',
+            'user_id'         => 'required|exists:users,id',
+            'type'            => 'required|string',
+            'start_at'        => 'required|date',
+            'end_at'          => 'required|date|after_or_equal:start_at',
+            'hours'           => 'nullable|numeric|min:0',
+            'start_day_hours' => 'nullable|numeric|min:0|max:24',
+            'end_day_hours'   => 'nullable|numeric|min:0|max:24',
+            'description'     => 'nullable|string',
         ]);
 
         $leaveRequest->update($data);
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true]);
+        }
 
         return redirect()->route('requests.index', ['type' => 'leave'])->with('success', 'Cập nhật yêu cầu nghỉ phép thành công.');
     }
@@ -240,15 +284,9 @@ class LeaveRequestController extends Controller
 
         NotificationHelper::sendRequestApprovalNotification($leaveRequest, 'leave');
 
-        // NotificationHelper::send(
-        //     receivingUser: $leaveRequest->user,
-        //     title: 'Leave Request Approved',
-        //     description: 'Your ' . $leaveRequest->type . ' leave request (' .
-        //         $leaveRequest->start_at->format('d/m/Y') . ' – ' .
-        //         $leaveRequest->end_at->format('d/m/Y') . ') has been approved.',
-        //     url: route('leave-requests.index'),
-        //     incomingUser: auth()->user(),
-        // );
+        if (request()->expectsJson()) {
+            return response()->json(['success' => true]);
+        }
 
         return back()->with('success', 'Leave approved.');
     }
@@ -272,17 +310,11 @@ class LeaveRequestController extends Controller
             'reject_reason' => $data['reject_reason']
         ]);
 
-        // NotificationHelper::send(
-        //     receivingUser: $leaveRequest->user,
-        //     title: 'Leave Request Rejected',
-        //     description: 'Your ' . $leaveRequest->type . ' leave request (' .
-        //         $leaveRequest->start_at->format('d/m/Y') . ' – ' .
-        //         $leaveRequest->end_at->format('d/m/Y') . ') has been rejected.',
-        //     url: route('leave-requests.index'),
-        //     incomingUser: auth()->user(),
-        // );
-
         NotificationHelper::sendRequestApprovalNotification($leaveRequest, 'leave');
+
+        if (request()->expectsJson()) {
+            return response()->json(['success' => true]);
+        }
 
         return back()->with('success', 'Leave rejected.');
     }

@@ -10,7 +10,7 @@
         </div>
     </x-slot>
 
-    <div class="py-12" x-data="{
+    <div class="max-w-full mx-auto sm:px-6 lg:px-8 py-4" x-data="{
         teamModal: false,
         teamName: '',
         activeTeamId: null,
@@ -20,13 +20,24 @@
             this.teamModal = true;
         }
     }">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
-            @if(session('success'))
-                <div class="mb-4 p-3 bg-green-100 text-green-800 rounded">{{ session('success') }}</div>
-            @endif
+        {{-- Tabs --}}
+        <div class="border-b border-gray-200 dark:border-gray-700 mb-4">
+            <nav class="flex gap-1">
+                @php $tabBase = 'px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition'; $tabOn = 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400'; $tabOff = 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'; @endphp
+                <a href="{{ route('projects.index') }}"      class="{{ $tabBase }} {{ $tabOn }}">Dự án</a>
+                <a href="{{ route('tasks.index') }}"         class="{{ $tabBase }} {{ $tabOff }}">Công việc</a>
+                @canany(['view project timesheet', 'view all timesheet'])
+                    <a href="{{ route('timesheets.project') }}"  class="{{ $tabBase }} {{ $tabOff }}">Timesheet</a>
+                @endcanany
+            </nav>
+        </div>
 
-            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-hidden">
+        @if(session('success'))
+            <div class="mb-4 p-3 bg-green-100 text-green-800 rounded">{{ session('success') }}</div>
+        @endif
+
+        <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-hidden">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
@@ -54,7 +65,7 @@
                                 <td class="px-4 py-4">
                                     <a href="{{ route('projects.show', $project) }}"
                                         class="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline whitespace-nowrap">
-                                        PJ-{{ $project->id }}
+                                        {{ $project->project_code }}
                                     </a>
                                 </td>
                                 <td class="px-4 py-4 font-medium text-gray-900 dark:text-gray-100">{{ $project->name }}</td>
@@ -75,21 +86,7 @@
                                     </div>
                                 </td>
                                 <td class="px-4 py-4">
-                                    @php
-                                        $directMembers = $project->users->take(4);
-                                        $extra = max(0, $project->users->count() - 4);
-                                    @endphp
-                                    <div class="flex items-center flex-wrap gap-1">
-                                        @foreach($directMembers as $member)
-                                            <x-user-status :user="$member" :show-name="false" />
-                                        @endforeach
-                                        @if($extra > 0)
-                                            <span class="text-xs text-gray-500 dark:text-gray-400 ml-1">+{{ $extra }}</span>
-                                        @endif
-                                        @if($project->users->isEmpty())
-                                            <span class="text-gray-400 text-xs">—</span>
-                                        @endif
-                                    </div>
+                                    <x-assignees :users="$project->users" />
                                 </td>
                                 <td class="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">{{ $project->start_date?->format('d/m/Y') ?? '—' }}</td>
                                 <td class="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">{{ $project->expected_end_date?->format('d/m/Y') ?? '—' }}</td>
@@ -150,7 +147,6 @@
                 </table>
                 <div class="p-4">{{ $projects->links() }}</div>
             </div>
-        </div>
 
         {{-- Team Members Modal --}}
         @php $allTeams = $projects->getCollection()->flatMap(fn($p) => $p->teams)->unique('id'); @endphp

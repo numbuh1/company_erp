@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\RecruitmentApplicant;
 use App\Models\RecruitmentPosition;
 use App\Models\User;
 use App\Models\RecruitmentTag;
@@ -17,12 +18,13 @@ class RecruitmentController extends Controller
         $query = RecruitmentPosition::with('assignedUsers', 'team')
             ->withCount([
                 'applicants',
-                'applicants as cv_screening_count'      => fn($q) => $q->where('status', 'CV Screening'),
-                'applicants as interview_count'          => fn($q) => $q->where('status', 'Approved for Interview'),
-                'applicants as approved_count'           => fn($q) => $q->where('status', 'Approved'),
-                'applicants as rejected_count'           => fn($q) => $q->where('status', 'Rejected'),
-                'applicants as offered_count'            => fn($q) => $q->where('status', 'Offered'),
-                'applicants as hired_count'              => fn($q) => $q->where('status', 'Hired'),
+                'applicants as potential_count'          => fn($q) => $q->where('status', 'Tiềm năng'),
+                'applicants as cv_screening_count'       => fn($q) => $q->where('status', 'Lọc CV'),
+                'applicants as interview_count'          => fn($q) => $q->where('status', 'Duyệt phỏng vấn'),
+                'applicants as offer_consider_count'     => fn($q) => $q->where('status', 'Cân nhắc offer'),
+                'applicants as offered_count'            => fn($q) => $q->where('status', 'Đã gửi offer'),
+                'applicants as hired_count'              => fn($q) => $q->where('status', 'Đã tuyển'),
+                'applicants as rejected_count'           => fn($q) => $q->where('status', 'Không phù hợp'),
             ]);
 
         if ($user->can('edit recruitment')) return $query;
@@ -52,7 +54,14 @@ class RecruitmentController extends Controller
         $skillOptions = Skill::orderBy('category')->orderBy('name')->get();
         $tagOptions   = RecruitmentTag::where('type', 'position')->orderBy('name')->get();
 
-        return view('recruitment.form', compact('userOptions', 'teamOptions', 'skillOptions', 'tagOptions'));
+        // Past positions that have at least one "Tiềm năng" applicant —
+        // offered as the "Import potential CV" source list, newest first.
+        $pastPositions = RecruitmentPosition::query()
+            ->whereHas('applicants', fn($q) => $q->where('status', 'Tiềm năng'))
+            ->orderByRaw('COALESCE(search_start_date, DATE(created_at)) DESC')
+            ->get(['id', 'name', 'search_start_date', 'created_at']);
+
+        return view('recruitment.form', compact('userOptions', 'teamOptions', 'skillOptions', 'tagOptions', 'pastPositions'));
     }
 
 
@@ -75,7 +84,12 @@ class RecruitmentController extends Controller
             'skills.*'          => 'exists:skills,id',
             'tags'              => 'nullable|array',
             'status'            => 'nullable|in:upcoming,in_progress,done',
+            'import_potential_from'   => 'nullable|array',
+            'import_potential_from.*' => 'exists:recruitment_positions,id',
         ]);
+
+        $importFromIds = $data['import_potential_from'] ?? [];
+        unset($data['import_potential_from']);
 
         if ($request->hasFile('file')) {
             $data['file_path'] = $request->file('file')->store('recruitment/jd', 'public');
@@ -96,7 +110,77 @@ class RecruitmentController extends Controller
         $tagIds = RecruitmentTag::resolveIds($request->input('tags', []), 'position');
         $position->tags()->sync($tagIds);
 
+        if (!empty($importFromIds)) {
+            $this->_importPotentialApplicants($position, $importFromIds);
+        }
+
         return redirect()->route('recruitment.show', $position)->with('success', 'Position created.');
+    }
+
+    /**
+     * Import all "Tiềm năng" applicants from the given source positions
+     * into the newly created $position, as "Lọc CV" applicants.
+     * If multiple imported applicants share the same email or phone,
+     * only the most recently updated one is imported.
+     */
+    private function _importPotentialApplicants(RecruitmentPosition $position, array $sourcePositionIds): void
+    {
+        $applicants = RecruitmentApplicant::with(['skills', 'tags'])
+            ->whereIn('recruitment_position_id', $sourcePositionIds)
+            ->where('status', 'Tiềm năng')
+            ->orderByDesc('updated_at')
+            ->get();
+
+        // De-duplicate by email/phone, keeping the most recently updated
+        // applicant for each email/phone (list is already ordered newest first).
+        $seenKeys = [];
+        $toImport = [];
+
+        foreach ($applicants as $applicant) {
+            $keys = [];
+            if ($applicant->email) $keys[] = 'email:' . mb_strtolower(trim($applicant->email));
+            if ($applicant->phone) $keys[] = 'phone:' . preg_replace('/\D+/', '', $applicant->phone);
+
+            $isDuplicate = false;
+            foreach ($keys as $key) {
+                if (isset($seenKeys[$key])) { $isDuplicate = true; break; }
+            }
+            if ($isDuplicate) continue;
+
+            foreach ($keys as $key) { $seenKeys[$key] = true; }
+            $toImport[] = $applicant;
+        }
+
+        foreach ($toImport as $applicant) {
+            $newCvPath = null;
+            if ($applicant->cv_path && Storage::disk('public')->exists($applicant->cv_path)) {
+                $newCvPath = 'recruitment/cv/' . $position->id . '/' . basename($applicant->cv_path);
+                Storage::disk('public')->copy($applicant->cv_path, $newCvPath);
+            }
+
+            $newApplicant = RecruitmentApplicant::create([
+                'recruitment_position_id' => $position->id,
+                'name'               => $applicant->name,
+                'cv_path'            => $newCvPath,
+                'notes'              => $applicant->notes,
+                'hr_note'            => $applicant->hr_note,
+                'status'             => 'Lọc CV',
+                'evaluation'         => $applicant->evaluation,
+                'email'              => $applicant->email,
+                'phone'              => $applicant->phone,
+                'profile_url'        => $applicant->profile_url,
+                'salary_expectation' => $applicant->salary_expectation,
+                'available_date'     => $applicant->available_date,
+                'referer_user_id'    => $applicant->referer_user_id,
+                'duplicate_check_dismissed' => true,
+            ]);
+
+            $skillsData = $applicant->skills->mapWithKeys(fn($s) => [
+                $s->id => ['level' => $s->pivot->level],
+            ])->toArray();
+            $newApplicant->skills()->sync($skillsData);
+            $newApplicant->tags()->sync($applicant->tags->pluck('id')->toArray());
+        }
     }
 
     public function show(RecruitmentPosition $recruitmentPosition)

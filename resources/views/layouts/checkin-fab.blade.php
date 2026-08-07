@@ -9,8 +9,52 @@
 
     $fabCheckedIn  = (bool) $fabAtt;
     $fabCheckedOut = $fabAtt && $fabAtt->check_out_time;
-    $fabShow = !$fabCheckedIn
-        || ($fabCheckedIn && !$fabCheckedOut && optional($fabAtt)->status === 'approved');
+    // Check-in FAB is hidden; set $fabShow = false to suppress rendering
+    $fabShow = false;
+
+    // ── Time Log FAB data ──────────────────────────────────────────────
+    $tlToday = now()->toDateString();
+
+    // Today's total logged work hours for the current user
+    $tlWorkHours = (float) \App\Models\TimeLog::where('user_id', auth()->id())
+        ->whereDate('date', $tlToday)
+        ->sum('time_spent');
+
+    // Today's approved leave hours (prorated for multi-day leaves)
+    $tlLeaveHours = 0.0;
+    foreach (
+        \App\Models\LeaveRequest::where('user_id', auth()->id())
+            ->where('status', 'approved')
+            ->where('start_at', '<=', now()->endOfDay()->toDateTimeString())
+            ->where('end_at',   '>=', now()->startOfDay()->toDateTimeString())
+            ->get() as $tlLeave
+    ) {
+        $lS = \Carbon\Carbon::parse($tlLeave->start_at)->startOfDay();
+        $lE = \Carbon\Carbon::parse($tlLeave->end_at)->startOfDay();
+        $tlLeaveHours += $tlLeave->hours / max(1, $lS->diffInDays($lE) + 1);
+    }
+
+    $tlTotal     = $tlWorkHours + $tlLeaveHours;
+    $tlIsPrimary = $tlTotal < 8;
+    $tlLeft      = round(max(0, 8 - $tlTotal), 2);
+    $tlDisplay   = number_format($tlTotal, 1) . 'h';
+
+    // Projects and tasks for the quick-log form
+    $tlProjects = \App\Models\Project::orderBy('name')->get(['id', 'name', 'project_code']);
+    $tlTasks    = \App\Models\Task::whereNotNull('project_id')
+        ->orderBy('name')
+        ->get(['id', 'name', 'project_id', 'task_code']);
+
+    // Users for the "log for someone else" dropdown (null = current user only)
+    $fabAuthUser = auth()->user();
+    $tlUsers = null;
+    if ($fabAuthUser->can('edit timesheet')) {
+        $tlUsers = \App\Models\User::orderBy('name')->get(['id', 'name', 'position']);
+    } elseif ($fabAuthUser->can('edit team timesheet')) {
+        $tmIds   = $fabAuthUser->teamMembers()->pluck('id')->toArray();
+        $tmIds[] = $fabAuthUser->id;
+        $tlUsers = \App\Models\User::whereIn('id', array_unique($tmIds))->orderBy('name')->get(['id', 'name', 'position']);
+    }
 
     // Checkout confirmation helpers
     $fabCheckInTime = null;
@@ -305,4 +349,399 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endif
+
+{{-- ══════════════════════════════════════════════════════════════════
+     TIME LOG FAB — quick log button (bottom-right, replaces check-in)
+     Primary (pink) when today's total < 8h, secondary (gray) when ≥ 8h.
+════════════════════════════════════════════════════════════════════ --}}
+
+{{-- Pass task array via a script global to avoid @json / " breaking
+     Alpine's JS object-literal parser when embedded in x-data="..." --}}
+<script>
+window._tlFabTasks        = {!! json_encode($tlTasks->map(fn($t) => ['id' => $t->id, 'name' => $t->name, 'pid' => $t->project_id, 'code' => $t->task_code])->values()->all(), JSON_HEX_TAG) !!};
+window._tlFabDefaultHours = {{ $tlLeft > 0 ? (float) min($tlLeft, 8) : 1 }};
+window._tlFabDayHoursUrl  = '{{ route('timesheets.day-hours') }}';
+window._tlFabCurrentUser  = {{ auth()->id() }};
+window._tlFabToday        = '{{ now()->toDateString() }}';
+</script>
+
+<div id="timelog-fab"
+     x-data="{
+         open: false,
+         hours: window._tlFabDefaultHours,
+         desc: '',
+         submitting: false,
+         summaryWork:  {{ (float) $tlWorkHours }},
+         summaryLeave: {{ (float) $tlLeaveHours }},
+         editMode: false,
+         editId: null,
+         originalHours: 0,
+         get summaryTotal() { return Math.round((this.summaryWork + this.summaryLeave) * 100) / 100; },
+         get baseTotal()    { return this.editMode ? Math.max(0, Math.round((this.summaryTotal - this.originalHours) * 100) / 100) : this.summaryTotal; },
+         get summaryLeft()  { return Math.max(0, Math.round((8 - this.baseTotal) * 100) / 100); },
+         get btnPrimary()   { return this.summaryTotal < 8; },
+         fetchSummary(userId, date) {
+             if (!date || !userId) return;
+             fetch(window._tlFabDayHoursUrl + '?user_id=' + encodeURIComponent(userId) + '&date=' + encodeURIComponent(date))
+                 .then(r => r.ok ? r.json() : null)
+                 .then(d => { if (d) { this.summaryWork = d.work; this.summaryLeave = d.leave; } })
+                 .catch(() => {});
+         },
+         openFromCell(data) {
+             this.editMode      = false;
+             this.editId        = null;
+             this.originalHours = 0;
+             const dateEl = document.getElementById('fab-date');
+             if (dateEl && data.date) dateEl.value = data.date;
+             const uid = data.userId || window._tlFabCurrentUser;
+             if (window._fabUserTs) window._fabUserTs.setValue(String(uid));
+             const uh = document.getElementById('fab-user-id-hidden');
+             if (uh) uh.value = String(uid);
+             if (data.projectId && window._fabProjTs) window._fabProjTs.setValue(String(data.projectId));
+             if (data.taskId    && window._fabTaskTs) window._fabTaskTs.setValue(String(data.taskId));
+             this.fetchSummary(uid, data.date || window._tlFabToday);
+             this.open = true;
+         },
+         openEdit(data) {
+             this.editMode      = true;
+             this.editId        = data.id;
+             this.originalHours = parseFloat(data.hours) || 0;
+             this.hours = data.hours;
+             this.desc  = data.description || '';
+             const dateEl = document.getElementById('fab-date');
+             if (dateEl) dateEl.value = data.date || window._tlFabToday;
+             const uid = data.userId || window._tlFabCurrentUser;
+             if (window._fabUserTs) window._fabUserTs.setValue(String(uid));
+             const uh = document.getElementById('fab-user-id-hidden');
+             if (uh) uh.value = String(uid);
+             if (window._fabProjTs) {
+                 if (data.projectId) window._fabProjTs.setValue(String(data.projectId));
+                 else window._fabProjTs.clear();
+             }
+             if (window._fabTaskTs) {
+                 if (data.taskId) window._fabTaskTs.setValue(String(data.taskId));
+                 else window._fabTaskTs.clear();
+             }
+             this.fetchSummary(uid, data.date || window._tlFabToday);
+             this.open = true;
+         },
+         quickSet(h) { this.hours = h; },
+     }"
+     x-init="
+         $watch('open', val => {
+             if (!val) {
+                 if (window._fabUserTs)  window._fabUserTs.clear();
+                 if (window._fabProjTs)  window._fabProjTs.clear();
+                 if (window._fabTaskTs)  window._fabTaskTs.clear();
+                 ['fab-user-id-hidden','fab-project-id','fab-task-id'].forEach(id => {
+                     const el = document.getElementById(id);
+                     if (el) el.value = '';
+                 });
+                 const d = document.getElementById('fab-date');
+                 if (d) d.value = window._tlFabToday;
+                 editMode = false;
+                 editId = null;
+                 originalHours = 0;
+                 hours = window._tlFabDefaultHours;
+                 desc = '';
+                 summaryWork  = {{ (float) $tlWorkHours }};
+                 summaryLeave = {{ (float) $tlLeaveHours }};
+             }
+         })
+     "
+     @tl-fab-open.window="openFromCell($event.detail)"
+     @tl-fab-edit.window="openEdit($event.detail)"
+     @keydown.escape.window="open = false"
+     style="position:fixed; bottom:1.5rem; right:1.5rem; z-index:70">
+
+    {{-- ── FAB button ── --}}
+    <button type="button" @click="open = !open"
+        :class="btnPrimary
+            ? 'bg-pink-600 hover:bg-pink-700 text-white'
+            : 'bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-500 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'"
+        class="flex items-center gap-2 px-5 py-3 rounded-full shadow-lg font-bold text-sm transition-colors duration-150">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+        </svg>
+        <span x-text="summaryTotal.toFixed(1) + 'h'">{{ $tlDisplay }}</span>
+        <span x-show="summaryLeft > 0" class="text-xs font-normal opacity-75"
+              x-text="'/ ' + summaryLeft.toFixed(1) + 'h còn lại'"></span>
+        <span x-show="summaryLeft <= 0" class="text-xs font-normal opacity-75" x-cloak>✓</span>
+    </button>
+
+    {{-- ── Modal overlay ── --}}
+    <div x-show="open" x-cloak
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         @click.self="open = false"
+         class="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 px-4">
+
+        <div x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+
+            {{-- Header --}}
+            <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+                <div>
+                    <h3 class="font-semibold text-gray-800 dark:text-gray-100"
+                        x-text="editMode ? '✏️ Sửa nhật ký' : '⏱ Chấm giờ làm'">⏱ Chấm giờ làm</h3>
+                    <p class="text-xs text-gray-400 mt-0.5">{{ now()->translatedFormat('l, d/m/Y') }}</p>
+                </div>
+                <button type="button" @click="open = false"
+                    class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            {{-- Summary bar — reactive via Alpine --}}
+            <div class="px-5 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 flex items-center gap-4 text-xs">
+                <div class="flex items-center gap-1.5">
+                    <span class="text-gray-500 dark:text-gray-400">Công việc:</span>
+                    <span class="font-semibold text-gray-800 dark:text-gray-200" x-text="summaryWork.toFixed(1) + 'h'"></span>
+                </div>
+                <div class="flex items-center gap-1.5" x-show="summaryLeave > 0">
+                    <span class="text-amber-500">🏖</span>
+                    <span class="font-semibold text-amber-600 dark:text-amber-400" x-text="summaryLeave.toFixed(1) + 'h'"></span>
+                </div>
+                <div class="flex items-center gap-1.5 ml-auto">
+                    <span class="text-gray-500 dark:text-gray-400">Tổng:</span>
+                    <span class="font-bold"
+                          :class="btnPrimary ? 'text-pink-600 dark:text-pink-400' : 'text-green-600 dark:text-green-400'"
+                          x-text="summaryTotal.toFixed(1) + 'h ' + (btnPrimary ? '/ 8h' : '✓')"></span>
+                </div>
+            </div>
+
+            {{-- Form --}}
+            <form method="POST" :action="editMode ? ('{{ url('time-logs') }}/' + editId) : '{{ route('time-logs.store') }}'"
+                  @submit="
+                      const newTotal = (editMode ? baseTotal : summaryTotal) + (+hours);
+                      if (hours > summaryLeft) {
+                          const msg = 'Số giờ nhập (' + (+hours).toFixed(1) + 'h) vượt quá thời gian còn lại ('
+                                    + summaryLeft.toFixed(1) + 'h). Tổng hôm nay sẽ là '
+                                    + newTotal.toFixed(1) + 'h. Vẫn tiếp tục?';
+                          if (!window.confirm(msg)) { $event.preventDefault(); return; }
+                      }
+                      submitting = true;
+                  "
+                  class="px-5 py-5 space-y-4">
+                @csrf
+                <input type="hidden" name="_method" :value="editMode ? 'PUT' : 'POST'">
+                <input type="hidden" name="_fab"       value="1">
+                <input type="hidden" name="project_id" id="fab-project-id" value="">
+                <input type="hidden" name="task_id"    id="fab-task-id"    value="">
+                <input type="hidden" name="user_id"    id="fab-user-id-hidden" value="{{ auth()->id() }}">
+
+                {{-- User (only shown if permission to log for others; not changeable when editing) --}}
+                @if($tlUsers)
+                <div x-show="!editMode">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Người dùng</label>
+                    <select id="fab-user-ts">
+                        @foreach($tlUsers as $u)
+                            <option value="{{ $u->id }}" {{ $u->id === auth()->id() ? 'selected' : '' }}>
+                                {{ $u->name }}{{ $u->position ? ' · '.$u->position : '' }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                @endif
+
+                {{-- Date --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ngày</label>
+                    <input type="date" id="fab-date" name="date" value="{{ $tlToday }}"
+                        @change="
+                            const uid = document.getElementById('fab-user-id-hidden')?.value || '{{ auth()->id() }}';
+                            fetchSummary(uid, $event.target.value);
+                        "
+                        class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-pink-500 focus:border-pink-500">
+                </div>
+
+                {{-- Project (searchable via TomSelect) --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Dự án <span class="text-gray-400 font-normal">(tuỳ chọn)</span>
+                    </label>
+                    <select id="fab-project-ts">
+                        <option value="">— Không có dự án —</option>
+                        @foreach($tlProjects as $p)
+                            <option value="{{ $p->id }}">{{ $p->project_code }} · {{ $p->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Task (searchable via TomSelect; selecting a task auto-fills the project) --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Công việc <span class="text-gray-400 font-normal">(tuỳ chọn)</span>
+                    </label>
+                    <select id="fab-task-ts">
+                        <option value="">— Không có công việc —</option>
+                        {{-- Options populated by JS from window._tlFabTasks --}}
+                    </select>
+                </div>
+
+                {{-- Hours + quick buttons --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Số giờ</label>
+                    <div class="flex gap-1.5 flex-wrap mb-2">
+                        @foreach([0.5, 1, 2, 4, 8] as $qh)
+                            <button type="button" @click="quickSet({{ $qh }})"
+                                :class="hours == {{ $qh }} ? 'bg-pink-100 dark:bg-pink-900/40 border-pink-400 text-pink-700 dark:text-pink-300' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'"
+                                class="px-2.5 py-1 text-xs rounded border transition font-medium">
+                                {{ $qh >= 1 ? (int)$qh . 'h' : ($qh * 60) . 'm' }}
+                            </button>
+                        @endforeach
+                        @if($tlLeft > 0 && $tlLeft <= 8)
+                            <button type="button" @click="quickSet({{ $tlLeft }})"
+                                :class="hours == {{ $tlLeft }} ? 'bg-pink-100 dark:bg-pink-900/40 border-pink-400 text-pink-700 dark:text-pink-300' : 'border-pink-300 dark:border-pink-700 text-pink-600 dark:text-pink-400 hover:bg-pink-50 dark:hover:bg-pink-900/20'"
+                                class="px-2.5 py-1 text-xs rounded border transition font-medium">
+                                ↑ {{ number_format($tlLeft, 2) == (int)$tlLeft ? (int)$tlLeft . 'h' : number_format($tlLeft, 2) . 'h' }} còn lại
+                            </button>
+                        @endif
+                    </div>
+                    <input type="number" name="time_spent" x-model.number="hours"
+                        step="0.25" min="0.25" max="24" required
+                        class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-pink-500 focus:border-pink-500">
+                </div>
+
+                {{-- Description --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mô tả <span class="text-gray-400 font-normal">(tuỳ chọn)</span></label>
+                    <textarea name="description" x-model="desc" rows="2"
+                        class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-pink-500 focus:border-pink-500"
+                        placeholder="Làm gì hôm nay…"></textarea>
+                </div>
+
+                {{-- Actions --}}
+                <div class="flex justify-end gap-2 pt-1">
+                    <button type="button" x-show="editMode" x-cloak
+                        @click="if (window.confirm('Xóa nhật ký này?')) document.getElementById('fab-delete-form').submit();"
+                        class="mr-auto px-4 py-2 text-sm rounded-lg border border-red-300 dark:border-red-700
+                               text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+                        Xóa
+                    </button>
+                    <button type="button" @click="open = false"
+                        class="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600
+                               text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                        Hủy
+                    </button>
+                    <button type="submit" :disabled="submitting || hours <= 0"
+                        class="px-4 py-2 text-sm rounded-lg bg-pink-600 hover:bg-pink-700
+                               text-white font-medium transition disabled:opacity-50">
+                        <span x-show="!submitting" x-text="editMode ? 'Cập nhật' : 'Lưu giờ làm'">Lưu giờ làm</span>
+                        <span x-show="submitting" x-cloak>Đang lưu…</span>
+                    </button>
+                </div>
+            </form>
+
+            {{-- Hidden delete form for edit mode --}}
+            <form id="fab-delete-form" method="POST" :action="'{{ url('time-logs') }}/' + editId" class="hidden">
+                @csrf
+                @method('DELETE')
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+{{-- TomSelect: searchable project + task dropdowns in Time Log FAB --}}
+<style>
+    /* Compact TomSelect inside the FAB modal */
+    #timelog-fab .ts-wrapper .ts-control {
+        border-color: #d1d5db; border-radius: 0.375rem; font-size: 0.875rem;
+        min-height: 2.25rem; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    }
+    html.dark #timelog-fab .ts-wrapper .ts-control { background: #111827; border-color: #374151; color: #d1d5db; }
+    html.dark #timelog-fab .ts-dropdown           { background: #1f2937; border-color: #374151; color: #d1d5db; }
+    html.dark #timelog-fab .ts-dropdown .option:hover,
+    html.dark #timelog-fab .ts-dropdown .option.active { background: #374151; }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const projEl = document.getElementById('fab-project-ts');
+    const taskEl = document.getElementById('fab-task-ts');
+    const userEl = document.getElementById('fab-user-ts');
+    if (!projEl || !taskEl) return;
+
+    // ── User TomSelect (optional — only present when permission grants it) ──
+    if (userEl) {
+        window._fabUserTs = new TomSelect(userEl, {
+            allowEmptyOption: false,
+            onChange: function (val) {
+                const h = document.getElementById('fab-user-id-hidden');
+                if (h) h.value = val || '';
+                const dateEl = document.getElementById('fab-date');
+                const date   = dateEl ? dateEl.value : window._tlFabToday;
+                // Update summary bar via Alpine
+                const fabEl = document.getElementById('timelog-fab');
+                if (fabEl && fabEl._x_dataStack) {
+                    try { Alpine.$data(fabEl).fetchSummary(val || window._tlFabCurrentUser, date); } catch(e) {}
+                }
+            },
+        });
+    }
+
+    const allTasks = window._tlFabTasks || [];
+
+    // Build TomSelect option list for tasks, optionally filtered by project
+    function taskOpts(projectId) {
+        const list = projectId
+            ? allTasks.filter(t => String(t.pid) === String(projectId))
+            : allTasks;
+        return list.map(t => ({ value: String(t.id), text: t.code + ' · ' + t.name, pid: String(t.pid || '') }));
+    }
+
+    // ── Task TomSelect (initialised first so projTs.onChange can reference it) ──
+    window._fabTaskTs = new TomSelect(taskEl, {
+        allowEmptyOption: true,
+        placeholder: '— Không có công việc —',
+        options: taskOpts(null),
+        onChange: function (val) {
+            document.getElementById('fab-task-id').value = val || '';
+            if (!val) return;
+            // Auto-fill project from the selected task
+            const task = allTasks.find(t => String(t.id) === String(val));
+            if (task && task.pid) {
+                const projVal = String(task.pid);
+                if (window._fabProjTs && window._fabProjTs.getValue() !== projVal) {
+                    window._fabProjTs.setValue(projVal); // this triggers projTs.onChange → re-filters tasks
+                }
+            }
+        },
+    });
+
+    // ── Project TomSelect ──────────────────────────────────────────────────────
+    window._fabProjTs = new TomSelect(projEl, {
+        allowEmptyOption: true,
+        placeholder: '— Không có dự án —',
+        onChange: function (val) {
+            document.getElementById('fab-project-id').value = val || '';
+            // Re-populate task options for the chosen project
+            const currentTask = window._fabTaskTs.getValue();
+            window._fabTaskTs.clearOptions();
+            taskOpts(val).forEach(o => window._fabTaskTs.addOption(o));
+            window._fabTaskTs.refreshOptions(false);
+            // Keep task selection if it still belongs to this project
+            if (currentTask) {
+                const stillValid = taskOpts(val).find(o => o.value === currentTask);
+                if (stillValid) {
+                    window._fabTaskTs.setValue(currentTask, true); // silent — don't re-trigger onChange
+                } else {
+                    window._fabTaskTs.clear();
+                    document.getElementById('fab-task-id').value = '';
+                }
+            }
+        },
+    });
+});
+</script>
+
 @endauth

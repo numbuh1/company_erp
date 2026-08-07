@@ -23,6 +23,14 @@
                     </div>
 
                     <div class="mb-4">
+                        <x-input-label value="Mã dự án" />
+                        <x-text-input name="project_code" class="mt-1 block w-full sm:max-w-xs font-mono"
+                            value="{{ old('project_code', $project->project_code ?? $predicted_project_code ?? '') }}"
+                            placeholder="PJ-..." />
+                        <p class="mt-1 text-xs text-gray-400">Để trống để dùng mã mặc định.</p>
+                    </div>
+
+                    <div class="mb-4">
                         <x-input-label value="Trạng thái" />
                         <select name="status"
                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
@@ -103,7 +111,7 @@
 
                 {{-- Buttons --}}
                 <div class="flex justify-end gap-2 mt-5 mb-10">
-                    <a href="{{ isset($project) ? route('projects.show', $project) : route('projects.index') }}">
+                    <a href="javascript:history.back()">
                         <x-secondary-button type="button">Hủy</x-secondary-button>
                     </a>
                     <x-primary-button>{{ isset($project) ? 'Lưu' : 'Tạo' }}</x-primary-button>

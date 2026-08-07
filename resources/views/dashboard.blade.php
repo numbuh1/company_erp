@@ -27,25 +27,22 @@
                     </p>
                 </div>
                 <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4">
-                    <p class="text-xs text-gray-500 uppercase font-medium">Tuần này</p>
+                    <p class="text-xs text-gray-500 uppercase font-medium">Giờ công tuần này</p>
                     <p class="mt-1 text-2xl font-bold text-indigo-600 dark:text-indigo-400">
                         {{ \App\Models\TimeLog::formatTime($weekTimeLogs) }}
                     </p>
-                    <p class="text-xs text-gray-400">giờ công</p>
                 </div>
                 <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4">
-                    <p class="text-xs text-gray-500 uppercase font-medium">Tháng này</p>
+                    <p class="text-xs text-gray-500 uppercase font-medium">Giờ công tháng này</p>
                     <p class="mt-1 text-2xl font-bold text-indigo-600 dark:text-indigo-400">
                         {{ \App\Models\TimeLog::formatTime($monthTimeLogs) }}
                     </p>
-                    <p class="text-xs text-gray-400">giờ công</p>
                 </div>
                 <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4">
                     <p class="text-xs text-gray-500 uppercase font-medium">Tăng ca tháng này</p>
                     <p class="mt-1 text-2xl font-bold text-green-600 dark:text-green-400">
                         {{ rtrim(rtrim(number_format($monthOTHours, 2), '0'), '.') }} giờ
                     </p>
-                    <p class="text-xs text-gray-400">giờ OT được duyệt</p>
                 </div>
             </div>
 
@@ -57,7 +54,7 @@
                     <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
-                                Thông báo mới nhất
+                                Thông báo
                             </h3>
                             @can('edit announcements')
                                 <a href="{{ route('announcements.create') }}"
@@ -88,110 +85,88 @@
                         @else
                             <p class="text-sm text-gray-400">Chưa có thông báo.</p>
                         @endif
-                    </div>
 
-                    @if($previousAnnouncements->isNotEmpty())
-                        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
-                            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-3">
-                                Thông báo cũ
-                            </h3>
-                            <ul class="space-y-2">
-                                @foreach($previousAnnouncements as $prev)
-                                    <li class="text-sm">
-                                        <a href="{{ route('announcements.show', $prev) }}"
-                                            class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline">
-                                            {{ $prev->title }}
-                                        </a>
-                                        <span class="text-xs text-gray-400 ml-1">
-                                            {{ $prev->created_at->format('d/m/Y') }}
-                                        </span>
-                                    </li>
-                                @endforeach
-                            </ul>
-                            <a href="{{ route('announcements.index') }}"
-                                class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline mt-3 inline-block">
-                                Tất cả Thông báo →
-                            </a>
-                        </div>
-                    @else
-                        <div class="text-right">
-                            <a href="{{ route('announcements.index') }}"
-                                class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">
-                                Tất cả Thông báo →
-                            </a>
-                        </div>
-                    @endif
+                        @if($previousAnnouncements->isNotEmpty())
+                            <div class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700">
+                                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                                    Thông báo khác
+                                </h4>
+                                <ul class="space-y-2">
+                                    @foreach($previousAnnouncements as $prev)
+                                        <li class="text-sm">
+                                            <a href="{{ route('announcements.show', $prev) }}"
+                                                class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline">
+                                                {{ $prev->title }}
+                                            </a>
+                                            <span class="text-xs text-gray-400 ml-1">
+                                                {{ $prev->created_at->format('d/m/Y') }}
+                                            </span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
+                        <a href="{{ route('announcements.index') }}"
+                            class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline mt-3 inline-block">
+                            Tất cả Thông báo →
+                        </a>
+                    </div>
                 </div>
 
                 {{-- ── Right: Notifications ───────────────────────────────── --}}
                 <div class="lg:col-span-3 space-y-4">
-                    {{-- Today's Attendance --}}
-                    @if($attendanceStats)
+
+                    {{-- Onboarding (Team Lead / HR) --}}
+                    @if($canViewOnboarding && ($onboardedUsers->isNotEmpty() || $probationEndingUsers->isNotEmpty()))
                         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
-                            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-4">
-                                Bảng chấm công
-                                <span class="font-normal text-gray-400 normal-case">— {{ $attendanceStats['label'] }}</span>
+                            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-1">
+                                Onboarding
                             </h3>
 
-                            <div class="grid grid-cols-2 gap-3 mb-4">
-                                <div class="text-center bg-gray-50 dark:bg-gray-700 rounded-lg py-3">
-                                    <p class="text-2xl font-bold text-green-600 dark:text-green-400">{{ $attendanceStats['present'] }}</p>
-                                    <p class="text-xs text-gray-500 mt-0.5">Có mặt</p>
-                                </div>
-                                <!-- <div class="text-center bg-green-50 dark:bg-green-900/20 rounded-lg py-3">
-                                    <p class="text-2xl font-bold text-gray-700 dark:text-gray-200">{{ $attendanceStats['total'] }}</p>
-                                    <p class="text-xs text-gray-500 mt-0.5">Tổng</p>
-                                </div> -->
-                                <div class="text-center bg-yellow-50 dark:bg-yellow-900/20 rounded-lg py-3">
-                                    <p class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{{ $attendanceStats['on_leave'] }}</p>
-                                    <p class="text-xs text-gray-500 mt-0.5">Đang nghỉ phép</p>
-                                </div>
-                            </div>
-
-                            @if($attendanceStats['on_leave_users']->isNotEmpty())
-                                <div class="border-t border-gray-100 dark:border-gray-700 pt-3">
-                                    <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Nghỉ phép hôm nay</p>
-                                    <div class="flex flex-wrap gap-1.5">
-                                        @foreach($attendanceStats['on_leave_users'] as $ou)
-                                            <span class="inline-flex items-center gap-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 text-xs px-2 py-0.5 rounded">
-                                                {{ $ou->name }}
+                            @if($onboardedUsers->isNotEmpty())
+                                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mt-3 mb-2">
+                                    🆕 Đã Onboard <span class="font-normal normal-case">({{ $onboardedUsers->count() }})</span>
+                                </p>
+                                <div class="space-y-1.5">
+                                    @foreach($onboardedUsers->take(5) as $ou)
+                                        <div class="flex items-center justify-between text-sm border-l-2 border-emerald-300 pl-3 py-0.5">
+                                            <div>
+                                                <a href="{{ route('users.show', $ou) }}" class="font-medium text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400">
+                                                    {{ $ou->name }}
+                                                </a>
                                                 @if($ou->position)
-                                                    <span class="text-yellow-600 dark:text-yellow-400 opacity-70">· {{ $ou->position }}</span>
+                                                    <span class="text-xs text-gray-400 ml-1.5">{{ $ou->position }}</span>
                                                 @endif
-                                            </span>
-                                        @endforeach
-                                    </div>
+                                            </div>
+                                            <span class="text-xs text-gray-400 shrink-0 ml-2">{{ $ou->probation_start_date->translatedFormat('d M') }}</span>
+                                        </div>
+                                    @endforeach
                                 </div>
                             @endif
-                        </div>
-                    @endif
 
-                    {{-- Pending request counts (approvers only) --}}
-                    @if($pendingLeavesCount !== null || $pendingOTCount !== null)
-                        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
-                            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-3">
-                                Yêu cầu đang chờ duyệt
-                            </h3>
-                            <div class="flex flex-wrap gap-3">
-                                @if($pendingLeavesCount !== null)
-                                    <a href="{{ route('leave-requests.index', ['status' => 'pending']) }}"
-                                        class="flex items-center gap-2 px-3 py-2 rounded-lg {{ $pendingLeavesCount > 0 ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700' : 'bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600' }} text-sm hover:opacity-80 transition">
-                                        <span class="text-xl font-bold {{ $pendingLeavesCount > 0 ? 'text-yellow-600' : 'text-gray-400' }}">
-                                            {{ $pendingLeavesCount }}
-                                        </span>
-                                        <span class="text-gray-600 dark:text-gray-300">Yêu cầu nghỉ phép đang chờ</span>
-                                    </a>
-                                @endif
-                                @if($pendingOTCount !== null)
-                                    <a href="{{ route('overtime-requests.index', ['status' => 'pending']) }}"
-                                        class="flex items-center gap-2 px-3 py-2 rounded-lg {{ $pendingOTCount > 0 ? 'bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700' : 'bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600' }} text-sm hover:opacity-80 transition">
-                                        <span class="text-xl font-bold {{ $pendingOTCount > 0 ? 'text-orange-600' : 'text-gray-400' }}">
-                                            {{ $pendingOTCount }}
-                                        </span>
-                                        <span class="text-gray-600 dark:text-gray-300">Yêu cầu tăng ca đang chờ</span>
-                                    </a>
-                                @endif
-                            </div>
+                            @if($probationEndingUsers->isNotEmpty())
+                                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mt-4 mb-2">⏳ Hết thử việc</p>
+                                <div class="space-y-1.5">
+                                    @foreach($probationEndingUsers as $pu)
+                                        @php
+                                            $daysLeft = (int) now()->startOfDay()->diffInDays($pu->probation_end_date->copy()->startOfDay(), false);
+                                        @endphp
+                                        <div class="flex items-center justify-between text-sm border-l-2 border-amber-300 pl-3 py-0.5">
+                                            <div>
+                                                <a href="{{ route('users.show', $pu) }}" class="font-medium text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400">{{ $pu->name }}</a>
+                                                @if($pu->position)
+                                                    <span class="text-xs text-gray-400 ml-1.5">{{ $pu->position }}</span>
+                                                @endif
+                                                <span class="text-xs text-gray-400 ml-1.5">{{ $pu->probation_end_date->translatedFormat('d M') }}</span>
+                                            </div>
+                                            <span class="text-xs shrink-0 ml-2 {{ $daysLeft < 0 ? 'text-red-500 font-semibold' : ($daysLeft <= 7 ? 'text-orange-500 font-semibold' : 'text-yellow-600') }}">
+                                                {{ $daysLeft < 0 ? 'Đã hết hạn' : ($daysLeft === 0 ? 'Hôm nay' : 'in ' . $daysLeft . 'd') }}
+                                            </span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
                         </div>
                     @endif
 
@@ -391,7 +366,7 @@
                             <span class="font-normal text-gray-400 normal-case">(trước ngày kết thúc dự kiến 5 ngày)</span>
                         </h3>
                         @if($deadlineTasks->isEmpty())
-                            <p class="text-sm text-gray-400">Không có công việc khẩn cấp.</p>
+                            <p class="text-sm text-gray-400">Không có công việc sắp tới hạn nào.</p>
                         @else
                             <div class="space-y-2">
                                 @foreach($deadlineTasks as $task)
@@ -401,7 +376,7 @@
                                     <div class="flex items-center gap-3 p-2 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                                         <a href="{{ route('tasks.show', $task) }}"
                                             class="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400 shrink-0">
-                                            TK-{{ $task->id }}
+                                            {{ $task->task_code }}
                                         </a>
                                         <div class="flex-1 min-w-0">
                                             <a href="{{ route('tasks.show', $task) }}"
@@ -410,7 +385,7 @@
                                             </a>
                                             @if($task->project)
                                                 <span class="text-xs text-gray-400">
-                                                    <span class="font-mono">PJ-{{ $task->project_id }}</span>
+                                                    <span class="font-mono">{{ $task->project->project_code }}</span>
                                                     {{ $task->project->name }}
                                                 </span>
                                             @endif

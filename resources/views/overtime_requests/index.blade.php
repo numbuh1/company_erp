@@ -25,9 +25,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     Xuất
                 </a>
-                <a href="{{ route('overtime-requests.create') }}">
-                    <x-primary-button>Tạo yêu cầu tăng ca</x-primary-button>
-                </a>
+                <x-primary-button onclick="openOtCreate()" type="button">Tạo yêu cầu tăng ca</x-primary-button>
             </div>
         </div>
     </x-slot>
@@ -69,7 +67,11 @@
                         @forelse($otRequests as $ot)
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                                 <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">{{ $ot->created_at->format('d/m/y H:i') }}</td>
-                                <td class="px-4 py-3"><x-user-status :user="$ot->user" /></td>
+                                <td class="px-4 py-3">
+                                    <a href="{{ route('users.show', $ot->user) }}" class="hover:opacity-75 transition">
+                                        <x-user-status :user="$ot->user" />
+                                    </a>
+                                </td>
                                 <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
                                     <div>{{ $ot->start_at->translatedFormat('D, d/m/y H:i') }}</div>
                                     <div class="text-xs text-gray-500">→ {{ $ot->end_at->translatedFormat('D, d/m/y H:i') }}</div>
@@ -78,11 +80,27 @@
                                 <td class="px-4 py-3">
                                     <span class="inline-block bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 text-xs px-2 py-1 rounded">{{ $ot->type }}</span>
                                 </td>
-                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                    {{ $ot->project?->name ?? '—' }}
+                                <td class="px-4 py-3 text-sm">
+                                    @if($ot->project)
+                                        <a href="{{ route('projects.show', $ot->project) }}"
+                                            class="text-indigo-600 dark:text-indigo-400 hover:underline">
+                                            <span class="font-mono text-xs font-semibold">{{ $ot->project->project_code }}</span>
+                                            <span class="ml-1">{{ $ot->project->name }}</span>
+                                        </a>
+                                    @else
+                                        <span class="text-gray-400 dark:text-gray-500">—</span>
+                                    @endif
                                 </td>
-                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                    {{ $ot->task?->name ?? '—' }}
+                                <td class="px-4 py-3 text-sm">
+                                    @if($ot->task)
+                                        <a href="{{ route('tasks.show', $ot->task) }}"
+                                            class="text-indigo-600 dark:text-indigo-400 hover:underline">
+                                            <span class="font-mono text-xs font-semibold">{{ $ot->task->task_code }}</span>
+                                            <span class="ml-1">{{ $ot->task->name }}</span>
+                                        </a>
+                                    @else
+                                        <span class="text-gray-400 dark:text-gray-500">—</span>
+                                    @endif
                                 </td>
                                 <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 max-w-xs truncate">{{ $ot->description }}</td>
                                 <td class="px-4 py-3">
@@ -93,7 +111,15 @@
                                         {{ ['pending' => 'Đang chờ', 'approved' => 'Đã duyệt', 'rejected' => 'Đã từ chối'][$ot->status] ?? ucfirst($ot->status) }}
                                     </span>
                                 </td>
-                                <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{{ $ot->approver?->name ?? '—' }}</td>
+                                <td class="px-4 py-3">
+                                    @if($ot->approver)
+                                        <a href="{{ route('users.show', $ot->approver) }}" class="hover:opacity-75 transition">
+                                            <x-user-status :user="$ot->approver" />
+                                        </a>
+                                    @else
+                                        <span class="text-gray-400 text-sm">—</span>
+                                    @endif
+                                </td>
                                 <td class="px-4 py-3 text-sm">
                                     @if($ot->status === 'rejected')
                                         <span class="text-red-500">{{ $ot->reject_reason ?? '—' }}</span>
@@ -103,19 +129,19 @@
                                 </td>
                                 <td class="px-4 py-3 text-right">
                                     <div class="flex items-center justify-end gap-1.5">
-                                        <a href="{{ route('overtime-requests.show', $ot) }}" title="Xem"
+                                        <button onclick="openOtModal({{ $ot->id }})" title="Xem"
                                             class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-blue-600 hover:border-blue-400 bg-white dark:bg-gray-700 transition">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                             <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Xem</span>
-                                        </a>
+                                        </button>
                                         @if(!in_array($ot->status, ['approved', 'rejected']))
                                             @php $canEdit = auth()->user()->can('edit all ot') || auth()->user()->can('edit team ot') || (auth()->user()->can('edit own ot') && $ot->user_id === auth()->id()); @endphp
                                             @if($canEdit)
-                                                <a href="{{ route('overtime-requests.edit', $ot) }}" title="Chỉnh sửa"
+                                                <button onclick="openOtModal({{ $ot->id }})" title="Chỉnh sửa"
                                                     class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-yellow-600 hover:border-yellow-400 bg-white dark:bg-gray-700 transition">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                                     <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Chỉnh sửa</span>
-                                                </a>
+                                                </button>
                                             @endif
                                         @endif
                                         @canany(['approve team ot', 'approve all ot'])

@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <span class="font-mono text-sm font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">PJ-{{ $project->id }}</span>
+                <span class="font-mono text-sm font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">{{ $project->project_code }}</span>
                 <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">{{ $project->name }}</h2>
             </div>
             <div class="flex gap-2">
@@ -10,7 +10,7 @@
                 @canany(['edit projects', 'edit assigned projects'])
                     <a href="{{ route('projects.edit', $project) }}"><x-secondary-button>Chỉnh sửa</x-secondary-button></a>
                 @endcanany
-                <a href="{{ route('projects.index') }}"><x-secondary-button>Quay lại</x-secondary-button></a>
+                <a href="javascript:history.back()"><x-secondary-button>Quay lại</x-secondary-button></a>
             </div>
         </div>
     </x-slot>
@@ -211,6 +211,13 @@
                         Timesheet
                     </button>
                     @endcanany
+                    <button @click="activeTab = 'assignees'"
+                        :class="activeTab === 'assignees'
+                            ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                            : 'border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
+                        class="px-5 py-3 text-sm font-medium -mb-px transition">
+                        Người phụ trách
+                    </button>
                 </div>
 
                 {{-- Tasks Panel --}}
@@ -240,7 +247,7 @@
 
                             {{-- Assignee --}}
                             <div class="min-w-[160px]">
-                                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Người phân công</label>
+                                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Người làm</label>
                                 <select id="proj-task-assignee-select" name="assignee_id">
                                     <option value="">— Tất cả —</option>
                                     @foreach($taskAssignees as $u)
@@ -296,7 +303,7 @@
                                         <input type="checkbox" x-model="cols.status"     @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Trạng thái
                                     </label>
                                     <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400">
-                                        <input type="checkbox" x-model="cols.assignees"  @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Người phân công
+                                        <input type="checkbox" x-model="cols.assignees"  @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Người làm
                                     </label>
                                     <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400">
                                         <input type="checkbox" x-model="cols.budget"     @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Budget Time
@@ -325,8 +332,9 @@
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">ID</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Tên</th>
                                     <th :class="{ 'hidden': !cols.status }"     class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Trạng thái</th>
-                                    <th :class="{ 'hidden': !cols.assignees }"  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Người phân công</th>
-                                    <th :class="{ 'hidden': !cols.budget }"    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Budget Time</th>
+                                    <th :class="{ 'hidden': !cols.assignees }"  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Người làm</th>
+                                    <th :class="{ 'hidden': !cols.budget }" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Budget</th>
+                                    <th :class="{ 'hidden': !cols.budget }" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Thời gian</th>
                                     <th :class="{ 'hidden': !cols.start_date }" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Bắt đầu</th>
                                     <th :class="{ 'hidden': !cols.due_date }"   class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">End (EST)</th>
                                     <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Thao tác</th>
@@ -347,7 +355,7 @@
                                         <td class="px-4 py-3 whitespace-nowrap">
                                             <a href="{{ route('tasks.show', $task) }}"
                                                class="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
-                                                TK-{{ $task->id }}
+                                                {{ $task->task_code }}
                                             </a>
                                         </td>
 
@@ -386,26 +394,30 @@
                                             </div>
                                         </td>
 
-                                        {{-- Budget / Time Spent --}}
+                                        {{-- Budget: progress bar --}}
                                         <td :class="{ 'hidden': !cols.budget }" class="px-4 py-3">
                                             @php
-                                                $tBudgetH = $task->budget_hours;
-                                                $tSpentH  = $taskTimeSpentMap[$task->id] ?? 0;
-                                                $tPct     = $tBudgetH > 0 ? round($tSpentH / $tBudgetH * 100) : null;
-                                                $tOver    = $tBudgetH > 0 && $tSpentH > $tBudgetH;
+                                                $tBudgetH  = $task->budget_hours;
+                                                $tNtH      = $taskTimeSpentMap[$task->id] ?? 0;
+                                                $tOtH      = $taskOtMap[$task->id] ?? 0;
+                                                $tActualH  = $tNtH + $tOtH;
+                                                $tIsDone   = $task->status === 'Đã xong';
+                                                $tPct      = $tBudgetH > 0 ? round($tActualH / $tBudgetH * 100) : 0;
+                                                $tOver     = $tBudgetH > 0 && $tActualH > $tBudgetH;
+                                                $tBarColor = $tOver
+                                                    ? ($tIsDone ? 'bg-amber-700 dark:bg-amber-600' : 'bg-red-500')
+                                                    : ($tIsDone ? 'bg-green-500' : 'bg-blue-500');
+                                                $tPctColor = $tOver
+                                                    ? ($tIsDone ? 'text-amber-700 dark:text-amber-500' : 'text-red-600 dark:text-red-400')
+                                                    : ($tIsDone ? 'text-green-600 dark:text-green-400' : 'text-gray-500');
                                             @endphp
-                                            <div class="flex items-center gap-2 min-w-[120px]">
-                                                @if($tBudgetH)
-                                                    <div class="flex-1 bg-white dark:bg-gray-900 rounded h-2 border border-gray-300 dark:border-gray-600 overflow-hidden">
-                                                        <div class="{{ $tOver ? 'bg-red-500' : 'bg-gray-800 dark:bg-gray-100' }} h-2" style="width: {{ min($tPct, 100) }}%"></div>
-                                                    </div>
-                                                    <span class="text-xs {{ $tOver ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-500' }} w-8 text-right shrink-0">{{ $tPct }}%</span>
-                                                @elseif($tSpentH > 0)
-                                                    <span class="text-xs text-gray-500">{{ number_format($tSpentH, 1) }}h</span>
-                                                @else
-                                                    <span class="text-xs text-gray-400">—</span>
-                                                @endif
+                                            <div class="w-24 bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden">
+                                                <div class="{{ $tBarColor }} h-2 rounded-full" style="width: {{ min($tPct, 100) }}%"></div>
                                             </div>
+                                        </td>
+                                        {{-- Budget: spent / budget text --}}
+                                        <td :class="{ 'hidden': !cols.budget }" class="px-4 py-3 whitespace-nowrap">
+                                            <span class="text-xs tabular-nums {{ $tOver ? 'font-semibold' : '' }} {{ $tPctColor }}">{{ number_format($tActualH, 1) }}h / {{ $tBudgetH > 0 ? number_format($tBudgetH, 1) . 'h' : '—' }}</span>
                                         </td>
 
                                         {{-- Start --}}
@@ -632,7 +644,7 @@
                                         <td class="{{ $tdC1 }}" title="{{ $row['task']?->name ?? $row['label'] }}">
                                             @if($row['task'])
                                                 <a href="{{ route('tasks.show', $row['task_id']) }}"
-                                                    class="font-mono text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">TK-{{ $row['task_id'] }}</a>
+                                                    class="font-mono text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">{{ $row['task']->task_code }}</a>
                                                 <span class="ml-1 text-gray-700 dark:text-gray-300">{{ $row['task']->name }}</span>
                                             @else
                                                 <span class="text-gray-400 italic">{{ $row['label'] }}</span>
@@ -824,6 +836,229 @@
                     @endif
                 </div>
                 @endcanany
+
+                {{-- Assignees Panel --}}
+                @php
+                    $_budgetsArr  = $assigneeUsers->mapWithKeys(fn($u) => [$u->id => $userBudgetMap->get($u->id, 0.0)])->toArray();
+                    $_budgetsJson = htmlspecialchars(json_encode($_budgetsArr, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
+                    $_projBudget  = $project->budget_hours !== null ? (float) $project->budget_hours : 'null';
+                @endphp
+                <div x-show="activeTab === 'assignees'"
+                     x-data="{
+                         bulkOpen: false,
+                         projectBudget: {{ $_projBudget }},
+                         origBudgets: {!! $_budgetsJson !!},
+                         budgets: {!! $_budgetsJson !!},
+                         get totalAssigned() {
+                             return Object.values(this.budgets).reduce((s, v) => s + (isNaN(parseFloat(v)) ? 0 : parseFloat(v)), 0);
+                         },
+                         get remaining() {
+                             return this.projectBudget !== null ? this.projectBudget - this.totalAssigned : null;
+                         },
+                         openBulk() { this.budgets = Object.assign({}, this.origBudgets); this.bulkOpen = true; },
+                         closeBulk() { this.budgets = Object.assign({}, this.origBudgets); this.bulkOpen = false; }
+                     }"
+                     class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-b-lg sm:rounded-tr-lg">
+
+                    {{-- Panel header --}}
+                    <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                        <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200">Người phụ trách</h3>
+                        @if($canEditBudget && $assigneeUsers->isNotEmpty())
+                            <button type="button" @click="openBulk()"
+                                class="px-3 py-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-700 rounded-md hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition">
+                                Sửa hàng loạt
+                            </button>
+                        @endif
+                    </div>
+
+                    @if($assigneeUsers->isEmpty())
+                        <div class="px-5 py-8 text-center text-sm text-gray-400">Chưa có người phụ trách nào.</div>
+                    @else
+
+                    {{-- Main table --}}
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40">
+                                    <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-40">Nhân viên</th>
+                                    <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Chức vụ</th>
+                                    <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Cấp độ</th>
+                                    <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide min-w-[140px]">Tiến độ</th>
+                                    <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Budget</th>
+                                    <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">NT</th>
+                                    <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">OT</th>
+                                    <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Còn lại</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                                @foreach($assigneeUsers as $au)
+                                @php
+                                    $auBudget   = $userBudgetMap->get($au->id, 0.0);
+                                    $auNt       = $ntByUser->get($au->id, 0.0);
+                                    $auOt       = $otByUser->get($au->id, 0.0);
+                                    $auActual   = $auNt + $auOt;
+                                    $auLeft     = $auBudget > 0 ? $auBudget - $auActual : null;
+                                    $auPct      = $auBudget > 0 ? round($auActual / $auBudget * 100) : 0;
+                                    $auOver     = $auBudget > 0 && $auActual > $auBudget;
+                                    $auAllZero  = $auBudget <= 0 && $auActual <= 0;
+                                    $auNoBudget = $auBudget <= 0 && $auActual > 0;
+                                    $barBg      = $auOver ? 'bg-blue-400 dark:bg-blue-600' : 'bg-gray-200 dark:bg-gray-600';
+                                    $barFill    = $auNoBudget ? 'bg-orange-400' : ($auOver ? 'bg-red-500' : 'bg-blue-500');
+                                    $barWidth   = $auAllZero ? 0 : ($auNoBudget || $auOver ? 100 : min($auPct, 100));
+                                    $pctLabel   = $auBudget > 0 ? $auPct . '%' : '—';
+                                    $pctColor   = $auNoBudget ? 'text-orange-500' : ($auOver ? 'text-red-500' : 'text-gray-500 dark:text-gray-400');
+                                @endphp
+                                <tr>
+                                    <td class="px-4 py-3">
+                                        <a href="{{ route('users.show', $au) }}" class="flex items-center gap-2 hover:opacity-80 transition">
+                                            <x-user-status :user="$au" />
+                                        </a>
+                                    </td>
+                                    <td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">{{ $au->position ?: '—' }}</td>
+                                    <td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">{{ $au->grade ?: '—' }}</td>
+                                    <td class="px-4 py-3">
+                                        <div class="flex items-center gap-2">
+                                            <div class="flex-1 rounded-full h-2 overflow-hidden {{ $barBg }}">
+                                                <div class="{{ $barFill }} h-2 rounded-full transition-all" style="width: {{ $barWidth }}%"></div>
+                                            </div>
+                                            <span class="text-xs tabular-nums {{ $pctColor }} w-10 text-right shrink-0">{{ $pctLabel }}</span>
+                                        </div>
+                                    </td>
+                                    {{-- Budget cell with inline edit popup --}}
+                                    <td class="px-4 py-3 text-right">
+                                        @if($canEditBudget)
+                                        <div x-data="{ open: false, val: {{ $auBudget }} }" class="inline-block relative">
+                                            <button type="button" @click="open = !open"
+                                                class="font-semibold {{ $auBudget > 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500' }} hover:underline tabular-nums cursor-pointer">
+                                                {{ $auBudget > 0 ? number_format($auBudget, 1) . 'h' : '—' }}
+                                            </button>
+                                            <div x-show="open" x-cloak @click.away="open = false"
+                                                class="absolute right-0 top-full mt-1 z-30 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg p-3 w-48">
+                                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Budget (giờ)</p>
+                                                <form method="POST"
+                                                    action="{{ route('projects.user-budgets.update', [$project, $au]) }}"
+                                                    class="flex gap-2 items-center">
+                                                    @csrf
+                                                    <input type="number" name="budget_hours" x-model="val"
+                                                        min="0" max="9999.99" step="0.25"
+                                                        class="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 rounded-md text-sm px-2 py-1 focus:ring-indigo-500 focus:border-indigo-500">
+                                                    <button type="submit"
+                                                        class="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs rounded-md font-medium transition">
+                                                        Lưu
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                        @else
+                                            <span class="font-semibold {{ $auBudget > 0 ? 'text-gray-700 dark:text-gray-200' : 'text-gray-400' }} tabular-nums">
+                                                {{ $auBudget > 0 ? number_format($auBudget, 1) . 'h' : '—' }}
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3 text-right tabular-nums text-gray-700 dark:text-gray-200 font-medium">
+                                        {{ number_format($auNt, 1) }}h
+                                    </td>
+                                    <td class="px-4 py-3 text-right tabular-nums {{ $auOt > 0 ? 'text-orange-600 dark:text-orange-400 font-medium' : 'text-gray-400' }}">
+                                        {{ $auOt > 0 ? number_format($auOt, 1) . 'h' : '—' }}
+                                    </td>
+                                    <td class="px-4 py-3 text-right tabular-nums font-semibold {{ $auLeft === null ? 'text-gray-400' : ($auLeft < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400') }}">
+                                        @if($auLeft === null)—
+                                        @else{{ number_format($auLeft, 1) }}h
+                                        @endif
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {{-- Bulk Edit Modal --}}
+                    <div x-show="bulkOpen" x-cloak
+                         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+                         @click="closeBulk()">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl mx-4 flex flex-col"
+                             style="max-height: 85vh"
+                             @click.stop>
+                            {{-- Modal header --}}
+                            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between shrink-0">
+                                <h4 class="text-base font-semibold text-gray-800 dark:text-gray-100">Sửa Budget hàng loạt</h4>
+                                <button type="button" @click="closeBulk()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+
+                            {{-- Stats bar --}}
+                            <div class="px-6 py-3 bg-gray-50 dark:bg-gray-700/40 border-b border-gray-200 dark:border-gray-700 flex flex-wrap gap-8 shrink-0">
+                                <div>
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 mb-0.5">Budget dự án</p>
+                                    <p class="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                                        {{ $project->budget_hours !== null ? number_format($project->budget_hours, 1) . 'h' : '—' }}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 mb-0.5">Đã phân công</p>
+                                    <p class="text-sm font-semibold text-gray-700 dark:text-gray-200"
+                                       x-text="totalAssigned.toFixed(1) + 'h'"></p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 mb-0.5">Còn lại</p>
+                                    <p class="text-sm font-semibold"
+                                       :class="remaining === null ? 'text-gray-400' : (remaining < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400')"
+                                       x-text="remaining !== null ? remaining.toFixed(1) + 'h' : '—'"></p>
+                                </div>
+                            </div>
+
+                            {{-- Scrollable table + form --}}
+                            <form method="POST" action="{{ route('projects.user-budgets.bulk', $project) }}"
+                                  class="flex flex-col flex-1 min-h-0">
+                                @csrf
+                                <div class="overflow-y-auto flex-1">
+                                    <table class="min-w-full text-sm">
+                                        <thead class="sticky top-0 z-10 bg-gray-50 dark:bg-gray-700/60">
+                                            <tr class="border-b border-gray-200 dark:border-gray-700">
+                                                <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Nhân viên</th>
+                                                <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Chức vụ</th>
+                                                <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Cấp độ</th>
+                                                <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Budget (giờ)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                                            @foreach($assigneeUsers as $au)
+                                            <tr>
+                                                <td class="px-4 py-2.5">
+                                                    <x-user-status :user="$au" />
+                                                </td>
+                                                <td class="px-4 py-2.5 text-xs text-gray-500 dark:text-gray-400">{{ $au->position ?: '—' }}</td>
+                                                <td class="px-4 py-2.5 text-xs text-gray-500 dark:text-gray-400">{{ $au->grade ?: '—' }}</td>
+                                                <td class="px-4 py-2.5 text-right">
+                                                    <input type="number" name="budgets[{{ $au->id }}]"
+                                                        x-model.number="budgets[{{ $au->id }}]"
+                                                        min="0" max="9999.99" step="0.25" placeholder="0"
+                                                        class="w-28 text-right border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 rounded-md text-sm px-2 py-1.5 focus:ring-indigo-500 focus:border-indigo-500">
+                                                </td>
+                                            </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {{-- Modal footer --}}
+                                <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-2 shrink-0">
+                                    <button type="button" @click="closeBulk()"
+                                        class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 transition">
+                                        Hủy
+                                    </button>
+                                    <button type="submit"
+                                        class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md transition">
+                                        Lưu tất cả
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    @endif
+                </div>
 
             </div>
 

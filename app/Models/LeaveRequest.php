@@ -11,11 +11,13 @@ class LeaveRequest extends Model
         'start_at',
         'end_at',
         'hours',
+        'start_day_hours',
+        'end_day_hours',
         'type',
         'description',
         'status',
         'approved_by',
-        'reject_reason'
+        'reject_reason',
     ];
 
     protected $casts = [

@@ -5,10 +5,37 @@ let _locsLoaded   = false;
 
 const _eventCache = new Map();
 
+// Holds the data of the event currently shown in the read-only view modal,
+// so the Edit / Send Email buttons can act on it without re-fetching.
+let _currentViewData = null;
+
+function _formatDateLabel(isoDate) {
+    if (!isoDate) return '';
+    const [y, m, d] = isoDate.split('-');
+    return `${d}/${m}/${y}`;
+}
+
+function _formatDuration(mins) {
+    if (!mins || mins <= 0) return '';
+    if (mins >= 60) {
+        const h = Math.floor(mins / 60);
+        const m = mins % 60;
+        return m > 0 ? `${h}h ${m}m` : `${h}h`;
+    }
+    return `${mins}m`;
+}
+
+// Splits a comma/semicolon separated list of email addresses into a
+// trimmed, non-empty array.
+function _splitEmails(value) {
+    if (!value) return [];
+    return value.split(/[,;]+/).map(s => s.trim()).filter(Boolean);
+}
+
 async function _loadUsers() {
     if (_usersLoaded) return;
     try {
-        const res  = await fetch('/events/users', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        const res  = await fetch(window.eventRoutes.users, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
         const data = await res.json();
         _tsAttendants = new TomSelect('#event-attendants', {
             options: data,
@@ -25,7 +52,7 @@ async function _loadUsers() {
 async function _loadLocations() {
     if (_locsLoaded) return;
     try {
-        const res  = await fetch('/events/locations', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        const res  = await fetch(window.eventRoutes.locations, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
         const data = await res.json();
         const opts = data.map(n => ({ value: n, text: n }));
         _tsLocation = new TomSelect('#event-location', {
@@ -43,7 +70,7 @@ async function _loadLocations() {
 async function _fetchEvent(id) {
     if (_eventCache.has(id)) return _eventCache.get(id);
     try {
-        const res  = await fetch(`/events/${id}/data`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        const res  = await fetch(`${window.eventRoutes.base}/${id}/data`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
         const data = await res.json();
         _eventCache.set(id, data);
         return data;
@@ -53,13 +80,13 @@ async function _fetchEvent(id) {
     }
 }
 
-// Delegate click on any element with data-event-id
+// Delegate click on any element with data-event-id — open the read-only view modal
 document.addEventListener('click', async function(e) {
     const btn = e.target.closest('[data-event-id]');
     if (!btn) return;
     const id   = btn.dataset.eventId;
     const data = await _fetchEvent(id);
-    if (data) openEventModal({ ...data, title: 'Edit Event' });
+    if (data) openViewEventModal(data);
 });
 
 window.openEventModal = async function(data = {}) {
@@ -67,11 +94,11 @@ window.openEventModal = async function(data = {}) {
     form.reset();
 
     if (data.id) {
-        form.action = '/events/' + data.id;
+        form.action = window.eventRoutes.base + '/' + data.id;
         document.getElementById('event-modal-method').value = 'PUT';
         document.getElementById('event-modal-title').textContent = data.title || 'Edit Event';
     } else {
-        form.action = '/events';
+        form.action = window.eventRoutes.store;
         document.getElementById('event-modal-method').value = 'POST';
         document.getElementById('event-modal-title').textContent = data.title || 'New Event';
     }
@@ -79,7 +106,7 @@ window.openEventModal = async function(data = {}) {
     // Show/hide delete button
     const deleteForm = document.getElementById('event-delete-form');
     if (data.id) {
-        deleteForm.action = '/events/' + data.id;
+        deleteForm.action = window.eventRoutes.base + '/' + data.id;
         deleteForm.classList.remove('hidden');
     } else {
         deleteForm.classList.add('hidden');
@@ -115,8 +142,19 @@ window.openEventModal = async function(data = {}) {
     if (data.name)        document.getElementById('event-name').value        = data.name;
     if (data.event_type)  document.getElementById('event-type').value        = data.event_type;
     if (data.description) document.getElementById('event-description').value = data.description;
-    if (data.start_at)    document.getElementById('event-start').value       = data.start_at;
-    if (data.end_at)      document.getElementById('event-end').value         = data.end_at;
+
+    if (data.start_at) {
+        const [datePart, timePart] = data.start_at.split('T');
+        document.getElementById('event-date').value = datePart || '';
+        document.getElementById('event-time').value = timePart || '';
+
+        if (data.end_at) {
+            const start    = new Date(data.start_at);
+            const end      = new Date(data.end_at);
+            const diffMins = Math.round((end - start) / 60000);
+            document.getElementById('event-duration').value = diffMins > 0 ? diffMins : '';
+        }
+    }
 
     if (_tsLocation) {
         _tsLocation.clear();
@@ -142,6 +180,228 @@ window.closeEventModal = function() {
     document.body.style.overflow = '';
 };
 
+// ─────────────────────────────────────────────────────────────────────────
+// Read-only "view" modal — shown when clicking an event. Offers Edit and
+// (for interview events linked to an applicant) Send Email actions.
+// ─────────────────────────────────────────────────────────────────────────
+window.openViewEventModal = function(data) {
+    _currentViewData = data;
+
+    document.getElementById('view-event-title').textContent = data.name || 'Event';
+    document.getElementById('view-event-type').textContent  = data.event_type_label || data.event_type || '';
+
+    const locationRow = document.getElementById('view-event-location-row');
+    if (data.location) {
+        document.getElementById('view-event-location').textContent = data.location;
+        locationRow.classList.remove('hidden');
+    } else {
+        locationRow.classList.add('hidden');
+    }
+
+    let diffMins = 0;
+    if (data.start_at) {
+        const [datePart, timePart] = data.start_at.split('T');
+        document.getElementById('view-event-date').textContent = _formatDateLabel(datePart);
+        document.getElementById('view-event-time').textContent = timePart || '';
+
+        if (data.end_at) {
+            const start = new Date(data.start_at);
+            const end   = new Date(data.end_at);
+            diffMins    = Math.round((end - start) / 60000);
+        }
+    }
+    document.getElementById('view-event-duration').textContent = _formatDuration(diffMins);
+
+    const descRow = document.getElementById('view-event-description-row');
+    if (data.description) {
+        document.getElementById('view-event-description').textContent = data.description;
+        descRow.classList.remove('hidden');
+    } else {
+        descRow.classList.add('hidden');
+    }
+
+    const attendantsRow = document.getElementById('view-event-attendants-row');
+    const attendantsEl  = document.getElementById('view-event-attendants');
+    attendantsEl.innerHTML = '';
+    if (data.attendants_detail && data.attendants_detail.length) {
+        data.attendants_detail.forEach(u => {
+            const span = document.createElement('span');
+            span.className = 'text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300';
+            span.textContent = u.name;
+            attendantsEl.appendChild(span);
+        });
+        attendantsRow.classList.remove('hidden');
+    } else {
+        attendantsRow.classList.add('hidden');
+    }
+
+    const applicantRow  = document.getElementById('view-event-applicant-row');
+    const applicantLink = document.getElementById('view-event-applicant-link');
+    if (data.applicants && data.applicants.length) {
+        applicantLink.href        = data.applicants[0].url;
+        applicantLink.textContent = data.applicants.map(a => a.name).join(', ');
+        applicantRow.classList.remove('hidden');
+    } else {
+        applicantRow.classList.add('hidden');
+    }
+
+    const fileRow  = document.getElementById('view-event-file-row');
+    const fileLink = document.getElementById('view-event-file-link');
+    if (data.file_url) {
+        fileLink.href        = data.file_url;
+        fileLink.textContent = data.file_name || 'Tải tệp đính kèm';
+        fileRow.classList.remove('hidden');
+    } else {
+        fileRow.classList.add('hidden');
+    }
+
+    document.getElementById('view-event-edit-btn').classList.toggle('hidden', !data.can_edit);
+
+    const hasApplicantEmail = !!(data.applicants && data.applicants.some(a => a.email));
+    document.getElementById('view-event-email-btn').classList.toggle('hidden', !hasApplicantEmail);
+
+    document.getElementById('event-view-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+};
+
+window.closeViewEventModal = function() {
+    document.getElementById('event-view-modal').classList.add('hidden');
+    document.body.style.overflow = '';
+};
+
+window.editFromView = function() {
+    if (!_currentViewData) return;
+    closeViewEventModal();
+    openEventModal({ ..._currentViewData, title: 'Edit Event' });
+};
+
+// ─────────────────────────────────────────────────────────────────────────
+// Email modal — composes an interview-invite email using the event data
+// and the Company option settings, then hands off to the user's mail client.
+// ─────────────────────────────────────────────────────────────────────────
+window.openEmailFromView = function() {
+    if (!_currentViewData) return;
+    const data = _currentViewData;
+    const cfg  = window.appConfig || {};
+
+    const applicants = data.applicants || [];
+    const to = applicants.map(a => a.email).filter(Boolean).join(', ');
+
+    const cc = (data.attendants_detail || [])
+        .filter(u => u.email && u.id !== cfg.currentUserId)
+        .filter(u => !applicants.some(a => a.email === u.email))
+        .map(u => u.email)
+        .join(', ');
+
+    const position      = applicants[0]?.position || '';
+    const applicantName = applicants[0]?.name || '';
+    const company       = cfg.companyName || '';
+
+    let dateLabel = '', timeLabel = '', endLabel = '';
+    if (data.start_at) {
+        const [datePart, timePart] = data.start_at.split('T');
+        dateLabel = _formatDateLabel(datePart);
+        timeLabel = timePart || '';
+    }
+    if (data.end_at) {
+        endLabel = data.end_at.split('T')[1] || '';
+    }
+
+    const subject = `Thư mời phỏng vấn${position ? ' - ' + position : ''}${company ? ' tại ' + company : ''}`;
+
+    const lines = [];
+    lines.push(`Kính gửi ${applicantName || 'Anh/Chị'},`);
+    lines.push('');
+    lines.push(`${company || 'Chúng tôi'} xin trân trọng mời bạn tham gia buổi phỏng vấn${position ? ' cho vị trí ' + position : ''} với thông tin chi tiết như sau:`);
+    lines.push('');
+    lines.push(`- Thời gian: ${dateLabel} lúc ${timeLabel}${endLabel ? ' - ' + endLabel : ''}`);
+    if (data.location) lines.push(`- Địa điểm: ${data.location}`);
+    if (cfg.companyAddress) lines.push(`- Địa chỉ công ty: ${cfg.companyAddress}`);
+    if (cfg.companyPhone) lines.push(`- Điện thoại liên hệ: ${cfg.companyPhone}`);
+    lines.push('');
+    lines.push('Vui lòng phản hồi email này để xác nhận lịch hẹn. Nếu có bất kỳ thay đổi nào, xin vui lòng liên hệ với chúng tôi sớm nhất có thể.');
+    lines.push('');
+    lines.push('Trân trọng,');
+    if (cfg.currentUserName) lines.push(cfg.currentUserName);
+    if (company) lines.push(company);
+
+    closeViewEventModal();
+    openEmailModal({ to, cc, subject, body: lines.join('\n') });
+};
+
+window.openEmailModal = function(data = {}) {
+    document.getElementById('email-to').value      = data.to || '';
+    document.getElementById('email-cc').value      = data.cc || '';
+    document.getElementById('email-subject').value = data.subject || '';
+    document.getElementById('email-body').value    = data.body || '';
+
+    document.getElementById('email-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+};
+
+window.closeEmailModal = function() {
+    document.getElementById('email-modal').classList.add('hidden');
+    document.body.style.overflow = '';
+};
+
+// Builds a mailto: link from the modal fields and hands off to the
+// Outlook desktop app (or whichever app is registered for mailto: links).
+window.sendEmailViaOutlookApp = function() {
+    const to      = _splitEmails(document.getElementById('email-to').value);
+    const cc      = _splitEmails(document.getElementById('email-cc').value);
+    const subject = document.getElementById('email-subject').value;
+    const body    = document.getElementById('email-body').value;
+
+    let mailto = `mailto:${to.map(encodeURIComponent).join(',')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+    if (cc.length) {
+        mailto += `&cc=${cc.map(encodeURIComponent).join(',')}`;
+    }
+
+    window.location.href = mailto;
+};
+
+// Opens an Outlook on the web (OWA) "new message" compose window pre-filled
+// with the modal's fields. Recipients are separated with ';' per OWA convention.
+window.sendEmailViaOutlookWeb = function() {
+    const to      = _splitEmails(document.getElementById('email-to').value);
+    const cc      = _splitEmails(document.getElementById('email-cc').value);
+    const subject = document.getElementById('email-subject').value;
+    const body    = document.getElementById('email-body').value;
+
+    // Build the query string manually with encodeURIComponent (which encodes
+    // spaces as %20). URLSearchParams encodes spaces as '+', which OWA's
+    // compose deep link displays literally instead of treating as a space.
+    const parts = [];
+    if (to.length)  parts.push('to=' + encodeURIComponent(to.join(';')));
+    if (cc.length)  parts.push('cc=' + encodeURIComponent(cc.join(';')));
+    if (subject)    parts.push('subject=' + encodeURIComponent(subject));
+    if (body)       parts.push('body=' + encodeURIComponent(body));
+
+    window.open(`https://outlook.office.com/mail/deeplink/compose?${parts.join('&')}`, '_blank');
+
+    // OWA's compose deep link does not reliably pre-fill the CC field, so
+    // copy the CC addresses to the clipboard and let the user paste them in.
+    if (cc.length && navigator.clipboard) {
+        navigator.clipboard.writeText(cc.join('; ')).then(() => {
+            alert('Outlook trên web hiện chưa hỗ trợ tự điền CC.\n'
+                + 'Danh sách CC đã được sao chép vào clipboard:\n' + cc.join('; ')
+                + '\n\nVui lòng dán (Ctrl+V / Cmd+V) vào ô CC trong cửa sổ soạn thư.');
+        }).catch(() => {});
+    }
+};
+
 document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closeEventModal();
+    if (e.key !== 'Escape') return;
+
+    const emailModal = document.getElementById('email-modal');
+    const viewModal  = document.getElementById('event-view-modal');
+
+    if (emailModal && !emailModal.classList.contains('hidden')) {
+        closeEmailModal();
+    } else if (viewModal && !viewModal.classList.contains('hidden')) {
+        closeViewEventModal();
+    } else {
+        closeEventModal();
+    }
 });

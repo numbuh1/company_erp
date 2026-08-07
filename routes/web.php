@@ -22,6 +22,8 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\PublicHolidayController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\PendingApprovalsController;
+use App\Http\Controllers\ImportExportController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -69,6 +71,9 @@ Route::middleware('auth')->group(function () {
     // Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    Route::get('users/import', [UserController::class, 'importForm'])->name('users.import.form');
+    Route::post('users/import', [UserController::class, 'import'])->name('users.import');
+    Route::get('users/import/template', [UserController::class, 'downloadImportTemplate'])->name('users.import.template');
     Route::resource('users', UserController::class);
     Route::get('users/{user}/leave-balance-history', [UserController::class, 'leaveBalanceHistory'])
         ->name('users.leave-balance-history');
@@ -76,6 +81,9 @@ Route::middleware('auth')->group(function () {
         ->name('users.reset-password');
     Route::get('/profile', [UserController::class, 'profile'])->name('users.profile');
     Route::post('/user/column-preferences', [UserController::class, 'updateColumnPreferences'])->name('user.column-preferences');
+    Route::get('/users/{user}/request-info', [UserController::class, 'requestInfo'])->name('users.request-info');
+
+    Route::get('/pending-approvals', [PendingApprovalsController::class, 'index'])->name('pending-approvals.index');
 
     Route::resource('teams', TeamController::class);
     Route::post('/teams/{team}/assign-user', [TeamUserController::class, 'store']);
@@ -116,16 +124,23 @@ Route::middleware('auth')->group(function () {
         ->name('projects.folders.create');
     Route::get('projects/{project}/files/{file}/download', [ProjectController::class, 'downloadItem'])
         ->name('projects.files.download');
+    Route::post('projects/{project}/user-budgets/{user}', [ProjectController::class, 'updateUserBudget'])
+        ->name('projects.user-budgets.update');
+    Route::post('projects/{project}/user-budgets', [ProjectController::class, 'bulkUpdateUserBudgets'])
+        ->name('projects.user-budgets.bulk');
 
     Route::resource('tasks', TaskController::class);
 
     Route::post('/comments', [CommentController::class, 'store'])->name('comments.store');
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
 
+    Route::get('time-logs/export', [TimeLogController::class, 'export'])->name('time-logs.export');
     Route::resource('time-logs', TimeLogController::class);
-    Route::get('timesheets/weekly', [TimeLogController::class, 'weekly'])->name('timesheets.weekly');
-    Route::get('timesheets/monthly', [TimeLogController::class, 'monthly'])->name('timesheets.monthly');
-    Route::get('timesheets/project', [TimeLogController::class, 'projectView'])->name('timesheets.project');
+    Route::get('timesheets/day-hours',   [TimeLogController::class, 'dayHours'])->name('timesheets.day-hours');
+    Route::get('timesheets/timeline',    [TimeLogController::class, 'weekly'])->name('timesheets.timeline');
+    Route::get('timesheets/calendar',    [TimeLogController::class, 'monthly'])->name('timesheets.calendar');
+    Route::get('timesheets/project',     [TimeLogController::class, 'projectView'])->name('timesheets.project');
+    Route::get('timesheets/attendance',  [TimeLogController::class, 'attendanceView'])->name('timesheets.attendance');
 
     Route::post('announcements/upload-image', [AnnouncementController::class, 'uploadImage'])
         ->name('announcements.upload-image');
@@ -183,7 +198,26 @@ Route::middleware('auth')->group(function () {
         Route::patch('/{recruitmentPosition}/applicants/{recruitmentApplicant}/status',
             [RecruitmentApplicantController::class, 'updateStatus'])
             ->name('applicants.updateStatus');
+        Route::post('/{recruitmentPosition}/statuses',
+            [RecruitmentApplicantController::class, 'addStatus'])
+            ->name('applicants.statuses.add');
+        Route::post('/{recruitmentPosition}/statuses/reorder',
+            [RecruitmentApplicantController::class, 'reorderStatuses'])
+            ->name('applicants.statuses.reorder');
+        Route::post('/{recruitmentPosition}/applicants/notify-bulk',
+            [RecruitmentApplicantController::class, 'notifyBulkAdded'])
+            ->name('applicants.notify-bulk');
     });
+
+    // Import / Export
+    Route::get('/data-transfer',                       [ImportExportController::class, 'index'])   ->name('import-export.index');
+    Route::get('/data-transfer/export/{type}',         [ImportExportController::class, 'export'])  ->name('import-export.export');
+    Route::get('/data-transfer/template/{type}',       [ImportExportController::class, 'template'])->name('import-export.template');
+    Route::post('/data-transfer/preview/{type}',       [ImportExportController::class, 'preview']) ->name('import-export.preview');
+    Route::post('/data-transfer/import/{type}',        [ImportExportController::class, 'import'])       ->name('import-export.import');
+    Route::get('/data-transfer/logs/{log}/progress',      [ImportExportController::class, 'progressPage']) ->name('import-export.progress');
+    Route::get('/data-transfer/logs/{log}/progress-data', [ImportExportController::class, 'progressData']) ->name('import-export.progress-data');
+    Route::get('/data-transfer/logs/{log}',            [ImportExportController::class, 'logShow'])      ->name('import-export.log.show');
 
     // Holidays
     Route::resource('admin/public-holidays', PublicHolidayController::class)

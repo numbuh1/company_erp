@@ -81,8 +81,8 @@
                     Next ›
                 </a>
 
-                @if($view !== 'month')
-                <form method="GET" action="{{ route('calendar.index') }}" class="inline-flex">
+                {{-- Date / month picker (shown for all views, type depends on view mode) --}}
+                <form method="GET" action="{{ route('calendar.index') }}" class="inline-flex" id="cal-date-form">
                     <input type="hidden" name="view" value="{{ $view }}">
                     @foreach($filterParams as $fk => $fv)
                         @if(is_array($fv))
@@ -93,12 +93,24 @@
                             <input type="hidden" name="{{ $fk }}" value="{{ $fv }}">
                         @endif
                     @endforeach
-                    <input type="date" name="date"
-                           value="{{ $view === 'week' ? $calStart->format('Y-m-d') : $date->format('Y-m-d') }}"
-                           onchange="this.form.submit()"
-                           class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-lg text-sm px-2 py-1.5 cursor-pointer">
+                    @if($view === 'month')
+                        {{-- Month picker — same style as timesheets.calendar --}}
+                        <input type="month" id="cal-month-input"
+                               value="{{ $date->format('Y-m') }}"
+                               onchange="
+                                   var p = this.value.split('-');
+                                   document.getElementById('cal-date-hidden').value = p[0]+'-'+p[1]+'-01';
+                                   this.form.submit();
+                               "
+                               class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-lg text-sm px-2 py-1.5 cursor-pointer">
+                        <input type="hidden" name="date" id="cal-date-hidden" value="{{ $date->format('Y-m-d') }}">
+                    @else
+                        <input type="date" name="date"
+                               value="{{ $view === 'week' ? $calStart->format('Y-m-d') : $date->format('Y-m-d') }}"
+                               onchange="this.form.submit()"
+                               class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-lg text-sm px-2 py-1.5 cursor-pointer">
+                    @endif
                 </form>
-                @endif
 
                 @can('module calendar')
                     <button onclick="openEventModal()"

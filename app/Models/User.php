@@ -31,6 +31,7 @@ class User extends Authenticatable
         'name',
         'full_name',
         'email',
+        'contact_email',
         'password',
         'leave_balance',
         'salary',
@@ -45,7 +46,21 @@ class User extends Authenticatable
         'birthday',
         'contract_expiry',
         'is_active',
+        'employment_status',
+        'probation_start_date',
+        'probation_end_date',
+        'recruitment_applicant_id',
         'wfh_without_approval',
+    ];
+
+    /**
+     * Employment status options shown on the HR tab of the user form.
+     * Key = value stored in DB. Value = label shown to the user.
+     */
+    public static array $employmentStatuses = [
+        'active'       => 'Đang làm việc',
+        'on_probation' => 'Đang thử việc',
+        'inactive'     => 'Không hoạt động',
     ];
 
     /**
@@ -62,6 +77,8 @@ class User extends Authenticatable
             'wfh_without_approval' => 'boolean',
             'birthday'        => 'date',
             'contract_expiry' => 'date',
+            'probation_start_date' => 'date',
+            'probation_end_date'   => 'date',
         ];
     }
 
@@ -143,6 +160,19 @@ class User extends Authenticatable
         return $this->hasOne(UserPreference::class);
     }
 
+    /**
+     * Check whether this user has a given email notification type enabled.
+     * Defaults to true if no preference has been saved.
+     *
+     * Keys: 'leave', 'ot', 'project', 'announcement'
+     */
+    public function emailNotificationEnabled(string $key): bool
+    {
+        $prefs = $this->preferences?->email_notifications;
+        if (!is_array($prefs)) return true;
+        return (bool) ($prefs[$key] ?? true);
+    }
+
     public function leaveBalanceLogs()
     {
         return $this->hasMany(LeaveBalanceLog::class);
@@ -160,6 +190,15 @@ class User extends Authenticatable
         return $this->belongsToMany(
             User::class, 'user_supervisors', 'supervisor_id', 'user_id'
         );
+    }
+
+    /**
+     * The recruitment applicant this user was onboarded from (if any),
+     * set via the "Begin Onboard" flow on the recruitment module.
+     */
+    public function recruitmentApplicant()
+    {
+        return $this->belongsTo(RecruitmentApplicant::class);
     }
 
     // Log Functions

@@ -2,12 +2,24 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Bảng chấm công</h2>
-            <a href="{{ route('time-logs.create') }}"><x-primary-button>Chấm công</x-primary-button></a>
+            <div class="flex items-center gap-2">
+                @php
+                    $exportUrl = route('time-logs.export') . (request()->getQueryString() ? '?' . request()->getQueryString() : '');
+                @endphp
+                @can('export timesheet')
+                <a href="{{ $exportUrl }}"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 bg-white dark:bg-gray-800 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Xuất Excel
+                </a>
+                @endcan                
+            </div>
         </div>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-4">
+    <div class="max-w-full mx-auto sm:px-6 lg:px-8 space-y-4 py-4">
 
             @if(session('success'))
                 <div class="p-3 bg-green-100 text-green-800 rounded">{{ session('success') }}</div>
@@ -16,26 +28,10 @@
             {{-- Tabs --}}
             <div class="border-b border-gray-200 dark:border-gray-700">
                 <nav class="flex gap-1">
-                    <a href="{{ route('time-logs.index') }}"
-                        class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
-                            border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400">
-                        Danh sách
-                    </a>
-                    <a href="{{ route('timesheets.weekly') }}"
-                        class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
-                            border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-                        Tuần
-                    </a>
-                    <a href="{{ route('timesheets.monthly') }}"
-                        class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
-                            border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-                        Tháng
-                    </a>
-                    <a href="{{ route('timesheets.project') }}"
-                        class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition
-                            border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-                        Dự án
-                    </a>
+                    @php $tabBase = 'px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition'; $tabOn = 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400'; $tabOff = 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'; @endphp
+                    <a href="{{ route('time-logs.index') }}"      class="{{ $tabBase }} {{ $tabOn }}">Danh sách</a>
+                    <a href="{{ route('timesheets.attendance') }}" class="{{ $tabBase }} {{ $tabOff }}">Chấm công</a>
+                    <a href="{{ route('timesheets.calendar') }}"  class="{{ $tabBase }} {{ $tabOff }}">Lịch</a>
                 </nav>
             </div>
 
@@ -94,7 +90,7 @@
                         <option value="">Tất cả dự án</option>
                         @foreach($projects as $project)
                             <option value="{{ $project->id }}" {{ request('project_id') == $project->id ? 'selected' : '' }}>
-                                PJ-{{ $project->id }} {{ $project->name }}
+                                {{ $project->project_code }} {{ $project->name }}
                             </option>
                         @endforeach
                     </select>
@@ -105,7 +101,7 @@
                         <option value="">Tất cả công việc</option>
                         @foreach($tasks as $task)
                             <option value="{{ $task->id }}" {{ request('task_id') == $task->id ? 'selected' : '' }}>
-                                TK-{{ $task->id }} {{ $task->name }}
+                                {{ $task->task_code }} {{ $task->name }}
                             </option>
                         @endforeach
                     </select>
@@ -151,12 +147,12 @@
                                             <span class="text-xs font-semibold px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400 shrink-0">OT</span>
                                             @if($model->task)
                                                 <a href="{{ route('tasks.show', $model->task) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
-                                                    <span class="font-mono text-xs font-semibold">TK-{{ $model->task_id }}</span>
+                                                    <span class="font-mono text-xs font-semibold">{{ $model->task->task_code }}</span>
                                                     <span class="ml-1">{{ $model->task->name }}</span>
                                                 </a>
                                             @elseif($model->project)
                                                 <a href="{{ route('projects.show', $model->project) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
-                                                    <span class="font-mono text-xs font-semibold">PJ-{{ $model->project_id }}</span>
+                                                    <span class="font-mono text-xs font-semibold">{{ $model->project->project_code }}</span>
                                                     <span class="ml-1">{{ $model->project->name }}</span>
                                                 </a>
                                             @endif
@@ -164,12 +160,12 @@
                                     @else
                                         @if($model->task)
                                             <a href="{{ route('tasks.show', $model->task) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
-                                                <span class="font-mono text-xs font-semibold">TK-{{ $model->task_id }}</span>
+                                                <span class="font-mono text-xs font-semibold">{{ $model->task->task_code }}</span>
                                                 <span class="ml-1">{{ $model->task->name }}</span>
                                             </a>
                                         @elseif($model->project)
                                             <a href="{{ route('projects.show', $model->project) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
-                                                <span class="font-mono text-xs font-semibold">PJ-{{ $model->project_id }}</span>
+                                                <span class="font-mono text-xs font-semibold">{{ $model->project->project_code }}</span>
                                                 <span class="ml-1">{{ $model->project->name }}</span>
                                             </a>
                                         @else
@@ -226,7 +222,6 @@
                 </table>
                 <div class="p-4">{{ $logs->links() }}</div>
             </div>
-        </div>
     </div>
 
     @push('scripts')

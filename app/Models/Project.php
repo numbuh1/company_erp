@@ -13,6 +13,7 @@ class Project extends Model
 
     protected $fillable = [
         'name',
+        'project_code',
         'description',
         'start_date',
         'expected_end_date',
@@ -51,6 +52,11 @@ class Project extends Model
     public function comments()
     {
         return $this->morphMany(Comment::class, 'commentable')->oldest();
+    }
+
+    public function userBudgets()
+    {
+        return $this->hasMany(ProjectUserBudget::class);
     }
 
 

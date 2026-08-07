@@ -3,6 +3,7 @@ import './bootstrap';
 import searchableSelect from './components/searchable-select.js';
 import './components/event-modal.js';
 import './components/skill-picker.js';
+import './components/recruitment-kanban.js';
 
 import Alpine from 'alpinejs';
 

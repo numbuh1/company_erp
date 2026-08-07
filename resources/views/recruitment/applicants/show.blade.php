@@ -39,10 +39,38 @@
                         Tải xuống CV
                     </a>
                 @endif
-                <a href="{{ route('recruitment.applicants.edit', [$recruitmentPosition, $recruitmentApplicant]) }}"
+                @if($recruitmentApplicant->status === 'Đã tuyển')
+                    @php
+                        $onboardedUser = $recruitmentApplicant->onboardedUser;
+                    @endphp
+                    @if($onboardedUser)
+                        <a href="{{ route('users.show', $onboardedUser) }}"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                            </svg>
+                            Xem hồ sơ nhân viên
+                        </a>
+                    @elseif(auth()->user()->can('create all user'))
+                        <a href="{{ route('users.create', [
+                                'name'                     => $recruitmentApplicant->name,
+                                'contact_email'            => $recruitmentApplicant->email,
+                                'phone_number'             => $recruitmentApplicant->phone,
+                                'position'                 => $recruitmentPosition->name,
+                                'recruitment_applicant_id' => $recruitmentApplicant->id,
+                            ]) }}"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM3 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 019.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
+                            </svg>
+                            Bắt đầu Onboard
+                        </a>
+                    @endif
+                @endif
+                <button type="button" onclick="openApplicantEditModal({{ $recruitmentApplicant->id }})"
                     class="inline-flex items-center gap-1 px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:text-yellow-600 hover:border-yellow-400 text-sm font-medium rounded-lg bg-white dark:bg-gray-700 transition">
                     Chỉnh sửa
-                </a>
+                </button>
                 <a href="{{ route('recruitment.show', $recruitmentPosition) }}"
                     class="text-sm text-gray-500 dark:text-gray-400 hover:underline">← Back</a>
             </div>
@@ -50,7 +78,7 @@
     </x-slot>
 
     <div class="py-8">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto sm:px-2 lg:px-2">
 
             @if(session('success'))
                 <div class="mb-4 p-3 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-sm">{{ session('success') }}</div>
@@ -89,12 +117,14 @@
                                     </a>
                                 </div>
                             @endif
-                            @if($recruitmentApplicant->salary_expectation)
-                                <div>
-                                    <p class="text-xs text-gray-400 mb-0.5">Mức lương mong muốn</p>
-                                    <p class="text-gray-700 dark:text-gray-300">{{ number_format($recruitmentApplicant->salary_expectation) }}</p>
-                                </div>
-                            @endif
+                            @can('view recruitment salary')
+                                @if($recruitmentApplicant->salary_expectation)
+                                    <div>
+                                        <p class="text-xs text-gray-400 mb-0.5">Mức lương mong muốn</p>
+                                        <p class="text-gray-700 dark:text-gray-300">{{ number_format($recruitmentApplicant->salary_expectation) }}</p>
+                                    </div>
+                                @endif
+                            @endcan
                             @if($recruitmentApplicant->available_date)
                                 <div>
                                     <p class="text-xs text-gray-400 mb-0.5">Có hiệu lực từ</p>
@@ -105,6 +135,16 @@
                                 <div>
                                     <p class="text-xs text-gray-400 mb-0.5">Được giới thiệu bởi</p>
                                     <p class="text-gray-700 dark:text-gray-300">{{ $recruitmentApplicant->referer->name }}</p>
+                                </div>
+                            @endif
+                            <div>
+                                <p class="text-xs text-gray-400 mb-0.5">Ngày nộp hồ sơ</p>
+                                <p class="text-gray-700 dark:text-gray-300">{{ $recruitmentApplicant->created_at->format('d/m/Y H:i') }}</p>
+                            </div>
+                            @if($cvUploadedAt)
+                                <div>
+                                    <p class="text-xs text-gray-400 mb-0.5">Ngày tải CV</p>
+                                    <p class="text-gray-700 dark:text-gray-300">{{ $cvUploadedAt->format('d/m/Y H:i') }}</p>
                                 </div>
                             @endif
                         </div>
@@ -198,10 +238,55 @@
                         @endforelse
                     </div>
 
+                    {{-- Activity Log --}}
+                    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
+                        <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+                            <h3 class="font-semibold text-sm text-gray-700 dark:text-gray-200">Nhật ký hoạt động</h3>
+                        </div>
+                        <div class="px-5 py-4">
+                            @if($activities->isEmpty())
+                                <p class="text-sm text-gray-400">Chưa có hoạt động nào.</p>
+                            @else
+                                <div class="space-y-3">
+                                    @foreach($activities as $activity)
+                                        <div class="flex gap-4 text-sm border-l-2 border-indigo-300 pl-4 py-1">
+                                            <div class="text-gray-400 whitespace-nowrap w-32 shrink-0">
+                                                {{ $activity->created_at->format('d/m/y H:i') }}
+                                            </div>
+                                            <div>
+                                                <span class="font-medium text-gray-800 dark:text-gray-200">{{ $activity->causer?->name ?? 'System' }}</span>
+                                                <span class="text-gray-500 ml-1">{{ $activity->description }}</span>
+                                                @php $changes = $activity->properties['attributes'] ?? []; @endphp
+                                                @if(count($changes))
+                                                    <div class="mt-1 space-y-0.5">
+                                                        @foreach($changes as $key => $newVal)
+                                                            @if($canViewHrNote || !in_array($key, ['salary_expectation', 'hr_note']))
+                                                                @php $oldVal = $activity->properties['old'][$key] ?? null; @endphp
+                                                                <div class="text-xs text-gray-500">
+                                                                    <span class="font-medium">{{ str_replace('_', ' ', $key) }}</span>:
+                                                                    @if($oldVal !== null)
+                                                                        <span class="line-through text-red-400">{{ is_array($oldVal) ? json_encode($oldVal) : $oldVal }}</span> →
+                                                                    @endif
+                                                                    <span class="text-green-600">{{ is_array($newVal) ? json_encode($newVal) : $newVal }}</span>
+                                                                </div>
+                                                            @endif
+                                                        @endforeach
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
                 </div>
 
-                {{-- Right: Skills --}}
+                {{-- Right: CV Preview & Skills --}}
                 <div class="space-y-4">
+                    @include('recruitment.applicants._cv-preview', ['cvPreviewSticky' => false])
+
                     @if($recruitmentApplicant->skills->isNotEmpty())
                         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
                             <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Kỹ năng</h3>
@@ -239,4 +324,11 @@
     </div>
 
     <x-event-modal />
+    <x-recruitment-applicant-modal :position="$recruitmentPosition" />
+
+    @push('scripts')
+    <script>
+        window.recruitmentBaseUrl = @js(route('recruitment.show', $recruitmentPosition));
+    </script>
+    @endpush
 </x-app-layout>
