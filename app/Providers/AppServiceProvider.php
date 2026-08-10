@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Translation\DatabaseLoader;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
@@ -14,7 +15,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->extend('translation.loader', function ($loader) {
+            return new DatabaseLoader($loader);
+        });
     }
 
     /**

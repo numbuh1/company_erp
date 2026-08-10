@@ -256,7 +256,6 @@
                                     </p>
                                 </div>
                             @endif
-                            @endif
 
                             {{-- Supervisors --}}
                             <div class="mb-6">

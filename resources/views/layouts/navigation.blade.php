@@ -34,7 +34,7 @@
                 <!-- Dark Mode Toggle -->
                 <button onclick="toggleDarkMode()"
                     class="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition"
-                    title="Chuyển chế độ tối">
+                    title="{{ __('Toggle dark mode') }}">
                     <svg class="h-5 w-5 block dark:hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
@@ -70,11 +70,11 @@
                     <div x-show="open" x-cloak
                         class="absolute right-0 top-full mt-1 z-50 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                         <div class="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-600">
-                            <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">Thông báo</span>
-                            <a href="{{ route('notifications.index') }}" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">Xem tất cả</a>
+                            <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{ __('Notifications') }}</span>
+                            <a href="{{ route('notifications.index') }}" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">{{ __('View all') }}</a>
                         </div>
                         @if($bellPreviews->isEmpty())
-                            <div class="px-4 py-6 text-sm text-gray-400 text-center">Không có thông báo chưa đọc</div>
+                            <div class="px-4 py-6 text-sm text-gray-400 text-center">{{ __('No unread notifications') }}</div>
                         @else
                             <div class="divide-y divide-gray-100 dark:divide-gray-700 max-h-80 overflow-y-auto">
                                 @foreach($bellPreviews as $notification)
@@ -125,13 +125,16 @@
                     </x-slot>
                     <x-slot name="content">
                         <x-dropdown-link :href="route('users.profile')">
-                            Hồ sơ
+                            {{ __('User Profile') }}
+                        </x-dropdown-link>
+                        <x-dropdown-link :href="route('locale.switch', app()->getLocale() === 'vi' ? 'en' : 'vi')">
+                            {{ app()->getLocale() === 'vi' ? 'English' : 'Tiếng Việt' }}
                         </x-dropdown-link>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <x-dropdown-link :href="route('logout')"
                                     onclick="event.preventDefault(); this.closest('form').submit();">
-                                Đăng xuất
+                                {{ __('Log Out') }}
                             </x-dropdown-link>
                         </form>
                     </x-slot>
