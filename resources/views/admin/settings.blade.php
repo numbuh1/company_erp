@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Cài đặt</h2>
+        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">{{ __('Settings') }}</h2>
     </x-slot>
 
     @push('styles')
@@ -9,10 +9,10 @@
 
     @php
         $tabs = [
-            ['key' => 'company',      'label' => 'Company'],
-            ['key' => 'policy',       'label' => 'Office Policy'],
-            ['key' => 'leave',        'label' => 'Leave Policies'],
-            ['key' => 'translations', 'label' => 'Translations'],
+            ['key' => 'company',      'label' => __('Company')],
+            ['key' => 'policy',       'label' => __('Office Policy')],
+            ['key' => 'leave',        'label' => __('Leave Policies')],
+            ['key' => 'translations', 'label' => __('Translations')],
         ];
     @endphp
 
@@ -57,22 +57,22 @@
                     <div x-show="activeTab === 'company'">
 
                         <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-1">
-                            🏢 Company Info
+                            🏢 {{ __('Company Info') }}
                         </h3>
                         <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
-                            Thông tin công ty, được sử dụng trong các email và tài liệu liên quan.
+                            {{ __('Company info is used in emails and official documents.') }}
                         </p>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
-                                <x-input-label value="Company Name" />
+                                <x-input-label :value="__('Company Name')" />
                                 <x-text-input name="company_name" class="w-full mt-1"
                                     value="{{ old('company_name', $settings['company_name']) }}"
                                     placeholder="VD: A6 Company Ltd." />
                                 @error('company_name')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                             </div>
                             <div>
-                                <x-input-label value="Company Phone Number" />
+                                <x-input-label :value="__('Company Phone Number')" />
                                 <x-text-input name="company_phone" class="w-full mt-1"
                                     value="{{ old('company_phone', $settings['company_phone']) }}"
                                     placeholder="VD: +84 28 1234 5678" />
@@ -82,7 +82,7 @@
 
                         <div class="grid grid-cols-1 gap-4 mb-6">
                             <div>
-                                <x-input-label value="Company Address" />
+                                <x-input-label :value="__('Company Address')" />
                                 <x-text-input name="company_address" class="w-full mt-1"
                                     value="{{ old('company_address', $settings['company_address']) }}"
                                     placeholder="VD: 123 Đường ABC, Quận 1, TP. Hồ Chí Minh" />
@@ -92,15 +92,15 @@
 
                         <div class="pt-5 border-t border-gray-200 dark:border-gray-600 mb-6">
                             <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-1">
-                                📍 Office Location
+                                📍 {{ __('Office Location') }}
                             </h3>
                             <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
-                                Dùng để xác minh chấm công tại văn phòng.
+                                {{ __('Used to verify On-Site check-in. Leave blank to disable IP checking.') }}
                             </p>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <div>
-                                    <x-input-label value="Tên văn phòng" />
+                                    <x-input-label :value="__('Office Name')" />
                                     <x-text-input name="office_name" class="w-full mt-1"
                                         value="{{ old('office_name', $settings['office_name']) }}"
                                         placeholder="VD: Trụ sở chính" />
@@ -110,14 +110,13 @@
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="mb-4">
-                                    <x-input-label value="IP công khai văn phòng" />
+                                    <x-input-label :value="__('Office Public IP(s)')" />
                                     <x-text-input name="office_ips" class="w-full mt-1"
                                         value="{{ old('office_ips', $settings['office_ips']) }}"
                                         placeholder="e.g. 203.0.113.10, 203.0.113.11" />
                                     <p class="text-xs text-gray-400 mt-1">
-                                        Comma-separated. Only users connecting from these IPs can check in On-Site.
-                                        Leave blank to disable IP checking.
-                                        <br>Your current IP: <span class="font-mono">{{ request()->ip() }}</span>
+                                        {{ __('Used to verify On-Site check-in. Leave blank to disable IP checking.') }}
+                                        <br>{{ __('Your current IP:') }} <span class="font-mono">{{ request()->ip() }}</span>
                                     </p>
                                     @error('office_ips')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                                 </div>
@@ -126,17 +125,15 @@
 
                         <div class="pt-5 border-t border-gray-200 dark:border-gray-600">
                             <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
-                                🛰️ Tọa độ GPS
+                                🛰️ {{ __('GPS Coordinates') }}
                             </p>
                             <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                                Khi cài đặt, trình duyệt nhân viên sẽ kiểm tra vị trí GPS khi chấm công
-                                <strong>Tại văn phòng</strong>. Nhân viên ngoài bán kính sẽ không thể chấm công on-site.
-                                Để trống để tắt xác minh GPS.
+                                {{ __('When set, the browser checks GPS location on On-Site check-in. Employees outside the radius cannot check in on-site. Leave blank to disable.') }}
                             </p>
 
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
                                 <div>
-                                    <x-input-label value="Vĩ độ (Latitude)" />
+                                    <x-input-label :value="__('Latitude')" />
                                     <x-text-input id="settingLat" name="office_latitude" type="text"
                                         inputmode="decimal" class="w-full mt-1"
                                         value="{{ old('office_latitude', $settings['office_latitude']) }}"
@@ -144,7 +141,7 @@
                                     @error('office_latitude')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                                 </div>
                                 <div>
-                                    <x-input-label value="Kinh độ (Longitude)" />
+                                    <x-input-label :value="__('Longitude')" />
                                     <x-text-input id="settingLng" name="office_longitude" type="text"
                                         inputmode="decimal" class="w-full mt-1"
                                         value="{{ old('office_longitude', $settings['office_longitude']) }}"
@@ -152,12 +149,12 @@
                                     @error('office_longitude')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                                 </div>
                                 <div>
-                                    <x-input-label value="Bán kính cho phép (km)" />
+                                    <x-input-label :value="__('Allowed radius (km)')" />
                                     <x-text-input name="office_radius_km" type="text"
                                         inputmode="decimal" class="w-full mt-1"
                                         value="{{ old('office_radius_km', $settings['office_radius_km']) }}"
                                         placeholder="VD: 0.2" />
-                                    <p class="text-xs text-gray-400 mt-1">Tối thiểu 0.05 km (50 m).</p>
+                                    <p class="text-xs text-gray-400 mt-1">{{ __('Min 0.05 km (50 m).') }}</p>
                                     @error('office_radius_km')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                                 </div>
                             </div>
@@ -165,14 +162,14 @@
                             <div class="flex flex-wrap items-center gap-3">
                                 <button type="button" id="getMyLocationBtn"
                                     class="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded border border-indigo-400 dark:border-indigo-500 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition">
-                                    📍 Lấy vị trí hiện tại
+                                    📍 {{ __('Get my location') }}
                                 </button>
 
                                 @if($settings['office_latitude'] && $settings['office_longitude'])
                                     <a href="https://www.google.com/maps?q={{ $settings['office_latitude'] }},{{ $settings['office_longitude'] }}"
                                         target="_blank" rel="noopener"
                                         class="text-sm text-blue-500 hover:underline">
-                                        🗺️ Xem trên Google Maps ↗
+                                        🗺️ {{ __('View on Google Maps') }} ↗
                                     </a>
                                 @endif
 
@@ -184,21 +181,21 @@
                     {{-- ── Office Policy ───────────────────────────── --}}
                     <div x-show="activeTab === 'policy'" x-cloak>
                         <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-1">
-                            🍱 Giờ nghỉ trưa
+                            🍱 {{ __('Lunch Break') }}
                         </h3>
                         <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                            Khoảng thời gian nghỉ trưa sẽ được tự động trừ khi tính giờ làm thực tế lúc check-out.
+                            {{ __('Lunch break is automatically deducted when calculating hours at check-out.') }}
                         </p>
                         <div class="grid grid-cols-2 gap-4 max-w-xs">
                             <div>
-                                <x-input-label value="Bắt đầu nghỉ trưa" />
+                                <x-input-label :value="__('Lunch Break Start')" />
                                 <input type="time" name="lunch_break_start" lang="en-GB"
                                     value="{{ old('lunch_break_start', $settings['lunch_break_start']) }}"
                                     class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
                                 @error('lunch_break_start')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                             </div>
                             <div>
-                                <x-input-label value="Kết thúc nghỉ trưa" />
+                                <x-input-label :value="__('Lunch Break End')" />
                                 <input type="time" name="lunch_break_end" lang="en-GB"
                                     value="{{ old('lunch_break_end', $settings['lunch_break_end']) }}"
                                     class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
@@ -210,41 +207,41 @@
                     {{-- ── Leave Policies ─────────────────────────── --}}
                     <div x-show="activeTab === 'leave'" x-cloak>
                         <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-1">
-                            🗓️ Chính sách nghỉ phép
+                            🗓️ {{ __('Annual Leave Policy') }}
                         </h3>
                         <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
-                            Cấu hình tích lũy và đặt lại số dư phép hàng năm cho toàn bộ nhân viên. Việc xử lý diễn ra tự động vào đầu mỗi tháng.
+                            {{ __('Configure leave accrual and annual reset for all employees. Processing runs automatically at the start of each month.') }}
                         </p>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg">
                             <div>
-                                <x-input-label value="Số giờ phép tăng mỗi tháng" />
+                                <x-input-label :value="__('Monthly leave increase (hours)')" />
                                 <x-text-input name="leave_balance_monthly_increase" type="number" step="0.25" min="0"
                                     class="w-full mt-1"
                                     value="{{ old('leave_balance_monthly_increase', $settings['leave_balance_monthly_increase']) }}"
                                     placeholder="VD: 8" />
-                                <p class="text-xs text-gray-400 mt-1">Số giờ phép cộng thêm cho mỗi nhân viên vào đầu mỗi tháng. Để 0 để tắt.</p>
+                                <p class="text-xs text-gray-400 mt-1">{{ __('Hours added to each employee at the start of each month. Set to 0 to disable.') }}</p>
                                 @error('leave_balance_monthly_increase')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                             </div>
                             <div>
-                                <x-input-label value="Tháng đặt lại số dư phép" />
+                                <x-input-label :value="__('Leave balance reset month')" />
                                 <select name="leave_balance_reset_month"
                                     class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                                    <option value="">— Không đặt lại —</option>
+                                    <option value="">{{ __('— No reset —') }}</option>
                                     @foreach(range(1, 12) as $m)
                                         <option value="{{ $m }}" @selected((string) old('leave_balance_reset_month', $settings['leave_balance_reset_month']) === (string) $m)>
-                                            Tháng {{ $m }}
+                                            {{ __('Month :month', ['month' => $m]) }}
                                         </option>
                                     @endforeach
                                 </select>
-                                <p class="text-xs text-gray-400 mt-1">Vào đầu tháng này mỗi năm, số dư phép của tất cả nhân viên sẽ được đặt lại về 0 trước khi cộng số giờ tăng hàng tháng.</p>
+                                <p class="text-xs text-gray-400 mt-1">{{ __("At the start of this month each year, all employees' leave balances are reset to 0 before the monthly increase is added.") }}</p>
                                 @error('leave_balance_reset_month')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                             </div>
                         </div>
                     </div>
 
                     <div class="flex justify-end pt-6 mt-6 border-t border-gray-200 dark:border-gray-600">
-                        <x-primary-button>Lưu cài đặt</x-primary-button>
+                        <x-primary-button>{{ __('Save Settings') }}</x-primary-button>
                     </div>
                 </div>
             </form>
@@ -262,19 +259,19 @@
                         <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
-                        <input type="text" x-model="search" placeholder="Filter by key…"
+                        <input type="text" x-model="search" placeholder="{{ __('Filter by key…') }}"
                             class="flex-1 text-sm bg-transparent border-none outline-none text-gray-700 dark:text-gray-300 placeholder-gray-400">
-                        <span class="text-xs text-gray-400" x-text="`{{ $translations->count() }} keys`"></span>
+                        <span class="text-xs text-gray-400" x-text="`{{ $translations->count() }} {{ __('keys') }}`"></span>
                     </div>
 
                     {{-- Column headers --}}
                     <div class="grid grid-cols-[2fr_3fr_3fr] gap-0 px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
-                        <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Key</div>
+                        <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ __('Key') }}</div>
                         <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide pl-3">
-                            🇻🇳 Vietnamese
+                            🇻🇳 {{ __('Vietnamese') }}
                         </div>
                         <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide pl-3">
-                            🇬🇧 English
+                            🇬🇧 {{ __('English') }}
                         </div>
                     </div>
 
@@ -290,7 +287,7 @@
                                 <span class="text-xs text-gray-600 dark:text-gray-400 font-mono break-words leading-snug">{{ $t['key'] }}</span>
                                 @if(!$t['vi_in_db'] || !$t['en_in_db'])
                                     <span class="block text-xs text-amber-500 dark:text-amber-400 mt-0.5">
-                                        from file{{ (!$t['vi_in_db'] && !$t['en_in_db']) ? '' : (!$t['vi_in_db'] ? ' (vi)' : ' (en)') }}
+                                        {{ __('from file') }}{{ (!$t['vi_in_db'] && !$t['en_in_db']) ? '' : (!$t['vi_in_db'] ? ' (vi)' : ' (en)') }}
                                     </span>
                                 @endif
                             </div>
@@ -318,9 +315,9 @@
                     {{-- Save --}}
                     <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
                         <p class="text-xs text-gray-400">
-                            Changes are saved to the database and override JSON file values.
+                            {{ __('Changes are saved to the database and override the JSON file values.') }}
                         </p>
-                        <x-primary-button>Save Translations</x-primary-button>
+                        <x-primary-button>{{ __('Save Translations') }}</x-primary-button>
                     </div>
                 </div>
             </form>

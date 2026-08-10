@@ -22,14 +22,14 @@
             <div class="flex items-center gap-1">
 
                 <!-- Language Toggle -->
-                <!-- <a href="{{ route('locale.switch', app()->getLocale() === 'en' ? 'vi' : 'en') }}"
-                   class="px-2 py-1 rounded text-xs font-bold border transition
+                <a href="{{ route('locale.switch', app()->getLocale() === 'vi' ? 'en' : 'vi') }}"
+                   title="{{ app()->getLocale() === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt' }}"
+                   class="px-2 py-1 rounded text-xs font-semibold border transition select-none
                           {{ app()->getLocale() === 'vi'
-                              ? 'border-indigo-400 text-indigo-600 dark:text-indigo-400 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30'
-                              : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-400 hover:text-gray-700 dark:hover:text-gray-300' }}"
-                   title="{{ app()->getLocale() === 'en' ? 'Chuyển sang tiếng Việt' : 'Switch to English' }}">
-                    {{ strtoupper(app()->getLocale()) }}
-                </a> -->
+                              ? 'border-indigo-300 dark:border-indigo-600 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50'
+                              : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500 hover:text-gray-700 dark:hover:text-gray-200' }}">
+                    {{ app()->getLocale() === 'vi' ? 'VI' : 'EN' }}
+                </a>
 
                 <!-- Dark Mode Toggle -->
                 <button onclick="toggleDarkMode()"
@@ -126,9 +126,6 @@
                     <x-slot name="content">
                         <x-dropdown-link :href="route('users.profile')">
                             {{ __('User Profile') }}
-                        </x-dropdown-link>
-                        <x-dropdown-link :href="route('locale.switch', app()->getLocale() === 'vi' ? 'en' : 'vi')">
-                            {{ app()->getLocale() === 'vi' ? 'English' : 'Tiếng Việt' }}
                         </x-dropdown-link>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
