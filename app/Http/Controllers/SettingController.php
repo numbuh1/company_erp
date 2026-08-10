@@ -2,13 +2,32 @@
 namespace App\Http\Controllers;
 
 use App\Models\AppSetting;
+use App\Models\Translation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\File;
 
 class SettingController extends Controller
 {
     public function edit()
     {
         if (!auth()->user()->can('manage settings')) abort(403);
+
+        $viJson = File::exists(lang_path('vi.json')) ? json_decode(File::get(lang_path('vi.json')), true) : [];
+        $enJson = File::exists(lang_path('en.json')) ? json_decode(File::get(lang_path('en.json')), true) : [];
+
+        $allKeys = array_values(array_unique(array_merge(array_keys($viJson), array_keys($enJson))));
+
+        $dbVi = Translation::where('locale', 'vi')->pluck('value', 'key');
+        $dbEn = Translation::where('locale', 'en')->pluck('value', 'key');
+
+        $translations = collect($allKeys)->map(fn ($key) => [
+            'key'       => $key,
+            'vi'        => $dbVi->get($key, $viJson[$key] ?? $key),
+            'en'        => $dbEn->get($key, $enJson[$key] ?? $key),
+            'vi_in_db'  => $dbVi->has($key),
+            'en_in_db'  => $dbEn->has($key),
+        ]);
 
         $settings = [
             'company_name'       => AppSetting::get('company_name', ''),
@@ -25,7 +44,7 @@ class SettingController extends Controller
             'leave_balance_reset_month'       => AppSetting::get('leave_balance_reset_month', ''),
         ];
 
-        return view('admin.settings', compact('settings'));
+        return view('admin.settings', compact('settings', 'translations'));
     }
 
     public function update(Request $request)
@@ -52,5 +71,22 @@ class SettingController extends Controller
         }
 
         return back()->with('success', 'Settings saved.');
+    }
+
+    public function translationsUpdate(Request $request)
+    {
+        if (!auth()->user()->can('manage settings')) abort(403);
+
+        foreach (['vi', 'en'] as $locale) {
+            foreach ($request->input($locale, []) as $key => $value) {
+                Translation::updateOrCreate(
+                    ['locale' => $locale, 'key' => $key],
+                    ['value' => $value]
+                );
+            }
+            Cache::forget("translations.{$locale}");
+        }
+
+        return back()->with('success', 'Translations saved.');
     }
 }

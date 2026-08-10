@@ -160,6 +160,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/admin/settings', [SettingController::class, 'edit'])->name('admin.settings.edit');
     Route::put('/admin/settings', [SettingController::class, 'update'])->name('admin.settings.update');
+    Route::put('/admin/settings/translations', [SettingController::class, 'translationsUpdate'])->name('admin.settings.translations.update');
 
     Route::resource('skills', SkillController::class)->except(['show']);
 
