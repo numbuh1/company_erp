@@ -10,9 +10,9 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Thông báo</h2>
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">{{ __('Announcements') }}</h2>
             @can('edit announcements')
-                <a href="{{ route('announcements.create') }}"><x-primary-button>Thông báo mới</x-primary-button></a>
+                <a href="{{ route('announcements.create') }}"><x-primary-button>{{ __('New Announcement') }}</x-primary-button></a>
             @endcan
         </div>
     </x-slot>
@@ -32,11 +32,11 @@
                 <div class="p-3 border-b border-gray-200 dark:border-gray-700">
                     <form method="GET" action="{{ route('announcements.index') }}" class="flex gap-2">
                         <input type="text" name="search" value="{{ request('search') }}"
-                               placeholder="Tìm kiếm…"
+                               placeholder="{{ __('Search...') }}"
                                class="block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 rounded-md shadow-sm text-sm px-3 py-1.5 focus:ring-indigo-500 focus:border-indigo-500">
                         <button type="submit"
                                 class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md shadow-sm transition shrink-0">
-                            Tìm
+                            {{ __('Filter') }}
                         </button>
                         @if(request('search'))
                             <a href="{{ route('announcements.index') }}"
@@ -63,7 +63,7 @@
                             <p class="text-xs text-gray-400 mt-0.5">{{ $item->author?->name ?? 'System' }}</p>
                             <div class="mt-1">
                                 @if($item->teams->isEmpty())
-                                    <span class="inline-flex items-center gap-1 text-[11px] bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded">🌐 All Company</span>
+                                    <span class="inline-flex items-center gap-1 text-[11px] bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded">🌐 {{ __('All Company') }}</span>
                                 @else
                                     @foreach($item->teams as $team)
                                         <span class="inline-flex items-center gap-1 text-[11px] bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-1.5 py-0.5 rounded mr-1">👥 {{ $team->name }}</span>
@@ -73,7 +73,7 @@
                         </a>
                     @empty
                         <div class="p-6 text-center text-sm text-gray-400">
-                            {{ request('search') ? 'Không tìm thấy thông báo nào khớp với tìm kiếm.' : 'Chưa có thông báo.' }}
+                            {{ request('search') ? __('No announcements matching your search.') : __('No announcements yet.') }}
                         </div>
                     @endforelse
                 </div>
@@ -95,7 +95,7 @@
                             <div class="flex gap-2 shrink-0">
                                 @can('edit announcements')
                                     <a href="{{ route('announcements.edit', $selected) }}">
-                                        <x-secondary-button>Chỉnh sửa</x-secondary-button>
+                                        <x-secondary-button>{{ __('Edit') }}</x-secondary-button>
                                     </a>
                                 @endcan
                                 @can('delete announcements')
@@ -103,7 +103,7 @@
                                         @csrf @method('DELETE')
                                         <button type="submit" onclick="return confirm('Delete this announcement?')"
                                             class="inline-flex items-center px-3 py-1.5 text-sm text-red-600 border border-red-300 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition">
-                                            Xóa
+                                            {{ __('Delete') }}
                                         </button>
                                     </form>
                                 @endcan
@@ -113,7 +113,7 @@
                             {{ $selected->author?->name ?? 'System' }}
                             · {{ $selected->created_at->format('d/m/Y H:i') }}
                             @if($selected->updated_at->ne($selected->created_at))
-                                · <span class="italic">đã sửa {{ $selected->updated_at->format('d/m/Y H:i') }}</span>
+                                · <span class="italic">{{ __('edited') }} {{ $selected->updated_at->format('d/m/Y H:i') }}</span>
                             @endif
                         </p>
                     </div>
@@ -126,7 +126,7 @@
                     </div>
                 @else
                     <div class="flex-1 flex items-center justify-center text-gray-400 text-sm">
-                        Chưa có thông báo nào.
+                        {{ __('No announcements yet.') }}
                     </div>
                 @endif
             </div>

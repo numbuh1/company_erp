@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            Bảng điểm danh — {{ $month->isoFormat('MMMM YYYY') }}
+            {{ __('Attendance List') }} — {{ $month->isoFormat('MMMM YYYY') }}
         </h2>
     </x-slot>
 
@@ -78,7 +78,7 @@
 
                     {{-- Month --}}
                     <div>
-                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Tháng</label>
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ __('Month') }}</label>
                         <input type="month" name="month" value="{{ $monthStr }}"
                                class="border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 rounded-md text-sm px-3 py-1.5 focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
@@ -86,10 +86,10 @@
                     {{-- Team --}}
                     @if($teams->isNotEmpty())
                     <div class="min-w-[160px]">
-                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Nhóm</label>
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ __('Team') }}</label>
                         <select name="team_id"
                                 class="mt-0 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
-                            <option value="">— Tất cả —</option>
+                            <option value="">— {{ __('All') }} —</option>
                             @foreach($teams as $team)
                             <option value="{{ $team->id }}" @selected($selectedTeamId == $team->id)>{{ $team->name }}</option>
                             @endforeach
@@ -99,9 +99,9 @@
 
                     {{-- User --}}
                     <div class="min-w-[180px]">
-                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Thành viên</label>
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ __('Member') }}</label>
                         <select id="user-filter-select" name="user_id">
-                            <option value="">— Tất cả —</option>
+                            <option value="">— {{ __('All') }} —</option>
                             @foreach($allUsers as $u)
                             <option value="{{ $u->id }}" @selected($selectedUserId == $u->id)>{{ $u->name }}</option>
                             @endforeach
@@ -110,7 +110,7 @@
 
                     <button type="submit"
                         class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md shadow-sm transition">
-                        Lọc
+                        {{ __('Filter') }}
                     </button>
                 </form>
 
@@ -126,7 +126,7 @@
                     </a>
                     <a href="{{ route('attendance.list', array_filter(['month' => now()->format('Y-m'), 'team_id' => $selectedTeamId, 'user_id' => $selectedUserId])) }}"
                        class="px-2 py-1 text-xs rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-indigo-400 hover:text-indigo-600 bg-white dark:bg-gray-700 transition">
-                        Hôm nay
+                        {{ __('Today') }}
                     </a>
                     <a href="{{ route('attendance.list', array_filter(['month' => $nextMonth, 'team_id' => $selectedTeamId, 'user_id' => $selectedUserId])) }}"
                        class="inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-indigo-600 hover:border-indigo-400 bg-white dark:bg-gray-700 transition">
@@ -142,7 +142,7 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
-                        Thêm chấm công
+                        {{ __('Add Attendance') }}
                     </button>
                 </div>
                 @endif
@@ -157,37 +157,37 @@
                     <span class="w-3 h-3 rounded bg-emerald-200 dark:bg-emerald-800/40 border border-emerald-500 dark:border-emerald-600"></span>WFH
                 </span>
                 <span class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 rounded bg-teal-100 dark:bg-teal-900/30 border border-teal-400 dark:border-teal-600"></span>WFH nửa ngày
+                    <span class="w-3 h-3 rounded bg-teal-100 dark:bg-teal-900/30 border border-teal-400 dark:border-teal-600"></span>{{ __('Half-day WFH') }}
                 </span>
                 <span class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 rounded bg-blue-100 dark:bg-blue-900/30 border border-blue-400 dark:border-blue-600"></span>Chưa check out
+                    <span class="w-3 h-3 rounded bg-blue-100 dark:bg-blue-900/30 border border-blue-400 dark:border-blue-600"></span>{{ __('Checked in, not out') }}
                 </span>
                 <span class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 rounded bg-sky-50 dark:bg-sky-900/10 border border-sky-300 dark:border-sky-700"></span>WFH chờ duyệt
+                    <span class="w-3 h-3 rounded bg-sky-50 dark:bg-sky-900/10 border border-sky-300 dark:border-sky-700"></span>{{ __('WFH Pending') }}
                 </span>
                 <span class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 rounded bg-purple-100 dark:bg-purple-900/30 border border-purple-400 dark:border-purple-600"></span>Nhiều lần (xong)
+                    <span class="w-3 h-3 rounded bg-purple-100 dark:bg-purple-900/30 border border-purple-400 dark:border-purple-600"></span>{{ __('Multiple (done)') }}
                 </span>
                 <span class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 rounded bg-orange-200 dark:bg-orange-800/30 border border-orange-400 dark:border-orange-600"></span>Nhiều lần (chưa xong)
+                    <span class="w-3 h-3 rounded bg-orange-200 dark:bg-orange-800/30 border border-orange-400 dark:border-orange-600"></span>{{ __('Multiple (in progress)') }}
                 </span>
                 <span class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 rounded bg-orange-100 dark:bg-orange-900/40 border border-orange-300 dark:border-orange-600"></span>Nghỉ phép cả ngày
+                    <span class="w-3 h-3 rounded bg-orange-100 dark:bg-orange-900/40 border border-orange-300 dark:border-orange-600"></span>{{ __('Full-day leave') }}
                 </span>
                 <span class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 rounded bg-yellow-100 dark:bg-yellow-900/40 border border-yellow-300 dark:border-yellow-600"></span>Nghỉ phép nửa ngày
+                    <span class="w-3 h-3 rounded bg-yellow-100 dark:bg-yellow-900/40 border border-yellow-300 dark:border-yellow-600"></span>{{ __('Half-day leave') }}
                 </span>
                 <span class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 rounded bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-600"></span>Vắng mặt
+                    <span class="w-3 h-3 rounded bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-600"></span>{{ __('Absent') }}
                 </span>
                 <span class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 rounded bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600"></span>Cuối tuần / Nghỉ lễ
+                    <span class="w-3 h-3 rounded bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600"></span>{{ __('Weekend / Holiday') }}
                 </span>
             </div>
 
             {{-- ── Grid ─────────────────────────────────────────────────────── --}}
             @if($members->isEmpty())
-            <div class="text-center py-12 text-gray-400 dark:text-gray-500 text-sm">Không có thành viên nào.</div>
+            <div class="text-center py-12 text-gray-400 dark:text-gray-500 text-sm">{{ __('No members found.') }}</div>
             @else
             <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
                 <table class="border-separate border-spacing-0 text-xs">
@@ -196,7 +196,7 @@
                         <tr class="bg-gray-50 dark:bg-gray-900/60">
                             <th class="sticky left-0 z-20 bg-gray-50 dark:bg-gray-900 border-b border-r border-gray-200 dark:border-gray-700
                                        px-3 py-2 text-left font-semibold text-gray-600 dark:text-gray-400 whitespace-nowrap min-w-[160px]">
-                                Thành viên
+                                {{ __('Member') }}
                             </th>
                             @for ($d = 1; $d <= $daysInMonth; $d++)
                                 @php
@@ -352,8 +352,8 @@
                                     <div class="att-tooltip absolute bottom-full left-1/2 -translate-x-1/2 mb-1 z-30
                                                 bg-gray-800 dark:bg-gray-700 text-white text-xs rounded px-2 py-1.5 whitespace-nowrap shadow-lg min-w-max">
                                         @if($attCount === 1)
-                                            @if($checkInStr)<div>Vào: {{ $checkInStr }}</div>@endif
-                                            @if($checkOutStr)<div>Ra: {{ $checkOutStr }}</div>@endif
+                                            @if($checkInStr)<div>{{ __('in:') }} {{ $checkInStr }}</div>@endif
+                                            @if($checkOutStr)<div>{{ __('out:') }} {{ $checkOutStr }}</div>@endif
                                         @elseif($attCount > 1)
                                             @foreach($attList as $ttIdx => $ttRec)
                                                 @if($ttIdx > 0)<div class="border-t border-gray-600 my-0.5"></div>@endif
@@ -364,12 +364,12 @@
                                                     $ttCls = $ttRec->type === 'wfh' ? 'text-emerald-300' : 'text-green-300';
                                                 @endphp
                                                 <div class="text-[10px] font-semibold {{ $ttCls }}">{{ $ttLbl }}</div>
-                                                @if($ttIn)<div>Vào: {{ $ttIn }}</div>@endif
-                                                @if($ttOut)<div>Ra: {{ $ttOut }}</div>@endif
+                                                @if($ttIn)<div>{{ __('in:') }} {{ $ttIn }}</div>@endif
+                                                @if($ttOut)<div>{{ __('out:') }} {{ $ttOut }}</div>@endif
                                             @endforeach
                                         @endif
                                         @if($isPartialLeave)
-                                        <div class="text-yellow-300">Nghỉ½: {{ $leave->hours }}h</div>
+                                        <div class="text-yellow-300">{{ __('Half leave:') }} {{ $leave->hours }}h</div>
                                         @endif
                                     </div>
                                     @endif
@@ -381,7 +381,7 @@
                                         <form method="POST" action="{{ route('attendance.destroy', $att) }}"
                                               class="att-del absolute top-0 right-0"
                                               @click.stop
-                                              onsubmit="return confirm('Xóa chấm công ngày {{ $dk }} của {{ addslashes($memberRow->name) }}?')">
+                                              onsubmit="return confirm('{{ addslashes(__('Delete attendance on :date for :name?', ['date' => $dk, 'name' => $memberRow->name])) }}')">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"
@@ -450,7 +450,7 @@
                                                 <form method="POST" action="{{ route('attendance.destroy', $atRec) }}"
                                                       class="att-row-del absolute top-0 right-0"
                                                       @click.stop
-                                                      onsubmit="return confirm('Xóa chấm công {{ $atLbl }} ngày {{ $dk }} của {{ addslashes($memberRow->name) }}?')">
+                                                      onsubmit="return confirm('{{ addslashes(__('Delete :label attendance on :date for :name?', ['label' => $atLbl, 'date' => $dk, 'name' => $memberRow->name])) }}')">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit"
@@ -471,11 +471,11 @@
                                     @else
                                         @if($state === 'partial_leave')
                                             <div class="flex flex-col items-center justify-center leading-tight">
-                                                <span class="text-yellow-700 dark:text-yellow-400 font-semibold text-[10px]">Nghỉ½</span>
+                                                <span class="text-yellow-700 dark:text-yellow-400 font-semibold text-[10px]">{{ __('Leave½') }}</span>
                                                 @if($leave->hours)<span class="text-yellow-600 dark:text-yellow-500 text-[10px] opacity-80">{{ $leave->hours }}h</span>@endif
                                             </div>
                                         @elseif($state === 'leave')
-                                            <span class="text-orange-700 dark:text-orange-400 font-semibold text-[10px]">Nghỉ</span>
+                                            <span class="text-orange-700 dark:text-orange-400 font-semibold text-[10px]">{{ __('Leave') }}</span>
                                         @elseif($state === 'absent')
                                             <span class="text-red-400 dark:text-red-500 text-[11px] font-medium">–</span>
                                         @endif
@@ -569,7 +569,7 @@
                 {{-- Modal header --}}
                 <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
                     <h2 class="text-base font-semibold text-gray-900 dark:text-white"
-                        x-text="editId ? 'Sửa chấm công' : 'Thêm chấm công'">Thêm chấm công</h2>
+                        x-text="editId ? '{{ __('Edit Attendance') }}' : '{{ __('Add Attendance') }}'">{{ __('Add Attendance') }}</h2>
                     <button type="button" @click="closeModal()"
                         class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -588,10 +588,10 @@
                     <div>
                         <label for="checkin-user-select"
                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Nhân viên <span class="text-red-500">*</span>
+                            {{ __('Employee') }} <span class="text-red-500">*</span>
                         </label>
                         <select id="checkin-user-select" name="user_id" required>
-                            <option value="">— Chọn nhân viên —</option>
+                            <option value="">{{ __('Select users…') }}</option>
                             @foreach($allUsers as $u)
                             <option value="{{ $u->id }}">{{ $u->name }}{{ $u->position ? ' · ' . $u->position : '' }}</option>
                             @endforeach
@@ -602,7 +602,7 @@
                     <div>
                         <label for="checkin-date"
                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Ngày <span class="text-red-500">*</span>
+                            {{ __('Date') }} <span class="text-red-500">*</span>
                         </label>
                         <input type="date" id="checkin-date" name="date"
                                x-model="editDate" required
@@ -612,7 +612,7 @@
                     {{-- Check-in row: time + type --}}
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Giờ vào <span class="text-red-500">*</span>
+                            {{ __('Check-in Time') }} <span class="text-red-500">*</span>
                         </label>
                         <div class="flex items-center gap-3">
                             <input type="time" id="checkin-time" name="check_in_time" lang="en-GB"
@@ -636,8 +636,8 @@
                     {{-- Check-out row: time + type --}}
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Giờ ra
-                            <span class="text-xs font-normal text-gray-400">(tùy chọn)</span>
+                            {{ __('Check-out Time') }}
+                            <span class="text-xs font-normal text-gray-400">{{ __('(optional)') }}</span>
                         </label>
                         <div class="flex items-center gap-3">
                             <input type="time" id="checkout-time" name="check_out_time" lang="en-GB"
@@ -662,11 +662,11 @@
                     <div class="flex justify-end gap-3 pt-1">
                         <button type="button" @click="closeModal()"
                             class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition">
-                            Hủy
+                            {{ __('Cancel') }}
                         </button>
                         <button type="submit"
                             class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition">
-                            Lưu
+                            {{ __('Save') }}
                         </button>
                     </div>
                 </form>
@@ -683,7 +683,7 @@
         const filterEl = document.getElementById('user-filter-select');
         if (filterEl) {
             new TomSelect(filterEl, {
-                placeholder: '— Tất cả —',
+                placeholder: '— {{ __('All') }} —',
                 allowEmptyOption: true,
                 maxOptions: 300,
             });
@@ -692,7 +692,7 @@
         const el = document.getElementById('checkin-user-select');
         if (el) {
             window.fabTomSelect = new TomSelect(el, {
-                placeholder: '— Chọn nhân viên —',
+                placeholder: '{{ __('Select users…') }}',
                 allowEmptyOption: true,
                 maxOptions: 200,
             });

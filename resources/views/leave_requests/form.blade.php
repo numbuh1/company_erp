@@ -2,7 +2,7 @@
     @php $readonly = $readonly ?? false; @endphp
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ $readonly ? 'Yêu cầu Nghỉ phép' : (isset($leave) ? 'Chỉnh sửa Yêu cầu Nghỉ phép' : 'Tạo Yêu cầu Nghỉ phép') }}
+            {{ $readonly ? __('Leave Request Details') : (isset($leave) ? __('Edit Leave Request') : __('Create Leave Request')) }}
         </h2>
     </x-slot>
 
@@ -20,16 +20,16 @@
                     <!-- User -->
                     @if(isset($leave))
                         <div class="mb-4">
-                            <x-input-label value="Người dùng" />
+                            <x-input-label :value="__('User')" />
                             <input type="text" value="{{ $leave->user->name }}" class="w-full border rounded p-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300" disabled>
                             <input type="hidden" name="user_id" value="{{ $leave->user_id }}">
                         </div>
                     @else
                         @can('edit team leaves')
                             <div class="mb-4">
-                                <x-input-label value="Người dùng" />
+                                <x-input-label :value="__('User')" />
                                 <select id="leave-user-select" name="user_id">
-                                    <option value="">— Chọn người dùng —</option>
+                                    <option value="">{{ __('— Select user —') }}</option>
                                     @foreach($users as $user)
                                         <option value="{{ $user->id }}"
                                             @selected(old('user_id', auth()->id()) == $user->id)>
@@ -43,12 +43,12 @@
 
                     <!-- Type -->
                     <div class="mb-4">
-                        <x-input-label value="Loại" />
+                        <x-input-label :value="__('Type')" />
                         <select name="type" class="w-full border rounded p-2" @disabled($readonly)>
                             @foreach(['annual', 'sick', 'unpaid'] as $type)
                                 <option value="{{ $type }}"
                                     @selected(old('type', $leave->type ?? '') == $type)>
-                                    {{ ['annual' => 'Nghỉ phép năm', 'sick' => 'Nghỉ ốm', 'unpaid' => 'Nghỉ không lương'][$type] ?? ucfirst($type) }}
+                                    {{ ['annual' => __('Annual leave'), 'sick' => __('Sick leave'), 'unpaid' => __('Unpaid leave')][$type] ?? ucfirst($type) }}
                                 </option>
                             @endforeach
                         </select>
@@ -56,7 +56,7 @@
 
                     <!-- Start datetime -->
                     <div class="mb-4">
-                        <x-input-label value="Giờ bắt đầu" />
+                        <x-input-label :value="__('Start Time')" />
                         <input type="datetime-local" name="start_at" id="start_at" lang="en-GB"
                             value="{{ old('start_at', isset($leave) ? $leave->start_at->format('Y-m-d\TH:i') : '') }}"
                             class="w-full border rounded p-2" @disabled($readonly)>
@@ -64,7 +64,7 @@
 
                     <!-- End datetime -->
                     <div class="mb-4">
-                        <x-input-label value="Giờ kết thúc" />
+                        <x-input-label :value="__('End Time')" />
                         <input type="datetime-local" name="end_at" id="end_at" lang="en-GB"
                             value="{{ old('end_at', isset($leave) ? $leave->end_at->format('Y-m-d\TH:i') : '') }}"
                             class="w-full border rounded p-2" @disabled($readonly)>
@@ -72,37 +72,37 @@
 
                     <!-- Partial-day hours section (multi-day leaves only, shown/hidden by JS) -->
                     <div id="partial-day-section" class="hidden mb-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg space-y-3">
-                        <p class="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide">⚡ Chỉnh giờ nghỉ từng ngày</p>
+                        <p class="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide">⚡ {{ __('Customize daily leave hours') }}</p>
 
                         <div class="grid grid-cols-2 gap-4">
                             <!-- Start day -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    Ngày đầu <span id="partial-start-label" class="font-normal text-gray-400 text-xs"></span>
+                                    {{ __('Start Day') }} <span id="partial-start-label" class="font-normal text-gray-400 text-xs"></span>
                                 </label>
                                 <div class="flex items-center gap-1.5">
                                     <input type="number" step="0.25" min="0" max="24" id="start_day_hours" name="start_day_hours"
                                         value="{{ old('start_day_hours', isset($leave) ? ($leave->start_day_hours ?? '') : '') }}"
                                         class="w-24 border rounded p-2 text-sm" @disabled($readonly)
                                         placeholder="0">
-                                    <span class="text-xs text-gray-500">giờ</span>
+                                    <span class="text-xs text-gray-500">{{ __('hours') }}</span>
                                 </div>
-                                <p class="text-xs text-gray-400 mt-1">Giờ nghỉ vào ngày bắt đầu</p>
+                                <p class="text-xs text-gray-400 mt-1">{{ __('Leave hours on start day') }}</p>
                             </div>
 
                             <!-- End day -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    Ngày cuối <span id="partial-end-label" class="font-normal text-gray-400 text-xs"></span>
+                                    {{ __('End Day') }} <span id="partial-end-label" class="font-normal text-gray-400 text-xs"></span>
                                 </label>
                                 <div class="flex items-center gap-1.5">
                                     <input type="number" step="0.25" min="0" max="24" id="end_day_hours" name="end_day_hours"
                                         value="{{ old('end_day_hours', isset($leave) ? ($leave->end_day_hours ?? '') : '') }}"
                                         class="w-24 border rounded p-2 text-sm" @disabled($readonly)
                                         placeholder="0">
-                                    <span class="text-xs text-gray-500">giờ</span>
+                                    <span class="text-xs text-gray-500">{{ __('hours') }}</span>
                                 </div>
-                                <p class="text-xs text-gray-400 mt-1">Giờ nghỉ vào ngày trở lại</p>
+                                <p class="text-xs text-gray-400 mt-1">{{ __('Leave hours on return day') }}</p>
                             </div>
                         </div>
                     </div>
@@ -114,7 +114,7 @@
 
                     <!-- Total hours (auto-calculated from partial-day inputs) -->
                     <div class="mb-4">
-                        <x-input-label value="Tổng giờ nghỉ" />
+                        <x-input-label :value="__('Total leave hours')" />
                         <input type="number" step="0.25" id="hours" name="hours"
                             value="{{ old('hours', isset($leave) ? $leave->hours : '') }}"
                             class="w-full border rounded p-2" @disabled($readonly)>
@@ -122,7 +122,7 @@
 
                     <!-- Description -->
                     <div class="mb-4">
-                        <x-input-label value="Lý do" />
+                        <x-input-label :value="__('Reason')" />
                         <textarea name="description" class="w-full border rounded p-2" @disabled($readonly)>{{ old('description', $leave->description ?? '') }}</textarea>
                     </div>
 
@@ -130,7 +130,7 @@
                     <div class="flex justify-end mt-6 space-x-2">
                         @if(!$readonly)
                             <x-primary-button>
-                                {{ isset($leave) ? 'Lưu' : 'Tạo' }}
+                                {{ isset($leave) ? __('Save') : __('Create') }}
                             </x-primary-button>
                         @endif
 
@@ -138,7 +138,7 @@
                             @canany(['edit team leaves', 'edit all leaves'])
                                 @if(!in_array($leave->status, ['approved', 'rejected']))
                                     <a href="{{ route('leave-requests.edit', $leave) }}">
-                                        <x-secondary-button>Chỉnh sửa</x-secondary-button>
+                                        <x-secondary-button>{{ __('Edit') }}</x-secondary-button>
                                     </a>
                                 @endif
                             @endcanany
@@ -147,17 +147,17 @@
                                 @if($leave->status === 'pending')
                                     <form method="POST" action="{{ route('leave-requests.approve', $leave) }}" class="inline">
                                         @csrf
-                                        <x-primary-button>Phê duyệt</x-primary-button>
+                                        <x-primary-button>{{ __('Approve') }}</x-primary-button>
                                     </form>
                                     <x-danger-button onclick="openRejectModal('{{ route('leave-requests.reject', $leave->id) }}')">
-                                        Từ chối
+                                        {{ __('Reject') }}
                                     </x-danger-button>
                                 @endif
                             @endcanany
                         @endif
 
                         <a href="{{ route('requests.index', ['type' => 'leave']) }}">
-                            <x-secondary-button>{{ $readonly ? 'Quay lại' : 'Bỏ' }}</x-secondary-button>
+                            <x-secondary-button>{{ $readonly ? __('Back') : __('Cancel') }}</x-secondary-button>
                         </a>
                     </div>
 

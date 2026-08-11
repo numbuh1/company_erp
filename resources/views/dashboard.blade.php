@@ -11,7 +11,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            Bảng điều khiển
+            {{ __('Dashboard') }}
         </h2>
     </x-slot>
 
@@ -21,27 +21,27 @@
             {{-- ── Stats Bar ─────────────────────────────────────────────── --}}
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4">
-                    <p class="text-xs text-gray-500 uppercase font-medium">Số giờ phép còn lại</p>
+                    <p class="text-xs text-gray-500 uppercase font-medium">{{ __('Leave Balance (hours)') }}</p>
                     <p class="mt-1 text-2xl font-bold text-gray-800 dark:text-gray-100">
-                        {{ rtrim(rtrim(number_format(auth()->user()->leave_balance ?? 0, 2), '0'), '.') }} giờ
+                        {{ rtrim(rtrim(number_format(auth()->user()->leave_balance ?? 0, 2), '0'), '.') }} {{ __('hours') }}
                     </p>
                 </div>
                 <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4">
-                    <p class="text-xs text-gray-500 uppercase font-medium">Giờ công tuần này</p>
+                    <p class="text-xs text-gray-500 uppercase font-medium">{{ __('Hours Working This Week') }}</p>
                     <p class="mt-1 text-2xl font-bold text-indigo-600 dark:text-indigo-400">
                         {{ \App\Models\TimeLog::formatTime($weekTimeLogs) }}
                     </p>
                 </div>
                 <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4">
-                    <p class="text-xs text-gray-500 uppercase font-medium">Giờ công tháng này</p>
+                    <p class="text-xs text-gray-500 uppercase font-medium">{{ __('Hours Working This Month') }}</p>
                     <p class="mt-1 text-2xl font-bold text-indigo-600 dark:text-indigo-400">
                         {{ \App\Models\TimeLog::formatTime($monthTimeLogs) }}
                     </p>
                 </div>
                 <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4">
-                    <p class="text-xs text-gray-500 uppercase font-medium">Tăng ca tháng này</p>
+                    <p class="text-xs text-gray-500 uppercase font-medium">{{ __('OT This Month') }}</p>
                     <p class="mt-1 text-2xl font-bold text-green-600 dark:text-green-400">
-                        {{ rtrim(rtrim(number_format($monthOTHours, 2), '0'), '.') }} giờ
+                        {{ rtrim(rtrim(number_format($monthOTHours, 2), '0'), '.') }} {{ __('hours') }}
                     </p>
                 </div>
             </div>
@@ -54,11 +54,11 @@
                     <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
-                                Thông báo
+                                {{ __('Announcements') }}
                             </h3>
                             @can('edit announcements')
                                 <a href="{{ route('announcements.create') }}"
-                                    class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">+ Tạo mới</a>
+                                    class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">{{ __('+ New') }}</a>
                             @endcan
                         </div>
 
@@ -79,17 +79,17 @@
                                 </div>
                                 <a href="{{ route('announcements.show', $latestAnnouncement) }}"
                                     class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline mt-2 inline-block">
-                                    Đọc thêm →
+                                    {{ __('Read more →') }}
                                 </a>
                             </div>
                         @else
-                            <p class="text-sm text-gray-400">Chưa có thông báo.</p>
+                            <p class="text-sm text-gray-400">{{ __('No announcements yet.') }}</p>
                         @endif
 
                         @if($previousAnnouncements->isNotEmpty())
                             <div class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700">
                                 <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                                    Thông báo khác
+                                    {{ __('Other Announcements') }}
                                 </h4>
                                 <ul class="space-y-2">
                                     @foreach($previousAnnouncements as $prev)
@@ -109,7 +109,7 @@
 
                         <a href="{{ route('announcements.index') }}"
                             class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline mt-3 inline-block">
-                            Tất cả Thông báo →
+                            {{ __('All Announcements →') }}
                         </a>
                     </div>
                 </div>
@@ -126,7 +126,7 @@
 
                             @if($onboardedUsers->isNotEmpty())
                                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mt-3 mb-2">
-                                    🆕 Đã Onboard <span class="font-normal normal-case">({{ $onboardedUsers->count() }})</span>
+                                    🆕 {{ __('Onboarded') }} <span class="font-normal normal-case">({{ $onboardedUsers->count() }})</span>
                                 </p>
                                 <div class="space-y-1.5">
                                     @foreach($onboardedUsers->take(5) as $ou)
@@ -146,7 +146,7 @@
                             @endif
 
                             @if($probationEndingUsers->isNotEmpty())
-                                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mt-4 mb-2">⏳ Hết thử việc</p>
+                                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mt-4 mb-2">⏳ {{ __('Probation Ending') }}</p>
                                 <div class="space-y-1.5">
                                     @foreach($probationEndingUsers as $pu)
                                         @php
@@ -161,7 +161,7 @@
                                                 <span class="text-xs text-gray-400 ml-1.5">{{ $pu->probation_end_date->translatedFormat('d M') }}</span>
                                             </div>
                                             <span class="text-xs shrink-0 ml-2 {{ $daysLeft < 0 ? 'text-red-500 font-semibold' : ($daysLeft <= 7 ? 'text-orange-500 font-semibold' : 'text-yellow-600') }}">
-                                                {{ $daysLeft < 0 ? 'Đã hết hạn' : ($daysLeft === 0 ? 'Hôm nay' : 'in ' . $daysLeft . 'd') }}
+                                                {{ $daysLeft < 0 ? __('Expired') : ($daysLeft === 0 ? __('Today') : 'in ' . $daysLeft . 'd') }}
                                             </span>
                                         </div>
                                     @endforeach
@@ -173,11 +173,11 @@
                     {{-- Upcoming Approved Leaves --}}
                     <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
                         <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-3">
-                            Nghỉ phép sắp tới
-                            <span class="font-normal text-gray-400 normal-case">(next 2 weeks)</span>
+                            {{ __('Upcoming Leaves') }}
+                            <span class="font-normal text-gray-400 normal-case">({{ __('next 2 weeks') }})</span>
                         </h3>
                         @if($upcomingLeaves->isEmpty())
-                            <p class="text-sm text-gray-400">Không có nghỉ phép đã duyệt sắp tới.</p>
+                            <p class="text-sm text-gray-400">{{ __('No upcoming approved leaves.') }}</p>
                         @else
                             <div class="space-y-2">
                                 @foreach($upcomingLeaves as $leave)
@@ -213,13 +213,13 @@
                     @if($upcomingBirthdays->isNotEmpty() || count($monthHolidays) > 0 || $contractExpiryUsers->isNotEmpty())
                         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
                             <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-1">
-                                Sự kiện Tháng này
+                                {{ __("This Month's Events") }}
                                 <span class="font-normal normal-case text-gray-400">— {{ now()->translatedFormat('F Y') }}</span>
                             </h3>
 
                             {{-- Birthdays --}}
                             @if($upcomingBirthdays->isNotEmpty())
-                                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mt-3 mb-2">🎂 Sinh nhật</p>
+                                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mt-3 mb-2">🎂 {{ __('Birthdays') }}</p>
                                 <div class="space-y-1.5">
                                     @foreach($upcomingBirthdays as $b)
                                         <div class="flex items-center justify-between text-sm border-l-2 border-pink-300 pl-3 py-0.5">
@@ -243,7 +243,7 @@
 
                             {{-- Public Holidays --}}
                             @if(count($monthHolidays) > 0)
-                                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mt-4 mb-2">📅 Nghỉ lễ</p>
+                                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mt-4 mb-2">📅 {{ __('Public Holidays') }}</p>
                                 <div class="space-y-1.5">
                                     @foreach($monthHolidays as $h)
                                         <div class="flex items-center justify-between text-sm border-l-2 border-yellow-300 pl-3 py-0.5">
@@ -263,7 +263,7 @@
 
                         {{-- Contract Expiries --}}
                         @if($contractExpiryUsers->isNotEmpty())
-                            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mt-4 mb-2">📋 Hết hạn Hợp đồng</p>
+                            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mt-4 mb-2">📋 {{ __('Contract Expiries') }}</p>
                             <div class="space-y-1.5">
                                 @foreach($contractExpiryUsers as $cu)
                                     @php
@@ -297,16 +297,16 @@
                         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
                             <div class="flex items-center justify-between mb-3">
                                 <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
-                                    Sự kiện
+                                    {{ __('Events') }}
                                 </h3>
                                 <a href="{{ route('calendar.index') }}"
                                     class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">
-                                    Xem lịch →
+                                    {{ __('View Calendar →') }}
                                 </a>
                             </div>
 
                             @if($todayEvents->isNotEmpty())
-                                <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Hôm nay</p>
+                                <p class="text-xs font-semibold text-gray-400 uppercase mb-2">{{ __('Today') }}</p>
                                 <div class="space-y-2 mb-4">
                                     @foreach($todayEvents as $ev)
                                         @php
@@ -332,7 +332,7 @@
                             @endif
 
                             @if($weekEvents->isNotEmpty())
-                                <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Tuần này</p>
+                                <p class="text-xs font-semibold text-gray-400 uppercase mb-2">{{ __('This Week') }}</p>
                                 <div class="space-y-2">
                                     @foreach($weekEvents as $ev)
                                         @php
@@ -362,11 +362,11 @@
                     {{-- Tasks nearing deadline --}}
                     <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
                         <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-3">
-                            Công việc sắp tới hạn
-                            <span class="font-normal text-gray-400 normal-case">(trước ngày kết thúc dự kiến 5 ngày)</span>
+                            {{ __('Tasks Nearing Deadline') }}
+                            <span class="font-normal text-gray-400 normal-case">({{ __('within 5 days of expected end date') }})</span>
                         </h3>
                         @if($deadlineTasks->isEmpty())
-                            <p class="text-sm text-gray-400">Không có công việc sắp tới hạn nào.</p>
+                            <p class="text-sm text-gray-400">{{ __('No urgent tasks.') }}</p>
                         @else
                             <div class="space-y-2">
                                 @foreach($deadlineTasks as $task)
@@ -392,7 +392,7 @@
                                         </div>
                                         <div class="shrink-0 text-right">
                                             <span class="text-xs font-semibold {{ $daysLeft === 0 ? 'text-red-600' : ($daysLeft === 1 ? 'text-orange-500' : 'text-yellow-600') }}">
-                                                {{ $daysLeft === 0 ? 'Due today' : ($daysLeft === 1 ? 'Kết thúc vào ngày mai' : 'Kết thúc trong ' . $daysLeft . ' ngày') }}
+                                                {{ $daysLeft === 0 ? 'Due today' : ($daysLeft === 1 ? __('Due tomorrow') : __('Due in :days days', ['days' => $daysLeft])) }}
                                             </span>
                                             <div class="text-xs text-gray-400">{{ $task->expected_end_date->format('d/m/Y') }}</div>
                                         </div>

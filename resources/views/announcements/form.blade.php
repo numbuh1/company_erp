@@ -11,7 +11,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ isset($announcement) ? 'Chỉnh sửa Thông báo' : 'Thông báo mới' }}
+            {{ isset($announcement) ? __('Edit Announcement') : __('New Announcement') }}
         </h2>
     </x-slot>
 
@@ -36,10 +36,10 @@
 
                     <!-- Title -->
                     <div class="mb-5">
-                        <x-input-label value="Tiêu đề" />
+                        <x-input-label :value="__('Title')" />
                         <x-text-input name="title" class="w-full mt-1"
                             value="{{ old('title', $announcement->title ?? '') }}"
-                            placeholder="Tiêu đề thông báo..." />
+                            placeholder="{{ __('Announcement title...') }}" />
                         @error('title')
                             <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
                         @enderror
@@ -53,22 +53,22 @@
                         $selectedTeams = old('teams', isset($announcement) ? $announcement->teams->pluck('id')->toArray() : []);
                     @endphp
                     <div class="mb-5" x-data="{ allCompany: {{ $isAllCompany ? 'true' : 'false' }} }">
-                        <x-input-label value="Đối tượng" />
+                        <x-input-label :value="__('Audience')" />
 
                         <label class="inline-flex items-center gap-2 mt-2 cursor-pointer">
                             <input type="checkbox" name="all_company" value="1"
                                 x-model="allCompany"
                                 class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
-                            <span class="text-sm text-gray-700 dark:text-gray-300 font-medium">Toàn công ty</span>
+                            <span class="text-sm text-gray-700 dark:text-gray-300 font-medium">{{ __('All Company') }}</span>
                         </label>
 
                         <div x-show="!allCompany" x-cloak class="mt-3">
                             @if($teams->isEmpty())
-                                <p class="text-xs text-gray-400">Chưa có nhóm nào.</p>
+                                <p class="text-xs text-gray-400">{{ __('No teams exist yet.') }}</p>
                             @else
-                                <x-input-label value="Chỉ hiển thị với các nhóm này" class="mb-1" />
+                                <x-input-label :value="__('Visible to these teams only')" class="mb-1" />
                                 <select name="teams[]" id="teams-select" data-multi-select
-                                        data-placeholder="Chọn nhóm…" class="w-full" multiple>
+                                        data-placeholder="{{ __('Select teams…') }}" class="w-full" multiple>
                                     @foreach($teams as $team)
                                         <option value="{{ $team->id }}"
                                             {{ in_array($team->id, $selectedTeams) ? 'selected' : '' }}>
@@ -82,7 +82,7 @@
 
                     <!-- Rich Text Content -->
                     <div class="mb-5">
-                        <x-input-label value="Nội dung" class="mb-1" />
+                        <x-input-label :value="__('Content')" class="mb-1" />
                         <div id="editor-container" class="mt-1 bg-white"></div>
                         <input type="hidden" name="content" id="content-input">
                         @error('content')
@@ -92,10 +92,10 @@
 
                     <div class="flex justify-end gap-2">
                         <x-primary-button type="submit">
-                            {{ isset($announcement) ? 'Lưu' : 'Đăng bài' }}
+                            {{ isset($announcement) ? __('Save') : __('Post') }}
                         </x-primary-button>
                         <a href="{{ isset($announcement) ? route('announcements.show', $announcement) : route('announcements.index') }}">
-                            <x-secondary-button type="button">Hủy</x-secondary-button>
+                            <x-secondary-button type="button">{{ __('Cancel') }}</x-secondary-button>
                         </a>
                     </div>
                 </form>
