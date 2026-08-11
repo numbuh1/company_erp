@@ -2,18 +2,18 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                Team Details
+                {{ __('Team Details') }}
             </h2>
 
             <div class="space-x-2">
                 @can('edit teams')
                     <a href="{{ route('teams.edit', $team) }}">
-                        <x-secondary-button>Chỉnh sửa</x-secondary-button>
+                        <x-secondary-button>{{ __('Edit') }}</x-secondary-button>
                     </a>
                 @endcan
 
                 <a href="{{ route('teams.index') }}">
-                    <x-secondary-button>Quay lại</x-secondary-button>
+                    <x-secondary-button>{{ __('Back') }}</x-secondary-button>
                 </a>
             </div>
         </div>
@@ -29,7 +29,7 @@
                 </h3>
 
                 <p class="text-sm text-gray-500 mt-1">
-                    {{ $team->users->count() }} members
+                    {{ $team->users->count() }} {{ __('Members') }}
                 </p>
             </div>
 
@@ -39,7 +39,7 @@
                 <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg overflow-hidden">
                     <div class="px-6 py-4 border-b dark:border-gray-700">
                         <h3 class="text-md font-semibold text-gray-800 dark:text-gray-200">
-                            Trưởng nhóm
+                            {{ __('Team Lead') }}
                         </h3>
                     </div>
 
@@ -60,11 +60,11 @@
                                 </div>
 
                                 <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                                    Trưởng nhóm
+                                    {{ __('Team Lead') }}
                                 </span>
                             </div>
                         @empty
-                            <p class="text-gray-500 text-sm">Chưa có trưởng nhóm.</p>
+                            <p class="text-gray-500 text-sm">{{ __('No leaders yet.') }}</p>
                         @endforelse
                     </div>
                 </div>
@@ -73,7 +73,7 @@
                 <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg overflow-hidden">
                     <div class="px-6 py-4 border-b dark:border-gray-700">
                         <h3 class="text-md font-semibold text-gray-800 dark:text-gray-200">
-                            Thành viên
+                            {{ __('Members') }}
                         </h3>
                     </div>
 
@@ -94,11 +94,11 @@
                                 </div>
 
                                 <span class="text-gray-500 text-sm">
-                                    Thành viên
+                                    {{ __('Member') }}
                                 </span>
                             </div>
                         @empty
-                            <p class="text-gray-500 text-sm">Chưa có thành viên.</p>
+                            <p class="text-gray-500 text-sm">{{ __('No members yet.') }}</p>
                         @endforelse
                     </div>
                 </div>

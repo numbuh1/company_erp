@@ -82,13 +82,13 @@
     >
         {{-- Panel header --}}
         <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700">
-            <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Chờ phê duyệt</h4>
-            <button @click="load()" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">Làm mới</button>
+            <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-100">{{ __('Pending Approval') }}</h4>
+            <button @click="load()" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">{{ __('Refresh') }}</button>
         </div>
 
         {{-- Tabs --}}
         <div class="flex border-b border-gray-100 dark:border-gray-700">
-            <template x-for="tab in [{key:'all',label:'Tất cả'},{key:'leave',label:'Nghỉ phép'},{key:'ot',label:'Tăng ca'}]" :key="tab.key">
+            <template x-for="tab in [{key:'all',label:'{{ __('All') }}'},{key:'leave',label:'{{ __('Leave Requests') }}'},{key:'ot',label:'{{ __('OT') }}'}]" :key="tab.key">
                 <button
                     @click="activeTab = tab.key"
                     :class="activeTab === tab.key
@@ -103,11 +103,11 @@
         </div>
 
         {{-- Loading --}}
-        <div x-show="loading" class="py-8 text-center text-sm text-gray-400">Đang tải…</div>
+        <div x-show="loading" class="py-8 text-center text-sm text-gray-400">{{ __('Loading…') }}</div>
 
         {{-- Empty --}}
         <div x-show="!loading && items !== null && currentItems().length === 0" class="py-8 text-center text-sm text-gray-400">
-            Không có yêu cầu đang chờ.
+            {{ __('No pending requests.') }}
         </div>
 
         {{-- Items --}}
@@ -149,11 +149,11 @@
 
                     {{-- Reject inline --}}
                     <div x-show="rejectingId === item.id" class="mt-2 space-y-1.5">
-                        <textarea x-model="rejectReason" rows="2" placeholder="Lý do từ chối…"
+                        <textarea x-model="rejectReason" rows="2" placeholder="{{ __('Rejection reason…') }}"
                             class="w-full text-xs border border-red-300 dark:border-red-600 dark:bg-gray-900 dark:text-gray-300 rounded-md px-2 py-1.5"></textarea>
                         <div class="flex gap-1.5 justify-end">
-                            <button @click="cancelReject()" class="px-2.5 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition">Hủy</button>
-                            <button @click="confirmReject(item)" class="px-2.5 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition">Xác nhận</button>
+                            <button @click="cancelReject()" class="px-2.5 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition">{{ __('Cancel') }}</button>
+                            <button @click="confirmReject(item)" class="px-2.5 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition">{{ __('Confirm') }}</button>
                         </div>
                     </div>
 
@@ -162,12 +162,12 @@
                         <button @click.stop="approve(item)"
                             class="px-2.5 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded transition flex items-center gap-1">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                            Duyệt
+                            {{ __('Approve') }}
                         </button>
                         <button @click.stop="showReject(item.id)"
                             class="px-2.5 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition flex items-center gap-1">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                            Từ chối
+                            {{ __('Reject') }}
                         </button>
                     </div>
                 </div>
@@ -179,7 +179,7 @@
     <button
         @click="toggle()"
         class="relative flex items-center justify-center w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg transition"
-        title="Yêu cầu chờ phê duyệt"
+        title="{{ __('Pending Approval') }}"
     >
         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>

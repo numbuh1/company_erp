@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ isset($skill) ? 'Chỉnh sửa Kĩ năng' : 'Tạo Kĩ năng' }}
+            {{ isset($skill) ? __('Edit Skill') : __('Create Skill') }}
         </h2>
     </x-slot>
 
@@ -14,18 +14,18 @@
                     @if(isset($skill)) @method('PUT') @endif
 
                     <div class="mb-4">
-                        <x-input-label for="name" value="Skill Name *" />
+                        <x-input-label for="name" value="{{ __('Skill Name') }} *" />
                         <x-text-input id="name" name="name" type="text" class="mt-1 block w-full"
                             value="{{ old('name', $skill->name ?? '') }}" required />
                         @error('name')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                     </div>
 
                     <div class="mb-6">
-                        <x-input-label for="category" value="Category *" />
+                        <x-input-label for="category" value="{{ __('Category') }} *" />
                         <x-text-input id="category" name="category" type="text" class="mt-1 block w-full"
                             list="category-suggestions"
                             value="{{ old('category', $skill->category ?? '') }}"
-                            placeholder="e.g. Engineering, IT, Languages…"
+                            placeholder="{{ __('e.g. Engineering, IT, Languages…') }}"
                             required />
                         <datalist id="category-suggestions">
                             @foreach(\App\Models\Skill::$categories as $cat)
@@ -36,9 +36,9 @@
                     </div>
 
                     <div class="flex items-center gap-3">
-                        <x-primary-button>{{ isset($skill) ? 'Lưu' : 'Tạo' }}</x-primary-button>
+                        <x-primary-button>{{ isset($skill) ? __('Save') : __('Create') }}</x-primary-button>
                         <a href="{{ route('skills.index') }}">
-                            <x-secondary-button type="button">Hủy</x-secondary-button>
+                            <x-secondary-button type="button">{{ __('Cancel') }}</x-secondary-button>
                         </a>
                     </div>
                 </form>

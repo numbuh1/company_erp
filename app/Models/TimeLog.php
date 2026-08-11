@@ -51,9 +51,11 @@ class TimeLog extends Model
     {
         $h = (int) floor($hours);
         $m = (int) round(($hours - $h) * 60);
-        if ($h > 0 && $m > 0) return "{$h} giờ {$m} phút";
-        if ($h > 0) return "{$h} giờ";
-        return "{$m} phút";
+        $hr = __('hr');
+        $mn = __('min');
+        if ($h > 0 && $m > 0) return "{$h} {$hr} {$m} {$mn}";
+        if ($h > 0) return "{$h} {$hr}";
+        return "{$m} {$mn}";
     }
 
     public static function formatTimeShort(float $hours): string

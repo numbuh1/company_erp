@@ -1,11 +1,11 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Người dùng</h2>
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">{{ __('Users') }}</h2>
             @can('create all user')
                 <div class="flex gap-2">
-                    <a href="{{ route('users.import.form') }}"><x-secondary-button>Import CSV</x-secondary-button></a>
-                    <a href="{{ route('users.create') }}"><x-primary-button>Tạo người dùng</x-primary-button></a>
+                    <a href="{{ route('users.import.form') }}"><x-secondary-button>{{ __('Import CSV') }}</x-secondary-button></a>
+                    <a href="{{ route('users.create') }}"><x-primary-button>{{ __('Create User') }}</x-primary-button></a>
                 </div>
             @endcan
         </div>
@@ -24,11 +24,11 @@
             <nav class="-mb-px flex">
                 @php
                     $tabs = [
-                        ['key' => 'overall',  'label' => 'Nhân viên',        'show' => true],
-                        ['key' => 'team',     'label' => 'Nhóm',             'show' => true],
-                        ['key' => 'salary',   'label' => 'Lương',            'show' => $canViewSalary],
-                        ['key' => 'leaves',   'label' => 'Giờ nghỉ phép',    'show' => true],
-                        ['key' => 'personal', 'label' => 'Thông tin cá nhân','show' => $canViewPersonal],
+                        ['key' => 'overall',  'label' => 'Employee',      'show' => true],
+                        ['key' => 'team',     'label' => 'Team',          'show' => true],
+                        ['key' => 'salary',   'label' => 'Salary',        'show' => $canViewSalary],
+                        ['key' => 'leaves',   'label' => 'Leave Balance', 'show' => true],
+                        ['key' => 'personal', 'label' => 'Personal Info', 'show' => $canViewPersonal],
                     ];
                 @endphp
                 @foreach($tabs as $t)
@@ -39,7 +39,7 @@
                             ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400'
                             : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
                         class="px-4 py-2.5 text-sm font-medium border-b-2 transition whitespace-nowrap">
-                        {{ $t['label'] }}
+                        {{ __($t['label']) }}
                     </button>
                     @endif
                 @endforeach
@@ -57,73 +57,73 @@
                         <th class="sticky left-0 z-20 bg-gray-50 dark:bg-gray-700
                                    px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider
                                    border-r border-gray-200 dark:border-gray-600 w-52 min-w-[13rem]">
-                            Tên
+                            {{ __('Name') }}
                         </th>
 
                         {{-- Overall columns --}}
                         <th x-show="tab === 'overall'"
                             class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap min-w-[10rem]">
-                            Họ và tên
+                            {{ __('Full Name') }}
                         </th>
                         <th x-show="tab === 'overall'"
                             class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap min-w-[14rem]">
-                            Email
+                            {{ __('Email') }}
                         </th>
                         <th x-show="tab === 'overall'"
                             class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap min-w-[10rem]">
-                            Chức vụ
+                            {{ __('Position') }}
                         </th>
                         <th x-show="tab === 'overall'"
                             class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap min-w-[7rem]">
-                            Cấp bậc
+                            {{ __('Grade') }}
                         </th>
                         <th x-show="tab === 'overall'"
                             class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap min-w-[12rem]">
-                            Vai trò
+                            {{ __('Role') }}
                         </th>
 
                         {{-- Team columns --}}
                         <th x-show="tab === 'team'"
                             class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap min-w-[16rem]">
-                            Nhóm
+                            {{ __('Team') }}
                         </th>
 
                         {{-- Salary columns --}}
                         @if($canViewSalary)
                         @php $thSal = "px-3 py-2 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap"; @endphp
-                        <th x-show="tab === 'salary'" class="{{ $thSal }} text-left min-w-[8rem]">Lương CB</th>
-                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[5rem]">Chu kì</th>
-                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[6rem]">/Giờ</th>
-                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[6rem]">/Ngày</th>
-                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[6rem]">/Tuần</th>
-                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[7rem]">/Tháng</th>
-                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[7rem]">Điều chỉnh</th>
-                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[6rem]">Thưởng</th>
-                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[7rem]">PC MT</th>
-                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[6rem]">Gửi xe</th>
-                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[6rem]">BH</th>
-                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[6rem]">T.TNCN</th>
-                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[7rem]">KT khác</th>
-                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[8rem]">Gross</th>
-                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[8rem]">Net</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} text-left min-w-[8rem]">{{ __('Basic Salary') }}</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[5rem]">{{ __('Period') }}</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[6rem]">{{ __('/Hour') }}</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[6rem]">{{ __('/Day') }}</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[6rem]">{{ __('/Week') }}</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[7rem]">{{ __('/Month') }}</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[7rem]">{{ __('Adjustment') }}</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[6rem]">{{ __('Bonus') }}</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[7rem]">{{ __('Allow. Excl. Tax') }}</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[6rem]">{{ __('Parking') }}</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[6rem]">{{ __('Insurance') }}</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[6rem]">{{ __('Income Tax') }}</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[7rem]">{{ __('Other Ded.') }}</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[8rem]">{{ __('Gross') }}</th>
+                        <th x-show="tab === 'salary'" class="{{ $thSal }} min-w-[8rem]">{{ __('Net') }}</th>
                         @endif
 
                         {{-- Leaves columns --}}
                         <th x-show="tab === 'leaves'"
                             class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap min-w-[8rem]">
-                            Số giờ phép còn lại
+                            {{ __('Remaining Leave Hours') }}
                         </th>
 
                         {{-- Personal Info columns --}}
                         @if($canViewPersonal)
                         @php $thPer = "px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap"; @endphp
-                        <th x-show="tab === 'personal'" class="{{ $thPer }} min-w-[9rem]">Số điện thoại</th>
-                        <th x-show="tab === 'personal'" class="{{ $thPer }} min-w-[14rem]">Địa chỉ</th>
-                        <th x-show="tab === 'personal'" class="{{ $thPer }} min-w-[9rem]">CCCD</th>
-                        <th x-show="tab === 'personal'" class="{{ $thPer }} min-w-[7rem]">Sinh nhật</th>
-                        <th x-show="tab === 'personal'" class="{{ $thPer }} min-w-[7rem]">Mã số Thuế</th>
-                        <th x-show="tab === 'personal'" class="{{ $thPer }} min-w-[7rem]">Mã BHXH</th>
-                        <th x-show="tab === 'personal'" class="{{ $thPer }} min-w-[8rem]">Hết hạn HĐ</th>
+                        <th x-show="tab === 'personal'" class="{{ $thPer }} min-w-[9rem]">{{ __('Phone') }}</th>
+                        <th x-show="tab === 'personal'" class="{{ $thPer }} min-w-[14rem]">{{ __('Address') }}</th>
+                        <th x-show="tab === 'personal'" class="{{ $thPer }} min-w-[9rem]">{{ __('Citizen ID') }}</th>
+                        <th x-show="tab === 'personal'" class="{{ $thPer }} min-w-[7rem]">{{ __('Birthday') }}</th>
+                        <th x-show="tab === 'personal'" class="{{ $thPer }} min-w-[7rem]">{{ __('Tax Code') }}</th>
+                        <th x-show="tab === 'personal'" class="{{ $thPer }} min-w-[7rem]">{{ __('Social Insurance ID') }}</th>
+                        <th x-show="tab === 'personal'" class="{{ $thPer }} min-w-[8rem]">{{ __('Contract Expiry') }}</th>
                         @endif
 
                     </tr>
@@ -152,12 +152,12 @@
                                             <span class="inline-block text-xs px-1.5 rounded
                                                          bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300
                                                          leading-5">
-                                                Không hoạt động
+                                                {{ __('Inactive') }}
                                             </span>
                                         @endif
                                     </div>
                                     @can('edit all user')
-                                    <a href="{{ route('users.edit', $user) }}" title="Chỉnh sửa"
+                                    <a href="{{ route('users.edit', $user) }}" title="{{ __('Edit') }}"
                                        class="shrink-0 inline-flex items-center justify-center w-7 h-7 rounded border border-gray-300 dark:border-gray-600 text-gray-400 hover:text-yellow-600 hover:border-yellow-400 bg-white dark:bg-gray-700 transition opacity-0 group-hover/row:opacity-100">
                                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -224,7 +224,7 @@
                             {{-- Salary columns --}}
                             @if($canViewSalary)
                             @php
-                                $typeLabel = ['monthly'=>'Tháng','weekly'=>'Tuần','daily'=>'Ngày','hourly'=>'Giờ'];
+                                $typeLabel = ['monthly' => __('Monthly'), 'weekly' => __('Weekly'), 'daily' => __('Daily'), 'hourly' => __('Hourly')];
                                 $fmtN  = fn(?float $n) => $n ? number_format((int)$n, 0, '.', ',') : '—';
                                 $fmtSgn = fn(?int $n) => $n === null ? '—' : number_format($n, 0, '.', ',');
                                 $sr    = $user->salaryRecord;
@@ -300,7 +300,7 @@
                                     <span class="font-medium text-gray-700 dark:text-gray-300">
                                         {{ $user->leave_balance }}
                                     </span>
-                                    <span class="text-xs text-gray-400 ml-0.5">giờ</span>
+                                    <span class="text-xs text-gray-400 ml-0.5">{{ __('h') }}</span>
                                 @else
                                     <span class="text-gray-400">—</span>
                                 @endif
@@ -322,7 +322,7 @@
                     @empty
                         <tr>
                             <td colspan="20" class="px-6 py-10 text-center text-gray-400 text-sm">
-                                No users found.
+                                {{ __('No users found.') }}
                             </td>
                         </tr>
                     @endforelse

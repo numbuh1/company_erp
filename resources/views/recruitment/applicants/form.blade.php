@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ isset($recruitmentApplicant) ? 'Chỉnh sửa Ứng viên' : 'Tạo Ứng viên' }}
+            {{ isset($recruitmentApplicant) ? __('Edit Applicant') : __('Add Applicant') }}
             <span class="text-base font-normal text-gray-500 dark:text-gray-400 ml-2">— {{ $recruitmentPosition->name }}</span>
         </h2>
     </x-slot>
@@ -29,7 +29,7 @@
 
                     <!-- Status (always shown first for assigned users convenience) -->
                     <div class="mb-4">
-                        <x-input-label for="status" value="Status *" />
+                        <x-input-label for="status" value="{{ __('Status') }} *" />
                         <select id="status" name="status"
                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
                             @foreach($recruitmentPosition->allStatuses() as $s => $label)
@@ -45,7 +45,7 @@
                     @if($canFullEdit)
                         <!-- Name -->
                         <div class="mb-4">
-                            <x-input-label for="name" value="Applicant Name *" />
+                            <x-input-label for="name" value="{{ __('Applicant Name') }} *" />
                             <x-text-input id="name" name="name" type="text" class="mt-1 block w-full"
                                 value="{{ old('name', $recruitmentApplicant->name ?? '') }}" required />
                             @error('name')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
@@ -53,12 +53,12 @@
 
                         <!-- CV Upload -->
                         <div class="mb-4">
-                            <x-input-label for="cv" value="Tệp CV" />
+                            <x-input-label for="cv" value="{{ __('CV File') }}" />
                             @if(isset($recruitmentApplicant) && $recruitmentApplicant->cv_path)
                                 <div class="mt-1 mb-2 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                                    <span>📄 Current CV:</span>
+                                    <span>📄 {{ __('Current CV') }}:</span>
                                     <a href="{{ route('recruitment.applicants.cv.download', [$recruitmentPosition, $recruitmentApplicant]) }}"
-                                        class="text-indigo-600 dark:text-indigo-400 hover:underline">Tải xuống</a>
+                                        class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ __('Download') }}</a>
                                 </div>
                             @endif
                             <input id="cv" name="cv" type="file"
@@ -71,16 +71,16 @@
 
                         <!-- Notes -->
                         <div class="mb-4">
-                            <x-input-label for="notes" value="Ghi chú" />
+                            <x-input-label for="notes" value="{{ __('Notes') }}" />
                             <textarea id="notes" name="notes" rows="4"
                                 class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm"
-                                placeholder="Ghi chú, phản hồi, nhận xét phỏng vấn…">{{ old('notes', $recruitmentApplicant->notes ?? '') }}</textarea>
+                                placeholder="{{ __('Notes, feedback, interview comments…') }}">{{ old('notes', $recruitmentApplicant->notes ?? '') }}</textarea>
                             @error('notes')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                         </div>
 
                         <!-- Evaluation -->
                         <div class="mb-4">
-                            <x-input-label value="Đánh giá" />
+                            <x-input-label value="{{ __('Rating') }}" />
                             <div class="flex items-center gap-1 mt-2" id="star-rating">
                                 @for($i = 1; $i <= 3; $i++)
                                     <button type="button" data-star="{{ $i }}"
@@ -104,7 +104,7 @@
                                 @error('email')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                             </div>
                             <div>
-                                <x-input-label for="phone" value="Điện thoại" />
+                                <x-input-label for="phone" value="{{ __('Phone') }}" />
                                 <x-text-input id="phone" name="phone" type="text" class="mt-1 block w-full"
                                     value="{{ old('phone', $recruitmentApplicant->phone ?? '') }}" />
                                 @error('phone')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
@@ -113,7 +113,7 @@
 
                         <!-- Profile URL -->
                         <div class="mb-4">
-                            <x-input-label for="profile_url" value="Profile URL (LinkedIn, etc.)" />
+                            <x-input-label for="profile_url" value="{{ __('Profile URL (LinkedIn, etc.)') }}" />
                             <x-text-input id="profile_url" name="profile_url" type="url" class="mt-1 block w-full"
                                 value="{{ old('profile_url', $recruitmentApplicant->profile_url ?? '') }}"
                                 placeholder="https://linkedin.com/in/…" />
@@ -124,7 +124,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             @can('view recruitment salary')
                                 <div>
-                                    <x-input-label for="salary_expectation" value="Mức lương mong muốn" />
+                                    <x-input-label for="salary_expectation" value="{{ __('Salary Expectation') }}" />
                                     <x-text-input id="salary_expectation" name="salary_expectation" type="number" min="0" step="100"
                                         class="mt-1 block w-full"
                                         value="{{ old('salary_expectation', $recruitmentApplicant->salary_expectation ?? '') }}" />
@@ -132,7 +132,7 @@
                                 </div>
                             @endcan
                             <div>
-                                <x-input-label for="available_date" value="Có hiệu lực từ" />
+                                <x-input-label for="available_date" value="{{ __('Available From') }}" />
                                 <x-text-input id="available_date" name="available_date" type="date" class="mt-1 block w-full"
                                     value="{{ old('available_date', isset($recruitmentApplicant) ? $recruitmentApplicant->available_date?->format('Y-m-d') : '') }}" />
                                 @error('available_date')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
@@ -141,10 +141,10 @@
 
                         <!-- Referer -->
                         <div class="mb-4">
-                            <x-input-label for="referer_user_id" value="Được giới thiệu bởi" />
+                            <x-input-label for="referer_user_id" value="{{ __('Referred By') }}" />
                             <select id="referer-select" name="referer_user_id"
                                 class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
-                                <option value="">— None —</option>
+                                <option value="">— {{ __('None') }} —</option>
                                 @foreach($userOptions as $u)
                                     <option value="{{ $u->id }}"
                                         {{ old('referer_user_id', $recruitmentApplicant->referer_user_id ?? '') == $u->id ? 'selected' : '' }}>
@@ -158,11 +158,11 @@
                         <!-- Skills -->
                         <div class="mb-4">
                             <div class="flex items-center justify-between mb-2">
-                                <x-input-label value="Kỹ năng" />
+                                <x-input-label value="{{ __('Skills') }}" />
                                 @if($skillOptions->isNotEmpty())
                                     <button type="button" onclick="openSkillModal()"
                                         class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">
-                                        Chỉnh sửa Kĩ năng
+                                        {{ __('Edit Skills') }}
                                     </button>
                                 @endif
                             </div>
@@ -176,7 +176,7 @@
 
                         <!-- Applicant Tags -->
                         <div class="mb-4">
-                            <x-input-label value="Thẻ" />
+                            <x-input-label value="{{ __('Tags') }}" />
                             <select name="tags[]" id="applicant-tags-select" multiple class="mt-1 block w-full">
                                 @foreach($tagOptions as $tag)
                                     <option value="{{ $tag->id }}"
@@ -190,9 +190,9 @@
                     @endif
 
                     <div class="flex items-center gap-3 mt-6">
-                        <x-primary-button>{{ isset($recruitmentApplicant) ? 'Lưu' : 'Thêm' }}</x-primary-button>
+                        <x-primary-button>{{ isset($recruitmentApplicant) ? __('Save') : __('Add') }}</x-primary-button>
                         <a href="{{ route('recruitment.show', $recruitmentPosition) }}">
-                            <x-secondary-button type="button">Hủy</x-secondary-button>
+                            <x-secondary-button type="button">{{ __('Cancel') }}</x-secondary-button>
                         </a>
                     </div>
                 </form>
@@ -250,7 +250,7 @@
             maxOptions: null,
             render: {
                 option_create: function(data, escape) {
-                    return '<div class="create">Create tag <strong>' + escape(data.input) + '</strong></div>';
+                    return '<div class="create">{{ __("Create tag") }} <strong>' + escape(data.input) + '</strong></div>';
                 }
             }
         });

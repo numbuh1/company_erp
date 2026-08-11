@@ -36,7 +36,7 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                         </svg>
-                        Tải xuống CV
+                        {{ __('Download CV') }}
                     </a>
                 @endif
                 @if($recruitmentApplicant->status === 'Đã tuyển')
@@ -49,7 +49,7 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                             </svg>
-                            Xem hồ sơ nhân viên
+                            {{ __('View Employee Profile') }}
                         </a>
                     @elseif(auth()->user()->can('create all user'))
                         <a href="{{ route('users.create', [
@@ -63,16 +63,16 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM3 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 019.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
                             </svg>
-                            Bắt đầu Onboard
+                            {{ __('Start Onboarding') }}
                         </a>
                     @endif
                 @endif
                 <button type="button" onclick="openApplicantEditModal({{ $recruitmentApplicant->id }})"
                     class="inline-flex items-center gap-1 px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:text-yellow-600 hover:border-yellow-400 text-sm font-medium rounded-lg bg-white dark:bg-gray-700 transition">
-                    Chỉnh sửa
+                    {{ __('Edit') }}
                 </button>
                 <a href="{{ route('recruitment.show', $recruitmentPosition) }}"
-                    class="text-sm text-gray-500 dark:text-gray-400 hover:underline">← Back</a>
+                    class="text-sm text-gray-500 dark:text-gray-400 hover:underline">← {{ __('Back') }}</a>
             </div>
         </div>
     </x-slot>
@@ -91,7 +91,7 @@
 
                     {{-- Contact & Details --}}
                     <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
-                        <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">Chi tiết</h3>
+                        <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ __('Details') }}</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                             @if($recruitmentApplicant->email)
                                 <div>
@@ -104,13 +104,13 @@
                             @endif
                             @if($recruitmentApplicant->phone)
                                 <div>
-                                    <p class="text-xs text-gray-400 mb-0.5">Điện thoại</p>
+                                    <p class="text-xs text-gray-400 mb-0.5">{{ __('Phone') }}</p>
                                     <p class="text-gray-700 dark:text-gray-300">{{ $recruitmentApplicant->phone }}</p>
                                 </div>
                             @endif
                             @if($recruitmentApplicant->profile_url)
                                 <div class="sm:col-span-2">
-                                    <p class="text-xs text-gray-400 mb-0.5">URL hồ sơ</p>
+                                    <p class="text-xs text-gray-400 mb-0.5">{{ __('Profile URL') }}</p>
                                     <a href="{{ $recruitmentApplicant->profile_url }}" target="_blank"
                                         class="text-indigo-600 dark:text-indigo-400 hover:underline truncate block">
                                         {{ $recruitmentApplicant->profile_url }}
@@ -120,30 +120,30 @@
                             @can('view recruitment salary')
                                 @if($recruitmentApplicant->salary_expectation)
                                     <div>
-                                        <p class="text-xs text-gray-400 mb-0.5">Mức lương mong muốn</p>
+                                        <p class="text-xs text-gray-400 mb-0.5">{{ __('Salary Expectation') }}</p>
                                         <p class="text-gray-700 dark:text-gray-300">{{ number_format($recruitmentApplicant->salary_expectation) }}</p>
                                     </div>
                                 @endif
                             @endcan
                             @if($recruitmentApplicant->available_date)
                                 <div>
-                                    <p class="text-xs text-gray-400 mb-0.5">Có hiệu lực từ</p>
+                                    <p class="text-xs text-gray-400 mb-0.5">{{ __('Available From') }}</p>
                                     <p class="text-gray-700 dark:text-gray-300">{{ $recruitmentApplicant->available_date->format('d/m/Y') }}</p>
                                 </div>
                             @endif
                             @if($recruitmentApplicant->referer)
                                 <div>
-                                    <p class="text-xs text-gray-400 mb-0.5">Được giới thiệu bởi</p>
+                                    <p class="text-xs text-gray-400 mb-0.5">{{ __('Referred By') }}</p>
                                     <p class="text-gray-700 dark:text-gray-300">{{ $recruitmentApplicant->referer->name }}</p>
                                 </div>
                             @endif
                             <div>
-                                <p class="text-xs text-gray-400 mb-0.5">Ngày nộp hồ sơ</p>
+                                <p class="text-xs text-gray-400 mb-0.5">{{ __('Application Date') }}</p>
                                 <p class="text-gray-700 dark:text-gray-300">{{ $recruitmentApplicant->created_at->format('d/m/Y H:i') }}</p>
                             </div>
                             @if($cvUploadedAt)
                                 <div>
-                                    <p class="text-xs text-gray-400 mb-0.5">Ngày tải CV</p>
+                                    <p class="text-xs text-gray-400 mb-0.5">{{ __('CV Upload Date') }}</p>
                                     <p class="text-gray-700 dark:text-gray-300">{{ $cvUploadedAt->format('d/m/Y H:i') }}</p>
                                 </div>
                             @endif
@@ -151,7 +151,7 @@
 
                         @if($recruitmentApplicant->notes)
                             <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                                <p class="text-xs text-gray-400 mb-1">Ghi chú</p>
+                                <p class="text-xs text-gray-400 mb-1">{{ __('Notes') }}</p>
                                 <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line leading-relaxed">
                                     {{ $recruitmentApplicant->notes }}
                                 </p>
@@ -162,7 +162,7 @@
                     {{-- Tags --}}
                     @if($recruitmentApplicant->tags->isNotEmpty())
                         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
-                            <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Thẻ</h3>
+                            <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ __('Tags') }}</h3>
                             <div class="flex flex-wrap gap-1.5">
                                 @foreach($recruitmentApplicant->tags as $tag)
                                     <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300">
@@ -177,7 +177,7 @@
                     <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
                         <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
                             <h3 class="font-semibold text-sm text-gray-700 dark:text-gray-200">
-                                Interview Events
+                                {{ __('Interview Events') }}
                                 <span class="ml-1 text-xs font-normal text-gray-400">({{ $recruitmentApplicant->events->count() }})</span>
                             </h3>
                             @php
@@ -204,7 +204,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                                 </svg>
-                                Đặt lịch phỏng vấn
+                                {{ __('Book Interview') }}
                             </button>
                         </div>
 
@@ -234,18 +234,18 @@
                                 </div>
                             </div>
                         @empty
-                            <div class="px-5 py-8 text-center text-sm text-gray-400">Chưa có lịch phỏng vấn.</div>
+                            <div class="px-5 py-8 text-center text-sm text-gray-400">{{ __('No interviews scheduled.') }}</div>
                         @endforelse
                     </div>
 
                     {{-- Activity Log --}}
                     <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
                         <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
-                            <h3 class="font-semibold text-sm text-gray-700 dark:text-gray-200">Nhật ký hoạt động</h3>
+                            <h3 class="font-semibold text-sm text-gray-700 dark:text-gray-200">{{ __('Activity Log') }}</h3>
                         </div>
                         <div class="px-5 py-4">
                             @if($activities->isEmpty())
-                                <p class="text-sm text-gray-400">Chưa có hoạt động nào.</p>
+                                <p class="text-sm text-gray-400">{{ __('No activity yet.') }}</p>
                             @else
                                 <div class="space-y-3">
                                     @foreach($activities as $activity)
@@ -289,7 +289,7 @@
 
                     @if($recruitmentApplicant->skills->isNotEmpty())
                         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
-                            <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Kỹ năng</h3>
+                            <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ __('Skills') }}</h3>
                             @foreach($recruitmentApplicant->skills->groupBy('category') as $cat => $group)
                                 <div class="mb-3">
                                     <p class="text-xs text-gray-400 dark:text-gray-500 mb-1.5">{{ ucfirst($cat) }}</p>
@@ -297,7 +297,7 @@
                                         @foreach($group as $skill)
                                             <span class="text-xs font-medium px-2 py-0.5 rounded-full {{ $levelColor($skill->pivot->level) }}">
                                                 {{ $skill->name }}
-                                                <span class="opacity-60">· {{ ['beginner' => 'Sơ cấp', 'intermediate' => 'Trung cấp', 'advanced' => 'Nâng cao'][$skill->pivot->level] ?? '' }}</span>
+                                                <span class="opacity-60">· {{ ['beginner' => __('Beginner'), 'intermediate' => __('Intermediate'), 'advanced' => __('Advanced')][$skill->pivot->level] ?? '' }}</span>
                                             </span>
                                         @endforeach
                                     </div>
@@ -308,7 +308,7 @@
 
                     {{-- Position info --}}
                     <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
-                        <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Chức vụ</h3>
+                        <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ __('Position') }}</h3>
                         <a href="{{ route('recruitment.show', $recruitmentPosition) }}"
                             class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
                             {{ $recruitmentPosition->name }}

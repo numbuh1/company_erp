@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ isset($recruitmentPosition) ? 'Chỉnh sửa Vị trí' : 'Tạo Vị trí' }}
+            {{ isset($recruitmentPosition) ? __('Edit Position') : __('Create Position') }}
         </h2>
     </x-slot>
 
@@ -25,7 +25,7 @@
 
                     <!-- Position Name -->
                     <div class="mb-4">
-                        <x-input-label for="name" value="Position Name *" />
+                        <x-input-label for="name" value="{{ __('Position Name') }} *" />
                         <x-text-input id="name" name="name" type="text" class="mt-1 block w-full"
                             value="{{ old('name', $recruitmentPosition->name ?? '') }}" required />
                         @error('name')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
@@ -33,12 +33,12 @@
 
                     <!-- Status -->
                     <div class="mb-4">
-                        <x-input-label for="status" value="Trạng thái" />
+                        <x-input-label for="status" value="{{ __('Status') }}" />
                         <select id="status" name="status"
                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
                             @foreach(\App\Models\RecruitmentPosition::$statuses as $s)
                                 <option value="{{ $s }}" {{ old('status', $recruitmentPosition->status ?? 'upcoming') === $s ? 'selected' : '' }}>
-                                    {{ ['upcoming' => 'Sắp tới', 'in_progress' => 'Đang tuyển', 'done' => 'Đã đóng'][$s] ?? ucfirst(str_replace('_', ' ', $s)) }}
+                                    {{ ['upcoming' => __('Upcoming'), 'in_progress' => __('Recruiting'), 'done' => __('Closed')][$s] ?? ucfirst(str_replace('_', ' ', $s)) }}
                                 </option>
                             @endforeach
                         </select>
@@ -46,10 +46,10 @@
 
                     <!-- Team -->
                     <div class="mb-4">
-                        <x-input-label for="team_id" value="Nhóm" />
+                        <x-input-label for="team_id" value="{{ __('Team') }}" />
                         <select id="team-select" name="team_id"
                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
-                            <option value="">— None —</option>
+                            <option value="">— {{ __('None') }} —</option>
                             @foreach($teamOptions as $team)
                                 <option value="{{ $team->id }}"
                                     {{ old('team_id', $recruitmentPosition->team_id ?? '') == $team->id ? 'selected' : '' }}>
@@ -63,13 +63,13 @@
                     <!-- Search Period -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
-                            <x-input-label for="search_start_date" value="Search Start Date" />
+                            <x-input-label for="search_start_date" value="{{ __('Search Start Date') }}" />
                             <x-text-input id="search_start_date" name="search_start_date" type="date" class="mt-1 block w-full"
                                 value="{{ old('search_start_date', isset($recruitmentPosition) ? $recruitmentPosition->search_start_date?->format('Y-m-d') : '') }}" />
                             @error('search_start_date')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                         </div>
                         <div>
-                            <x-input-label for="search_end_date" value="Search End Date" />
+                            <x-input-label for="search_end_date" value="{{ __('Search End Date') }}" />
                             <x-text-input id="search_end_date" name="search_end_date" type="date" class="mt-1 block w-full"
                                 value="{{ old('search_end_date', isset($recruitmentPosition) ? $recruitmentPosition->search_end_date?->format('Y-m-d') : '') }}" />
                             @error('search_end_date')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
@@ -80,13 +80,13 @@
                         <!-- Salary Range -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
-                                <x-input-label for="salary_min" value="Lương tối thiểu" />
+                                <x-input-label for="salary_min" value="{{ __('Min Salary') }}" />
                                 <x-text-input id="salary_min" name="salary_min" type="number" min="0" step="100" class="mt-1 block w-full"
                                     value="{{ old('salary_min', $recruitmentPosition->salary_min ?? '') }}" />
                                 @error('salary_min')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                             </div>
                             <div>
-                                <x-input-label for="salary_max" value="Lương tối đa" />
+                                <x-input-label for="salary_max" value="{{ __('Max Salary') }}" />
                                 <x-text-input id="salary_max" name="salary_max" type="number" min="0" step="100" class="mt-1 block w-full"
                                     value="{{ old('salary_max', $recruitmentPosition->salary_max ?? '') }}" />
                                 @error('salary_max')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
@@ -96,21 +96,21 @@
 
                     <!-- Description -->
                     <div class="mb-4">
-                        <x-input-label for="description" value="Mô tả công việc (văn bản)" />
+                        <x-input-label for="description" value="{{ __('Job Description (text)') }}" />
                         <textarea id="description" name="description" rows="6"
                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm"
-                            placeholder="Mô tả vai trò, yêu cầu, trách nhiệm…">{{ old('description', $recruitmentPosition->description ?? '') }}</textarea>
+                            placeholder="{{ __('Describe role, requirements, responsibilities…') }}">{{ old('description', $recruitmentPosition->description ?? '') }}</textarea>
                         @error('description')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                     </div>
 
                     <!-- File upload -->
                     <div class="mb-4">
-                        <x-input-label for="file" value="Tệp mô tả công việc (PDF/DOC, tùy chọn)" />
+                        <x-input-label for="file" value="{{ __('Job Description File (PDF/DOC, optional)') }}" />
                         @if(isset($recruitmentPosition) && $recruitmentPosition->file_path)
                             <div class="mt-1 mb-2 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                                <span>📄 Current file:</span>
+                                <span>📄 {{ __('Current file') }}:</span>
                                 <a href="{{ route('recruitment.jd.download', $recruitmentPosition) }}"
-                                    class="text-indigo-600 dark:text-indigo-400 hover:underline">Tải xuống</a>
+                                    class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ __('Download') }}</a>
                             </div>
                         @endif
                         <input id="file" name="file" type="file"
@@ -123,10 +123,10 @@
 
                     <!-- Assigned Users -->
                     <div class="mb-6">
-                        <x-input-label value="Người dùng được phân công" />
-                        <p class="text-xs text-gray-400 mb-2">Những người dùng này có thể xem vị trí này và cập nhật trạng thái ứng viên.</p>
+                        <x-input-label value="{{ __('Assigned Users') }}" />
+                        <p class="text-xs text-gray-400 mb-2">{{ __('These users can view this position and update applicant statuses.') }}</p>
                         <select name="assigned_users[]" id="assigned-users-select" data-multi-select
-                                data-placeholder="Chọn người dùng…" class="mt-1 block w-full" multiple>
+                                data-placeholder="{{ __('Select users…') }}" class="mt-1 block w-full" multiple>
                             @foreach($userOptions as $opt)
                                 <option value="{{ $opt->id }}"
                                     {{ (isset($recruitmentPosition) && $recruitmentPosition->assignedUsers->contains($opt->id)) ? 'selected' : '' }}>
@@ -140,11 +140,11 @@
                     <!-- Skills -->
                     <div class="mb-4">
                         <div class="flex items-center justify-between mb-2">
-                            <x-input-label value="Kỹ năng yêu cầu" />
+                            <x-input-label value="{{ __('Skills Required') }}" />
                             @if($skillOptions->isNotEmpty())
                                 <button type="button" onclick="openSkillModal()"
                                     class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">
-                                    Chỉnh sửa Kĩ năng
+                                    {{ __('Edit Skills') }}
                                 </button>
                             @endif
                         </div>
@@ -160,8 +160,8 @@
 
                     <!-- Position Tags -->
                     <div class="mb-6">
-                        <x-input-label value="Thẻ" />
-                        <p class="text-xs text-gray-400 mb-1">Select existing or type to create a new tag.</p>
+                        <x-input-label value="{{ __('Tags') }}" />
+                        <p class="text-xs text-gray-400 mb-1">{{ __('Select existing or type to create a new tag.') }}</p>
                         <select name="tags[]" id="position-tags-select" multiple class="mt-1 block w-full">
                             @foreach($tagOptions as $tag)
                                 <option value="{{ $tag->id }}"
@@ -176,13 +176,12 @@
                     @if(!isset($recruitmentPosition))
                         <!-- Import potential CV -->
                         <div class="mb-6">
-                            <x-input-label value="Import ứng viên tiềm năng" />
+                            <x-input-label value="{{ __('Import Potential Applicants') }}" />
                             <p class="text-xs text-gray-400 mb-2">
-                                Các ứng viên ở trạng thái "Tiềm năng" từ những vị trí được chọn sẽ được nhập vào vị trí mới này với trạng thái "Lọc CV".
-                                Nếu email hoặc số điện thoại trùng nhau, chỉ ứng viên được cập nhật gần nhất mới được nhập.
+                                {{ __('Applicants with "Potential" status from selected positions will be imported into this new position with "CV Screening" status. If email or phone number match, only the most recently updated applicant will be imported.') }}
                             </p>
                             <select name="import_potential_from[]" id="import-potential-select" data-multi-select
-                                    data-placeholder="Chọn vị trí tuyển dụng…" class="mt-1 block w-full" multiple>
+                                    data-placeholder="{{ __('Select positions…') }}" class="mt-1 block w-full" multiple>
                                 @foreach($pastPositions as $p)
                                     <option value="{{ $p->id }}">{{ $p->name }} - {{ ($p->search_start_date ?? $p->created_at)->format('d/m/Y') }}</option>
                                 @endforeach
@@ -192,9 +191,9 @@
                     @endif
 
                     <div class="flex items-center gap-3">
-                        <x-primary-button>{{ isset($recruitmentPosition) ? 'Lưu' : 'Tạo' }}</x-primary-button>
+                        <x-primary-button>{{ isset($recruitmentPosition) ? __('Save') : __('Create') }}</x-primary-button>
                         <a href="{{ isset($recruitmentPosition) ? route('recruitment.show', $recruitmentPosition) : route('recruitment.index') }}">
-                            <x-secondary-button type="button">Hủy</x-secondary-button>
+                            <x-secondary-button type="button">{{ __('Cancel') }}</x-secondary-button>
                         </a>
                     </div>
                 </form>
@@ -237,7 +236,7 @@
             maxOptions: null,
             render: {
                 option_create: function(data, escape) {
-                    return '<div class="create">Create tag <strong>' + escape(data.input) + '</strong></div>';
+                    return '<div class="create">{{ __("Create tag") }} <strong>' + escape(data.input) + '</strong></div>';
                 }
             }
         });

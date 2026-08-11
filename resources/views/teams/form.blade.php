@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ isset($team) ? 'Chỉnh sửa Team' : 'Tạo Team' }}
+            {{ isset($team) ? __('Edit Team') : __('Create Team') }}
         </h2>
     </x-slot>
 
@@ -18,7 +18,7 @@
 
                     <!-- Team Name -->
                     <div class="mb-6">
-                        <x-input-label for="name" value="Tên nhóm" />
+                        <x-input-label for="name" :value="__('Team Name')" />
                         <x-text-input 
                             id="name"
                             name="name"
@@ -59,11 +59,11 @@
 
                         <!-- LEFT: Unassigned -->
                         <div>
-                            <h3 class="font-bold mb-2 text-gray-800 dark:text-gray-200">Người dùng chưa phân công</h3>
+                            <h3 class="font-bold mb-2 text-gray-800 dark:text-gray-200">{{ __('Unassigned Users') }}</h3>
 
-                            <input 
-                                type="text" 
-                                placeholder="Tìm kiếm..." 
+                            <input
+                                type="text"
+                                placeholder="{{ __('Search…') }}"
                                 class="mb-2 w-full border rounded p-2"
                                 id="search-unassigned"
                             >
@@ -86,11 +86,11 @@
 
                         <!-- RIGHT: Assigned -->
                         <div>
-                            <h3 class="font-bold mb-2 text-gray-800 dark:text-gray-200">Người dùng được phân công</h3>
+                            <h3 class="font-bold mb-2 text-gray-800 dark:text-gray-200">{{ __('Assigned Users') }}</h3>
 
-                            <input 
-                                type="text" 
-                                placeholder="Tìm kiếm..." 
+                            <input
+                                type="text"
+                                placeholder="{{ __('Search…') }}"
                                 class="mb-2 w-full border rounded p-2"
                                 id="search-assigned"
                             >
@@ -114,7 +114,7 @@
                                                     value="{{ $item['model']->id }}"
                                                     {{ $item['is_leader'] ? 'checked' : '' }}
                                                 >
-                                                <span class="text-sm text-gray-700 dark:text-gray-300">Trưởng nhóm</span>
+                                                <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('Team Lead') }}</span>
                                             </label>
                                         </div>
 
@@ -131,12 +131,12 @@
                     <div class="flex justify-end mt-6 space-x-2">
                         <a href="{{ route('teams.index') }}">
                             <x-secondary-button>
-                                Hủy
+                                {{ __('Cancel') }}
                             </x-secondary-button>
                         </a>
 
                         <x-primary-button>
-                            {{ isset($team) ? 'Update Team' : 'Create Team' }}
+                            {{ isset($team) ? __('Update Team') : __('Create Team') }}
                         </x-primary-button>
                     </div>
 

@@ -1,15 +1,15 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="text-xl font-semibold">Hồ sơ người dùng</h2>
+            <h2 class="text-xl font-semibold">{{ __('User Profile') }}</h2>
             <div class="flex gap-2">
                 @if(auth()->id() === $user->id || auth()->user()->canAny(['edit team user', 'edit all user']))
                     <a href="{{ route('users.edit', $user) }}">
-                        <x-primary-button>Chỉnh sửa</x-primary-button>
+                        <x-primary-button>{{ __('Edit') }}</x-primary-button>
                     </a>
                 @endif
                 <a href="{{ route('users.index') }}">
-                    <x-secondary-button>Quay lại</x-secondary-button>
+                    <x-secondary-button>{{ __('Back') }}</x-secondary-button>
                 </a>
             </div>
         </div>
@@ -20,9 +20,9 @@
     @endpush
 
     @php
-        $tabs = [['key' => 'general', 'label' => 'Thông tin chung']];
-        if ($canViewPersonal) $tabs[] = ['key' => 'private', 'label' => 'Thông tin riêng tư'];
-        if ($canViewPersonal) $tabs[] = ['key' => 'contact', 'label' => 'Thông tin liên hệ'];
+        $tabs = [['key' => 'general', 'label' => 'General Info']];
+        if ($canViewPersonal) $tabs[] = ['key' => 'private', 'label' => 'Private Info'];
+        if ($canViewPersonal) $tabs[] = ['key' => 'contact', 'label' => 'Contact Info'];
         if ($canViewSalary)   $tabs[] = ['key' => 'hr',      'label' => 'HR Only'];
         $defaultTab = $tabs[0]['key'];
     @endphp
@@ -32,7 +32,7 @@
 
             {{-- Basic Info --}}
             <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
-                <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">Thông tin cơ bản</h3>
+                <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">{{ __('Basic Info') }}</h3>
 
                 <div class="flex items-center gap-6 mb-6">
                     @if($user->profile_picture)
@@ -40,7 +40,7 @@
                             class="w-20 h-20 rounded-full object-cover border-2 border-gray-300">
                     @else
                         <div class="w-20 h-20 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-400 text-sm">
-                            No photo
+                            {{ __('No photo') }}
                         </div>
                     @endif
                     <div>
@@ -58,28 +58,28 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                        <x-input-label value="Chức vụ" />
+                        <x-input-label value="{{ __('Position') }}" />
                         <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">
                             {{ $user->position ?: '—' }}
                         </p>
                     </div>
 
                     <div>
-                        <x-input-label value="Cấp bậc" />
+                        <x-input-label value="{{ __('Grade') }}" />
                         <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">
                             {{ $user->grade ?: '—' }}
                         </p>
                     </div>
 
                     <div>
-                        <x-input-label value="Vai trò" />
+                        <x-input-label value="{{ __('Role') }}" />
                         <div class="flex flex-wrap gap-1 mt-1">
                             @forelse($user->roles as $role)
                                 <span class="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-xs px-2 py-1 rounded">
                                     {{ $role->name }}
                                 </span>
                             @empty
-                                <span class="text-sm text-gray-400">Không có vai trò</span>
+                                <span class="text-sm text-gray-400">{{ __('No roles') }}</span>
                             @endforelse
                         </div>
                     </div>
@@ -101,7 +101,7 @@
                                 ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
                                 : 'border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300'"
                             class="px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors shrink-0">
-                            {{ $tab['label'] }}
+                            {{ __($tab['label']) }}
                         </button>
                         @endforeach
                     </nav>
@@ -114,14 +114,14 @@
                     <div x-show="activeTab === 'general'" x-cloak>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                             <div>
-                                <x-input-label value="Số giờ phép còn lại" />
+                                <x-input-label value="{{ __('Remaining Leave Hours') }}" />
                                 <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">
                                     {{ rtrim(rtrim(number_format($user->leave_balance ?? 0, 2), '0'), '.') }}h
-                                    <a href="{{ route('users.leave-balance-history', $user) }}" class="text-xs text-blue-500 ml-1 hover:underline">lịch sử</a>
+                                    <a href="{{ route('users.leave-balance-history', $user) }}" class="text-xs text-blue-500 ml-1 hover:underline">{{ __('history') }}</a>
                                 </p>
                             </div>
                             <div>
-                                <x-input-label value="Số giờ phép đã sử dụng" />
+                                <x-input-label value="{{ __('Used Leave Hours') }}" />
                                 <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">
                                     {{ rtrim(rtrim(number_format($spentBalance ?? 0, 2), '0'), '.') }}h
                                 </p>
@@ -131,7 +131,7 @@
                         {{-- Probation Time --}}
                         @if($user->probation_start_date || $user->probation_end_date)
                             <div class="mb-6">
-                                <x-input-label value="Thời gian thử việc" />
+                                <x-input-label value="{{ __('Probation Period') }}" />
                                 <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">
                                     {{ $user->probation_start_date ? $user->probation_start_date->format('d/m/Y') : '—' }}
                                     –
@@ -143,7 +143,7 @@
                         {{-- Onboarded from recruitment applicant --}}
                         @if($canViewOriginalApplicant ?? false)
                             <div class="mb-6">
-                                <x-input-label value="Ứng viên gốc" />
+                                <x-input-label value="{{ __('Original Applicant') }}" />
                                 <p class="mt-1 text-sm">
                                     <a href="{{ route('recruitment.applicants.show', [$user->recruitmentApplicant->recruitment_position_id, $user->recruitmentApplicant->id]) }}"
                                         class="text-indigo-600 dark:text-indigo-400 hover:underline">
@@ -155,9 +155,9 @@
 
                         {{-- Supervisors --}}
                         <div class="mb-6">
-                            <x-input-label value="Người giám sát" />
+                            <x-input-label value="{{ __('Supervisors') }}" />
                             @if($user->supervisors->isEmpty())
-                                <p class="mt-1 text-sm text-gray-400">Chưa có người giám sát.</p>
+                                <p class="mt-1 text-sm text-gray-400">{{ __('No supervisors yet.') }}</p>
                             @else
                                 <div class="space-y-2 mt-1">
                                     @foreach($user->supervisors as $supervisor)
@@ -187,9 +187,9 @@
 
                         {{-- Teams --}}
                         <div class="mb-6">
-                            <x-input-label value="Nhóm" />
+                            <x-input-label value="{{ __('Team') }}" />
                             @if($user->teams->isEmpty())
-                                <p class="mt-1 text-sm text-gray-400">Chưa là thành viên của nhóm nào.</p>
+                                <p class="mt-1 text-sm text-gray-400">{{ __('Not a member of any team yet.') }}</p>
                             @else
                                 <div class="space-y-2 mt-1">
                                     @foreach($user->teams as $team)
@@ -199,11 +199,11 @@
                                             </span>
                                             @if($team->pivot->is_leader)
                                                 <span class="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 text-xs px-2 py-0.5 rounded">
-                                                    Trưởng nhóm
+                                                    {{ __('Team Leader') }}
                                                 </span>
                                             @else
                                                 <span class="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 text-xs px-2 py-0.5 rounded">
-                                                    Thành viên
+                                                    {{ __('Member') }}
                                                 </span>
                                             @endif
                                         </div>
@@ -218,23 +218,23 @@
                     <div x-show="activeTab === 'private'" x-cloak>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <x-input-label value="Căn cước Công dân" />
+                                <x-input-label value="{{ __('Citizen ID') }}" />
                                 <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">{{ $user->citizen_id ?: '—' }}</p>
                             </div>
                             <div>
-                                <x-input-label value="Sinh nhật" />
+                                <x-input-label value="{{ __('Birthday') }}" />
                                 <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">{{ $user->birthday ? $user->birthday->format('d/m/Y') : '—' }}</p>
                             </div>
                             <div>
-                                <x-input-label value="Mã số Thuế" />
+                                <x-input-label value="{{ __('Tax Code') }}" />
                                 <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">{{ $user->tax_code ?: '—' }}</p>
                             </div>
                             <div>
-                                <x-input-label value="Mã BHXH" />
+                                <x-input-label value="{{ __('Social Insurance ID') }}" />
                                 <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">{{ $user->social_insurance_id ?: '—' }}</p>
                             </div>
                             <div class="sm:col-span-2">
-                                <x-input-label value="Hết hạn hợp đồng" />
+                                <x-input-label value="{{ __('Contract Expiry') }}" />
                                 <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">{{ $user->contract_expiry ? $user->contract_expiry->format('d/m/Y') : '—' }}</p>
                             </div>
                         </div>
@@ -244,15 +244,15 @@
                     <div x-show="activeTab === 'contact'" x-cloak>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <x-input-label value="Email liên hệ" />
+                                <x-input-label value="{{ __('Contact Email') }}" />
                                 <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">{{ $user->contact_email ?: '—' }}</p>
                             </div>
                             <div>
-                                <x-input-label value="Số điện thoại" />
+                                <x-input-label value="{{ __('Phone') }}" />
                                 <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">{{ $user->phone_number ?: '—' }}</p>
                             </div>
                             <div class="sm:col-span-2">
-                                <x-input-label value="Địa chỉ nhà" />
+                                <x-input-label value="{{ __('Home Address') }}" />
                                 <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">{{ $user->home_address ?: '—' }}</p>
                             </div>
                         </div>
@@ -264,7 +264,7 @@
                     <div x-show="activeTab === 'hr'" x-cloak>
                         @if($user->salary)
                             @php
-                                $typeLabel = ['monthly' => 'Tháng', 'weekly' => 'Tuần', 'daily' => 'Ngày', 'hourly' => 'Giờ'];
+                                $typeLabel = ['monthly' => __('Monthly'), 'weekly' => __('Weekly'), 'daily' => __('Daily'), 'hourly' => __('Hourly')];
                                 $fmtMoney  = fn(?float $n) => $n !== null ? number_format($n, 0, '.', ',') . ' ₫' : '—';
                             @endphp
                             <div class="flex items-baseline gap-2 mb-4">
@@ -277,19 +277,19 @@
                             </div>
                             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                 @foreach([
-                                    ['label' => 'Theo giờ',  'value' => $user->hourly_rate],
-                                    ['label' => 'Theo ngày',  'value' => $user->daily_rate],
-                                    ['label' => 'Theo tuần',  'value' => $user->weekly_rate],
-                                    ['label' => 'Theo tháng', 'value' => $user->monthly_rate],
+                                    ['label' => 'Hourly',  'value' => $user->hourly_rate],
+                                    ['label' => 'Daily',   'value' => $user->daily_rate],
+                                    ['label' => 'Weekly',  'value' => $user->weekly_rate],
+                                    ['label' => 'Monthly', 'value' => $user->monthly_rate],
                                 ] as $rate)
                                 <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg px-4 py-3 text-center">
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ $rate['label'] }}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ __($rate['label']) }}</p>
                                     <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ $fmtMoney($rate['value']) }}</p>
                                 </div>
                                 @endforeach
                             </div>
                         @else
-                            <p class="text-sm text-gray-400">Chưa có thông tin lương.</p>
+                            <p class="text-sm text-gray-400">{{ __('No salary information.') }}</p>
                         @endif
                     </div>
                     @endif

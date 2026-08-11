@@ -58,9 +58,9 @@ class User extends Authenticatable
      * Key = value stored in DB. Value = label shown to the user.
      */
     public static array $employmentStatuses = [
-        'active'       => 'Đang làm việc',
-        'on_probation' => 'Đang thử việc',
-        'inactive'     => 'Không hoạt động',
+        'active'       => 'Employed',
+        'on_probation' => 'On Probation',
+        'inactive'     => 'Inactive',
     ];
 
     /**

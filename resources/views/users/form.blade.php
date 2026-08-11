@@ -2,9 +2,9 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">
-                {{ isset($user) ? 'Chỉnh sửa người dùng' : 'Tạo người dùng' }}
+                {{ isset($user) ? __('Edit User') : __('Create User') }}
             </h2>
-            <a href="javascript:history.back()"><x-secondary-button>Quay lại</x-secondary-button></a>
+            <a href="javascript:history.back()"><x-secondary-button>{{ __('Back') }}</x-secondary-button></a>
         </div>
     </x-slot>
 
@@ -29,10 +29,10 @@
 
         // Build tab list
         $tabs = [];
-        if (isset($user))    $tabs[] = ['key' => 'general',  'label' => 'Thông tin chung'];
-        if ($canSeePersonal) $tabs[] = ['key' => 'private',  'label' => 'Thông tin riêng tư'];
-        if ($canSeePersonal) $tabs[] = ['key' => 'contact',  'label' => 'Thông tin liên hệ'];
-        if ($isOwnProfile)   $tabs[] = ['key' => 'settings', 'label' => 'Cài đặt'];
+        if (isset($user))    $tabs[] = ['key' => 'general',  'label' => 'General Info'];
+        if ($canSeePersonal) $tabs[] = ['key' => 'private',  'label' => 'Private Info'];
+        if ($canSeePersonal) $tabs[] = ['key' => 'contact',  'label' => 'Contact Info'];
+        if ($isOwnProfile)   $tabs[] = ['key' => 'settings', 'label' => 'Settings'];
         if ($canSeeHR)       $tabs[] = ['key' => 'hr',       'label' => 'HR Only'];
 
         $defaultTab = $tabs[0]['key'] ?? null;
@@ -72,15 +72,15 @@
                 ═══════════════════════════════════════════════════ --}}
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                     <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
-                        Thông tin cơ bản
+                        {{ __('Basic Info') }}
                         @if(isset($user) && !$canEditBasic)
-                            <span class="ml-2 normal-case font-normal text-gray-400">(Chỉ xem — trừ ảnh đại diện)</span>
+                            <span class="ml-2 normal-case font-normal text-gray-400">{{ __('(Read-only — except avatar)') }}</span>
                         @endif
                     </p>
 
                     {{-- Profile Picture --}}
                     <div class="mb-6">
-                        <x-input-label value="Ảnh đại diện" />
+                        <x-input-label value="{{ __('Avatar') }}" />
                         <div class="mb-3 mt-1">
                             @if(isset($user) && $user->profile_picture)
                                 <img id="currentPicture"
@@ -88,7 +88,7 @@
                                     class="w-24 h-24 rounded-full object-cover border-2 border-gray-300 dark:border-gray-600">
                             @else
                                 <div id="currentPicture" class="w-24 h-24 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-400 text-sm">
-                                    No photo
+                                    {{ __('No photo') }}
                                 </div>
                             @endif
                         </div>
@@ -104,13 +104,13 @@
                     @if(isset($user))
                     <div id="cropModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
                         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm">
-                            <h3 class="text-base font-semibold text-gray-800 dark:text-gray-100 mb-4">Cắt ảnh đại diện</h3>
+                            <h3 class="text-base font-semibold text-gray-800 dark:text-gray-100 mb-4">{{ __('Crop Avatar') }}</h3>
                             <div id="cropElement"></div>
                             <div class="flex justify-end gap-2 mt-4">
                                 <button type="button" id="cropCancelBtn"
-                                    class="px-4 py-1.5 text-sm rounded border border-gray-300 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Hủy</button>
+                                    class="px-4 py-1.5 text-sm rounded border border-gray-300 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">{{ __('Cancel') }}</button>
                                 <button type="button" id="cropConfirmBtn"
-                                    class="px-4 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700">Confirm</button>
+                                    class="px-4 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700">{{ __('Confirm') }}</button>
                             </div>
                         </div>
                     </div>
@@ -120,29 +120,29 @@
                     @if($canEditBasic)
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <x-input-label value="Tên *" />
+                                <x-input-label value="{{ __('Name') }} *" />
                                 <x-text-input name="name" class="w-full mt-1"
                                     value="{{ old('name', $prefill['name'] ?? $user->name ?? '') }}" required />
                                 @error('name')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                             </div>
                             <div>
-                                <x-input-label for="full_name" value="Họ và tên" />
+                                <x-input-label for="full_name" value="{{ __('Full Name') }}" />
                                 <x-text-input id="full_name" name="full_name" class="w-full mt-1"
                                     value="{{ old('full_name', $user->full_name ?? '') }}"
-                                    placeholder="Tên đầy đủ (tuỳ chọn)" />
+                                    placeholder="{{ __('Full name (optional)') }}" />
                             </div>
                             <div>
-                                <x-input-label value="Chức vụ" />
+                                <x-input-label value="{{ __('Position') }}" />
                                 <x-text-input name="position" class="w-full mt-1"
                                     value="{{ old('position', $prefill['position'] ?? $user->position ?? '') }}" />
                             </div>
                             <div>
-                                <x-input-label value="Cấp bậc" />
+                                <x-input-label value="{{ __('Grade') }}" />
                                 <x-text-input name="grade" class="w-full mt-1"
                                     value="{{ old('grade', $user->grade ?? '') }}" />
                             </div>
                             <div>
-                                <x-input-label value="Email *" />
+                                <x-input-label value="{{ __('Email') }} *" />
                                 <x-text-input name="email" type="email" class="w-full mt-1"
                                     value="{{ old('email', $user->email ?? '') }}" required />
                                 @error('email')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
@@ -151,12 +151,12 @@
                             {{-- Password — only shown on create form here; edit uses Settings tab --}}
                             @if(!isset($user))
                             <div>
-                                <x-input-label value="Mật khẩu *" />
+                                <x-input-label value="{{ __('Password') }} *" />
                                 <x-text-input type="password" name="password" class="w-full mt-1" autocomplete="new-password" required />
                                 @error('password')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                             </div>
                             <div>
-                                <x-input-label value="Xác nhận mật khẩu *" />
+                                <x-input-label value="{{ __('Confirm Password') }} *" />
                                 <x-text-input type="password" name="password_confirmation" class="w-full mt-1" autocomplete="new-password" required />
                             </div>
                             @endif
@@ -165,23 +165,23 @@
                         {{-- Read-only display --}}
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                             <div>
-                                <x-input-label value="Tên" />
+                                <x-input-label value="{{ __('Name') }}" />
                                 <p class="mt-1 text-gray-800 dark:text-gray-200 font-medium">{{ $user->name }}</p>
                             </div>
                             <div>
-                                <x-input-label value="Họ và tên" />
+                                <x-input-label value="{{ __('Full Name') }}" />
                                 <p class="mt-1 text-gray-800 dark:text-gray-200">{{ $user->full_name ?: '—' }}</p>
                             </div>
                             <div>
-                                <x-input-label value="Chức vụ" />
+                                <x-input-label value="{{ __('Position') }}" />
                                 <p class="mt-1 text-gray-800 dark:text-gray-200">{{ $user->position ?: '—' }}</p>
                             </div>
                             <div>
-                                <x-input-label value="Cấp bậc" />
+                                <x-input-label value="{{ __('Grade') }}" />
                                 <p class="mt-1 text-gray-800 dark:text-gray-200">{{ $user->grade ?: '—' }}</p>
                             </div>
                             <div>
-                                <x-input-label value="Email" />
+                                <x-input-label value="{{ __('Email') }}" />
                                 <p class="mt-1 text-gray-800 dark:text-gray-200">{{ $user->email }}</p>
                             </div>
                         </div>
@@ -204,7 +204,7 @@
                                     ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
                                     : 'border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300'"
                                 class="px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors shrink-0">
-                                {{ $tab['label'] }}
+                                {{ __($tab['label']) }}
                             </button>
                             @endforeach
                         </nav>
@@ -218,14 +218,14 @@
                         <div x-show="activeTab === 'general'" x-cloak>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                                 <div>
-                                    <x-input-label value="Số giờ phép còn lại" />
+                                    <x-input-label value="{{ __('Remaining Leave Hours') }}" />
                                     <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">
                                         {{ rtrim(rtrim(number_format($user->leave_balance ?? 0, 2), '0'), '.') }}h
-                                        <a href="{{ route('users.leave-balance-history', $user) }}" class="text-xs text-blue-500 ml-1 hover:underline">lịch sử</a>
+                                        <a href="{{ route('users.leave-balance-history', $user) }}" class="text-xs text-blue-500 ml-1 hover:underline">{{ __('history') }}</a>
                                     </p>
                                 </div>
                                 <div>
-                                    <x-input-label value="Số giờ phép đã sử dụng" />
+                                    <x-input-label value="{{ __('Used Leave Hours') }}" />
                                     <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">
                                         {{ rtrim(rtrim(number_format($spentBalance ?? 0, 2), '0'), '.') }}h
                                     </p>
@@ -235,7 +235,7 @@
                             {{-- Probation Time --}}
                             @if($user->probation_start_date || $user->probation_end_date)
                                 <div class="mb-6">
-                                    <x-input-label value="Thời gian thử việc" />
+                                    <x-input-label value="{{ __('Probation Period') }}" />
                                     <p class="mt-1 text-sm text-gray-800 dark:text-gray-200">
                                         {{ $user->probation_start_date ? $user->probation_start_date->format('d/m/Y') : '—' }}
                                         –
@@ -247,7 +247,7 @@
                             {{-- Onboarded from recruitment applicant --}}
                             @if($canViewOriginalApplicant ?? false)
                                 <div class="mb-6">
-                                    <x-input-label value="Ứng viên gốc" />
+                                    <x-input-label value="{{ __('Original Applicant') }}" />
                                     <p class="mt-1 text-sm">
                                         <a href="{{ route('recruitment.applicants.show', [$user->recruitmentApplicant->recruitment_position_id, $user->recruitmentApplicant->id]) }}"
                                             class="text-indigo-600 dark:text-indigo-400 hover:underline">
@@ -259,9 +259,9 @@
 
                             {{-- Supervisors --}}
                             <div class="mb-6">
-                                <x-input-label value="Người giám sát" />
+                                <x-input-label value="{{ __('Supervisors') }}" />
                                 @if($user->supervisors->isEmpty())
-                                    <p class="mt-1 text-sm text-gray-400">Chưa có người giám sát.</p>
+                                    <p class="mt-1 text-sm text-gray-400">{{ __('No supervisors yet.') }}</p>
                                 @else
                                     <div class="space-y-2 mt-1">
                                         @foreach($user->supervisors as $supervisor)
@@ -291,9 +291,9 @@
 
                             {{-- Teams --}}
                             <div>
-                                <x-input-label value="Nhóm" />
+                                <x-input-label value="{{ __('Team') }}" />
                                 @if($user->teams->isEmpty())
-                                    <p class="mt-1 text-sm text-gray-400">Chưa là thành viên của nhóm nào.</p>
+                                    <p class="mt-1 text-sm text-gray-400">{{ __('Not a member of any team yet.') }}</p>
                                 @else
                                     <div class="space-y-2 mt-1">
                                         @foreach($user->teams as $team)
@@ -303,11 +303,11 @@
                                                 </span>
                                                 @if($team->pivot->is_leader)
                                                     <span class="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 text-xs px-2 py-0.5 rounded">
-                                                        Trưởng nhóm
+                                                        {{ __('Team Leader') }}
                                                     </span>
                                                 @else
                                                     <span class="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 text-xs px-2 py-0.5 rounded">
-                                                        Thành viên
+                                                        {{ __('Member') }}
                                                     </span>
                                                 @endif
                                             </div>
@@ -324,28 +324,28 @@
                             @if($canEditPersonal)
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <x-input-label value="Căn cước Công dân" />
+                                        <x-input-label value="{{ __('Citizen ID') }}" />
                                         <x-text-input name="citizen_id" class="w-full mt-1"
                                             value="{{ old('citizen_id', $user->citizen_id ?? '') }}" />
                                     </div>
                                     <div>
-                                        <x-input-label value="Sinh nhật" />
+                                        <x-input-label value="{{ __('Birthday') }}" />
                                         <x-text-input type="date" name="birthday" class="w-full mt-1"
                                             value="{{ old('birthday', isset($user) && $user->birthday ? $user->birthday->format('Y-m-d') : '') }}" />
                                         @error('birthday')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                                     </div>
                                     <div>
-                                        <x-input-label value="Mã số Thuế" />
+                                        <x-input-label value="{{ __('Tax Code') }}" />
                                         <x-text-input name="tax_code" class="w-full mt-1"
                                             value="{{ old('tax_code', $user->tax_code ?? '') }}" />
                                     </div>
                                     <div>
-                                        <x-input-label value="Mã BHXH" />
+                                        <x-input-label value="{{ __('Social Insurance ID') }}" />
                                         <x-text-input name="social_insurance_id" class="w-full mt-1"
                                             value="{{ old('social_insurance_id', $user->social_insurance_id ?? '') }}" />
                                     </div>
                                     <div class="sm:col-span-2">
-                                        <x-input-label value="Hết hạn hợp đồng" />
+                                        <x-input-label value="{{ __('Contract Expiry') }}" />
                                         <x-text-input type="date" name="contract_expiry" class="w-full mt-1"
                                             value="{{ old('contract_expiry', isset($user) && $user->contract_expiry ? $user->contract_expiry->format('Y-m-d') : '') }}" />
                                         @error('contract_expiry')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
@@ -353,11 +353,11 @@
                                 </div>
                             @else
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                                    <div><x-input-label value="Căn cước Công dân" /><p class="mt-1 text-gray-800 dark:text-gray-200">{{ isset($user) ? ($user->citizen_id ?: '—') : '—' }}</p></div>
-                                    <div><x-input-label value="Sinh nhật" /><p class="mt-1 text-gray-800 dark:text-gray-200">{{ isset($user) && $user->birthday ? $user->birthday->format('d/m/Y') : '—' }}</p></div>
-                                    <div><x-input-label value="Mã số Thuế" /><p class="mt-1 text-gray-800 dark:text-gray-200">{{ isset($user) ? ($user->tax_code ?: '—') : '—' }}</p></div>
-                                    <div><x-input-label value="Mã BHXH" /><p class="mt-1 text-gray-800 dark:text-gray-200">{{ isset($user) ? ($user->social_insurance_id ?: '—') : '—' }}</p></div>
-                                    <div class="sm:col-span-2"><x-input-label value="Hết hạn hợp đồng" /><p class="mt-1 text-gray-800 dark:text-gray-200">{{ isset($user) && $user->contract_expiry ? $user->contract_expiry->format('d/m/Y') : '—' }}</p></div>
+                                    <div><x-input-label value="{{ __('Citizen ID') }}" /><p class="mt-1 text-gray-800 dark:text-gray-200">{{ isset($user) ? ($user->citizen_id ?: '—') : '—' }}</p></div>
+                                    <div><x-input-label value="{{ __('Birthday') }}" /><p class="mt-1 text-gray-800 dark:text-gray-200">{{ isset($user) && $user->birthday ? $user->birthday->format('d/m/Y') : '—' }}</p></div>
+                                    <div><x-input-label value="{{ __('Tax Code') }}" /><p class="mt-1 text-gray-800 dark:text-gray-200">{{ isset($user) ? ($user->tax_code ?: '—') : '—' }}</p></div>
+                                    <div><x-input-label value="{{ __('Social Insurance ID') }}" /><p class="mt-1 text-gray-800 dark:text-gray-200">{{ isset($user) ? ($user->social_insurance_id ?: '—') : '—' }}</p></div>
+                                    <div class="sm:col-span-2"><x-input-label value="{{ __('Contract Expiry') }}" /><p class="mt-1 text-gray-800 dark:text-gray-200">{{ isset($user) && $user->contract_expiry ? $user->contract_expiry->format('d/m/Y') : '—' }}</p></div>
                                 </div>
                             @endif
                         </div>
@@ -367,27 +367,27 @@
                             @if($canEditPersonal)
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <x-input-label value="Email liên hệ" />
+                                        <x-input-label value="{{ __('Contact Email') }}" />
                                         <x-text-input name="contact_email" type="email" class="w-full mt-1"
                                             value="{{ old('contact_email', $prefill['contact_email'] ?? $user->contact_email ?? '') }}" />
                                         @error('contact_email')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                                     </div>
                                     <div>
-                                        <x-input-label value="Số điện thoại" />
+                                        <x-input-label value="{{ __('Phone') }}" />
                                         <x-text-input name="phone_number" type="tel" class="w-full mt-1"
                                             value="{{ old('phone_number', $prefill['phone_number'] ?? $user->phone_number ?? '') }}" />
                                     </div>
                                     <div class="sm:col-span-2">
-                                        <x-input-label value="Địa chỉ nhà" />
+                                        <x-input-label value="{{ __('Home Address') }}" />
                                         <textarea name="home_address" rows="2"
                                             class="w-full mt-1 border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">{{ old('home_address', $user->home_address ?? '') }}</textarea>
                                     </div>
                                 </div>
                             @else
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                                    <div><x-input-label value="Email liên hệ" /><p class="mt-1 text-gray-800 dark:text-gray-200">{{ isset($user) ? ($user->contact_email ?: '—') : '—' }}</p></div>
-                                    <div><x-input-label value="Số điện thoại" /><p class="mt-1 text-gray-800 dark:text-gray-200">{{ isset($user) ? ($user->phone_number ?: '—') : '—' }}</p></div>
-                                    <div class="sm:col-span-2"><x-input-label value="Địa chỉ nhà" /><p class="mt-1 text-gray-800 dark:text-gray-200">{{ isset($user) ? ($user->home_address ?: '—') : '—' }}</p></div>
+                                    <div><x-input-label value="{{ __('Contact Email') }}" /><p class="mt-1 text-gray-800 dark:text-gray-200">{{ isset($user) ? ($user->contact_email ?: '—') : '—' }}</p></div>
+                                    <div><x-input-label value="{{ __('Phone') }}" /><p class="mt-1 text-gray-800 dark:text-gray-200">{{ isset($user) ? ($user->phone_number ?: '—') : '—' }}</p></div>
+                                    <div class="sm:col-span-2"><x-input-label value="{{ __('Home Address') }}" /><p class="mt-1 text-gray-800 dark:text-gray-200">{{ isset($user) ? ($user->home_address ?: '—') : '—' }}</p></div>
                                 </div>
                             @endif
                         </div>
@@ -402,45 +402,45 @@
 
                             {{-- Password change --}}
                             <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-                                Đổi mật khẩu
+                                {{ __('Change Password') }}
                             </p>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                                 <div>
-                                    <x-input-label value="Mật khẩu mới" />
+                                    <x-input-label value="{{ __('New Password') }}" />
                                     <x-text-input type="password" name="password" class="w-full mt-1" autocomplete="new-password" />
-                                    <p class="text-xs text-gray-400 mt-1">Để trống để giữ mật khẩu hiện tại.</p>
+                                    <p class="text-xs text-gray-400 mt-1">{{ __('Leave blank to keep current password.') }}</p>
                                     @error('password')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                                 </div>
                                 <div>
-                                    <x-input-label value="Xác nhận mật khẩu" />
+                                    <x-input-label value="{{ __('Confirm Password') }}" />
                                     <x-text-input type="password" name="password_confirmation" class="w-full mt-1" autocomplete="new-password" />
                                 </div>
                             </div>
 
                             {{-- Email notification preferences --}}
                             <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
-                                Thông báo Email
+                                {{ __('Email Notifications') }}
                             </p>
                             <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">
-                                Tắt một loại để ngừng nhận email cho danh mục đó, kể cả khi bạn được chỉ định là người nhận hoặc CC.
+                                {{ __('Disable a type to stop receiving emails for that category, even when you are assigned as a recipient or CC.') }}
                             </p>
 
                             <div class="space-y-0 divide-y divide-gray-100 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
 
                                 @php
                                     $notifSettings = [
-                                        ['key' => 'leave',        'label' => 'Email yêu cầu Nghỉ phép',  'desc' => 'Nhận email khi có yêu cầu nghỉ phép cần duyệt và khi yêu cầu của bạn được cập nhật'],
-                                        ['key' => 'ot',           'label' => 'Email yêu cầu Tăng ca',    'desc' => 'Nhận email khi có yêu cầu tăng ca cần duyệt và khi yêu cầu của bạn được cập nhật'],
-                                        ['key' => 'project',      'label' => 'Email Dự án & Công việc',  'desc' => 'Nhận email cho các cập nhật về dự án và công việc được giao'],
-                                        ['key' => 'announcement', 'label' => 'Email Thông báo',           'desc' => 'Nhận email khi có thông báo mới được đăng'],
+                                        ['key' => 'leave',        'label' => 'Leave Request Emails',    'desc' => 'Receive emails for leave requests requiring approval and when your request is updated'],
+                                        ['key' => 'ot',           'label' => 'OT Request Emails',       'desc' => 'Receive emails for OT requests requiring approval and when your request is updated'],
+                                        ['key' => 'project',      'label' => 'Project & Task Emails',   'desc' => 'Receive emails for project and task updates assigned to you'],
+                                        ['key' => 'announcement', 'label' => 'Announcement Emails',     'desc' => 'Receive emails when a new announcement is posted'],
                                     ];
                                 @endphp
 
                                 @foreach($notifSettings as $ns)
                                 <div class="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800">
                                     <div class="mr-4">
-                                        <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ $ns['label'] }}</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $ns['desc'] }}</p>
+                                        <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ __($ns['label']) }}</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ __($ns['desc']) }}</p>
                                     </div>
                                     <label class="relative inline-flex items-center cursor-pointer shrink-0">
                                         <input type="checkbox" name="email_notify_{{ $ns['key'] }}" value="1"
@@ -468,23 +468,23 @@
                             @if($canEditPersonal)
                             {{-- Employment / Active Status --}}
                             <div class="mb-5">
-                                <x-input-label value="Trạng thái làm việc" />
+                                <x-input-label value="{{ __('Employment Status') }}" />
                                 <select name="employment_status"
                                     class="mt-1 block border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
                                     @foreach(\App\Models\User::$employmentStatuses as $value => $label)
                                         <option value="{{ $value }}" {{ old('employment_status', $user->employment_status ?? 'active') === $value ? 'selected' : '' }}>
-                                            {{ $label }}
+                                            {{ __($label) }}
                                         </option>
                                     @endforeach
                                 </select>
-                                <p class="text-xs text-gray-400 mt-1">"Không hoạt động" sẽ chặn người dùng đăng nhập.</p>
+                                <p class="text-xs text-gray-400 mt-1">"{{ __('Inactive') }}" {{ __('will block the user from logging in.') }}</p>
                             </div>
 
                             {{-- Roles --}}
                             <div class="mb-5">
-                                <x-input-label value="Vai trò" />
+                                <x-input-label value="{{ __('Role') }}" />
                                 <select name="roles[]" id="roles-select" data-multi-select
-                                        data-placeholder="Chọn vai trò…" class="mt-1">
+                                        data-placeholder="{{ __('Select roles…') }}" class="mt-1">
                                     @foreach($roles as $role)
                                         <option value="{{ $role->name }}"
                                             {{ isset($user) && $user->hasRole($role->name) ? 'selected' : '' }}>
@@ -496,13 +496,13 @@
 
                             {{-- Supervisors --}}
                             <div class="mb-5">
-                                <x-input-label value="Người giám sát" />
-                                <p class="text-xs text-gray-400 mb-1">Người dùng giám sát người này</p>
+                                <x-input-label value="{{ __('Supervisors') }}" />
+                                <p class="text-xs text-gray-400 mb-1">{{ __('Users who supervise this person') }}</p>
                                 @if(empty($supervisorOptions) || $supervisorOptions->isEmpty())
-                                    <p class="text-xs text-gray-400 px-1">Chưa có người dùng nào khác.</p>
+                                    <p class="text-xs text-gray-400 px-1">{{ __('No other users yet.') }}</p>
                                 @else
                                     <select name="supervisors[]" id="supervisors-select" data-multi-select
-                                            data-placeholder="Chọn người giám sát…" class="mt-1 block w-full" multiple>
+                                            data-placeholder="{{ __('Select supervisors…') }}" class="mt-1 block w-full" multiple>
                                         @foreach($supervisorOptions ?? [] as $opt)
                                             <option value="{{ $opt->id }}"
                                                 {{ isset($user) && $user->supervisors->contains($opt->id) ? 'selected' : '' }}>
@@ -515,13 +515,13 @@
 
                             {{-- WFH --}}
                             <div class="mb-5">
-                                <x-input-label value="Chính sách làm tại nhà" />
+                                <x-input-label value="{{ __('Work from Home Policy') }}" />
                                 <label class="inline-flex items-center gap-2 mt-2 cursor-pointer">
                                     <input type="hidden" name="wfh_without_approval" value="0">
                                     <input type="checkbox" name="wfh_without_approval" value="1"
                                         class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
                                         {{ old('wfh_without_approval', $user->wfh_without_approval ?? false) ? 'checked' : '' }}>
-                                    <span class="text-sm text-gray-700 dark:text-gray-300">Làm tại nhà không cần duyệt</span>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('WFH without approval') }}</span>
                                 </label>
                             </div>
 
@@ -531,15 +531,15 @@
                             @if($canEditLeaveBalance)
                             <div class="mb-5">
                                 <div class="pt-4 {{ $canEditPersonal ? 'border-t border-gray-200 dark:border-gray-700' : '' }}">
-                                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Số giờ phép</p>
+                                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ __('Leave Hours') }}</p>
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
-                                            <x-input-label value="Số giờ phép còn lại" />
+                                            <x-input-label value="{{ __('Remaining Leave Hours') }}" />
                                             <x-text-input type="number" step="0.5" name="leave_balance" class="w-full mt-1"
                                                 value="{{ old('leave_balance', $user->leave_balance ?? 112) }}" />
                                         </div>
                                         <div>
-                                            <x-input-label value="Lý do thay đổi" />
+                                            <x-input-label value="{{ __('Reason for Change') }}" />
                                             <x-text-input name="balance_reason" class="w-full mt-1"
                                                 value="{{ old('balance_reason') }}" />
                                         </div>
@@ -552,16 +552,16 @@
                             {{-- Probation Time --}}
                             <div class="mb-5">
                                 <div class="pt-4 {{ $canEditPersonal ? 'border-t border-gray-200 dark:border-gray-700' : '' }}">
-                                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Thời gian thử việc</p>
+                                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ __('Probation Period') }}</p>
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
-                                            <x-input-label value="Ngày bắt đầu" />
+                                            <x-input-label value="{{ __('Start Date') }}" />
                                             <x-text-input type="date" name="probation_start_date" class="w-full"
                                                 value="{{ old('probation_start_date', isset($user) && $user->probation_start_date ? $user->probation_start_date->format('Y-m-d') : '') }}" />
                                             @error('probation_start_date')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                                         </div>
                                         <div>
-                                            <x-input-label value="Ngày kết thúc" />
+                                            <x-input-label value="{{ __('End Date') }}" />
                                             <x-text-input type="date" name="probation_end_date" class="w-full"
                                                 value="{{ old('probation_end_date', isset($user) && $user->probation_end_date ? $user->probation_end_date->format('Y-m-d') : '') }}" />
                                             @error('probation_end_date')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
@@ -602,60 +602,60 @@
                                         return new Intl.NumberFormat('vi-VN').format(Math.round(n)); }
                                 }">
 
-                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Lương</p>
+                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ __('Salary') }}</p>
 
-                                <x-input-label value="Lương cơ bản" />
+                                <x-input-label value="{{ __('Basic Salary') }}" />
                                 <div class="flex gap-2 mt-1">
                                     <input type="number" name="salary" min="0" step="1" x-model="salary"
-                                        placeholder="Nhập mức lương…"
+                                        placeholder="{{ __('Enter salary…') }}"
                                         class="flex-1 border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500" />
                                     <select name="salary_type" x-model="salaryType"
                                         class="border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
-                                        <option value="monthly">Tháng</option>
-                                        <option value="weekly">Tuần</option>
-                                        <option value="daily">Ngày</option>
-                                        <option value="hourly">Giờ</option>
+                                        <option value="monthly">{{ __('Monthly') }}</option>
+                                        <option value="weekly">{{ __('Weekly') }}</option>
+                                        <option value="daily">{{ __('Daily') }}</option>
+                                        <option value="hourly">{{ __('Hourly') }}</option>
                                     </select>
                                 </div>
                                 <div class="mt-2 grid grid-cols-4 gap-2 text-xs text-gray-500 dark:text-gray-400">
-                                    <div class="bg-gray-50 dark:bg-gray-700 rounded px-2 py-1 text-center"><div class="font-medium mb-0.5">/ Giờ</div><div><span x-text="fmt(h)"></span> ₫</div></div>
-                                    <div class="bg-gray-50 dark:bg-gray-700 rounded px-2 py-1 text-center"><div class="font-medium mb-0.5">/ Ngày</div><div><span x-text="fmt(d)"></span> ₫</div></div>
-                                    <div class="bg-gray-50 dark:bg-gray-700 rounded px-2 py-1 text-center"><div class="font-medium mb-0.5">/ Tuần</div><div><span x-text="fmt(w)"></span> ₫</div></div>
-                                    <div class="bg-gray-50 dark:bg-gray-700 rounded px-2 py-1 text-center"><div class="font-medium mb-0.5">/ Tháng</div><div><span x-text="fmt(m)"></span> ₫</div></div>
+                                    <div class="bg-gray-50 dark:bg-gray-700 rounded px-2 py-1 text-center"><div class="font-medium mb-0.5">{{ __('/ Hour') }}</div><div><span x-text="fmt(h)"></span> ₫</div></div>
+                                    <div class="bg-gray-50 dark:bg-gray-700 rounded px-2 py-1 text-center"><div class="font-medium mb-0.5">{{ __('/ Day') }}</div><div><span x-text="fmt(d)"></span> ₫</div></div>
+                                    <div class="bg-gray-50 dark:bg-gray-700 rounded px-2 py-1 text-center"><div class="font-medium mb-0.5">{{ __('/ Week') }}</div><div><span x-text="fmt(w)"></span> ₫</div></div>
+                                    <div class="bg-gray-50 dark:bg-gray-700 rounded px-2 py-1 text-center"><div class="font-medium mb-0.5">{{ __('/ Month') }}</div><div><span x-text="fmt(m)"></span> ₫</div></div>
                                 </div>
 
                                 <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-5 mb-2">
-                                    Phụ cấp
+                                    {{ __('Allowances') }}
                                     <span class="ml-2 normal-case font-normal text-indigo-600 dark:text-indigo-400" x-show="totalAllowance !== 0">
-                                        Tổng: <span x-text="fmt(totalAllowance)"></span> ₫
+                                        {{ __('Total:') }} <span x-text="fmt(totalAllowance)"></span> ₫
                                     </span>
                                 </p>
                                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                    <div><x-input-label value="Điều chỉnh (±)" /><input type="number" name="allowance_adjustment" step="1" x-model="allowAdj" placeholder="0" class="mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500" /></div>
-                                    <div><x-input-label value="Thưởng / Bonus" /><input type="number" name="allowance_bonus" min="0" step="1" x-model="allowBonus" placeholder="0" class="mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500" /></div>
-                                    <div><x-input-label value="Phụ cấp miễn thuế" /><input type="number" name="allowance_excl_tax" min="0" step="1" x-model="allowExclTax" placeholder="0" class="mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500" /></div>
-                                    <div><x-input-label value="Phí gửi xe" /><input type="number" name="parking_fee" min="0" step="1" x-model="parking" placeholder="0" class="mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500" /></div>
+                                    <div><x-input-label value="{{ __('Adjustment (±)') }}" /><input type="number" name="allowance_adjustment" step="1" x-model="allowAdj" placeholder="0" class="mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500" /></div>
+                                    <div><x-input-label value="{{ __('Bonus') }}" /><input type="number" name="allowance_bonus" min="0" step="1" x-model="allowBonus" placeholder="0" class="mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500" /></div>
+                                    <div><x-input-label value="{{ __('Tax-exempt Allowance') }}" /><input type="number" name="allowance_excl_tax" min="0" step="1" x-model="allowExclTax" placeholder="0" class="mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500" /></div>
+                                    <div><x-input-label value="{{ __('Parking Fee') }}" /><input type="number" name="parking_fee" min="0" step="1" x-model="parking" placeholder="0" class="mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500" /></div>
                                 </div>
 
                                 <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-5 mb-2">
-                                    Khấu trừ
+                                    {{ __('Deductions') }}
                                     <span class="ml-2 normal-case font-normal text-red-500 dark:text-red-400" x-show="totalDeduction > 0">
-                                        Tổng: <span x-text="fmt(totalDeduction)"></span> ₫
+                                        {{ __('Total:') }} <span x-text="fmt(totalDeduction)"></span> ₫
                                     </span>
                                 </p>
                                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                    <div><x-input-label value="Bảo hiểm" /><input type="number" name="insurance" min="0" step="1" x-model="insurance" placeholder="0" class="mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500" /></div>
-                                    <div><x-input-label value="Thuế TNCN" /><input type="number" name="personal_income_tax" min="0" step="1" x-model="pit" placeholder="0" class="mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500" /></div>
-                                    <div><x-input-label value="Khấu trừ khác" /><input type="number" name="other_deduction" min="0" step="1" x-model="otherDed" placeholder="0" class="mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500" /></div>
+                                    <div><x-input-label value="{{ __('Insurance') }}" /><input type="number" name="insurance" min="0" step="1" x-model="insurance" placeholder="0" class="mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500" /></div>
+                                    <div><x-input-label value="{{ __('Personal Income Tax') }}" /><input type="number" name="personal_income_tax" min="0" step="1" x-model="pit" placeholder="0" class="mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500" /></div>
+                                    <div><x-input-label value="{{ __('Other Deductions') }}" /><input type="number" name="other_deduction" min="0" step="1" x-model="otherDed" placeholder="0" class="mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500" /></div>
                                 </div>
 
                                 <div class="mt-4 grid grid-cols-2 gap-3" x-show="grossPay !== null">
                                     <div class="bg-indigo-50 dark:bg-indigo-900/30 rounded-lg px-4 py-3">
-                                        <p class="text-xs text-indigo-500 dark:text-indigo-400 mb-1">Tổng thu nhập (Gross)</p>
+                                        <p class="text-xs text-indigo-500 dark:text-indigo-400 mb-1">{{ __('Gross Pay') }}</p>
                                         <p class="text-sm font-semibold text-indigo-700 dark:text-indigo-300"><span x-text="fmt(grossPay)"></span> ₫</p>
                                     </div>
                                     <div class="bg-green-50 dark:bg-green-900/30 rounded-lg px-4 py-3">
-                                        <p class="text-xs text-green-500 dark:text-green-400 mb-1">Thực lĩnh (Net)</p>
+                                        <p class="text-xs text-green-500 dark:text-green-400 mb-1">{{ __('Net Pay') }}</p>
                                         <p class="text-sm font-semibold text-green-700 dark:text-green-300"><span x-text="fmt(netPay)"></span> ₫</p>
                                     </div>
                                 </div>
@@ -671,8 +671,8 @@
 
                 {{-- Save / Cancel --}}
                 <div class="flex justify-end mt-6 gap-2">
-                    <a href="javascript:history.back()"><x-secondary-button type="button">Hủy</x-secondary-button></a>
-                    <x-primary-button>{{ isset($user) ? 'Lưu' : 'Tạo' }}</x-primary-button>
+                    <a href="javascript:history.back()"><x-secondary-button type="button">{{ __('Cancel') }}</x-secondary-button></a>
+                    <x-primary-button>{{ isset($user) ? __('Save') : __('Create') }}</x-primary-button>
                 </div>
 
             </form>
