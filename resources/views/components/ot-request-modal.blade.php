@@ -33,7 +33,7 @@
 
         {{-- Header --}}
         <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10">
-            <h3 id="otm-title" class="text-base font-semibold text-gray-900 dark:text-gray-100">Yêu cầu tăng ca</h3>
+            <h3 id="otm-title" class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ __('OT Request') }}</h3>
             <button onclick="closeOtModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
@@ -42,18 +42,18 @@
         {{-- Body --}}
         <div class="px-6 py-5 space-y-4">
 
-            <div id="otm-loading" class="hidden py-10 text-center text-gray-400 text-sm">Đang tải…</div>
+            <div id="otm-loading" class="hidden py-10 text-center text-gray-400 text-sm">{{ __('Loading…') }}</div>
 
             {{-- Status banner --}}
             <div id="otm-status-banner" class="hidden rounded-lg px-4 py-2.5 text-sm font-medium"></div>
 
             {{-- User --}}
             <div id="otm-user-row" class="hidden">
-                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Người dùng</label>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('User') }}</label>
                 <p id="otm-user-display" class="hidden text-sm font-medium text-gray-900 dark:text-gray-100 py-1"></p>
                 @if($otmCanTeamOrAll && $otmUsers->count() > 1)
                     <select id="otm-user-select" class="hidden w-full">
-                        <option value="">— Chọn người dùng —</option>
+                        <option value="">{{ __('— Select user —') }}</option>
                         @foreach($otmUsers as $u)
                             <option value="{{ $u->id }}">{{ $u->name }}{{ $u->position ? ' · ' . $u->position : '' }}</option>
                         @endforeach
@@ -65,22 +65,22 @@
 
             {{-- OT Date --}}
             <div>
-                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Ngày tăng ca</label>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('OT Date') }}</label>
                 <p id="otm-date-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
                 <input id="otm-ot-date" type="date" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
             </div>
 
             {{-- From / To time --}}
             <div>
-                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Thời gian</label>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('Time') }}</label>
                 <p id="otm-time-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs text-gray-400 dark:text-gray-500 mb-1">Từ</label>
+                        <label class="block text-xs text-gray-400 dark:text-gray-500 mb-1">{{ __('From') }}</label>
                         <input id="otm-start-time" type="time" lang="en-GB" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
                     </div>
                     <div>
-                        <label class="block text-xs text-gray-400 dark:text-gray-500 mb-1">Đến</label>
+                        <label class="block text-xs text-gray-400 dark:text-gray-500 mb-1">{{ __('To') }}</label>
                         <input id="otm-end-time" type="time" lang="en-GB" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
                     </div>
                 </div>
@@ -88,39 +88,39 @@
 
             {{-- OT Type --}}
             <div>
-                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Loại tăng ca</label>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('OT Type') }}</label>
                 <p id="otm-type-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
                 <select id="otm-type-select" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
-                    <option value="">— Tự động theo ngày —</option>
+                    <option value="">{{ __('Auto by date') }}</option>
                     <option value="OT x1.5">OT x1.5</option>
                     <option value="OT x2">OT x2</option>
                     <option value="OT x3">OT x3</option>
                 </select>
-                <p id="otm-type-auto-note" class="hidden mt-1 text-xs text-gray-400">Tự động chọn theo ngày, có thể thay đổi.</p>
+                <p id="otm-type-auto-note" class="hidden mt-1 text-xs text-gray-400">{{ __('Auto-selected by date, can be changed.') }}</p>
             </div>
 
             {{-- Hours --}}
             <div>
-                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Số giờ</label>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('Hours') }}</label>
                 <p id="otm-hours-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
                 <input id="otm-hours" type="number" step="0.25" min="0.25" placeholder="0"
                     class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
                 <p id="otm-hours-warning" class="hidden mt-1.5 text-xs text-amber-600 dark:text-amber-400 flex items-start gap-1">
                     <span>⚠️</span>
-                    <span>Số giờ tăng ca khá cao. Vui lòng kiểm tra lại giờ bắt đầu/kết thúc.</span>
+                    <span>{{ __('OT hours seem high. Please check start/end times.') }}</span>
                 </p>
             </div>
 
             {{-- OT month / year preview --}}
             <div id="otm-ot-preview" class="hidden p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg space-y-1">
                 <div class="flex items-center gap-2 flex-wrap text-sm">
-                    <span class="text-gray-500 dark:text-gray-400">Tăng ca tháng này:</span>
+                    <span class="text-gray-500 dark:text-gray-400">{{ __('OT this month:') }}</span>
                     <span id="otm-ot-month-total" class="font-semibold text-orange-700 dark:text-orange-300"></span>
                     <span id="otm-ot-month-arrow" class="hidden text-gray-400">→</span>
                     <span id="otm-ot-month-after" class="hidden font-semibold text-green-600 dark:text-green-400"></span>
                 </div>
                 <div class="flex items-center gap-2 flex-wrap text-sm">
-                    <span class="text-gray-500 dark:text-gray-400">Tăng ca năm nay:</span>
+                    <span class="text-gray-500 dark:text-gray-400">{{ __('OT this year:') }}</span>
                     <span id="otm-ot-total" class="font-semibold text-orange-700 dark:text-orange-300"></span>
                     <span id="otm-ot-arrow" class="hidden text-gray-400">→</span>
                     <span id="otm-ot-after" class="hidden font-semibold text-green-600 dark:text-green-400"></span>
@@ -129,10 +129,10 @@
 
             {{-- Project --}}
             <div id="otm-project-row">
-                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Dự án</label>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('Project') }}</label>
                 <p id="otm-project-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
                 <select id="otm-project-select" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
-                    <option value="">— Không có —</option>
+                    <option value="">{{ __('— None —') }}</option>
                     @foreach($otmProjects as $p)
                         <option value="{{ $p->id }}">{{ $p->project_code }} · {{ $p->name }}</option>
                     @endforeach
@@ -141,10 +141,10 @@
 
             {{-- Task --}}
             <div id="otm-task-row">
-                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Công việc</label>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('Task') }}</label>
                 <p id="otm-task-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
                 <select id="otm-task-select" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
-                    <option value="">— Không có —</option>
+                    <option value="">{{ __('— None —') }}</option>
                     @foreach($otmTasks as $t)
                         <option value="{{ $t->id }}" data-project="{{ $t->project_id }}">{{ $t->task_code }} · {{ $t->name }}</option>
                     @endforeach
@@ -153,27 +153,27 @@
 
             {{-- Description --}}
             <div>
-                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Lý do</label>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('Reason') }}</label>
                 <p id="otm-desc-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1 whitespace-pre-wrap min-h-[1.5rem]"></p>
                 <textarea id="otm-description" rows="3"
                     class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2"
-                    placeholder="Nhập lý do…"></textarea>
+                    placeholder="{{ __('Enter reason…') }}"></textarea>
             </div>
 
             {{-- Reject reason display --}}
             <div id="otm-reject-display" class="hidden p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
-                <p class="text-xs font-semibold text-red-600 dark:text-red-400 mb-1">Lý do từ chối</p>
+                <p class="text-xs font-semibold text-red-600 dark:text-red-400 mb-1">{{ __('Reject Reason') }}</p>
                 <p id="otm-reject-reason-text" class="text-sm text-red-700 dark:text-red-300"></p>
             </div>
 
             {{-- Inline reject input --}}
             <div id="otm-reject-section" class="hidden space-y-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
-                <label class="block text-xs font-semibold text-red-600 dark:text-red-400">Lý do từ chối <span>*</span></label>
-                <textarea id="otm-reject-input" rows="3" placeholder="Nhập lý do từ chối…"
+                <label class="block text-xs font-semibold text-red-600 dark:text-red-400">{{ __('Reject Reason') }} <span>*</span></label>
+                <textarea id="otm-reject-input" rows="3" placeholder="{{ __('Enter rejection reason…') }}"
                     class="w-full border-red-300 dark:border-red-600 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2"></textarea>
                 <div class="flex gap-2 justify-end">
-                    <button onclick="_otmCancelReject()" class="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition">Hủy</button>
-                    <button onclick="_otmConfirmReject()" class="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition">Xác nhận từ chối</button>
+                    <button onclick="_otmCancelReject()" class="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition">{{ __('Cancel') }}</button>
+                    <button onclick="_otmConfirmReject()" class="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition">{{ __('Confirm Reject') }}</button>
                 </div>
             </div>
         </div>
@@ -185,6 +185,24 @@
 
 <script>
 (function () {
+    var _OTM = {
+        close:       '{{ __("Close") }}',
+        cancel:      '{{ __("Cancel") }}',
+        create:      '{{ __("Create") }}',
+        save:        '{{ __("Save") }}',
+        edit:        '{{ __("Edit") }}',
+        approve:     '{{ __("Approve") }}',
+        reject:      '{{ __("Reject") }}',
+        titleCreate: '{{ __("Create OT Request") }}',
+        titleView:   '{{ __("OT Request") }}',
+        titleEdit:   '{{ __("Edit OT Request") }}',
+        pending:     '{{ __("Pending") }}',
+        approved:    '{{ __("Approved") }}',
+        rejected:    '{{ __("Rejected") }}',
+        errSave:     '{{ __("Error saving.") }}',
+        errConn:     '{{ __("Connection error.") }}',
+        noneOpt:     '{{ __("— None —") }}',
+    };
     var CSRF         = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     var AUTH_ID      = {{ $otmAuth?->id ?? 'null' }};
     var HAS_SEL      = {{ ($otmCanTeamOrAll && $otmUsers->count() > 1) ? 'true' : 'false' }};
@@ -230,13 +248,13 @@
         fetch(_OT_URL+'/'+id, { headers:{'Accept':'application/json','X-CSRF-TOKEN':CSRF} })
             .then(function(r){ return r.json(); })
             .then(function(d){ hide($g('otm-loading')); _data=d; _populateView(d); })
-            .catch(function(){ hide($g('otm-loading')); $g('otm-btn-area').innerHTML=_btn('Đóng','closeOtModal()','secondary'); });
+            .catch(function(){ hide($g('otm-loading')); $g('otm-btn-area').innerHTML=_btn(_OTM.close,'closeOtModal()','secondary'); });
     };
 
     window.openOtCreate = function () {
         _mode='create'; _id=null; _data=null; _otTotal=0; _otMonthTotal=0; _manualH=false;
         _showOverlay(); hide($g('otm-loading')); _hideBody();
-        $g('otm-title').textContent='Tạo yêu cầu tăng ca';
+        $g('otm-title').textContent=_OTM.titleCreate;
         _populateCreate();
     };
 
@@ -270,8 +288,8 @@
             body:JSON.stringify(payload),
         })
         .then(function(r){ return r.json(); })
-        .then(function(d){ if(d.success){ closeOtModal(); location.reload(); } else { alert(d.message||'Lỗi khi lưu.'); } })
-        .catch(function(){ alert('Lỗi kết nối.'); });
+        .then(function(d){ if(d.success){ closeOtModal(); location.reload(); } else { alert(d.message||_OTM.errSave); } })
+        .catch(function(){ alert(_OTM.errConn); });
     };
 
     window._otmApprove = function () {
@@ -313,17 +331,17 @@
         _fetchOtTotal(AUTH_ID);
         _bindListeners();
         _initProjectTaskTs();
-        $g('otm-btn-area').innerHTML=_btn('Bỏ','closeOtModal()','secondary')+_btn('Tạo','_otmSubmit()','primary');
+        $g('otm-btn-area').innerHTML=_btn(_OTM.cancel,'closeOtModal()','secondary')+_btn(_OTM.create,'_otmSubmit()','primary');
     }
 
     function _populateView(d){
         var ot=d.ot;
-        $g('otm-title').textContent='Yêu cầu tăng ca';
+        $g('otm-title').textContent=_OTM.titleView;
         _otTotal=d.ot_year_total||0;
         _otMonthTotal=d.ot_month_total||0;
 
         var banner=$g('otm-status-banner');
-        var labels={pending:'Đang chờ duyệt',approved:'Đã duyệt',rejected:'Đã từ chối'};
+        var labels={pending:_OTM.pending,approved:_OTM.approved,rejected:_OTM.rejected};
         var cls={
             pending:'bg-yellow-50 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-700',
             approved:'bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-300 border border-green-200 dark:border-green-700',
@@ -375,15 +393,15 @@
         }
 
         var btns='';
-        if(d.can_edit)    btns+=_btn('Chỉnh sửa','_otmSwitchToEdit()','secondary');
-        if(d.can_approve) btns+=_btn('Phê duyệt','_otmApprove()','success')+_btn('Từ chối','_otmShowReject()','danger');
-        btns+=_btn('Đóng','closeOtModal()','secondary');
+        if(d.can_edit)    btns+=_btn(_OTM.edit,'_otmSwitchToEdit()','secondary');
+        if(d.can_approve) btns+=_btn(_OTM.approve,'_otmApprove()','success')+_btn(_OTM.reject,'_otmShowReject()','danger');
+        btns+=_btn(_OTM.close,'closeOtModal()','secondary');
         $g('otm-btn-area').innerHTML=btns;
     }
 
     function _populateEdit(){
         var ot=_data.ot;
-        $g('otm-title').textContent='Chỉnh sửa yêu cầu tăng ca';
+        $g('otm-title').textContent=_OTM.titleEdit;
 
         hide($g('otm-date-display'));   show($g('otm-ot-date'));
         hide($g('otm-time-display'));   show($g('otm-start-time')); show($g('otm-end-time'));
@@ -406,9 +424,9 @@
         var tasks   =_data.tasks||[];
         _dynTasks = tasks;
         var pSel=$g('otm-project-select'); var tSel=$g('otm-task-select');
-        pSel.innerHTML='<option value="">— Không có —</option>';
+        pSel.innerHTML='<option value="">'+_OTM.noneOpt+'</option>';
         projects.forEach(function(p){ pSel.innerHTML+='<option value="'+p.id+'">'+_esc(p.text)+'</option>'; });
-        tSel.innerHTML='<option value="">— Không có —</option>';
+        tSel.innerHTML='<option value="">'+_OTM.noneOpt+'</option>';
         tasks.forEach(function(t){ tSel.innerHTML+='<option value="'+t.id+'" data-project="'+t.project_id+'">'+_esc(t.text)+'</option>'; });
 
         _bindListeners();
@@ -428,7 +446,7 @@
         _updateOtPreview();
         _checkHoursWarning();
 
-        $g('otm-btn-area').innerHTML=_btn('Bỏ','closeOtModal()','secondary')+_btn('Lưu','_otmSubmit()','primary');
+        $g('otm-btn-area').innerHTML=_btn(_OTM.cancel,'closeOtModal()','secondary')+_btn(_OTM.save,'_otmSubmit()','primary');
     }
 
     // ── OT preview ────────────────────────────────────────────────────
@@ -529,7 +547,7 @@
             onChange:function(v){
                 var filtered=v?_dynTasks.filter(function(t){ return String(t.proj)===String(v); }):_dynTasks;
                 _tsTask.clear(true); _tsTask.clearOptions();
-                _tsTask.addOption({value:'',text:'— Không có —'});
+                _tsTask.addOption({value:'',text:_OTM.noneOpt});
                 filtered.forEach(function(t){ _tsTask.addOption({value:String(t.id||t.value),text:t.text}); });
                 _tsTask.refreshOptions(false);
             }});

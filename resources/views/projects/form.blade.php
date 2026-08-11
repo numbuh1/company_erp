@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ isset($project) ? 'Chỉnh sửa Dự án' : 'Tạo Dự án' }}
+            {{ isset($project) ? __('Edit Project') : __('Create Project') }}
         </h2>
     </x-slot>
 
@@ -14,24 +14,24 @@
 
                 {{-- Main Info --}}
                 <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
-                    <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">Chi tiết dự án</h3>
+                    <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">{{ __('Project Details') }}</h3>
 
                     <div class="mb-4">
-                        <x-input-label value="Tên" />
+                        <x-input-label value="{{ __('Name') }}" />
                         <x-text-input name="name" class="mt-1 block w-full"
                             value="{{ old('name', $project->name ?? '') }}" required />
                     </div>
 
                     <div class="mb-4">
-                        <x-input-label value="Mã dự án" />
+                        <x-input-label value="{{ __('Code') }}" />
                         <x-text-input name="project_code" class="mt-1 block w-full sm:max-w-xs font-mono"
                             value="{{ old('project_code', $project->project_code ?? $predicted_project_code ?? '') }}"
                             placeholder="PJ-..." />
-                        <p class="mt-1 text-xs text-gray-400">Để trống để dùng mã mặc định.</p>
+                        <p class="mt-1 text-xs text-gray-400">{{ __('Leave blank to use default code.') }}</p>
                     </div>
 
                     <div class="mb-4">
-                        <x-input-label value="Trạng thái" />
+                        <x-input-label value="{{ __('Status') }}" />
                         <select name="status"
                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                             @foreach(['Chưa bắt đầu', 'Đang tiến hành', 'Đã xong'] as $s)
@@ -41,31 +41,31 @@
                     </div>                    
 
                     <div class="mb-4">
-                        <x-input-label value="Mô tả" />
+                        <x-input-label value="{{ __('Description') }}" />
                         <textarea name="description" rows="4"
                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">{{ old('description', $project->description ?? '') }}</textarea>
                     </div>
 
                     <div class="mb-4">
-                        <x-input-label value="Budget Time (giờ)" />
+                        <x-input-label value="{{ __('Budget Time (hours)') }}" />
                         <x-text-input type="number" name="budget_hours" min="0" step="0.25" class="mt-1 block w-full sm:max-w-xs"
                             value="{{ old('budget_hours', $project->budget_hours ?? '') }}"
-                            placeholder="Thời gian dự kiến…" />
+                            placeholder="{{ __('Expected duration…') }}" />
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
-                            <x-input-label value="Ngày bắt đầu" />
+                            <x-input-label value="{{ __('Start Date') }}" />
                             <x-text-input type="date" name="start_date" class="mt-1 block w-full"
                                 value="{{ old('start_date', isset($project) ? $project->start_date?->format('Y-m-d') : '') }}" />
                         </div>
                         <div>
-                            <x-input-label value="Ngày kết thúc dự kiến" />
+                            <x-input-label value="{{ __('Expected End Date') }}" />
                             <x-text-input type="date" name="expected_end_date" class="mt-1 block w-full"
                                 value="{{ old('expected_end_date', isset($project) ? $project->expected_end_date?->format('Y-m-d') : '') }}" />
                         </div>
                         <div>
-                            <x-input-label value="Ngày kết thúc thực tế" />
+                            <x-input-label value="{{ __('Actual End Date') }}" />
                             <x-text-input type="date" name="actual_end_date" class="mt-1 block w-full"
                                 value="{{ old('actual_end_date', isset($project) ? $project->actual_end_date?->format('Y-m-d') : '') }}" />
                         </div>
@@ -74,15 +74,15 @@
 
                 {{-- Team & Member Assignment --}}
                 <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
-                    <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">Phân công</h3>
+                    <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">{{ __('Assignment') }}</h3>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                         {{-- Teams --}}
                         <div>
-                            <x-input-label value="Nhóm được phân công" />
+                            <x-input-label value="{{ __('Assigned Teams') }}" />
                             <select name="teams[]" id="teams-select" data-multi-select
-                                    data-placeholder="Chọn nhóm…" class="mt-1 block w-full" multiple>
+                                    data-placeholder="{{ __('Select teams…') }}" class="mt-1 block w-full" multiple>
                                 @foreach($teams as $team)
                                     <option value="{{ $team->id }}"
                                         {{ collect(old('teams', isset($project) ? $project->teams->pluck('id')->toArray() : []))->contains($team->id) ? 'selected' : '' }}>
@@ -94,9 +94,9 @@
 
                         {{-- Members --}}
                         <div>
-                            <x-input-label value="Thành viên được phân công" />
+                            <x-input-label value="{{ __('Assigned Members') }}" />
                             <select name="members[]" id="members-select" data-multi-select
-                                    data-placeholder="Chọn thành viên…" class="mt-1 block w-full" multiple>
+                                    data-placeholder="{{ __('Select members…') }}" class="mt-1 block w-full" multiple>
                                 @foreach($users as $u)
                                     <option value="{{ $u->id }}"
                                         {{ collect(old('members', isset($project) ? $project->users->pluck('id')->toArray() : []))->contains($u->id) ? 'selected' : '' }}>
@@ -112,9 +112,9 @@
                 {{-- Buttons --}}
                 <div class="flex justify-end gap-2 mt-5 mb-10">
                     <a href="javascript:history.back()">
-                        <x-secondary-button type="button">Hủy</x-secondary-button>
+                        <x-secondary-button type="button">{{ __('Cancel') }}</x-secondary-button>
                     </a>
-                    <x-primary-button>{{ isset($project) ? 'Lưu' : 'Tạo' }}</x-primary-button>
+                    <x-primary-button>{{ isset($project) ? __('Save') : __('Create') }}</x-primary-button>
                 </div>
 
             </form>

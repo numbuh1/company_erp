@@ -6,11 +6,11 @@
                 <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">{{ $project->name }}</h2>
             </div>
             <div class="flex gap-2">
-                <a href="{{ route('time-logs.create', ['project_id' => $project->id]) }}"><x-secondary-button>Chấm công</x-secondary-button></a>
+                <a href="{{ route('time-logs.create', ['project_id' => $project->id]) }}"><x-secondary-button>{{ __('Log time →') }}</x-secondary-button></a>
                 @canany(['edit projects', 'edit assigned projects'])
-                    <a href="{{ route('projects.edit', $project) }}"><x-secondary-button>Chỉnh sửa</x-secondary-button></a>
+                    <a href="{{ route('projects.edit', $project) }}"><x-secondary-button>{{ __('Edit') }}</x-secondary-button></a>
                 @endcanany
-                <a href="javascript:history.back()"><x-secondary-button>Quay lại</x-secondary-button></a>
+                <a href="javascript:history.back()"><x-secondary-button>{{ __('Back') }}</x-secondary-button></a>
             </div>
         </div>
     </x-slot>
@@ -60,7 +60,7 @@
 
             {{-- Project Info --}}
             <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
-                <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">Chi tiết dự án</h3>
+                <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">{{ __('Project Details') }}</h3>
 
                 @php
                     $statusClass = match($project->status) {
@@ -71,20 +71,20 @@
                 @endphp
 
                 <div class="mb-4">
-                    <x-input-label value="Trạng thái" />
+                    <x-input-label value="{{ __('Status') }}" />
                     <div class="mt-1">
                         <span class="text-xs font-medium px-2 py-0.5 rounded {{ $statusClass }}">{{ $project->status }}</span>
                     </div>
                 </div>
 
                 <div class="mb-4">
-                    <x-input-label value="Mô tả" />
+                    <x-input-label value="{{ __('Description') }}" />
                     <p class="mt-1 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ $project->description ?? '—' }}</p>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                     <div>
-                        <x-input-label value="Bắt đầu" />
+                        <x-input-label value="{{ __('Start') }}" />
                         <p class="mt-1 text-sm text-gray-700 dark:text-gray-300">{{ $project->start_date?->format('d/m/Y') ?? '—' }}</p>
                     </div>
                     <div>
@@ -128,7 +128,7 @@
                             <p class="font-semibold text-gray-700 dark:text-gray-200">{{ number_format($projectTotalOt, 1) }}h</p>
                         </div>
                         <div>
-                            <p class="text-gray-400 dark:text-gray-500 mb-0.5">Còn lại</p>
+                            <p class="text-gray-400 dark:text-gray-500 mb-0.5">{{ __('Remaining') }}</p>
                             <p class="font-semibold {{ $projectRemaining < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400' }}">
                                 {{ number_format($projectRemaining, 1) }}h
                             </p>
@@ -139,7 +139,7 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <x-input-label value="Nhóm được phân công" />
+                        <x-input-label value="{{ __('Assigned Teams') }}" />
                         <div class="flex flex-wrap gap-1 mt-1">
                             @forelse($project->teams as $team)
                                 <button type="button"
@@ -148,19 +148,19 @@
                                     {{ $team->name }}
                                 </button>
                             @empty
-                                <span class="text-sm text-gray-400">Không có</span>
+                                <span class="text-sm text-gray-400">{{ __('None') }}</span>
                             @endforelse
                         </div>
                     </div>
                     <div>
-                        <x-input-label value="Thành viên được phân công" />
+                        <x-input-label value="{{ __('Assigned Members') }}" />
                         <div class="mt-2 space-y-1">
                             @forelse($project->users as $member)
                                 <a href="{{ route('users.show', $member) }}" class="flex items-center gap-2 hover:opacity-80 transition rounded px-1 py-0.5">
                                     <x-user-status :user="$member" />
                                 </a>
                             @empty
-                                <span class="text-sm text-gray-400">Không có</span>
+                                <span class="text-sm text-gray-400">{{ __('None') }}</span>
                             @endforelse
                         </div>
                     </div>
@@ -176,7 +176,7 @@
                             ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400'
                             : 'border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
                         class="px-5 py-3 text-sm font-medium -mb-px transition">
-                        Công việc
+                        {{ __('Tasks') }}
                     </button>
                     <button @click="activeTab = 'files'"
                         :class="activeTab === 'files'
@@ -200,7 +200,7 @@
                             ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400'
                             : 'border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
                         class="px-5 py-3 text-sm font-medium -mb-px transition">
-                        Nhật ký hoạt động
+                        {{ __('Activity Log') }}
                     </button>
                     @canany(['view own timesheet', 'view team timesheet', 'view all timesheet'])
                     <button @click="activeTab = 'timesheet'"
@@ -216,7 +216,7 @@
                             ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400'
                             : 'border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
                         class="px-5 py-3 text-sm font-medium -mb-px transition">
-                        Người phụ trách
+                        {{ __('Assignees') }}
                     </button>
                 </div>
 
@@ -226,10 +226,10 @@
                     {{-- Filter & column bar --}}
                     <div class="px-5 pt-5 pb-4 border-b border-gray-200 dark:border-gray-700">
                         <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200">Công việc</h3>
+                            <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200">{{ __('Tasks') }}</h3>
                             @can('edit tasks')
                                 <a href="{{ route('tasks.create', ['project_id' => $project->id]) }}">
-                                    <x-secondary-button>Thêm công việc</x-secondary-button>
+                                    <x-secondary-button>{{ __('Add Task') }}</x-secondary-button>
                                 </a>
                             @endcan
                         </div>
@@ -239,7 +239,7 @@
 
                             {{-- Search --}}
                             <div class="flex-1 min-w-[180px]">
-                                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Tìm kiếm</label>
+                                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ __('Search') }}</label>
                                 <input type="text" name="search" value="{{ $taskSearch }}"
                                        placeholder="Tên hoặc TK-ID…"
                                        class="block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 rounded-md shadow-sm text-sm px-3 py-1.5 focus:ring-indigo-500 focus:border-indigo-500">
@@ -247,7 +247,7 @@
 
                             {{-- Assignee --}}
                             <div class="min-w-[160px]">
-                                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Người làm</label>
+                                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ __('Assignee') }}</label>
                                 <select id="proj-task-assignee-select" name="assignee_id">
                                     <option value="">— Tất cả —</option>
                                     @foreach($taskAssignees as $u)
@@ -258,7 +258,7 @@
 
                             {{-- Sort --}}
                             <div>
-                                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Sắp xếp</label>
+                                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ __('Sort') }}</label>
                                 <select name="sort"
                                         class="mt-0 block border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
                                     <option value="id_asc"   @selected($taskSort === 'id_asc')>ID ↑</option>
@@ -272,7 +272,7 @@
                             <div class="flex items-end gap-2">
                                 <button type="submit"
                                         class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md shadow-sm transition">
-                                    Lọc
+                                    {{ __('Filter') }}
                                 </button>
                                 @if($taskSearch || $taskAssigneeId || $taskSort !== 'id_asc')
                                     <a href="{{ route('projects.show', ['project' => $project->id, 'tab' => 'tasks']) }}"
@@ -285,14 +285,14 @@
 
                         {{-- Column visibility popup --}}
                         <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center gap-2">
-                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0">Cột:</span>
+                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0">{{ __('Columns:') }}</span>
                             <div class="relative" @click.outside="colsOpen = false">
                                 <button type="button" @click="colsOpen = !colsOpen"
                                         class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
                                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
                                     </svg>
-                                    Hiển thị cột
+                                    {{ __('Show columns') }}
                                     <svg class="w-3 h-3 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
                                     </svg>
@@ -300,16 +300,16 @@
                                 <div x-show="colsOpen" x-cloak
                                      class="absolute left-0 top-full mt-1 z-30 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 space-y-2 min-w-[170px]">
                                     <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400">
-                                        <input type="checkbox" x-model="cols.status"     @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Trạng thái
+                                        <input type="checkbox" x-model="cols.status"     @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> {{ __('Status') }}
                                     </label>
                                     <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400">
-                                        <input type="checkbox" x-model="cols.assignees"  @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Người làm
+                                        <input type="checkbox" x-model="cols.assignees"  @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> {{ __('Assignee') }}
                                     </label>
                                     <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400">
                                         <input type="checkbox" x-model="cols.budget"     @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Budget Time
                                     </label>
                                     <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400">
-                                        <input type="checkbox" x-model="cols.start_date" @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Bắt đầu
+                                        <input type="checkbox" x-model="cols.start_date" @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> {{ __('Start') }}
                                     </label>
                                     <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400">
                                         <input type="checkbox" x-model="cols.due_date"   @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> End (EST)
@@ -322,7 +322,7 @@
                     {{-- Table --}}
                     @if($projectTasks->isEmpty())
                         <div class="px-5 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
-                            {{ ($taskSearch || $taskAssigneeId) ? 'Không tìm thấy công việc nào khớp với bộ lọc.' : 'Chưa có công việc.' }}
+                            {{ ($taskSearch || $taskAssigneeId) ? __('No tasks matching the filter.') : __('No tasks yet.') }}
                         </div>
                     @else
                     <div class="overflow-x-auto">
@@ -330,14 +330,14 @@
                             <thead class="bg-gray-50 dark:bg-gray-700/50">
                                 <tr>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">ID</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Tên</th>
-                                    <th :class="{ 'hidden': !cols.status }"     class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Trạng thái</th>
-                                    <th :class="{ 'hidden': !cols.assignees }"  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Người làm</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">{{ __('Name') }}</th>
+                                    <th :class="{ 'hidden': !cols.status }"     class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">{{ __('Status') }}</th>
+                                    <th :class="{ 'hidden': !cols.assignees }"  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">{{ __('Assignee') }}</th>
                                     <th :class="{ 'hidden': !cols.budget }" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Budget</th>
-                                    <th :class="{ 'hidden': !cols.budget }" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Thời gian</th>
-                                    <th :class="{ 'hidden': !cols.start_date }" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Bắt đầu</th>
+                                    <th :class="{ 'hidden': !cols.budget }" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">{{ __('Time Logged') }}</th>
+                                    <th :class="{ 'hidden': !cols.start_date }" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">{{ __('Start') }}</th>
                                     <th :class="{ 'hidden': !cols.due_date }"   class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">End (EST)</th>
-                                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Thao tác</th>
+                                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">{{ __('Actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -433,26 +433,26 @@
                                         {{-- Actions --}}
                                         <td class="px-4 py-3 text-right whitespace-nowrap">
                                             <div class="flex items-center justify-end gap-2">
-                                                <a href="{{ route('tasks.show', $task) }}" title="Xem"
+                                                <a href="{{ route('tasks.show', $task) }}" title="{{ __('View') }}"
                                                     class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-blue-600 hover:border-blue-400 bg-white dark:bg-gray-700 transition">
                                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Xem</span>
+                                                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">{{ __('View') }}</span>
                                                 </a>
                                                 @canany(['edit tasks', 'edit assigned tasks'])
-                                                    <a href="{{ route('tasks.edit', $task) }}" title="Sửa"
+                                                    <a href="{{ route('tasks.edit', $task) }}" title="{{ __('Edit') }}"
                                                         class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-yellow-600 hover:border-yellow-400 bg-white dark:bg-gray-700 transition">
                                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                                                        <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Sửa</span>
+                                                        <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">{{ __('Edit') }}</span>
                                                     </a>
                                                 @endcanany
                                                 @can('delete tasks')
                                                     <form method="POST" action="{{ route('tasks.destroy', $task) }}" class="inline">
                                                         @csrf @method('DELETE')
-                                                        <button type="submit" title="Xóa"
-                                                            onclick="return confirm('Xóa công việc này?')"
+                                                        <button type="submit" title="{{ __('Delete') }}"
+                                                            onclick="return confirm('{{ __('Delete this task?') }}')"
                                                             class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-red-600 hover:border-red-400 bg-white dark:bg-gray-700 transition">
                                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                                            <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Xóa</span>
+                                                            <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">{{ __('Delete') }}</span>
                                                         </button>
                                                     </form>
                                                 @endcan
@@ -483,7 +483,7 @@
 
                 {{-- Comments Panel --}}
                 <div x-show="activeTab === 'comments'" class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-b-lg sm:rounded-tr-lg p-6">
-                    <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-5">Bình luận</h3>
+                    <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-5">{{ __('Comments') }}</h3>
                     @include('partials.comments', [
                         'commentable'     => $project,
                         'commentableType' => 'project',
@@ -492,10 +492,10 @@
 
                 {{-- Activity Log Panel --}}
                 <div x-show="activeTab === 'activity'" class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-b-lg sm:rounded-tr-lg p-6">
-                    <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">Nhật ký hoạt động</h3>
+                    <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">{{ __('Activity Log') }}</h3>
 
                     @if($activities->isEmpty())
-                        <p class="text-sm text-gray-400">Chưa có hoạt động nào.</p>
+                        <p class="text-sm text-gray-400">{{ __('No activity recorded.') }}</p>
                     @else
                         <div class="space-y-3">
                             @foreach($activities as $activity)
@@ -569,18 +569,18 @@
                               class="flex flex-wrap items-end gap-x-3 gap-y-2">
                             <input type="hidden" name="tab" value="timesheet">
                             <div>
-                                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Từ ngày</label>
+                                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ __('From date') }}</label>
                                 <input type="date" name="ts_from" value="{{ $tsFromStr }}"
                                     class="border border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded text-sm px-2 py-1.5">
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Đến ngày</label>
+                                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ __('To date') }}</label>
                                 <input type="date" name="ts_to" value="{{ $tsToStr }}"
                                     class="border border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded text-sm px-2 py-1.5">
                             </div>
                             <div class="self-end">
                                 <button type="submit"
-                                    class="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 transition">Áp dụng</button>
+                                    class="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 transition">{{ __('Apply') }}</button>
                             </div>
                             <div class="self-end flex items-center gap-2 flex-wrap">
                                 @php
@@ -589,13 +589,13 @@
                                     $tsPreset30   = ['tab'=>'timesheet','ts_from'=>now()->subDays(29)->format('Y-m-d'),'ts_to'=>now()->format('Y-m-d')];
                                     $tsPreset7    = ['tab'=>'timesheet','ts_from'=>now()->subDays(6)->format('Y-m-d'),'ts_to'=>now()->format('Y-m-d')];
                                 @endphp
-                                <a href="{{ route('projects.show', array_merge(['project' => $project->id], $tsPresetThis)) }}" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">Tháng này</a>
+                                <a href="{{ route('projects.show', array_merge(['project' => $project->id], $tsPresetThis)) }}" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">{{ __('This Month') }}</a>
                                 <span class="text-gray-300 dark:text-gray-600">|</span>
-                                <a href="{{ route('projects.show', array_merge(['project' => $project->id], $tsPresetLast)) }}" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">Tháng trước</a>
+                                <a href="{{ route('projects.show', array_merge(['project' => $project->id], $tsPresetLast)) }}" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">{{ __('Last Month') }}</a>
                                 <span class="text-gray-300 dark:text-gray-600">|</span>
-                                <a href="{{ route('projects.show', array_merge(['project' => $project->id], $tsPreset30)) }}" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">30 ngày</a>
+                                <a href="{{ route('projects.show', array_merge(['project' => $project->id], $tsPreset30)) }}" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">{{ __('30 days') }}</a>
                                 <span class="text-gray-300 dark:text-gray-600">|</span>
-                                <a href="{{ route('projects.show', array_merge(['project' => $project->id], $tsPreset7)) }}" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">7 ngày</a>
+                                <a href="{{ route('projects.show', array_merge(['project' => $project->id], $tsPreset7)) }}" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">{{ __('7 days') }}</a>
                             </div>
                         </form>
                     </div>
@@ -611,8 +611,8 @@
                             </colgroup>
                             <thead>
                                 <tr>
-                                    <th class="{{ $thC1 }}">Mục</th>
-                                    <th class="{{ $thC2 }}">Tổng</th>
+                                    <th class="{{ $thC1 }}">{{ __('Item') }}</th>
+                                    <th class="{{ $thC2 }}">{{ __('Total') }}</th>
                                     @foreach($tsDays as $day)
                                         @php
                                             $dk      = $day->format('Y-m-d');
@@ -634,7 +634,7 @@
 
                                 {{-- Section: Công việc --}}
                                 <tr>
-                                    <td class="{{ $secC1 }}">Công việc</td>
+                                    <td class="{{ $secC1 }}">{{ __('Tasks') }}</td>
                                     <td class="{{ $secC2 }}"></td>
                                     <td colspan="{{ $nDays }}" class="{{ $bgSec }}"></td>
                                 </tr>
@@ -689,7 +689,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td class="{{ $tdC1 }} text-gray-400 italic">Không có dữ liệu</td>
+                                        <td class="{{ $tdC1 }} text-gray-400 italic">{{ __('No data') }}</td>
                                         <td class="{{ $tdC2 }}"></td>
                                         <td colspan="{{ $nDays }}"></td>
                                     </tr>
@@ -698,7 +698,7 @@
                                 {{-- Task section total --}}
                                 @if(count($tsTaskRows) > 0)
                                 <tr class="border-t border-gray-200 dark:border-gray-600">
-                                    <td class="{{ $totC1 }}">Tổng công việc</td>
+                                    <td class="{{ $totC1 }}">{{ __('Task Total') }}</td>
                                     <td class="{{ $totC2 }}">
                                         <div class="text-gray-800 dark:text-gray-200">{{ $fmtHours($tsGrandTotalHours) }}</div>
                                         @if($tsGrandTotalOt > 0)<div class="text-orange-500">+{{ $fmtHours($tsGrandTotalOt) }}</div>@endif
@@ -721,7 +721,7 @@
 
                                 {{-- Section: Thành viên --}}
                                 <tr>
-                                    <td class="{{ $secC1 }} border-t-[3px] border-gray-400 dark:border-gray-500">Thành viên</td>
+                                    <td class="{{ $secC1 }} border-t-[3px] border-gray-400 dark:border-gray-500">{{ __('Members') }}</td>
                                     <td class="{{ $secC2 }} border-t-[3px] border-gray-400 dark:border-gray-500"></td>
                                     <td colspan="{{ $nDays }}" class="{{ $bgSec }} border-t-[3px] border-gray-400 dark:border-gray-500"></td>
                                 </tr>
@@ -777,7 +777,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td class="{{ $tdC1 }} text-gray-400 italic">Không có dữ liệu</td>
+                                        <td class="{{ $tdC1 }} text-gray-400 italic">{{ __('No data') }}</td>
                                         <td class="{{ $tdC2 }}"></td>
                                         <td colspan="{{ $nDays }}"></td>
                                     </tr>
@@ -786,7 +786,7 @@
                                 {{-- Grand total --}}
                                 @if(count($tsUserRows) > 0)
                                 <tr class="border-t border-gray-200 dark:border-gray-600">
-                                    <td class="{{ $totC1 }}">Tổng cộng</td>
+                                    <td class="{{ $totC1 }}">{{ __('Grand Total') }}</td>
                                     <td class="{{ $totC2 }}">
                                         <div class="text-gray-800 dark:text-gray-200">{{ $fmtHours($tsGrandTotalHours) }}</div>
                                         @if($tsGrandTotalOt > 0)<div class="text-orange-500">+{{ $fmtHours($tsGrandTotalOt) }}</div>@endif
@@ -816,7 +816,7 @@
                     <div class="px-4 py-3 border-t border-gray-100 dark:border-gray-700">
                         <div class="flex flex-wrap gap-6 text-sm">
                             <div>
-                                <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Tổng giờ</div>
+                                <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">{{ __('Total Hours') }}</div>
                                 <div class="font-bold text-gray-800 dark:text-gray-100">{{ number_format($tsGrandTotalHours + $tsGrandTotalOt, 1) }}h</div>
                                 @if($tsGrandTotalOt > 0)
                                     <div class="text-xs text-orange-500">OT: {{ number_format($tsGrandTotalOt, 1) }}h</div>
@@ -824,7 +824,7 @@
                             </div>
                             @if($tsCanViewSalary && ($tsGrandTotalCost + $tsGrandTotalOtCost) > 0)
                             <div>
-                                <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Tổng chi phí</div>
+                                <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">{{ __('Total Cost') }}</div>
                                 <div class="font-bold text-gray-800 dark:text-gray-100">{{ number_format($tsGrandTotalCost + $tsGrandTotalOtCost, 0, '.', ',') }} ₫</div>
                                 @if($tsGrandTotalOtCost > 0)
                                     <div class="text-xs text-orange-500">OT: {{ number_format($tsGrandTotalOtCost, 0, '.', ',') }} ₫</div>
@@ -862,17 +862,17 @@
 
                     {{-- Panel header --}}
                     <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                        <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200">Người phụ trách</h3>
+                        <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200">{{ __('Assignees') }}</h3>
                         @if($canEditBudget && $assigneeUsers->isNotEmpty())
                             <button type="button" @click="openBulk()"
                                 class="px-3 py-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-700 rounded-md hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition">
-                                Sửa hàng loạt
+                                {{ __('Bulk Edit Budgets') }}
                             </button>
                         @endif
                     </div>
 
                     @if($assigneeUsers->isEmpty())
-                        <div class="px-5 py-8 text-center text-sm text-gray-400">Chưa có người phụ trách nào.</div>
+                        <div class="px-5 py-8 text-center text-sm text-gray-400">{{ __('No assignees yet.') }}</div>
                     @else
 
                     {{-- Main table --}}
@@ -880,14 +880,14 @@
                         <table class="min-w-full text-sm">
                             <thead>
                                 <tr class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40">
-                                    <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-40">Nhân viên</th>
-                                    <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Chức vụ</th>
-                                    <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Cấp độ</th>
-                                    <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide min-w-[140px]">Tiến độ</th>
+                                    <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-40">{{ __('Employee') }}</th>
+                                    <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ __('Position') }}</th>
+                                    <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ __('Level') }}</th>
+                                    <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide min-w-[140px]">{{ __('Progress') }}</th>
                                     <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Budget</th>
                                     <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">NT</th>
                                     <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">OT</th>
-                                    <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Còn lại</th>
+                                    <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ __('Remaining') }}</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -934,7 +934,7 @@
                                             </button>
                                             <div x-show="open" x-cloak @click.away="open = false"
                                                 class="absolute right-0 top-full mt-1 z-30 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg p-3 w-48">
-                                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Budget (giờ)</p>
+                                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">{{ __('Budget (hours)') }}</p>
                                                 <form method="POST"
                                                     action="{{ route('projects.user-budgets.update', [$project, $au]) }}"
                                                     class="flex gap-2 items-center">
@@ -944,7 +944,7 @@
                                                         class="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 rounded-md text-sm px-2 py-1 focus:ring-indigo-500 focus:border-indigo-500">
                                                     <button type="submit"
                                                         class="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs rounded-md font-medium transition">
-                                                        Lưu
+                                                        {{ __('Save') }}
                                                     </button>
                                                 </form>
                                             </div>
@@ -981,7 +981,7 @@
                              @click.stop>
                             {{-- Modal header --}}
                             <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between shrink-0">
-                                <h4 class="text-base font-semibold text-gray-800 dark:text-gray-100">Sửa Budget hàng loạt</h4>
+                                <h4 class="text-base font-semibold text-gray-800 dark:text-gray-100">{{ __('Bulk Edit Budgets') }}</h4>
                                 <button type="button" @click="closeBulk()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                 </button>
@@ -990,18 +990,18 @@
                             {{-- Stats bar --}}
                             <div class="px-6 py-3 bg-gray-50 dark:bg-gray-700/40 border-b border-gray-200 dark:border-gray-700 flex flex-wrap gap-8 shrink-0">
                                 <div>
-                                    <p class="text-xs text-gray-400 dark:text-gray-500 mb-0.5">Budget dự án</p>
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 mb-0.5">{{ __('Project Budget') }}</p>
                                     <p class="text-sm font-semibold text-gray-700 dark:text-gray-200">
                                         {{ $project->budget_hours !== null ? number_format($project->budget_hours, 1) . 'h' : '—' }}
                                     </p>
                                 </div>
                                 <div>
-                                    <p class="text-xs text-gray-400 dark:text-gray-500 mb-0.5">Đã phân công</p>
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 mb-0.5">{{ __('Assigned') }}</p>
                                     <p class="text-sm font-semibold text-gray-700 dark:text-gray-200"
                                        x-text="totalAssigned.toFixed(1) + 'h'"></p>
                                 </div>
                                 <div>
-                                    <p class="text-xs text-gray-400 dark:text-gray-500 mb-0.5">Còn lại</p>
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 mb-0.5">{{ __('Remaining') }}</p>
                                     <p class="text-sm font-semibold"
                                        :class="remaining === null ? 'text-gray-400' : (remaining < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400')"
                                        x-text="remaining !== null ? remaining.toFixed(1) + 'h' : '—'"></p>
@@ -1016,10 +1016,10 @@
                                     <table class="min-w-full text-sm">
                                         <thead class="sticky top-0 z-10 bg-gray-50 dark:bg-gray-700/60">
                                             <tr class="border-b border-gray-200 dark:border-gray-700">
-                                                <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Nhân viên</th>
-                                                <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Chức vụ</th>
-                                                <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Cấp độ</th>
-                                                <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Budget (giờ)</th>
+                                                <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ __('Employee') }}</th>
+                                                <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ __('Position') }}</th>
+                                                <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ __('Level') }}</th>
+                                                <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ __('Budget (hours)') }}</th>
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -1046,11 +1046,11 @@
                                 <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-2 shrink-0">
                                     <button type="button" @click="closeBulk()"
                                         class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 transition">
-                                        Hủy
+                                        {{ __('Cancel') }}
                                     </button>
                                     <button type="submit"
                                         class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md transition">
-                                        Lưu tất cả
+                                        {{ __('Save all') }}
                                     </button>
                                 </div>
                             </form>

@@ -149,7 +149,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
-        <span class="text-sm" x-text="open ? 'Đóng' : 'Check In'">Check In</span>
+        <span class="text-sm" x-text="open ? '{{ __('Close') }}' : 'Check In'">Check In</span>
     </button>
 
     {{-- WFH modal (fixed inset-0, works fine inside a non-transform parent) --}}
@@ -182,27 +182,27 @@
                 @csrf
                 <input type="hidden" name="type" value="wfh">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Số giờ làm hôm nay</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('Hours Working Today') }}</label>
                     <input type="number" name="hours" step="0.5" min="0.5" max="24" x-model="hours"
                         class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Lý do / Công việc hôm nay</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('Reason / Task for Today') }}</label>
                     <textarea name="reason" rows="3" x-model="reason"
                         class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                        placeholder="Mô tả ngắn gọn công việc bạn sẽ làm..."></textarea>
+                        placeholder="{{ __('Briefly describe what you will be working on...') }}"></textarea>
                 </div>
                 <div class="flex justify-end gap-2 pt-1">
                     <button type="button" @click="showWfh = false"
                         class="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600
                                text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                        Hủy
+                        {{ __('Cancel') }}
                     </button>
                     <button type="submit" :disabled="submitting"
                         class="px-4 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-700
                                text-white font-medium transition disabled:opacity-50">
-                        <span x-show="!submitting">Gửi yêu cầu WFH</span>
-                        <span x-show="submitting" x-cloak>Đang gửi…</span>
+                        <span x-show="!submitting">{{ __('Send WFH request') }}</span>
+                        <span x-show="submitting" x-cloak>{{ __('Submitting…') }}</span>
                     </button>
                 </div>
             </form>
@@ -242,7 +242,7 @@
                 @csrf
 
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Giờ vào</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('Check-in Time') }}</label>
                     <div class="flex items-center gap-2 mt-1 px-3 py-2
                                 border border-gray-300 dark:border-gray-700 rounded-md
                                 bg-gray-50 dark:bg-gray-900
@@ -257,16 +257,16 @@
 
                 <div class="mb-5">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Giờ làm thực tế ước tính
+                        {{ __('Estimated actual work hours') }}
                         <span class="text-xs font-normal text-gray-400"
-                              x-text="'(trừ nghỉ trưa ' + lunchStart + '–' + lunchEnd + ')'"></span>
+                              x-text="'({{ __('excl. lunch') }} ' + lunchStart + '–' + lunchEnd + ')'"></span>
                     </label>
                     <div class="flex items-baseline gap-1.5 mt-1 px-3 py-2.5
                                 border border-orange-200 dark:border-orange-700 rounded-md
                                 bg-orange-50 dark:bg-orange-900/20">
                         <span class="text-2xl font-bold text-orange-600 dark:text-orange-400"
                               x-text="estimatedHours"></span>
-                        <span class="text-sm font-medium text-orange-500 dark:text-orange-400">giờ</span>
+                        <span class="text-sm font-medium text-orange-500 dark:text-orange-400">{{ __('hours') }}</span>
                     </div>
                 </div>
 
@@ -274,7 +274,7 @@
                     <button type="button" @click="showCheckoutConfirm = false"
                         class="px-4 py-2 text-sm rounded border border-gray-300 dark:border-gray-600
                                text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                        Hủy
+                        {{ __('Cancel') }}
                     </button>
                     <button type="submit" :disabled="coSubmitting"
                         class="inline-flex items-center gap-1.5 px-4 py-2 text-sm rounded
@@ -315,14 +315,14 @@ document.addEventListener('DOMContentLoaded', function () {
     function setLoading(on) {
         btn.disabled = on;
         const lbl = btn.querySelector('[data-label]');
-        if (lbl) lbl.textContent = on ? 'Đang kiểm tra…' : 'On Site';
+        if (lbl) lbl.textContent = on ? '{{ __('Checking…') }}' : 'On Site';
     }
 
     btn.addEventListener('click', function () {
         if (errBox) errBox.classList.add('hidden');
         if (!officeLat || !officeLng) { form.submit(); return; }
         if (!navigator.geolocation) {
-            if (errBox) { errBox.textContent = 'Trình duyệt không hỗ trợ định vị.'; errBox.classList.remove('hidden'); }
+            if (errBox) { errBox.textContent = '{{ __('Browser does not support geolocation.') }}'; errBox.classList.remove('hidden'); }
             return;
         }
         setLoading(true);
@@ -341,7 +341,7 @@ document.addEventListener('DOMContentLoaded', function () {
             },
             function (err) {
                 setLoading(false);
-                if (errBox) { errBox.textContent = 'Không thể lấy vị trí: ' + err.message; errBox.classList.remove('hidden'); }
+                if (errBox) { errBox.textContent = '{{ __('Unable to get location: ') }}' + err.message; errBox.classList.remove('hidden'); }
             },
             { timeout: 10000, maximumAge: 60000 }
         );
@@ -465,7 +465,7 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
         </svg>
         <span x-text="summaryTotal.toFixed(1) + 'h'">{{ $tlDisplay }}</span>
         <span x-show="summaryLeft > 0" class="text-xs font-normal opacity-75"
-              x-text="'/ ' + summaryLeft.toFixed(1) + 'h còn lại'"></span>
+              x-text="'/ ' + summaryLeft.toFixed(1) + 'h {{ __('remaining') }}'"></span>
         <span x-show="summaryLeft <= 0" class="text-xs font-normal opacity-75" x-cloak>✓</span>
     </button>
 
@@ -483,13 +483,13 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
         <div x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0 scale-95"
              x-transition:enter-end="opacity-100 scale-100"
-             class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+             class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md md:max-w-2xl border border-gray-200 dark:border-gray-700 flex flex-col max-h-[calc(100vh-2rem)]">
 
             {{-- Header --}}
             <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
                 <div>
                     <h3 class="font-semibold text-gray-800 dark:text-gray-100"
-                        x-text="editMode ? '✏️ Sửa nhật ký' : '⏱ Chấm giờ làm'">⏱ Chấm giờ làm</h3>
+                        x-text="editMode ? '✏️ {{ __('Edit log') }}' : '⏱ {{ __('Log time') }}'">⏱ {{ __('Log time') }}</h3>
                     <p class="text-xs text-gray-400 mt-0.5">{{ now()->translatedFormat('l, d/m/Y') }}</p>
                 </div>
                 <button type="button" @click="open = false"
@@ -500,143 +500,160 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
                 </button>
             </div>
 
-            {{-- Summary bar — reactive via Alpine --}}
-            <div class="px-5 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 flex items-center gap-4 text-xs">
-                <div class="flex items-center gap-1.5">
-                    <span class="text-gray-500 dark:text-gray-400">Công việc:</span>
-                    <span class="font-semibold text-gray-800 dark:text-gray-200" x-text="summaryWork.toFixed(1) + 'h'"></span>
-                </div>
-                <div class="flex items-center gap-1.5" x-show="summaryLeave > 0">
-                    <span class="text-amber-500">🏖</span>
-                    <span class="font-semibold text-amber-600 dark:text-amber-400" x-text="summaryLeave.toFixed(1) + 'h'"></span>
-                </div>
-                <div class="flex items-center gap-1.5 ml-auto">
-                    <span class="text-gray-500 dark:text-gray-400">Tổng:</span>
-                    <span class="font-bold"
-                          :class="btnPrimary ? 'text-pink-600 dark:text-pink-400' : 'text-green-600 dark:text-green-400'"
-                          x-text="summaryTotal.toFixed(1) + 'h ' + (btnPrimary ? '/ 8h' : '✓')"></span>
-                </div>
-            </div>
-
             {{-- Form --}}
             <form method="POST" :action="editMode ? ('{{ url('time-logs') }}/' + editId) : '{{ route('time-logs.store') }}'"
                   @submit="
                       const newTotal = (editMode ? baseTotal : summaryTotal) + (+hours);
                       if (hours > summaryLeft) {
-                          const msg = 'Số giờ nhập (' + (+hours).toFixed(1) + 'h) vượt quá thời gian còn lại ('
-                                    + summaryLeft.toFixed(1) + 'h). Tổng hôm nay sẽ là '
-                                    + newTotal.toFixed(1) + 'h. Vẫn tiếp tục?';
+                          const msg = '{{ __("Hours entered") }}' + ' (' + (+hours).toFixed(1) + 'h) {{ __("exceeds remaining") }} (' + summaryLeft.toFixed(1) + 'h). {{ __("Today total will be") }} ' + newTotal.toFixed(1) + 'h. {{ __("Continue?") }}';
                           if (!window.confirm(msg)) { $event.preventDefault(); return; }
                       }
                       submitting = true;
                   "
-                  class="px-5 py-5 space-y-4">
-                @csrf
-                <input type="hidden" name="_method" :value="editMode ? 'PUT' : 'POST'">
-                <input type="hidden" name="_fab"       value="1">
-                <input type="hidden" name="project_id" id="fab-project-id" value="">
-                <input type="hidden" name="task_id"    id="fab-task-id"    value="">
-                <input type="hidden" name="user_id"    id="fab-user-id-hidden" value="{{ auth()->id() }}">
+                  class="flex flex-col flex-1 overflow-hidden">
 
-                {{-- User (only shown if permission to log for others; not changeable when editing) --}}
-                @if($tlUsers)
-                <div x-show="!editMode">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Người dùng</label>
-                    <select id="fab-user-ts">
-                        @foreach($tlUsers as $u)
-                            <option value="{{ $u->id }}" {{ $u->id === auth()->id() ? 'selected' : '' }}>
-                                {{ $u->name }}{{ $u->position ? ' · '.$u->position : '' }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                @endif
+                {{-- Scrollable area --}}
+                <div class="overflow-y-auto flex-1">
 
-                {{-- Date --}}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ngày</label>
-                    <input type="date" id="fab-date" name="date" value="{{ $tlToday }}"
-                        @change="
-                            const uid = document.getElementById('fab-user-id-hidden')?.value || '{{ auth()->id() }}';
-                            fetchSummary(uid, $event.target.value);
-                        "
-                        class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-pink-500 focus:border-pink-500">
-                </div>
-
-                {{-- Project (searchable via TomSelect) --}}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Dự án <span class="text-gray-400 font-normal">(tuỳ chọn)</span>
-                    </label>
-                    <select id="fab-project-ts">
-                        <option value="">— Không có dự án —</option>
-                        @foreach($tlProjects as $p)
-                            <option value="{{ $p->id }}">{{ $p->project_code }} · {{ $p->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                {{-- Task (searchable via TomSelect; selecting a task auto-fills the project) --}}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Công việc <span class="text-gray-400 font-normal">(tuỳ chọn)</span>
-                    </label>
-                    <select id="fab-task-ts">
-                        <option value="">— Không có công việc —</option>
-                        {{-- Options populated by JS from window._tlFabTasks --}}
-                    </select>
-                </div>
-
-                {{-- Hours + quick buttons --}}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Số giờ</label>
-                    <div class="flex gap-1.5 flex-wrap mb-2">
-                        @foreach([0.5, 1, 2, 4, 8] as $qh)
-                            <button type="button" @click="quickSet({{ $qh }})"
-                                :class="hours == {{ $qh }} ? 'bg-pink-100 dark:bg-pink-900/40 border-pink-400 text-pink-700 dark:text-pink-300' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'"
-                                class="px-2.5 py-1 text-xs rounded border transition font-medium">
-                                {{ $qh >= 1 ? (int)$qh . 'h' : ($qh * 60) . 'm' }}
-                            </button>
-                        @endforeach
-                        @if($tlLeft > 0 && $tlLeft <= 8)
-                            <button type="button" @click="quickSet({{ $tlLeft }})"
-                                :class="hours == {{ $tlLeft }} ? 'bg-pink-100 dark:bg-pink-900/40 border-pink-400 text-pink-700 dark:text-pink-300' : 'border-pink-300 dark:border-pink-700 text-pink-600 dark:text-pink-400 hover:bg-pink-50 dark:hover:bg-pink-900/20'"
-                                class="px-2.5 py-1 text-xs rounded border transition font-medium">
-                                ↑ {{ number_format($tlLeft, 2) == (int)$tlLeft ? (int)$tlLeft . 'h' : number_format($tlLeft, 2) . 'h' }} còn lại
-                            </button>
-                        @endif
+                    {{-- Summary bar — reactive via Alpine --}}
+                    <div class="px-5 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 flex items-center gap-4 text-xs">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-gray-500 dark:text-gray-400">{{ __('Work') }}:</span>
+                            <span class="font-semibold text-gray-800 dark:text-gray-200" x-text="summaryWork.toFixed(1) + 'h'"></span>
+                        </div>
+                        <div class="flex items-center gap-1.5" x-show="summaryLeave > 0">
+                            <span class="text-amber-500">🏖</span>
+                            <span class="font-semibold text-amber-600 dark:text-amber-400" x-text="summaryLeave.toFixed(1) + 'h'"></span>
+                        </div>
+                        <div class="flex items-center gap-1.5 ml-auto">
+                            <span class="text-gray-500 dark:text-gray-400">{{ __('Total') }}:</span>
+                            <span class="font-bold"
+                                  :class="btnPrimary ? 'text-pink-600 dark:text-pink-400' : 'text-green-600 dark:text-green-400'"
+                                  x-text="summaryTotal.toFixed(1) + 'h ' + (btnPrimary ? '/ 8h' : '✓')"></span>
+                        </div>
                     </div>
-                    <input type="number" name="time_spent" x-model.number="hours"
-                        step="0.25" min="0.25" max="24" required
-                        class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-pink-500 focus:border-pink-500">
-                </div>
 
-                {{-- Description --}}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mô tả <span class="text-gray-400 font-normal">(tuỳ chọn)</span></label>
-                    <textarea name="description" x-model="desc" rows="2"
-                        class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-pink-500 focus:border-pink-500"
-                        placeholder="Làm gì hôm nay…"></textarea>
+                    {{-- Field area --}}
+                    <div class="px-5 py-5">
+                        @csrf
+                        <input type="hidden" name="_method" :value="editMode ? 'PUT' : 'POST'">
+                        <input type="hidden" name="_fab"       value="1">
+                        <input type="hidden" name="project_id" id="fab-project-id" value="">
+                        <input type="hidden" name="task_id"    id="fab-task-id"    value="">
+                        <input type="hidden" name="user_id"    id="fab-user-id-hidden" value="{{ auth()->id() }}">
+
+                        <div class="grid md:grid-cols-2 md:gap-x-6 gap-y-4">
+                            {{-- LEFT COLUMN --}}
+                            <div class="space-y-4">
+
+                                {{-- User (only shown if permission to log for others; not changeable when editing) --}}
+                                @if($tlUsers)
+                                <div x-show="!editMode">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('User') }}</label>
+                                    <select id="fab-user-ts">
+                                        @foreach($tlUsers as $u)
+                                            <option value="{{ $u->id }}" {{ $u->id === auth()->id() ? 'selected' : '' }}>
+                                                {{ $u->name }}{{ $u->position ? ' · '.$u->position : '' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                @endif
+
+                                {{-- Date --}}
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('Date') }}</label>
+                                    <input type="date" id="fab-date" name="date" value="{{ $tlToday }}"
+                                        @change="
+                                            const uid = document.getElementById('fab-user-id-hidden')?.value || '{{ auth()->id() }}';
+                                            fetchSummary(uid, $event.target.value);
+                                        "
+                                        class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-pink-500 focus:border-pink-500">
+                                </div>
+
+                                {{-- Task (searchable via TomSelect; selecting a task auto-fills the project) --}}
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        {{ __('Task') }} <span class="text-gray-400 font-normal">{{ __('(optional)') }}</span>
+                                    </label>
+                                    <select id="fab-task-ts">
+                                        <option value="">— {{ __('No task') }} —</option>
+                                        {{-- Options populated by JS from window._tlFabTasks --}}
+                                    </select>
+                                </div>
+
+                                {{-- Project (searchable via TomSelect) --}}
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        {{ __('Project') }} <span class="text-gray-400 font-normal">{{ __('(optional)') }}</span>
+                                    </label>
+                                    <select id="fab-project-ts">
+                                        <option value="">— {{ __('No project') }} —</option>
+                                        @foreach($tlProjects as $p)
+                                            <option value="{{ $p->id }}">{{ $p->project_code }} · {{ $p->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                            </div>
+                            {{-- RIGHT COLUMN --}}
+                            <div class="space-y-4">
+
+                                {{-- Hours + quick buttons --}}
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{{ __('Hours') }}</label>
+                                    <div class="flex gap-1.5 flex-wrap mb-2">
+                                        @foreach([0.5, 1, 2, 4, 8] as $qh)
+                                            <button type="button" @click="quickSet({{ $qh }})"
+                                                :class="hours == {{ $qh }} ? 'bg-pink-100 dark:bg-pink-900/40 border-pink-400 text-pink-700 dark:text-pink-300' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'"
+                                                class="px-2.5 py-1 text-xs rounded border transition font-medium">
+                                                {{ $qh >= 1 ? (int)$qh . 'h' : ($qh * 60) . 'm' }}
+                                            </button>
+                                        @endforeach
+                                        @if($tlLeft > 0 && $tlLeft <= 8)
+                                            <button type="button" @click="quickSet({{ $tlLeft }})"
+                                                :class="hours == {{ $tlLeft }} ? 'bg-pink-100 dark:bg-pink-900/40 border-pink-400 text-pink-700 dark:text-pink-300' : 'border-pink-300 dark:border-pink-700 text-pink-600 dark:text-pink-400 hover:bg-pink-50 dark:hover:bg-pink-900/20'"
+                                                class="px-2.5 py-1 text-xs rounded border transition font-medium">
+                                                ↑ {{ number_format($tlLeft, 2) == (int)$tlLeft ? (int)$tlLeft . 'h' : number_format($tlLeft, 2) . 'h' }} {{ __('remaining') }}
+                                            </button>
+                                        @endif
+                                    </div>
+                                    <input type="number" name="time_spent" x-model.number="hours"
+                                        step="0.25" min="0.25" max="24" required
+                                        class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-pink-500 focus:border-pink-500">
+                                </div>
+
+                                {{-- Description --}}
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('Description') }} <span class="text-gray-400 font-normal">{{ __('(optional)') }}</span></label>
+                                    <textarea name="description" x-model="desc" rows="2"
+                                        class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-pink-500 focus:border-pink-500"
+                                        placeholder="{{ __('What did you work on?') }}"></textarea>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {{-- Actions --}}
-                <div class="flex justify-end gap-2 pt-1">
+                <div class="px-5 py-4 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-2">
                     <button type="button" x-show="editMode" x-cloak
-                        @click="if (window.confirm('Xóa nhật ký này?')) document.getElementById('fab-delete-form').submit();"
+                        @click="if (window.confirm('{{ addslashes(__('Delete this log?')) }}')) document.getElementById('fab-delete-form').submit();"
                         class="mr-auto px-4 py-2 text-sm rounded-lg border border-red-300 dark:border-red-700
                                text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
-                        Xóa
+                        {{ __('Delete') }}
                     </button>
                     <button type="button" @click="open = false"
                         class="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600
                                text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                        Hủy
+                        {{ __('Cancel') }}
                     </button>
                     <button type="submit" :disabled="submitting || hours <= 0"
                         class="px-4 py-2 text-sm rounded-lg bg-pink-600 hover:bg-pink-700
                                text-white font-medium transition disabled:opacity-50">
-                        <span x-show="!submitting" x-text="editMode ? 'Cập nhật' : 'Lưu giờ làm'">Lưu giờ làm</span>
-                        <span x-show="submitting" x-cloak>Đang lưu…</span>
+                        <span x-show="!submitting" x-text="editMode ? '{{ __('Update') }}' : '{{ __('Log hours') }}'">{{ __('Log hours') }}</span>
+                        <span x-show="submitting" x-cloak>{{ __('Saving…') }}</span>
                     </button>
                 </div>
             </form>
@@ -702,7 +719,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── Task TomSelect (initialised first so projTs.onChange can reference it) ──
     window._fabTaskTs = new TomSelect(taskEl, {
         allowEmptyOption: true,
-        placeholder: '— Không có công việc —',
+        placeholder: '— {{ __("No task") }} —',
         options: taskOpts(null),
         onChange: function (val) {
             document.getElementById('fab-task-id').value = val || '';
@@ -721,7 +738,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── Project TomSelect ──────────────────────────────────────────────────────
     window._fabProjTs = new TomSelect(projEl, {
         allowEmptyOption: true,
-        placeholder: '— Không có dự án —',
+        placeholder: '— {{ __("No project") }} —',
         onChange: function (val) {
             document.getElementById('fab-project-id').value = val || '';
             // Re-populate task options for the chosen project

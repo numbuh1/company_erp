@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Timesheet Dự án</h2>
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">{{ __('Project Timesheet') }}</h2>
         </div>
     </x-slot>
 
@@ -50,8 +50,8 @@
         <div class="border-b border-gray-200 dark:border-gray-700">
             <nav class="flex gap-1">
                 @php $tabBase = 'px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition'; $tabOn = 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400'; $tabOff = 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'; @endphp
-                <a href="{{ route('projects.index') }}"      class="{{ $tabBase }} {{ $tabOff }}">Dự án</a>
-                <a href="{{ route('tasks.index') }}"         class="{{ $tabBase }} {{ $tabOff }}">Công việc</a>
+                <a href="{{ route('projects.index') }}"      class="{{ $tabBase }} {{ $tabOff }}">{{ __('Projects') }}</a>
+                <a href="{{ route('tasks.index') }}"         class="{{ $tabBase }} {{ $tabOff }}">{{ __('Tasks') }}</a>
                 <a href="{{ route('timesheets.project') }}"  class="{{ $tabBase }} {{ $tabOn }}">Timesheet</a>
             </nav>
         </div>
@@ -63,12 +63,12 @@
 
                 {{-- Date range --}}
                 <div>
-                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Từ ngày</label>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ __('From date') }}</label>
                     <input type="date" name="from_date" value="{{ $fromDate }}"
                         class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded text-sm px-2 py-1.5">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Đến ngày</label>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ __('To date') }}</label>
                     <input type="date" name="to_date" value="{{ $toDate }}"
                         class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded text-sm px-2 py-1.5">
                 </div>
@@ -82,10 +82,10 @@
                 @endphp
                 <div class="flex gap-1 self-end pb-0.5">
                     @foreach([
-                        ['label' => 'Tuần này',   'f' => $thisWeek['from'],  't' => $thisWeek['to']],
-                        ['label' => 'Tuần trước', 'f' => $lastWeek['from'],  't' => $lastWeek['to']],
-                        ['label' => 'Tháng này',  'f' => $thisMonth['from'], 't' => $thisMonth['to']],
-                        ['label' => 'Tháng trước','f' => $lastMonth['from'], 't' => $lastMonth['to']],
+                        ['label' => __('This Week'),   'f' => $thisWeek['from'],  't' => $thisWeek['to']],
+                        ['label' => __('Last Week'),   'f' => $lastWeek['from'],  't' => $lastWeek['to']],
+                        ['label' => __('This Month'),  'f' => $thisMonth['from'], 't' => $thisMonth['to']],
+                        ['label' => __('Last Month'),  'f' => $lastMonth['from'], 't' => $lastMonth['to']],
                     ] as $q)
                         @php $isActive = $fromDate === $q['f'] && $toDate === $q['t']; @endphp
                         <button type="button"
@@ -102,8 +102,8 @@
                 {{-- Project multi-select --}}
                 @if($availableProjects->isNotEmpty())
                 <div class="min-w-[200px]">
-                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Dự án</label>
-                    <select name="project_ids[]" multiple data-multi-select data-placeholder="Tất cả dự án"
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ __('Project') }}</label>
+                    <select name="project_ids[]" multiple data-multi-select data-placeholder="{{ __('All projects') }}"
                         class="w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md text-sm">
                         @foreach($availableProjects as $p)
                             <option value="{{ $p->id }}" {{ in_array($p->id, $filterProjectIds) ? 'selected' : '' }}>
@@ -117,8 +117,8 @@
                 {{-- Task multi-select --}}
                 @if($availableTasks->isNotEmpty())
                 <div class="min-w-[200px]">
-                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Công việc</label>
-                    <select name="task_ids[]" multiple data-multi-select data-placeholder="Tất cả công việc"
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ __('Task') }}</label>
+                    <select name="task_ids[]" multiple data-multi-select data-placeholder="{{ __('All tasks') }}"
                         class="w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md text-sm">
                         @foreach($availableTasks as $t)
                             <option value="{{ $t->id }}" {{ in_array($t->id, $filterTaskIds) ? 'selected' : '' }}>
@@ -132,8 +132,8 @@
                 {{-- User multi-select --}}
                 @if($availableUsers && $availableUsers->isNotEmpty())
                 <div class="min-w-[180px]">
-                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Thành viên</label>
-                    <select name="user_ids[]" multiple data-multi-select data-placeholder="Tất cả thành viên"
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ __('Member') }}</label>
+                    <select name="user_ids[]" multiple data-multi-select data-placeholder="{{ __('All members') }}"
                         class="w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md text-sm">
                         @foreach($availableUsers as $u)
                             <option value="{{ $u->id }}" {{ in_array($u->id, $filterUserIds) ? 'selected' : '' }}>
@@ -147,11 +147,11 @@
                 <div class="self-end flex gap-2">
                     <button type="submit"
                         class="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 transition">
-                        Áp dụng
+                        {{ __('Apply') }}
                     </button>
                     <a href="{{ route('timesheets.project') }}"
                         class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                        Đặt lại
+                        {{ __('Reset') }}
                     </a>
                 </div>
             </form>
@@ -162,12 +162,12 @@
         <div class="flex items-center gap-3">
             <button type="button" @click="expandAll()"
                 class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">
-                Mở rộng tất cả
+                {{ __('Expand all') }}
             </button>
             <span class="text-gray-300 dark:text-gray-600">|</span>
             <button type="button" @click="collapseAll()"
                 class="text-xs text-gray-500 dark:text-gray-400 hover:underline">
-                Thu gọn tất cả
+                {{ __('Collapse all') }}
             </button>
         </div>
         @endif
@@ -175,7 +175,7 @@
         {{-- ── Table ──────────────────────────────────────────────────── --}}
         @if(empty($projectGroups))
             <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-10 text-center text-gray-400 text-sm">
-                Không có dữ liệu trong khoảng thời gian được chọn.
+                {{ __('No data in the selected period.') }}
             </div>
         @else
         <div class="pj-scroll bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-auto max-h-[calc(100vh-10rem)]">
@@ -192,10 +192,10 @@
                 <thead>
                     <tr>
                         <th class="pj-c1 bg-gray-50 dark:bg-gray-700 px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Mục
+                            {{ __('Item') }}
                         </th>
                         <th class="pj-c2 bg-gray-200 dark:bg-gray-600 px-2 py-2 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase">
-                            Tổng
+                            {{ __('Total') }}
                         </th>
                         @foreach($days as $day)
                             @php
@@ -281,7 +281,7 @@
                             $openKey = $pk . '_' . $tk;
                             $tId     = $tg['task_id'];
                             $tLink   = $tg['task'] ? route('tasks.show', $tId) : null;
-                            $tLabel  = $tg['task']?->name ?? '(Không có công việc)';
+                            $tLabel  = $tg['task']?->name ?? __('(No task)');
                         @endphp
 
                         <tr x-show="openProjects['{{ $pk }}']" x-cloak
@@ -425,7 +425,7 @@
                 @if($grandTotalHours > 0 || $grandTotalOt > 0)
                 <tr class="border-t-2 border-gray-300 dark:border-gray-500 bg-gray-100 dark:bg-gray-700">
                     <td class="pj-c1 bg-gray-100 dark:bg-gray-700 px-3 py-2 font-bold text-gray-700 dark:text-gray-200 uppercase text-[11px] tracking-wide">
-                        Tổng cộng
+                        {{ __('Grand Total') }}
                     </td>
                     <td class="pj-c2 bg-gray-200 dark:bg-gray-600 px-2 py-2 text-center font-bold">
                         @if($grandTotalHours > 0)

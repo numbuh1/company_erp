@@ -37,7 +37,7 @@
 
         {{-- Header --}}
         <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10">
-            <h3 id="lrm-title" class="text-base font-semibold text-gray-900 dark:text-gray-100">Yêu cầu nghỉ phép</h3>
+            <h3 id="lrm-title" class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ __('Leave Request') }}</h3>
             <button onclick="closeLR()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
@@ -46,18 +46,18 @@
         {{-- Body --}}
         <div class="px-6 py-5 space-y-4">
 
-            <div id="lrm-loading" class="hidden py-10 text-center text-gray-400 text-sm">Đang tải…</div>
+            <div id="lrm-loading" class="hidden py-10 text-center text-gray-400 text-sm">{{ __('Loading…') }}</div>
 
             {{-- Status banner --}}
             <div id="lrm-status-banner" class="hidden rounded-lg px-4 py-2.5 text-sm font-medium"></div>
 
             {{-- User --}}
             <div id="lrm-user-row" class="hidden">
-                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Người dùng</label>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('User') }}</label>
                 <p id="lrm-user-display" class="hidden text-sm font-medium text-gray-900 dark:text-gray-100 py-1"></p>
                 @if($lrmCanTeamOrAll)
                     <select id="lrm-user-select" class="hidden w-full">
-                        <option value="">— Chọn người dùng —</option>
+                        <option value="">{{ __('— Select user —') }}</option>
                         @foreach($lrmUsers as $u)
                             <option value="{{ $u->id }}">{{ $u->name }}{{ $u->position ? ' · ' . $u->position : '' }}</option>
                         @endforeach
@@ -69,24 +69,24 @@
 
             {{-- Type --}}
             <div>
-                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Loại nghỉ</label>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('Leave Type') }}</label>
                 <p id="lrm-type-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
                 <select id="lrm-type" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
-                    <option value="annual">Nghỉ phép năm</option>
-                    <option value="sick">Nghỉ ốm</option>
-                    <option value="unpaid">Nghỉ không lương</option>
+                    <option value="annual">{{ __('Annual leave') }}</option>
+                    <option value="sick">{{ __('Sick leave') }}</option>
+                    <option value="unpaid">{{ __('Unpaid leave') }}</option>
                 </select>
             </div>
 
             {{-- Start / End --}}
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Bắt đầu</label>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('Start') }}</label>
                     <p id="lrm-start-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
                     <input id="lrm-start-at" type="datetime-local" lang="en-GB" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Kết thúc</label>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('End') }}</label>
                     <p id="lrm-end-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
                     <input id="lrm-end-at" type="datetime-local" lang="en-GB" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
                 </div>
@@ -94,22 +94,22 @@
 
             {{-- Partial-day section --}}
             <div id="lrm-partial-section" class="hidden p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg space-y-2">
-                <p class="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide">⚡ Chỉnh giờ nghỉ từng ngày</p>
+                <p class="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide">⚡ {{ __('Customize daily leave hours') }}</p>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Ngày đầu <span id="lrm-start-label" class="text-gray-400"></span></label>
+                        <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">{{ __('Start Day') }} <span id="lrm-start-label" class="text-gray-400"></span></label>
                         <div class="flex items-center gap-1.5">
                             <input type="number" step="0.25" min="0" max="24" id="lrm-start-day" placeholder="0"
                                 class="w-20 border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-1.5">
-                            <span class="text-xs text-gray-500">giờ</span>
+                            <span class="text-xs text-gray-500">{{ __('hours') }}</span>
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Ngày cuối <span id="lrm-end-label" class="text-gray-400"></span></label>
+                        <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">{{ __('End Day') }} <span id="lrm-end-label" class="text-gray-400"></span></label>
                         <div class="flex items-center gap-1.5">
                             <input type="number" step="0.25" min="0" max="24" id="lrm-end-day" placeholder="0"
                                 class="w-20 border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-1.5">
-                            <span class="text-xs text-gray-500">giờ</span>
+                            <span class="text-xs text-gray-500">{{ __('hours') }}</span>
                         </div>
                     </div>
                 </div>
@@ -120,7 +120,7 @@
 
             {{-- Total hours --}}
             <div>
-                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Tổng giờ nghỉ</label>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('Total leave hours') }}</label>
                 <p id="lrm-hours-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
                 <input id="lrm-hours" type="number" step="0.25" min="0" placeholder="0"
                     class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
@@ -129,13 +129,13 @@
             {{-- Balance preview --}}
             <div id="lrm-balance-preview" class="hidden p-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 rounded-lg space-y-1">
                 <div class="flex items-center gap-2 flex-wrap text-sm">
-                    <span class="text-gray-500 dark:text-gray-400">Giờ phép còn lại:</span>
+                    <span class="text-gray-500 dark:text-gray-400">{{ __('Annual leave balance:') }}</span>
                     <span id="lrm-balance-current" class="font-semibold text-indigo-700 dark:text-indigo-300"></span>
                     <span id="lrm-balance-arrow" class="hidden text-gray-400">→</span>
                     <span id="lrm-balance-after" class="hidden font-semibold"></span>
                 </div>
                 <div class="flex items-center gap-2 flex-wrap text-sm">
-                    <span class="text-gray-500 dark:text-gray-400">Ngày phép còn lại:</span>
+                    <span class="text-gray-500 dark:text-gray-400">{{ __('Leave days remaining:') }}</span>
                     <span id="lrm-balance-current-days" class="font-semibold text-indigo-700 dark:text-indigo-300"></span>
                     <span id="lrm-balance-arrow-days" class="hidden text-gray-400">→</span>
                     <span id="lrm-balance-after-days" class="hidden font-semibold"></span>
@@ -144,27 +144,27 @@
 
             {{-- Description --}}
             <div>
-                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Lý do</label>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('Reason') }}</label>
                 <p id="lrm-desc-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1 whitespace-pre-wrap min-h-[1.5rem]"></p>
                 <textarea id="lrm-description" rows="3"
                     class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2"
-                    placeholder="Nhập lý do…"></textarea>
+                    placeholder="{{ __('Enter reason…') }}"></textarea>
             </div>
 
             {{-- Reject reason display --}}
             <div id="lrm-reject-display" class="hidden p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
-                <p class="text-xs font-semibold text-red-600 dark:text-red-400 mb-1">Lý do từ chối</p>
+                <p class="text-xs font-semibold text-red-600 dark:text-red-400 mb-1">{{ __('Reject Reason') }}</p>
                 <p id="lrm-reject-reason-text" class="text-sm text-red-700 dark:text-red-300"></p>
             </div>
 
             {{-- Inline reject input --}}
             <div id="lrm-reject-section" class="hidden space-y-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
-                <label class="block text-xs font-semibold text-red-600 dark:text-red-400">Lý do từ chối <span>*</span></label>
-                <textarea id="lrm-reject-input" rows="3" placeholder="Nhập lý do từ chối…"
+                <label class="block text-xs font-semibold text-red-600 dark:text-red-400">{{ __('Reject Reason') }} <span>*</span></label>
+                <textarea id="lrm-reject-input" rows="3" placeholder="{{ __('Enter rejection reason…') }}"
                     class="w-full border-red-300 dark:border-red-600 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2"></textarea>
                 <div class="flex gap-2 justify-end">
-                    <button onclick="_lrmCancelReject()" class="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition">Hủy</button>
-                    <button onclick="_lrmConfirmReject()" class="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition">Xác nhận từ chối</button>
+                    <button onclick="_lrmCancelReject()" class="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition">{{ __('Cancel') }}</button>
+                    <button onclick="_lrmConfirmReject()" class="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition">{{ __('Confirm Reject') }}</button>
                 </div>
             </div>
 
@@ -177,6 +177,30 @@
 
 <script>
 (function () {
+    var _LRM = {
+        close:       '{{ __("Close") }}',
+        cancel:      '{{ __("Cancel") }}',
+        create:      '{{ __("Create") }}',
+        save:        '{{ __("Save") }}',
+        edit:        '{{ __("Edit") }}',
+        approve:     '{{ __("Approve") }}',
+        reject:      '{{ __("Reject") }}',
+        titleCreate: '{{ __("Create Leave Request") }}',
+        titleView:   '{{ __("Leave Request") }}',
+        titleEdit:   '{{ __("Edit Leave Request") }}',
+        pending:     '{{ __("Pending") }}',
+        approved:    '{{ __("Approved") }}',
+        rejected:    '{{ __("Rejected") }}',
+        annual:      '{{ __("Annual leave") }}',
+        sick:        '{{ __("Sick leave") }}',
+        unpaid:      '{{ __("Unpaid leave") }}',
+        errSave:     '{{ __("Error saving request.") }}',
+        errConn:     '{{ __("Connection error.") }}',
+        bdTitle:     '{{ __("Expected total hours") }}',
+        bdDay:       'Ngày',
+        bdWorkDays:  '{{ __("working days") }}',
+        bdExcl:      '{{ __("8h/day, excl. weekends & holidays") }}',
+    };
     var CSRF    = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     var AUTH_ID = {{ $lrmAuth?->id ?? 'null' }};
     var CAN_TEAM_OR_ALL = {{ $lrmCanTeamOrAll ? 'true' : 'false' }};
@@ -219,14 +243,14 @@
         fetch(_LR_URL + '/' + id, { headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF } })
             .then(function(r){ return r.json(); })
             .then(function(d){ hide($g('lrm-loading')); _data = d; _populateView(d); })
-            .catch(function(){ hide($g('lrm-loading')); $g('lrm-btn-area').innerHTML = _btn('Đóng','closeLR()','secondary'); });
+            .catch(function(){ hide($g('lrm-loading')); $g('lrm-btn-area').innerHTML = _btn(_LRM.close,'closeLR()','secondary'); });
     };
 
     window.openLeaveCreate = function () {
         _mode = 'create'; _id = null; _data = null; _balance = null; _totalManual = false;
         _showOverlay();
         hide($g('lrm-loading')); _hideBody();
-        $g('lrm-title').textContent = 'Tạo yêu cầu nghỉ phép';
+        $g('lrm-title').textContent = _LRM.titleCreate;
         _populateCreate();
     };
 
@@ -261,8 +285,8 @@
             body: JSON.stringify(payload),
         })
         .then(function(r){ return r.json(); })
-        .then(function(d){ if (d.success) { closeLR(); location.reload(); } else { alert(d.message || 'Lỗi khi lưu yêu cầu.'); } })
-        .catch(function(){ alert('Lỗi kết nối.'); });
+        .then(function(d){ if (d.success) { closeLR(); location.reload(); } else { alert(d.message || _LRM.errSave); } })
+        .catch(function(){ alert(_LRM.errConn); });
     };
 
     window._lrmApprove = function () {
@@ -314,17 +338,17 @@
         _fetchBalance(AUTH_ID);
         _bindListeners();
         $g('lrm-btn-area').innerHTML =
-            _btn('Bỏ', 'closeLR()', 'secondary') +
-            _btn('Tạo', '_lrmSubmit()', 'primary');
+            _btn(_LRM.cancel, 'closeLR()', 'secondary') +
+            _btn(_LRM.create, '_lrmSubmit()', 'primary');
     }
 
     function _populateView(d) {
         var lr = d.leave;
-        $g('lrm-title').textContent = 'Yêu cầu nghỉ phép';
+        $g('lrm-title').textContent = _LRM.titleView;
         _balance = d.leave_balance;
 
         var banner = $g('lrm-status-banner');
-        var labels = { pending: 'Đang chờ duyệt', approved: 'Đã duyệt', rejected: 'Đã từ chối' };
+        var labels = { pending: _LRM.pending, approved: _LRM.approved, rejected: _LRM.rejected };
         var cls = {
             pending:  'bg-yellow-50 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-700',
             approved: 'bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-300 border border-green-200 dark:border-green-700',
@@ -338,7 +362,7 @@
         $g('lrm-user-display').textContent = lr.user_name;
         show($g('lrm-user-display'));
 
-        var typeLabels = { annual: 'Nghỉ phép năm', sick: 'Nghỉ ốm', unpaid: 'Nghỉ không lương' };
+        var typeLabels = { annual: _LRM.annual, sick: _LRM.sick, unpaid: _LRM.unpaid };
         $g('lrm-type-display').textContent = typeLabels[lr.type] || lr.type;
         show($g('lrm-type-display'));
 
@@ -373,15 +397,15 @@
         }
 
         var btns = '';
-        if (d.can_edit)    btns += _btn('Chỉnh sửa', '_lrmSwitchToEdit()', 'secondary');
-        if (d.can_approve) btns += _btn('Phê duyệt', '_lrmApprove()', 'success') + _btn('Từ chối', '_lrmShowReject()', 'danger');
-        btns += _btn('Đóng', 'closeLR()', 'secondary');
+        if (d.can_edit)    btns += _btn(_LRM.edit, '_lrmSwitchToEdit()', 'secondary');
+        if (d.can_approve) btns += _btn(_LRM.approve, '_lrmApprove()', 'success') + _btn(_LRM.reject, '_lrmShowReject()', 'danger');
+        btns += _btn(_LRM.close, 'closeLR()', 'secondary');
         $g('lrm-btn-area').innerHTML = btns;
     }
 
     function _populateEdit() {
         var lr = _data.leave;
-        $g('lrm-title').textContent = 'Chỉnh sửa yêu cầu nghỉ phép';
+        $g('lrm-title').textContent = _LRM.titleEdit;
 
         hide($g('lrm-type-display'));    show($g('lrm-type'));
         hide($g('lrm-start-display'));   show($g('lrm-start-at'));
@@ -404,8 +428,8 @@
         _lrmCalc();
 
         $g('lrm-btn-area').innerHTML =
-            _btn('Bỏ', 'closeLR()', 'secondary') +
-            _btn('Lưu', '_lrmSubmit()', 'primary');
+            _btn(_LRM.cancel, 'closeLR()', 'secondary') +
+            _btn(_LRM.save, '_lrmSubmit()', 'primary');
     }
 
     // ── Balance ───────────────────────────────────────────────────────
@@ -479,10 +503,10 @@
         var bd=$g('lrm-breakdown');
         if(bd){
             var dot='<span class="text-blue-400 mr-1">•</span>';
-            var html='<p class="font-semibold text-blue-700 dark:text-blue-400 mb-1.5">Tổng giờ dự kiến</p><div class="space-y-0.5">';
-            html+=dot+'<strong>Ngày '+_fd(startDt)+'</strong>: '+sdH.toFixed(1)+'h<br>';
-            if(mid>0) html+=dot+'<strong>'+mid+' ngày làm việc</strong>: '+(mid*8)+'h <span class="text-gray-400">(8h/ngày, bỏ qua cuối tuần &amp; ngày lễ)</span><br>';
-            html+=dot+'<strong>Ngày '+_fd(endDt)+'</strong>: '+edH.toFixed(1)+'h';
+            var html='<p class="font-semibold text-blue-700 dark:text-blue-400 mb-1.5">'+_LRM.bdTitle+'</p><div class="space-y-0.5">';
+            html+=dot+'<strong>'+_LRM.bdDay+' '+_fd(startDt)+'</strong>: '+sdH.toFixed(1)+'h<br>';
+            if(mid>0) html+=dot+'<strong>'+mid+' '+_LRM.bdWorkDays+'</strong>: '+(mid*8)+'h <span class="text-gray-400">('+_LRM.bdExcl+')</span><br>';
+            html+=dot+'<strong>'+_LRM.bdDay+' '+_fd(endDt)+'</strong>: '+edH.toFixed(1)+'h';
             html+='</div>'; bd.innerHTML=html; show(bd);
         }
         _updateBalancePreview();

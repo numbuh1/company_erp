@@ -2,9 +2,9 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                {{ isset($task) ? 'Chỉnh sửa Công việc' : 'Tạo Công việc' }}
+                {{ isset($task) ? __('Edit Task') : __('Create Task') }}
             </h2>
-            <a href="javascript:history.back()"><x-secondary-button>Quay lại</x-secondary-button></a>
+            <a href="javascript:history.back()"><x-secondary-button>{{ __('Back') }}</x-secondary-button></a>
         </div>
     </x-slot>
 
@@ -17,7 +17,7 @@
 
                     {{-- Name --}}
                     <div class="mb-4">
-                        <x-input-label for="name" value="Tên công việc *" />
+                        <x-input-label for="name" value="{{ __('Task Name') }} *" />
                         <x-text-input id="name" name="name" type="text" class="mt-1 block w-full"
                             value="{{ old('name', $task->name ?? '') }}" required />
                         <x-input-error :messages="$errors->get('name')" class="mt-1" />
@@ -25,20 +25,20 @@
 
                     {{-- Task Code --}}
                     <div class="mb-4">
-                        <x-input-label for="task_code" value="Mã công việc" />
+                        <x-input-label for="task_code" value="{{ __('Task Code') }}" />
                         <x-text-input id="task_code" name="task_code" type="text" class="mt-1 block w-full sm:max-w-xs font-mono"
                             value="{{ old('task_code', $task->task_code ?? $predicted_task_code ?? '') }}"
                             placeholder="TK-..." />
-                        <p class="mt-1 text-xs text-gray-400">Để trống để dùng mã mặc định.</p>
+                        <p class="mt-1 text-xs text-gray-400">{{ __('Leave blank to use default code.') }}</p>
                         <x-input-error :messages="$errors->get('task_code')" class="mt-1" />
                     </div>
 
                     {{-- Project --}}
                     <div class="mb-4">
-                        <x-input-label for="project_id" value="Dự án" />
+                        <x-input-label for="project_id" value="{{ __('Project') }}" />
                         <select id="project_id" name="project_id"
                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            <option value="">— Không có (công việc tự do) —</option>
+                            <option value="">{{ __('No project (standalone task)') }}</option>
                             @foreach($projects as $project)
                                 <option value="{{ $project->id }}"
                                     {{ old('project_id', $task->project_id ?? $default_project_id ?? '') == $project->id ? 'selected' : '' }}>
@@ -51,7 +51,7 @@
 
                     {{-- Description --}}
                     <div class="mb-4">
-                        <x-input-label for="description" value="Mô tả" />
+                        <x-input-label for="description" value="{{ __('Description') }}" />
                         <textarea id="description" name="description" rows="4"
                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('description', $task->description ?? '') }}</textarea>
                         <x-input-error :messages="$errors->get('description')" class="mt-1" />
@@ -59,17 +59,17 @@
 
                     {{-- Budget Hours --}}
                     <div class="mb-4">
-                        <x-input-label for="budget_hours" value="Budget Time (giờ)" />
+                        <x-input-label for="budget_hours" value="{{ __('Budget Time (hours)') }}" />
                         <x-text-input id="budget_hours" name="budget_hours" type="number" min="0" step="0.25"
                             class="mt-1 block w-full"
                             value="{{ old('budget_hours', $task->budget_hours ?? '') }}"
-                            placeholder="Thời gian dự kiến…" />
+                            placeholder="{{ __('Expected duration…') }}" />
                         <x-input-error :messages="$errors->get('budget_hours')" class="mt-1" />
                     </div>
 
                     {{-- Status --}}
                     <div class="mb-4">
-                        <x-input-label for="status" value="Trạng thái" />
+                        <x-input-label for="status" value="{{ __('Status') }}" />
                         <select id="status" name="status"
                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                             @foreach(['Chưa bắt đầu', 'Đang tiến hành', 'Đã xong'] as $s)
@@ -82,19 +82,19 @@
                     {{-- Dates --}}
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                         <div>
-                            <x-input-label for="start_date" value="Ngày bắt đầu" />
+                            <x-input-label for="start_date" value="{{ __('Start Date') }}" />
                             <x-text-input id="start_date" name="start_date" type="date" class="mt-1 block w-full"
                                 value="{{ old('start_date', isset($task) ? $task->start_date?->format('Y-m-d') : '') }}" />
                             <x-input-error :messages="$errors->get('start_date')" class="mt-1" />
                         </div>
                         <div>
-                            <x-input-label for="expected_end_date" value="Dự kiến kết thúc" />
+                            <x-input-label for="expected_end_date" value="{{ __('Expected End') }}" />
                             <x-text-input id="expected_end_date" name="expected_end_date" type="date" class="mt-1 block w-full"
                                 value="{{ old('expected_end_date', isset($task) ? $task->expected_end_date?->format('Y-m-d') : '') }}" />
                             <x-input-error :messages="$errors->get('expected_end_date')" class="mt-1" />
                         </div>
                         <div>
-                            <x-input-label for="actual_end_date" value="Ngày kết thúc" />
+                            <x-input-label for="actual_end_date" value="{{ __('End Date') }}" />
                             <x-text-input id="actual_end_date" name="actual_end_date" type="date" class="mt-1 block w-full"
                                 value="{{ old('actual_end_date', isset($task) ? $task->actual_end_date?->format('Y-m-d') : '') }}" />
                             <x-input-error :messages="$errors->get('actual_end_date')" class="mt-1" />
@@ -103,9 +103,9 @@
 
                     {{-- Assignees --}}
                     <div class="mb-6">
-                        <x-input-label value="Người được phân công" />
+                        <x-input-label value="{{ __('Assignees') }}" />
                         <select name="assignees[]" id="assignees-select" data-multi-select
-                                data-placeholder="Chọn người được phân công…" class="mt-2 block w-full" multiple>
+                                data-placeholder="{{ __('Select assignees…') }}" class="mt-2 block w-full" multiple>
                             @foreach($users as $user)
                                 <option value="{{ $user->id }}"
                                     {{ in_array($user->id, old('assignees', isset($task) ? $task->assignees->pluck('id')->toArray() : [])) ? 'selected' : '' }}>
@@ -117,7 +117,7 @@
                     </div>
 
                     <div class="flex justify-end gap-2">
-                        <a href="javascript:history.back()"><x-secondary-button type="button">Hủy</x-secondary-button></a>
+                        <a href="javascript:history.back()"><x-secondary-button type="button">{{ __('Cancel') }}</x-secondary-button></a>
                         <x-primary-button type="submit">{{ isset($task) ? 'Update Task' : 'Create Task' }}</x-primary-button>
                     </div>
                 </form>
