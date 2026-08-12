@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="text-xl font-semibold">{{ __('User Profile') }}</h2>
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">{{ __('User Profile') }}</h2>
             <div class="flex gap-2">
                 @if(auth()->id() === $user->id || auth()->user()->canAny(['edit team user', 'edit all user']))
                     <a href="{{ route('users.edit', $user) }}">
