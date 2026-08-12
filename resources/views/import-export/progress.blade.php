@@ -9,7 +9,7 @@
                 </svg>
             </div>
             <div>
-                <h2 class="text-xl font-semibold" id="headerTitle">Đang nhập dữ liệu…</h2>
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200" id="headerTitle">{{ __('Importing data…') }}</h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                     {{ $log->typeLabel() }}
                     @if($log->filename)
@@ -30,7 +30,7 @@
                 {{-- Progress bar --}}
                 <div class="space-y-2">
                     <div class="flex justify-between items-center text-sm">
-                        <span class="text-gray-600 dark:text-gray-400 font-medium" id="statusText">Đang chờ worker xử lý…</span>
+                        <span class="text-gray-600 dark:text-gray-400 font-medium" id="statusText">{{ __('Waiting for worker to process…') }}</span>
                         <span class="font-semibold text-gray-700 dark:text-gray-200" id="percentText">0%</span>
                     </div>
                     <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
@@ -39,22 +39,22 @@
                              style="width: 0%">
                         </div>
                     </div>
-                    <p class="text-xs text-gray-400 dark:text-gray-500" id="rowsText">0 / — dòng</p>
+                    <p class="text-xs text-gray-400 dark:text-gray-500" id="rowsText">0 / — {{ __('rows') }}</p>
                 </div>
 
                 {{-- Summary counts --}}
                 <div class="grid grid-cols-3 gap-4 pt-2 border-t border-gray-100 dark:border-gray-700">
                     <div class="text-center">
                         <p class="text-2xl font-bold text-green-600 dark:text-green-400" id="createdCount">0</p>
-                        <p class="text-xs text-gray-500 mt-0.5">Tạo mới</p>
+                        <p class="text-xs text-gray-500 mt-0.5">{{ __('Created') }}</p>
                     </div>
                     <div class="text-center">
                         <p class="text-2xl font-bold text-blue-600 dark:text-blue-400" id="updatedCount">0</p>
-                        <p class="text-xs text-gray-500 mt-0.5">Cập nhật</p>
+                        <p class="text-xs text-gray-500 mt-0.5">{{ __('Updated') }}</p>
                     </div>
                     <div class="text-center">
                         <p class="text-2xl font-bold text-amber-600 dark:text-amber-400" id="skippedCount">0</p>
-                        <p class="text-xs text-gray-500 mt-0.5">Bỏ qua</p>
+                        <p class="text-xs text-gray-500 mt-0.5">{{ __('Skipped') }}</p>
                     </div>
                 </div>
 
@@ -65,7 +65,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                         <div>
-                            <p class="text-sm font-semibold text-red-700 dark:text-red-300">Import thất bại</p>
+                            <p class="text-sm font-semibold text-red-700 dark:text-red-300">{{ __('Import failed') }}</p>
                             <p class="mt-1 text-xs text-red-600 dark:text-red-400 font-mono break-all" id="errorMessage"></p>
                         </div>
                     </div>
@@ -76,25 +76,25 @@
                     <svg class="w-5 h-5 text-green-500 inline mr-1 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
-                    Hoàn thành! Đang chuyển đến trang kết quả…
+                    {{ __('Done! Redirecting to results…') }}
                 </div>
 
                 {{-- Action buttons (hidden until stopped) --}}
                 <div id="actionSection" class="hidden flex gap-3 pt-2">
                     <a href="{{ route('import-export.log.show', $log) }}"
                        class="inline-flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors">
-                        Xem kết quả chi tiết
+                        {{ __('View detailed results') }}
                     </a>
                     <a href="{{ route('import-export.index') }}"
                        class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        Quay lại
+                        {{ __('Back') }}
                     </a>
                 </div>
             </div>
 
             {{-- Worker hint --}}
             <p class="text-xs text-center text-gray-400 dark:text-gray-500">
-                Import đang chạy trong nền. Bạn có thể rời khỏi trang này — kết quả vẫn được lưu lại.
+                {{ __('Import is running in the background. You can leave this page — results will still be saved.') }}
             </p>
 
         </div>
@@ -102,6 +102,14 @@
 
     @push('scripts')
     <script>
+    var _LRM = {
+        done:           '{{ __("Done!") }}',
+        importComplete: '{{ __("Import complete") }}',
+        errorOccurred:  '{{ __("An error occurred") }}',
+        importFailed:   '{{ __("Import failed") }}',
+        processingRow:  '{{ __("Processing row") }}',
+        rows:           '{{ __("rows") }}',
+    };
     (function () {
         const progressUrl = @json(route('import-export.progress-data', $log));
         const resultUrl   = @json(route('import-export.log.show', $log));
@@ -127,8 +135,8 @@
             bar.style.width = '100%';
             bar.classList.replace('bg-indigo-500', 'bg-green-500');
             percentText.textContent = '100%';
-            statusText.textContent  = 'Hoàn thành!';
-            headerTitle.textContent = 'Nhập dữ liệu hoàn thành';
+            statusText.textContent  = _LRM.done;
+            headerTitle.textContent = _LRM.importComplete;
             headerIcon.innerHTML    = '<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
             doneSec.classList.remove('hidden');
             setTimeout(() => { window.location.href = resultUrl; }, 2000);
@@ -137,8 +145,8 @@
         function setError(message) {
             clearInterval(interval);
             bar.classList.replace('bg-indigo-500', 'bg-red-500');
-            statusText.textContent  = 'Có lỗi xảy ra';
-            headerTitle.textContent = 'Import thất bại';
+            statusText.textContent  = _LRM.errorOccurred;
+            headerTitle.textContent = _LRM.importFailed;
             headerIcon.innerHTML    = '<svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
             errorSec.classList.remove('hidden');
             errorMsg.textContent = message || '';
@@ -160,10 +168,10 @@
                 createdEl.textContent       = data.created_count || 0;
                 updatedEl.textContent       = data.updated_count || 0;
                 skippedEl.textContent       = data.skipped_count || 0;
-                rowsText.textContent        = processed + ' / ' + (total || '—') + ' dòng';
+                rowsText.textContent        = processed + ' / ' + (total || '—') + ' ' + _LRM.rows;
 
                 if (data.status === 'in_progress' && total > 0) {
-                    statusText.textContent = 'Đang xử lý dòng ' + processed + ' / ' + total + '…';
+                    statusText.textContent = _LRM.processingRow + ' ' + processed + ' / ' + total + '…';
                 }
 
                 if (data.status === 'done') {

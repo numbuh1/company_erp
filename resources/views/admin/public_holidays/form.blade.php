@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ isset($publicHoliday) ? 'Chỉnh sửa Ngày lễ' : 'Tạo Ngày lễ' }}
+            {{ isset($publicHoliday) ? __('Edit Holiday') : __('Add Holiday') }}
         </h2>
     </x-slot>
 
@@ -24,7 +24,7 @@
 
                     <div class="space-y-4">
                         <div>
-                            <x-input-label value="Tên" />
+                            <x-input-label :value="__('Name')" />
                             <x-text-input name="name" class="mt-1 block w-full"
                                 value="{{ old('name', $publicHoliday->name ?? '') }}"
                                 placeholder="e.g. New Year's Day" required />
@@ -33,14 +33,14 @@
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <x-input-label value="Ngày bắt đầu" />
+                                <x-input-label :value="__('Start Date')" />
                                 <x-text-input type="date" name="start_date" class="mt-1 block w-full"
                                     value="{{ old('start_date', isset($publicHoliday) ? $publicHoliday->start_date->format('Y-m-d') : '') }}"
                                     required />
                                 @error('start_date')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                             </div>
                             <div>
-                                <x-input-label value="Ngày kết thúc" />
+                                <x-input-label :value="__('End Date')" />
                                 <x-text-input type="date" name="end_date" class="mt-1 block w-full"
                                     value="{{ old('end_date', isset($publicHoliday) ? $publicHoliday->end_date->format('Y-m-d') : '') }}"
                                     required />
@@ -53,15 +53,15 @@
                                 class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 shadow-sm"
                                 {{ old('repeats_annually', $publicHoliday->repeats_annually ?? false) ? 'checked' : '' }}>
                             <label for="repeats_annually" class="text-sm text-gray-700 dark:text-gray-300">
-                                Lặp lại hàng năm
+                                {{ __('Repeat annually') }}
                             </label>
                         </div>
                     </div>
 
                     <div class="flex gap-3 mt-6">
-                        <x-primary-button type="submit">{{ isset($publicHoliday) ? 'Lưu' : 'Thêm Ngày Nghỉ' }}</x-primary-button>
+                        <x-primary-button type="submit">{{ isset($publicHoliday) ? __('Save') : __('Add Holiday') }}</x-primary-button>
                         <a href="{{ route('admin.public-holidays.index') }}">
-                            <x-secondary-button type="button">Hủy</x-secondary-button>
+                            <x-secondary-button type="button">{{ __('Cancel') }}</x-secondary-button>
                         </a>
                     </div>
                 </form>

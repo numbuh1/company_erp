@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="text-xl font-semibold">Nhập / Xuất dữ liệu</h2>
+        <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">{{ __('Import / Export') }}</h2>
     </x-slot>
 
     @push('styles')
@@ -20,17 +20,17 @@
                 <button type="button" @click="tab = 'export'"
                     :class="tab === 'export' ? '{{ $tabOn }}' : '{{ $tabOff }}'"
                     class="px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors">
-                    Xuất dữ liệu
+                    {{ __('Export Data') }}
                 </button>
                 <button type="button" @click="tab = 'import'; cancelPreview()"
                     :class="tab === 'import' ? '{{ $tabOn }}' : '{{ $tabOff }}'"
                     class="px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors">
-                    Nhập dữ liệu
+                    {{ __('Import Data') }}
                 </button>
                 <button type="button" @click="tab = 'history'"
                     :class="tab === 'history' ? '{{ $tabOn }}' : '{{ $tabOff }}'"
                     class="px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors">
-                    Lịch sử nhập
+                    {{ __('Import History') }}
                     @if($logs->total() > 0)
                         <span class="ml-1.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded-full">
                             {{ $logs->total() }}
@@ -52,10 +52,10 @@
 
                     @php
                         $exports = [
-                            ['type' => 'users',          'label' => 'Người dùng',        'desc' => 'Tên, email, thông tin cá nhân, lương, vai trò, nhóm.',   'color' => 'indigo'],
-                            ['type' => 'teams',          'label' => 'Nhóm',              'desc' => 'Tên nhóm, trưởng nhóm, danh sách thành viên.',           'color' => 'purple'],
-                            ['type' => 'leave-requests', 'label' => 'Yêu cầu nghỉ phép', 'desc' => 'Tất cả yêu cầu nghỉ với trạng thái và người duyệt.',    'color' => 'green'],
-                            ['type' => 'ot-requests',    'label' => 'Yêu cầu tăng ca',   'desc' => 'Tất cả yêu cầu OT với dự án, công việc, người duyệt.', 'color' => 'orange'],
+                            ['type' => 'users',          'label' => __('Users'),          'desc' => __('Name, email, personal info, salary, roles, teams.'),   'color' => 'indigo'],
+                            ['type' => 'teams',          'label' => __('Teams'),          'desc' => __('Team name, team leader, member list.'),                'color' => 'purple'],
+                            ['type' => 'leave-requests', 'label' => __('Leave Requests'), 'desc' => __('All leave requests with status and approver.'),        'color' => 'green'],
+                            ['type' => 'ot-requests',    'label' => __('OT Requests'),    'desc' => __('All OT requests with project, task, and approver.'),  'color' => 'orange'],
                         ];
                     @endphp
 
@@ -82,14 +82,14 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                             </svg>
-                            Tải xuống Excel
+                            {{ __('Download Excel') }}
                         </a>
                     </div>
                     @endforeach
 
                 </div>
                 <p class="mt-4 text-xs text-gray-400 dark:text-gray-500">
-                    File xuất ở định dạng <strong>.xlsx</strong>. Dữ liệu phản ánh toàn bộ bản ghi trong cơ sở dữ liệu tại thời điểm xuất.
+                    {{ __('Export files are in') }} <strong>.xlsx</strong> {{ __('format. Data reflects all records in the database at time of export.') }}
                 </p>
             </div>
 
@@ -108,13 +108,13 @@
 
                         {{-- Type selector --}}
                         <div>
-                            <x-input-label value="Loại dữ liệu" />
+                            <x-input-label :value="__('Data Type')" />
                             <select x-model="importType" @change="cancelPreview()"
                                     class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
-                                <option value="users">Người dùng</option>
-                                <option value="teams">Nhóm</option>
-                                <option value="leave-requests">Yêu cầu nghỉ phép</option>
-                                <option value="ot-requests">Yêu cầu tăng ca</option>
+                                <option value="users">{{ __('Users') }}</option>
+                                <option value="teams">{{ __('Teams') }}</option>
+                                <option value="leave-requests">{{ __('Leave Requests') }}</option>
+                                <option value="ot-requests">{{ __('OT Requests') }}</option>
                             </select>
                         </div>
 
@@ -123,9 +123,9 @@
                             <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            <span>Tải file mẫu trước khi nhập:&nbsp;</span>
+                            <span>{{ __('Download template before importing:') }}&nbsp;</span>
                             <a :href="templateUrl()" class="font-medium underline hover:text-blue-900 dark:hover:text-blue-100">
-                                Tải template (.xlsx)
+                                {{ __('Download template (.xlsx)') }}
                             </a>
                         </div>
 
@@ -133,41 +133,41 @@
                         <div class="text-xs text-gray-500 dark:text-gray-400 space-y-1 border border-dashed border-gray-200 dark:border-gray-700 rounded-lg p-3">
                             <template x-if="importType === 'users'">
                                 <div class="space-y-1">
-                                    <p class="font-medium text-gray-700 dark:text-gray-300">Cột bắt buộc: <code>name</code>, <code>email</code></p>
-                                    <p>Cột tuỳ chọn: <code>password</code>, <code>full_name</code>, <code>contact_email</code>, <code>position</code>, <code>grade</code>, <code>phone_number</code>, <code>citizen_id</code>, <code>tax_code</code>, <code>social_insurance_id</code>, <code>home_address</code></p>
-                                    <p><code>birthday</code>, <code>contract_expiry</code>, <code>probation_start_date</code>, <code>probation_end_date</code> — định dạng <code>dd/mm/yyyy</code></p>
+                                    <p class="font-medium text-gray-700 dark:text-gray-300">{{ __('Required columns:') }} <code>name</code>, <code>email</code></p>
+                                    <p>{{ __('Optional columns:') }} <code>password</code>, <code>full_name</code>, <code>contact_email</code>, <code>position</code>, <code>grade</code>, <code>phone_number</code>, <code>citizen_id</code>, <code>tax_code</code>, <code>social_insurance_id</code>, <code>home_address</code></p>
+                                    <p><code>birthday</code>, <code>contract_expiry</code>, <code>probation_start_date</code>, <code>probation_end_date</code> — {{ __('format') }} <code>dd/mm/yyyy</code></p>
                                     <p><code>employment_status</code>: <code>active</code> / <code>on_probation</code> / <code>inactive</code></p>
                                     <p><code>is_active</code>, <code>wfh_without_approval</code>: <code>1</code> / <code>0</code></p>
-                                    <p><code>leave_balance</code>: số giờ &nbsp;·&nbsp; <code>salary</code>: số tiền &nbsp;·&nbsp; <code>salary_type</code>: <code>monthly</code> / <code>weekly</code> / <code>daily</code> / <code>hourly</code></p>
-                                    <p><code>roles</code>: tên vai trò, phân cách bằng <code>|</code></p>
-                                    <p class="text-indigo-600 dark:text-indigo-400">Email đã tồn tại → cập nhật. Email mới → tạo mới.</p>
+                                    <p><code>leave_balance</code>: {{ __('hours') }} &nbsp;·&nbsp; <code>salary</code>: {{ __('amount') }} &nbsp;·&nbsp; <code>salary_type</code>: <code>monthly</code> / <code>weekly</code> / <code>daily</code> / <code>hourly</code></p>
+                                    <p><code>roles</code>: {{ __('role name, separated by') }} <code>|</code></p>
+                                    <p class="text-indigo-600 dark:text-indigo-400">{{ __('Existing email → update. New email → create.') }}</p>
                                 </div>
                             </template>
                             <template x-if="importType === 'teams'">
                                 <div class="space-y-1">
-                                    <p class="font-medium text-gray-700 dark:text-gray-300">Cột bắt buộc: <code>name</code></p>
-                                    <p>Cột tuỳ chọn: <code>leaders</code>, <code>members</code></p>
-                                    <p><code>leaders</code>/<code>members</code>: tên người dùng hoặc <code>ID:Tên</code>, phân cách bằng <code>|</code></p>
-                                    <p class="text-indigo-600 dark:text-indigo-400">Tên nhóm đã tồn tại → cập nhật thành viên. Tên mới → tạo mới.</p>
+                                    <p class="font-medium text-gray-700 dark:text-gray-300">{{ __('Required columns:') }} <code>name</code></p>
+                                    <p>{{ __('Optional columns:') }} <code>leaders</code>, <code>members</code></p>
+                                    <p><code>leaders</code>/<code>members</code>: {{ __('user name or') }} <code>ID:Name</code>, {{ __('separated by') }} <code>|</code></p>
+                                    <p class="text-indigo-600 dark:text-indigo-400">{{ __('Existing team name → update members. New name → create.') }}</p>
                                 </div>
                             </template>
                             <template x-if="importType === 'leave-requests'">
                                 <div class="space-y-1">
-                                    <p class="font-medium text-gray-700 dark:text-gray-300">Cột bắt buộc: <code>user</code>, <code>type</code>, <code>start_at</code>, <code>end_at</code>, <code>hours</code></p>
-                                    <p>Cột tuỳ chọn: <code>description</code>, <code>status</code>, <code>approved_by</code>, <code>reject_reason</code></p>
-                                    <p><code>user</code> / <code>approved_by</code>: tên hoặc ID</p>
+                                    <p class="font-medium text-gray-700 dark:text-gray-300">{{ __('Required columns:') }} <code>user</code>, <code>type</code>, <code>start_at</code>, <code>end_at</code>, <code>hours</code></p>
+                                    <p>{{ __('Optional columns:') }} <code>description</code>, <code>status</code>, <code>approved_by</code>, <code>reject_reason</code></p>
+                                    <p><code>user</code> / <code>approved_by</code>: {{ __('name or ID') }}</p>
                                     <p><code>type</code>: <code>annual</code> / <code>sick</code> / <code>unpaid</code></p>
                                     <p><code>start_at</code> / <code>end_at</code>: <code>dd/mm/yyyy HH:mm</code></p>
-                                    <p><code>status</code>: <code>pending</code> (mặc định) / <code>approved</code> / <code>rejected</code></p>
+                                    <p><code>status</code>: <code>pending</code> ({{ __('default') }}) / <code>approved</code> / <code>rejected</code></p>
                                 </div>
                             </template>
                             <template x-if="importType === 'ot-requests'">
                                 <div class="space-y-1">
-                                    <p class="font-medium text-gray-700 dark:text-gray-300">Cột bắt buộc: <code>user</code>, <code>start_at</code>, <code>end_at</code>, <code>hours</code></p>
-                                    <p>Cột tuỳ chọn: <code>type</code>, <code>project</code>, <code>task</code>, <code>description</code>, <code>status</code>, <code>approved_by</code>, <code>reject_reason</code></p>
+                                    <p class="font-medium text-gray-700 dark:text-gray-300">{{ __('Required columns:') }} <code>user</code>, <code>start_at</code>, <code>end_at</code>, <code>hours</code></p>
+                                    <p>{{ __('Optional columns:') }} <code>type</code>, <code>project</code>, <code>task</code>, <code>description</code>, <code>status</code>, <code>approved_by</code>, <code>reject_reason</code></p>
                                     <p><code>type</code>: <code>OT x1.5</code> / <code>OT x2</code> / <code>OT x3</code></p>
-                                    <p><code>project</code> / <code>task</code>: tên hoặc ID</p>
-                                    <p><code>status</code>: <code>pending</code> (mặc định) / <code>approved</code> / <code>rejected</code></p>
+                                    <p><code>project</code> / <code>task</code>: {{ __('name or ID') }}</p>
+                                    <p><code>status</code>: <code>pending</code> ({{ __('default') }}) / <code>approved</code> / <code>rejected</code></p>
                                 </div>
                             </template>
                         </div>
@@ -200,20 +200,20 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                     </svg>
                                 </template>
-                                <span x-text="importStep === 'loading' ? 'Đang phân tích...' : 'Xem trước thay đổi'"></span>
+                                <span x-text="importStep === 'loading' ? '{{ __('Analyzing...') }}' : '{{ __('Preview changes') }}'"></span>
                             </button>
-                            <p class="text-xs text-gray-400">Tối đa 10 MB. File sẽ được phân tích trước khi nhập thật.</p>
+                            <p class="text-xs text-gray-400">{{ __('Max 10 MB. File will be analyzed before actual import.') }}</p>
                         </div>
                     </div>
 
                     <div class="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-xs text-amber-700 dark:text-amber-300 space-y-1">
-                        <p class="font-semibold">Lưu ý khi nhập dữ liệu:</p>
+                        <p class="font-semibold">{{ __('Notes when importing data:') }}</p>
                         <ul class="list-disc list-inside space-y-0.5">
-                            <li>Hàng đầu tiên phải là tên cột (header). Hàng in nghiêng màu vàng trong file mẫu là ví dụ — xoá trước khi nhập thật.</li>
-                            <li>Người dùng: khớp theo email → cập nhật nếu đã tồn tại, tạo mới nếu chưa có.</li>
-                            <li>Nhóm: khớp theo tên → cập nhật thành viên nếu đã tồn tại, tạo mới nếu chưa có.</li>
-                            <li>Yêu cầu nghỉ phép / OT: luôn tạo mới, không kiểm tra trùng.</li>
-                            <li>Nhấn "Xem trước thay đổi" để xem dữ liệu sẽ được nhập trước khi xác nhận.</li>
+                            <li>{{ __('The first row must be column headers. The italic yellow rows in the template are examples — delete them before importing.') }}</li>
+                            <li>{{ __('Users: matched by email → update if exists, create if not.') }}</li>
+                            <li>{{ __('Teams: matched by name → update members if exists, create if not.') }}</li>
+                            <li>{{ __('Leave / OT requests: always created, no duplicate check.') }}</li>
+                            <li>{{ __('Click "Preview changes" to review data before confirming.') }}</li>
                         </ul>
                     </div>
                 </div>
@@ -223,7 +223,7 @@
 
                     <div class="flex items-center justify-between">
                         <div>
-                            <h3 class="font-semibold text-gray-800 dark:text-gray-100">Xem trước kết quả nhập</h3>
+                            <h3 class="font-semibold text-gray-800 dark:text-gray-100">{{ __('Preview import results') }}</h3>
                             <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                                 File: <span class="font-mono" x-text="previewData?.filename ?? ''"></span>
                             </p>
@@ -235,18 +235,18 @@
                         <div class="bg-white dark:bg-gray-800 rounded-xl ring-1 ring-green-200 dark:ring-green-800 p-4 text-center">
                             <p class="text-2xl font-bold text-green-600 dark:text-green-400"
                                x-text="'+' + (previewData?.created_count ?? 0)"></p>
-                            <p class="text-xs text-gray-500 mt-0.5">Tạo mới</p>
+                            <p class="text-xs text-gray-500 mt-0.5">{{ __('Created') }}</p>
                         </div>
                         <div class="bg-white dark:bg-gray-800 rounded-xl ring-1 ring-blue-200 dark:ring-blue-800 p-4 text-center">
                             <p class="text-2xl font-bold text-blue-600 dark:text-blue-400"
                                x-text="previewData?.updated_count ?? 0"></p>
-                            <p class="text-xs text-gray-500 mt-0.5">Cập nhật</p>
+                            <p class="text-xs text-gray-500 mt-0.5">{{ __('Updated') }}</p>
                         </div>
                         <div class="bg-white dark:bg-gray-800 rounded-xl ring-1 p-4 text-center"
                              :class="(previewData?.skipped_count ?? 0) > 0 ? 'ring-amber-200 dark:ring-amber-800' : 'ring-gray-200 dark:ring-gray-700'">
                             <p class="text-2xl font-bold" x-text="previewData?.skipped_count ?? 0"
                                :class="(previewData?.skipped_count ?? 0) > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400'"></p>
-                            <p class="text-xs text-gray-500 mt-0.5">Bỏ qua</p>
+                            <p class="text-xs text-gray-500 mt-0.5">{{ __('Skipped') }}</p>
                         </div>
                     </div>
 
@@ -257,7 +257,7 @@
                                     ? 'ring-2 ring-offset-1 ring-gray-400 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200'
                                     : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'"
                                 class="px-3 py-1 text-xs font-medium rounded-full transition-all">
-                            Tất cả (<span x-text="previewData?.rows?.length ?? 0"></span>)
+                            {{ __('All') }} (<span x-text="previewData?.rows?.length ?? 0"></span>)
                         </button>
                         <button type="button" x-show="(previewData?.created_count ?? 0) > 0"
                                 @click="previewFilter = 'created'"
@@ -265,7 +265,7 @@
                                     ? 'ring-2 ring-offset-1 ring-green-400 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
                                     : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'"
                                 class="px-3 py-1 text-xs font-medium rounded-full transition-all">
-                            Tạo mới (<span x-text="previewData?.created_count ?? 0"></span>)
+                            {{ __('Created') }} (<span x-text="previewData?.created_count ?? 0"></span>)
                         </button>
                         <button type="button" x-show="(previewData?.updated_count ?? 0) > 0"
                                 @click="previewFilter = 'updated'"
@@ -273,7 +273,7 @@
                                     ? 'ring-2 ring-offset-1 ring-blue-400 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
                                     : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'"
                                 class="px-3 py-1 text-xs font-medium rounded-full transition-all">
-                            Cập nhật (<span x-text="previewData?.updated_count ?? 0"></span>)
+                            {{ __('Updated') }} (<span x-text="previewData?.updated_count ?? 0"></span>)
                         </button>
                         <button type="button" x-show="(previewData?.skipped_count ?? 0) > 0"
                                 @click="previewFilter = 'skipped'"
@@ -281,7 +281,7 @@
                                     ? 'ring-2 ring-offset-1 ring-amber-400 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'
                                     : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'"
                                 class="px-3 py-1 text-xs font-medium rounded-full transition-all">
-                            Bỏ qua (<span x-text="previewData?.skipped_count ?? 0"></span>)
+                            {{ __('Skipped') }} (<span x-text="previewData?.skipped_count ?? 0"></span>)
                         </button>
                     </div>
 
@@ -289,16 +289,16 @@
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden">
                         <div x-show="(previewData?.rows?.length ?? 0) === 0"
                              class="p-8 text-center text-gray-400 dark:text-gray-500 text-sm">
-                            File không có dữ liệu hợp lệ.
+                            {{ __('No valid data in file.') }}
                         </div>
                         <template x-if="(previewData?.rows?.length ?? 0) > 0">
                             <table class="min-w-full divide-y divide-gray-100 dark:divide-gray-700 text-sm">
                                 <thead class="bg-gray-50 dark:bg-gray-700/50">
                                     <tr>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-16">Dòng</th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-24">Hành động</th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dữ liệu</th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Chi tiết thay đổi</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-16">{{ __('Row') }}</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-24">{{ __('Action') }}</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Data') }}</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Change details') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -330,7 +330,7 @@
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                 </svg>
-                                Xác nhận nhập dữ liệu
+                                {{ __('Confirm import') }}
                             </button>
                         </form>
                         <button type="button" @click="cancelPreview()"
@@ -338,12 +338,12 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                             </svg>
-                            Chọn file khác
+                            {{ __('Choose another file') }}
                         </button>
                     </div>
 
                     <div class="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-xs text-blue-700 dark:text-blue-300">
-                        Đây là xem trước — dữ liệu <strong>chưa được thay đổi</strong>. Nhấn "Xác nhận nhập dữ liệu" để thực hiện các thay đổi trên.
+                        {{ __('This is a preview — data has') }} <strong>{{ __('not been changed') }}</strong>. {{ __('Click "Confirm import" to apply the changes above.') }}
                     </div>
 
                 </div>
@@ -353,21 +353,21 @@
             <div x-show="tab === 'history'" x-cloak>
                 @if($logs->isEmpty())
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-10 text-center text-gray-400 dark:text-gray-500 text-sm">
-                        Chưa có lần nhập dữ liệu nào.
+                        {{ __('No import history yet.') }}
                     </div>
                 @else
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden">
                         <table class="min-w-full divide-y divide-gray-100 dark:divide-gray-700 text-sm">
                             <thead class="bg-gray-50 dark:bg-gray-700/50">
                                 <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Thời gian</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Loại</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Trạng thái</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">File</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Người nhập</th>
-                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wide">Tạo mới</th>
-                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wide">Cập nhật</th>
-                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wide">Bỏ qua</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">{{ __('Time') }}</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">{{ __('Type') }}</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">{{ __('Status') }}</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">{{ __('File') }}</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">{{ __('Importer') }}</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wide">{{ __('Created') }}</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wide">{{ __('Updated') }}</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wide">{{ __('Skipped') }}</th>
                                     <th class="px-4 py-3"></th>
                                 </tr>
                             </thead>
@@ -426,7 +426,7 @@
                                     <td class="px-4 py-3 text-right">
                                         <a href="{{ route('import-export.log.show', $log) }}"
                                            class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
-                                            Chi tiết
+                                            {{ __('Details') }}
                                         </a>
                                     </td>
                                 </tr>
@@ -447,6 +447,16 @@
 
     @push('scripts')
     <script>
+    var _LRM = {
+        pleaseSelectFile: '{{ __("Please select a file first.") }}',
+        parseError:       '{{ __("An error occurred while analyzing the file.") }}',
+        connectionError:  '{{ __("Could not connect to server. Please try again.") }}',
+        created:          '{{ __("Created") }}',
+        updated:          '{{ __("Updated") }}',
+        skipped:          '{{ __("Skipped") }}',
+        noChanges:        '{{ __("No changes") }}',
+        empty:            '{{ __("(empty)") }}',
+    };
     function importPageData(initialTab) {
         return {
             tab: initialTab,
@@ -479,7 +489,7 @@
             async doPreview() {
                 const fileInput = document.getElementById('importFile');
                 if (!fileInput || !fileInput.files.length) {
-                    this.previewError = 'Vui lòng chọn file trước.';
+                    this.previewError = _LRM.pleaseSelectFile;
                     return;
                 }
                 this.importStep = 'loading';
@@ -496,7 +506,7 @@
                         if (json.errors) {
                             this.previewError = Object.values(json.errors).flat().join(' ');
                         } else {
-                            this.previewError = json.error || json.message || 'Có lỗi xảy ra khi phân tích file.';
+                            this.previewError = json.error || json.message || _LRM.parseError;
                         }
                         this.importStep = 'idle';
                         return;
@@ -505,7 +515,7 @@
                     this.previewFilter = 'all';
                     this.importStep = 'preview';
                 } catch (e) {
-                    this.previewError = 'Không thể kết nối máy chủ. Vui lòng thử lại.';
+                    this.previewError = _LRM.connectionError;
                     this.importStep = 'idle';
                 }
             },
@@ -517,7 +527,7 @@
             },
 
             actionLabel(action) {
-                return ({ created: 'Tạo mới', updated: 'Cập nhật', skipped: 'Bỏ qua' })[action] || action;
+                return ({ created: _LRM.created, updated: _LRM.updated, skipped: _LRM.skipped })[action] || action;
             },
 
             actionBadge(action) {
@@ -552,17 +562,17 @@
                 if (row.action === 'updated') {
                     const changes = row.changes || {};
                     if (!Object.keys(changes).length) {
-                        return '<span class="text-xs text-gray-400">Không có thay đổi</span>';
+                        return '<span class="text-xs text-gray-400">' + _LRM.noChanges + '</span>';
                     }
                     const items = Object.entries(changes).map(([k, v]) => {
                         if (v && typeof v === 'object' && 'from' in v) {
                             return '<div class="flex items-start gap-1.5 text-xs">' +
                                 '<span class="font-mono font-medium text-gray-500 dark:text-gray-400 shrink-0">' + esc(k) + ':</span>' +
-                                '<span class="text-red-500 dark:text-red-400 line-through">' + (v.from !== null ? esc(String(v.from)) : 'trống') + '</span>' +
+                                '<span class="text-red-500 dark:text-red-400 line-through">' + (v.from !== null ? esc(String(v.from)) : _LRM.empty) + '</span>' +
                                 '<svg class="w-3 h-3 text-gray-400 shrink-0 mt-px" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
                                     '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>' +
                                 '</svg>' +
-                                '<span class="text-green-600 dark:text-green-400">' + (v.to !== null ? esc(String(v.to)) : 'trống') + '</span>' +
+                                '<span class="text-green-600 dark:text-green-400">' + (v.to !== null ? esc(String(v.to)) : _LRM.empty) + '</span>' +
                                 '</div>';
                         }
                         return '<div class="flex items-start gap-1.5 text-xs">' +

@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">
-            {{ isset($role) ? 'Chỉnh sửa Vai trò' : 'Tạo Vai trò' }}
+            {{ isset($role) ? __('Edit Role') : __('Create Role') }}
         </h2>
     </x-slot>
 
@@ -14,7 +14,7 @@
 
                 <!-- Name -->
                 <div class="mb-4">
-                    <x-input-label value="Tên vai trò" />
+                    <x-input-label :value="__('Role Name')" />
                     <x-text-input name="name" class="w-full mt-1"
                         value="{{ old('name', $role->name ?? '') }}" required />
                 </div>
@@ -22,7 +22,7 @@
                 <!-- Permissions -->
                 <div class="mt-6">
                     <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
-                        Permissions
+                        {{ __('Permissions') }}
                     </h3>
 
                     <div class="space-y-6">
@@ -39,7 +39,7 @@
                                     <!-- Select All -->
                                     <label class="flex items-center space-x-2 text-sm text-gray-500 cursor-pointer">
                                         <input type="checkbox" class="module-toggle">
-                                        <span>Chọn tất cả</span>
+                                        <span>{{ __('Select All') }}</span>
                                     </label>
                                 </div>
 
@@ -72,11 +72,11 @@
                 <!-- Actions -->
                 <div class="flex justify-end mt-6 space-x-2">
                     <x-primary-button>
-                        {{ isset($role) ? 'Lưu' : 'Tạo' }}
+                        {{ isset($role) ? __('Save') : __('Create') }}
                     </x-primary-button>
 
                     <a href="{{ route('roles.index') }}">
-                        <x-secondary-button>Hủy</x-secondary-button>
+                        <x-secondary-button>{{ __('Cancel') }}</x-secondary-button>
                     </a>
                 </div>
 
