@@ -205,8 +205,10 @@
                 return quill;
             }
 
-            // Searchable route selector
-        new TomSelect('#route-select', { allowEmptyOption: true, maxOptions: 500 });
+            // Searchable route selector — TomSelect is deferred, so wait for DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', function () {
+            new TomSelect('#route-select', { allowEmptyOption: true, maxOptions: 500 });
+        });
 
         var quillVi = makeHelpEditor('editor-vi', 'content-vi');
             var quillEn = makeHelpEditor('editor-en', 'content-en');
