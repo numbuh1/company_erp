@@ -815,5 +815,22 @@
     "Processing row": "Processing row",
     "Edit Holiday": "Edit Holiday",
     "Repeat annually": "Repeat annually",
-    "Leave Request Details": "Leave Request Details"
+    "Leave Request Details": "Leave Request Details",
+    "Help Pages": "Help Pages",
+    "Help Page": "Help Page",
+    "Add Help Page": "Add Help Page",
+    "Edit Help Page": "Edit Help Page",
+    "No help pages configured.": "No help pages configured.",
+    "Delete this help page?": "Delete this help page?",
+    "Help page created.": "Help page created.",
+    "Help page updated.": "Help page updated.",
+    "Help page deleted.": "Help page deleted.",
+    "Route": "Route",
+    "Select a route": "Select a route",
+    "Languages": "Languages",
+    "Only active help pages will show the Help button to users.": "Only active help pages will show the Help button to users.",
+    "Write help content…": "Write help content…",
+    "Help page title…": "Help page title…",
+    "Help": "Help",
+    "Image upload failed. Please try again.": "Image upload failed. Please try again."
 }

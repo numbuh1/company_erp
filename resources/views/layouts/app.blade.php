@@ -77,6 +77,7 @@
         <x-leave-request-modal />
         <x-ot-request-modal />
         <x-pending-requests-fab />
+        <x-help-fab />
 
         <script>
             function toggleDarkMode() {

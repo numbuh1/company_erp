@@ -24,6 +24,7 @@ use App\Http\Controllers\PublicHolidayController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\PendingApprovalsController;
 use App\Http\Controllers\ImportExportController;
+use App\Http\Controllers\HelpPageController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -219,6 +220,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/data-transfer/logs/{log}/progress',      [ImportExportController::class, 'progressPage']) ->name('import-export.progress');
     Route::get('/data-transfer/logs/{log}/progress-data', [ImportExportController::class, 'progressData']) ->name('import-export.progress-data');
     Route::get('/data-transfer/logs/{log}',            [ImportExportController::class, 'logShow'])      ->name('import-export.log.show');
+
+    // Help Pages
+    Route::prefix('admin/help-pages')->name('admin.help-pages.')->group(function () {
+        Route::get('/',                         [HelpPageController::class, 'index'])      ->name('index');
+        Route::get('/create',                   [HelpPageController::class, 'create'])     ->name('create');
+        Route::post('/',                        [HelpPageController::class, 'store'])      ->name('store');
+        Route::post('/upload-image',            [HelpPageController::class, 'uploadImage'])->name('upload-image');
+        Route::get('/{helpPage}/edit',          [HelpPageController::class, 'edit'])       ->name('edit');
+        Route::put('/{helpPage}',               [HelpPageController::class, 'update'])     ->name('update');
+        Route::delete('/{helpPage}',            [HelpPageController::class, 'destroy'])    ->name('destroy');
+    });
 
     // Holidays
     Route::resource('admin/public-holidays', PublicHolidayController::class)

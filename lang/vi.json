@@ -815,5 +815,22 @@
     "Processing row": "Đang xử lý dòng",
     "Edit Holiday": "Chỉnh sửa Ngày lễ",
     "Repeat annually": "Lặp lại hàng năm",
-    "Leave Request Details": "Chi tiết yêu cầu nghỉ phép"
+    "Leave Request Details": "Chi tiết yêu cầu nghỉ phép",
+    "Help Pages": "Trang trợ giúp",
+    "Help Page": "Trang trợ giúp",
+    "Add Help Page": "Thêm trang trợ giúp",
+    "Edit Help Page": "Chỉnh sửa trang trợ giúp",
+    "No help pages configured.": "Chưa có trang trợ giúp nào.",
+    "Delete this help page?": "Xóa trang trợ giúp này?",
+    "Help page created.": "Đã tạo trang trợ giúp.",
+    "Help page updated.": "Đã cập nhật trang trợ giúp.",
+    "Help page deleted.": "Đã xóa trang trợ giúp.",
+    "Route": "Route",
+    "Select a route": "Chọn một route",
+    "Languages": "Ngôn ngữ",
+    "Only active help pages will show the Help button to users.": "Chỉ các trang trợ giúp đang hoạt động mới hiển thị nút Trợ giúp cho người dùng.",
+    "Write help content…": "Viết nội dung trợ giúp…",
+    "Help page title…": "Tiêu đề trang trợ giúp…",
+    "Help": "Trợ giúp",
+    "Image upload failed. Please try again.": "Tải ảnh lên thất bại. Vui lòng thử lại."
 }
