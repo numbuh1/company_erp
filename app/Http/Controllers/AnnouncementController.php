@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Announcement;
 use App\Models\Team;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class AnnouncementController extends Controller
 {
@@ -146,6 +145,6 @@ class AnnouncementController extends Controller
     {
         $request->validate(['image' => 'required|image|max:5120']);
         $path = $request->file('image')->store('announcement_images', 'public');
-        return response()->json(['url' => Storage::disk('public')->url($path)]);
+        return response()->json(['url' => asset('storage/' . $path)]);
     }
 }

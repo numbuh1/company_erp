@@ -6,7 +6,6 @@ use App\Models\HelpPage;
 use App\Models\HelpPageContent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route as RouteFacade;
-use Illuminate\Support\Facades\Storage;
 
 class HelpPageController extends Controller
 {
@@ -123,6 +122,6 @@ class HelpPageController extends Controller
         $this->authorize();
         $request->validate(['image' => 'required|image|max:5120']);
         $path = $request->file('image')->store('help_images', 'public');
-        return response()->json(['url' => Storage::url($path)]);
+        return response()->json(['url' => asset('storage/' . $path)]);
     }
 }
