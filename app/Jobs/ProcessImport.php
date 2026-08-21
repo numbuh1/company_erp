@@ -2,8 +2,10 @@
 
 namespace App\Jobs;
 
+use App\Imports\LeaveBalanceImport;
 use App\Imports\LeaveRequestsImport;
 use App\Imports\OvertimeRequestsImport;
+use App\Imports\RequestsImport;
 use App\Imports\TeamsImport;
 use App\Imports\UsersImport;
 use App\Models\ImportLog;
@@ -37,6 +39,8 @@ class ProcessImport implements ShouldQueue
             'teams'          => new TeamsImport,
             'leave-requests' => new LeaveRequestsImport,
             'ot-requests'    => new OvertimeRequestsImport,
+            'leave-balance'  => new LeaveBalanceImport,
+            'requests'       => new RequestsImport,
             default          => throw new \InvalidArgumentException("Unknown type: {$this->type}"),
         };
 

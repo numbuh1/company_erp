@@ -7,8 +7,10 @@ use App\Exports\LeaveRequestsExport;
 use App\Exports\OvertimeRequestsExport;
 use App\Exports\TeamsExport;
 use App\Exports\UsersExport;
+use App\Imports\LeaveBalanceImport;
 use App\Imports\LeaveRequestsImport;
 use App\Imports\OvertimeRequestsImport;
+use App\Imports\RequestsImport;
 use App\Imports\TeamsImport;
 use App\Imports\UsersImport;
 use App\Jobs\ProcessImport;
@@ -21,7 +23,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class ImportExportController extends Controller
 {
-    private const TYPES = ['users', 'teams', 'leave-requests', 'ot-requests'];
+    private const TYPES = ['users', 'teams', 'leave-requests', 'ot-requests', 'leave-balance', 'requests'];
 
     public function index()
     {
@@ -88,6 +90,14 @@ class ImportExportController extends Controller
                 ['user', 'type', 'start_at', 'end_at', 'hours', 'project', 'task', 'description', 'status', 'approved_by', 'reject_reason'],
                 ['Nguyen Van A', 'OT x1.5', '01/06/2026 18:00', '01/06/2026 20:00', '2', 'Project Alpha', '', 'Extra work', 'pending', '', ''],
             ],
+            'leave-balance' => [
+                ['user', 'action', 'hours', 'reason'],
+                ['Nguyen Van A', 'set', '112', 'Annual reset'],
+            ],
+            'requests' => [
+                ['category', 'user', 'type', 'start_at', 'end_at', 'hours', 'project', 'task', 'description', 'status', 'approved_by', 'reject_reason'],
+                ['leave', 'Nguyen Van A', 'annual', '01/06/2026 09:00', '01/06/2026 17:00', '8', '', '', 'Personal leave', 'pending', '', ''],
+            ],
             default => abort(404),
         };
 
@@ -113,6 +123,8 @@ class ImportExportController extends Controller
             'teams'          => new TeamsImport(dryRun: true),
             'leave-requests' => new LeaveRequestsImport(dryRun: true),
             'ot-requests'    => new OvertimeRequestsImport(dryRun: true),
+            'leave-balance'  => new LeaveBalanceImport(dryRun: true),
+            'requests'       => new RequestsImport(dryRun: true),
         };
 
         try {

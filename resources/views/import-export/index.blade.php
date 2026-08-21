@@ -115,6 +115,8 @@
                                 <option value="teams">{{ __('Teams') }}</option>
                                 <option value="leave-requests">{{ __('Leave Requests') }}</option>
                                 <option value="ot-requests">{{ __('OT Requests') }}</option>
+                                <option value="leave-balance">{{ __('Leave Balance') }}</option>
+                                <option value="requests">{{ __('Requests (Leave + OT)') }}</option>
                             </select>
                         </div>
 
@@ -170,6 +172,28 @@
                                     <p><code>status</code>: <code>pending</code> ({{ __('default') }}) / <code>approved</code> / <code>rejected</code></p>
                                 </div>
                             </template>
+                            <template x-if="importType === 'leave-balance'">
+                                <div class="space-y-1">
+                                    <p class="font-medium text-gray-700 dark:text-gray-300">{{ __('Required columns:') }} <code>user</code>, <code>hours</code></p>
+                                    <p>{{ __('Optional columns:') }} <code>action</code>, <code>reason</code></p>
+                                    <p><code>user</code>: {{ __('name, email, or ID') }}</p>
+                                    <p><code>action</code>: <code>set</code> ({{ __('default — set balance to exact value') }}) / <code>add</code> ({{ __('add hours') }}) / <code>subtract</code> ({{ __('subtract hours') }})</p>
+                                    <p><code>hours</code>: {{ __('number of hours') }}</p>
+                                    <p><code>reason</code>: {{ __('reason for the change (shown in balance history)') }}</p>
+                                    <p class="text-indigo-600 dark:text-indigo-400">{{ __('Each row updates the user\'s leave balance and creates a log entry.') }}</p>
+                                </div>
+                            </template>
+                            <template x-if="importType === 'requests'">
+                                <div class="space-y-1">
+                                    <p class="font-medium text-gray-700 dark:text-gray-300">{{ __('Required columns:') }} <code>category</code>, <code>user</code>, <code>start_at</code>, <code>end_at</code>, <code>hours</code></p>
+                                    <p>{{ __('Optional columns:') }} <code>type</code>, <code>project</code>, <code>task</code>, <code>description</code>, <code>status</code>, <code>approved_by</code>, <code>reject_reason</code></p>
+                                    <p><code>category</code>: <code>leave</code> / <code>ot</code></p>
+                                    <p>{{ __('For leave rows:') }} <code>type</code>: <code>annual</code> / <code>sick</code> / <code>unpaid</code></p>
+                                    <p>{{ __('For OT rows:') }} <code>type</code>: <code>OT x1.5</code> / <code>OT x2</code> / <code>OT x3</code></p>
+                                    <p><code>user</code> / <code>approved_by</code>: {{ __('name, email, or ID') }} &nbsp;·&nbsp; <code>project</code> / <code>task</code>: {{ __('name or ID (OT only)') }}</p>
+                                    <p class="text-indigo-600 dark:text-indigo-400">{{ __('Mix leave and OT requests in a single file. Each row is always created (no duplicate check).') }}</p>
+                                </div>
+                            </template>
                         </div>
 
                         {{-- File input --}}
@@ -213,6 +237,7 @@
                             <li>{{ __('Users: matched by email → update if exists, create if not.') }}</li>
                             <li>{{ __('Teams: matched by name → update members if exists, create if not.') }}</li>
                             <li>{{ __('Leave / OT requests: always created, no duplicate check.') }}</li>
+                            <li>{{ __('Leave Balance: updates user balance and logs the change.') }}</li>
                             <li>{{ __('Click "Preview changes" to review data before confirming.') }}</li>
                         </ul>
                     </div>
@@ -384,6 +409,8 @@
                                                 'teams'          => 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
                                                 'leave-requests' => 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
                                                 'ot-requests'    => 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
+                                                'leave-balance'  => 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300',
+                                                'requests'       => 'bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300',
                                                 default          => 'bg-gray-100 text-gray-600',
                                             };
                                         @endphp
