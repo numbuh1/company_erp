@@ -22,6 +22,8 @@ class ImportLog extends Model
         'teams'          => 'Nhóm',
         'leave-requests' => 'Nghỉ phép',
         'ot-requests'    => 'Tăng ca',
+        'leave-balance'  => 'Số dư phép',
+        'requests'       => 'Yêu cầu',
     ];
 
     public function user()

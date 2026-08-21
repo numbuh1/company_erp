@@ -832,5 +832,19 @@
     "Write help content…": "Write help content…",
     "Help page title…": "Help page title…",
     "Help": "Help",
-    "Image upload failed. Please try again.": "Image upload failed. Please try again."
+    "Image upload failed. Please try again.": "Image upload failed. Please try again.",
+    "Leave Balance": "Leave Balance",
+    "Requests (Leave + OT)": "Requests (Leave + OT)",
+    "name, email, or ID": "name, email, or ID",
+    "default — set balance to exact value": "default — set balance to exact value",
+    "add hours": "add hours",
+    "subtract hours": "subtract hours",
+    "number of hours": "number of hours",
+    "reason for the change (shown in balance history)": "reason for the change (shown in balance history)",
+    "Each row updates the user's leave balance and creates a log entry.": "Each row updates the user's leave balance and creates a log entry.",
+    "For leave rows:": "For leave rows:",
+    "For OT rows:": "For OT rows:",
+    "name or ID (OT only)": "name or ID (OT only)",
+    "Mix leave and OT requests in a single file. Each row is always created (no duplicate check).": "Mix leave and OT requests in a single file. Each row is always created (no duplicate check).",
+    "Leave Balance: updates user balance and logs the change.": "Leave Balance: updates user balance and logs the change."
 }

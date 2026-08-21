@@ -832,5 +832,19 @@
     "Write help content…": "Viết nội dung trợ giúp…",
     "Help page title…": "Tiêu đề trang trợ giúp…",
     "Help": "Trợ giúp",
-    "Image upload failed. Please try again.": "Tải ảnh lên thất bại. Vui lòng thử lại."
+    "Image upload failed. Please try again.": "Tải ảnh lên thất bại. Vui lòng thử lại.",
+    "Leave Balance": "Số dư phép",
+    "Requests (Leave + OT)": "Yêu cầu (Nghỉ phép + Tăng ca)",
+    "name, email, or ID": "tên, email, hoặc ID",
+    "default — set balance to exact value": "mặc định — đặt số dư phép đúng giá trị",
+    "add hours": "cộng thêm giờ",
+    "subtract hours": "trừ giờ",
+    "number of hours": "số giờ",
+    "reason for the change (shown in balance history)": "lý do thay đổi (hiển thị trong lịch sử số dư)",
+    "Each row updates the user's leave balance and creates a log entry.": "Mỗi dòng cập nhật số dư phép của người dùng và tạo bản ghi lịch sử.",
+    "For leave rows:": "Cho dòng nghỉ phép:",
+    "For OT rows:": "Cho dòng tăng ca:",
+    "name or ID (OT only)": "tên hoặc ID (chỉ tăng ca)",
+    "Mix leave and OT requests in a single file. Each row is always created (no duplicate check).": "Kết hợp yêu cầu nghỉ phép và tăng ca trong cùng một file. Mỗi dòng luôn được tạo mới (không kiểm tra trùng).",
+    "Leave Balance: updates user balance and logs the change.": "Số dư phép: cập nhật số dư phép và ghi log thay đổi."
 }
