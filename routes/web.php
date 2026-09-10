@@ -25,6 +25,7 @@ use App\Http\Controllers\CommentController;
 use App\Http\Controllers\PendingApprovalsController;
 use App\Http\Controllers\ImportExportController;
 use App\Http\Controllers\HelpPageController;
+use App\Http\Controllers\FramecadViewerController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -39,6 +40,9 @@ Route::get('/locale/{locale}', function (string $locale) {
     }
     return back();
 })->name('locale.switch');
+
+// FrameCAD Viewer (public)
+Route::get('/framecad-viewer', [FramecadViewerController::class, 'index'])->name('framecad-viewer');
 
 Route::prefix('help')->group(function () {
     Route::view('/', 'help.index')->name('help.index');
