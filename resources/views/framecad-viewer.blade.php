@@ -79,6 +79,11 @@
         .compare-table td:first-child { text-align:left; color:#64748b; font-family:inherit; }
         .compare-table .delta-col { color:#3b82f6; }
         .compare-table tr.len-row { border-top:1px solid #e2e8f0; font-weight:600; }
+        .compare-table input[type=number] { width:5rem; padding:0.15rem 0.25rem; font-size:0.7rem; border:1px solid #cbd5e1; border-radius:0.2rem; text-align:right; font-family:ui-monospace,monospace; background:#fff; }
+        .compare-table input[type=number]:focus { outline:none; border-color:#3b82f6; box-shadow:0 0 0 2px rgba(59,130,246,0.15); }
+        .compare-table input[type=number].overridden { border-color:#f59e0b; background:#fffbeb; }
+        .coord-reset-btn { font-size:0.6rem; padding:0.05rem 0.3rem; border:1px solid #e2e8f0; border-radius:0.2rem; background:#fff; color:#94a3b8; cursor:pointer; margin-left:0.2rem; vertical-align:middle; }
+        .coord-reset-btn:hover { background:#fee2e2; color:#ef4444; border-color:#fca5a5; }
 
         .batch-row { display:flex; align-items:center; gap:0.375rem; flex-wrap:wrap; }
         .batch-row select,.batch-row input { font-size:0.7rem; padding:0.2rem 0.3rem; border:1px solid #e2e8f0; border-radius:0.25rem; }
@@ -87,6 +92,23 @@
         .batch-row .apply-btn:hover { background:#2563eb; }
         .batch-row label { font-size:0.65rem; color:#64748b; display:flex; align-items:center; gap:0.2rem; }
         .batch-check { display:flex; align-items:center; gap:0.25rem; font-size:0.65rem; color:#64748b; margin-top:0.375rem; }
+
+        /* Compare modal */
+        .modal-overlay { position:fixed; inset:0; background:rgba(15,23,42,0.6); z-index:100; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(2px); }
+        .modal-box { background:#fff; border-radius:0.75rem; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); width:90vw; max-width:1200px; max-height:90vh; display:flex; flex-direction:column; overflow:hidden; }
+        .modal-header { display:flex; align-items:center; justify-content:space-between; padding:0.75rem 1.25rem; border-bottom:1px solid #e2e8f0; }
+        .modal-header h2 { font-size:1rem; font-weight:700; }
+        .modal-close { width:2rem; height:2rem; display:flex; align-items:center; justify-content:center; border:none; background:transparent; cursor:pointer; border-radius:0.375rem; font-size:1.25rem; color:#64748b; }
+        .modal-close:hover { background:#f1f5f9; }
+        .modal-body { flex:1; display:flex; gap:1px; background:#e2e8f0; overflow:hidden; min-height:0; }
+        .compare-pane { flex:1; display:flex; flex-direction:column; background:#f8fafc; min-width:0; }
+        .compare-pane-header { padding:0.5rem 1rem; background:#fff; border-bottom:1px solid #e2e8f0; font-size:0.8rem; font-weight:600; text-align:center; }
+        .compare-pane-header.before { color:#ef4444; }
+        .compare-pane-header.after { color:#22c55e; }
+        .compare-pane canvas { flex:1; display:block; width:100%; }
+        .modal-footer { padding:0.5rem 1.25rem; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:0.5rem; }
+        .modal-nav-btn { padding:0.3rem 0.75rem; border-radius:0.375rem; border:1px solid #e2e8f0; background:#fff; cursor:pointer; font-size:0.75rem; color:#475569; }
+        .modal-nav-btn:hover { background:#f1f5f9; }
     </style>
 </head>
 <body>
@@ -103,6 +125,10 @@
                 Load XML
                 <input type="file" id="file-input" accept=".xml" hidden>
             </label>
+            <button class="header-btn" id="compare-btn" onclick="showCompareModal()" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:0.875rem;height:0.875rem"><path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H4.598a.75.75 0 00-.75.75v3.634a.75.75 0 001.5 0v-2.033l.312.311a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.06-7.983a.75.75 0 00-1.06 0l-.312.311A7 7 0 003.288 6.89a.75.75 0 101.449.39A5.5 5.5 0 0113.938 4.89l.312-.311H11.817a.75.75 0 000 1.5h3.634a.75.75 0 00.75-.75V1.694a.75.75 0 00-.75-.75z" clip-rule="evenodd"/></svg>
+                Compare
+            </button>
             <button class="header-btn primary" id="export-btn" onclick="exportXML()" disabled>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:0.875rem;height:0.875rem"><path d="M10.75 2.75a.75.75 0 00-1.5 0v8.614L6.295 8.235a.75.75 0 10-1.09 1.03l4.25 4.5a.75.75 0 001.09 0l4.25-4.5a.75.75 0 00-1.09-1.03l-2.955 3.129V2.75z"/><path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z"/></svg>
                 Export XML
@@ -223,6 +249,31 @@
     </div>
 </div>
 
+<!-- Compare Modal -->
+<div class="modal-overlay" id="compare-modal" style="display:none" onclick="if(event.target===this)closeCompareModal()">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2 id="compare-title">Compare: Before &amp; After</h2>
+            <button class="modal-close" onclick="closeCompareModal()">&times;</button>
+        </div>
+        <div class="modal-body" style="height:60vh">
+            <div class="compare-pane">
+                <div class="compare-pane-header before">Before (Original)</div>
+                <canvas id="compare-before"></canvas>
+            </div>
+            <div class="compare-pane">
+                <div class="compare-pane-header after">After (Modified)</div>
+                <canvas id="compare-after"></canvas>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-nav-btn" onclick="compareNav(-1)">&larr; Prev Frame</button>
+            <span id="compare-frame-label" style="font-size:0.8rem;color:#64748b;padding:0.3rem 0.5rem"></span>
+            <button class="modal-nav-btn" onclick="compareNav(1)">Next Frame &rarr;</button>
+        </div>
+    </div>
+</div>
+
 <script>
 // === CONSTANTS ===
 const COLORS = {
@@ -245,19 +296,25 @@ let isDragging = false, dragStart = {x:0,y:0}, camStart = {x:0,y:0};
 let frameMods = {};
 let originalXmlDoc = null;
 let cachedEnv = null;
+let compareFrameIdx = 0;
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
 // === FRAME MODIFICATIONS ===
 function getFrameMod(idx) {
-    if (!frameMods[idx]) frameMods[idx] = { resetOrigin:true, flipH:false, flipV:false, stickTrims:{} };
+    if (!frameMods[idx]) frameMods[idx] = { resetOrigin:true, flipH:false, flipV:false, stickTrims:{}, stickOverrides:{} };
     return frameMods[idx];
 }
 function getStickTrim(frameIdx, stickName) {
     const mod = getFrameMod(frameIdx);
     if (!mod.stickTrims[stickName]) mod.stickTrims[stickName] = { start:0, end:0 };
     return mod.stickTrims[stickName];
+}
+function getStickOverride(frameIdx, stickName) {
+    const mod = getFrameMod(frameIdx);
+    if (!mod.stickOverrides[stickName]) mod.stickOverrides[stickName] = { start:null, end:null };
+    return mod.stickOverrides[stickName];
 }
 
 // === COORDINATE TRANSFORM ===
@@ -310,6 +367,54 @@ function applyTrimToStick(stick, frameIdx, frame) {
     };
 }
 
+function getStickFinal3D(stick, frameIdx, frame) {
+    const trimmed = applyTrimToStick(stick, frameIdx, frame);
+    const ovr = getStickOverride(frameIdx, stick.name);
+    return {
+        start: ovr.start ? { ...ovr.start } : trimmed.start,
+        end: ovr.end ? { ...ovr.end } : trimmed.end,
+    };
+}
+
+function reconstruct3DFromHV(h, v, env) {
+    if (env.horizontal === 'x') {
+        return { x: h + env.minH, y: env.minH, z: v + env.minV };
+    } else {
+        return { x: env.minH, y: h + env.minH, z: v + env.minV };
+    }
+}
+
+function setStickCoord(si, which, axis, val) {
+    const frame = allFrames[currentFrameIdx];
+    const stick = frame.sticks[si];
+    const env = getProjectedEnvelope(frame, currentFrameIdx);
+    const ovr = getStickOverride(currentFrameIdx, stick.name);
+    const trimmed = applyTrimToStick(stick, currentFrameIdx, frame);
+
+    let point3d = ovr[which] ? { ...ovr[which] } : { ...(which === 'start' ? trimmed.start : trimmed.end) };
+
+    if (axis === 'h') {
+        const absH = val + env.minH;
+        if (env.horizontal === 'x') point3d.x = absH;
+        else point3d.y = absH;
+    } else {
+        point3d.z = val + env.minV;
+    }
+
+    ovr[which] = point3d;
+    renderComponentList();
+    draw();
+}
+
+function resetStickCoord(si, which) {
+    const frame = allFrames[currentFrameIdx];
+    const stick = frame.sticks[si];
+    const ovr = getStickOverride(currentFrameIdx, stick.name);
+    ovr[which] = null;
+    renderComponentList();
+    draw();
+}
+
 // === 2D PROJECTION ===
 function getProjectedEnvelope(frame, frameIdx) {
     if (!frame.envelope.length) return null;
@@ -319,6 +424,22 @@ function getProjectedEnvelope(frame, frameIdx) {
         allPts.push(transformPoint3D(s.start, frame, frameIdx));
         allPts.push(transformPoint3D(s.end, frame, frameIdx));
     });
+    const xs=allPts.map(p=>p.x), ys=allPts.map(p=>p.y);
+    const xR=Math.max(...xs)-Math.min(...xs), yR=Math.max(...ys)-Math.min(...ys);
+    const useX = xR > yR;
+    return {
+        horizontal: useX ? 'x' : 'y',
+        minH: useX ? Math.min(...xs) : Math.min(...ys),
+        maxH: useX ? Math.max(...xs) : Math.max(...ys),
+        minV: Math.min(...allPts.map(p=>p.z)),
+        maxV: Math.max(...allPts.map(p=>p.z)),
+    };
+}
+
+function getOriginalProjectedEnvelope(frame) {
+    if (!frame.envelope.length) return null;
+    const allPts = [...frame.envelope];
+    frame.sticks.forEach(s => { allPts.push(s.start); allPts.push(s.end); });
     const xs=allPts.map(p=>p.x), ys=allPts.map(p=>p.y);
     const xR=Math.max(...xs)-Math.min(...xs), yR=Math.max(...ys)-Math.min(...ys);
     const useX = xR > yR;
@@ -415,6 +536,7 @@ function parseXML(xmlText) {
     canvas.style.display = '';
     document.getElementById('toolbar').style.display = '';
     document.getElementById('export-btn').disabled = false;
+    document.getElementById('compare-btn').disabled = false;
 }
 
 // === UI: TABS ===
@@ -433,12 +555,14 @@ function onTransformChange() {
     if (currentFrameIdx < 0) return;
     const mod = getFrameMod(currentFrameIdx);
     mod.resetOrigin = document.getElementById('reset-origin').checked;
+    mod.stickOverrides = {};
     refreshAll();
 }
 function toggleFlipH() {
     if (currentFrameIdx < 0) return;
     const mod = getFrameMod(currentFrameIdx);
     mod.flipH = !mod.flipH;
+    mod.stickOverrides = {};
     document.getElementById('flip-h-btn').classList.toggle('on', mod.flipH);
     refreshAll();
 }
@@ -446,6 +570,7 @@ function toggleFlipV() {
     if (currentFrameIdx < 0) return;
     const mod = getFrameMod(currentFrameIdx);
     mod.flipV = !mod.flipV;
+    mod.stickOverrides = {};
     document.getElementById('flip-v-btn').classList.toggle('on', mod.flipV);
     refreshAll();
 }
@@ -513,26 +638,29 @@ function renderComponentList() {
 
     const tbody = document.getElementById('comp-tbody');
     tbody.innerHTML = frame.sticks.map((stick, si) => {
-        const trim = getStickTrim(idx, stick.name);
         const tS = transformPoint3D(stick.start, frame, idx);
         const tE = transformPoint3D(stick.end, frame, idx);
         const origLen = dist3D(tS, tE);
-        const trimmed = applyTrimToStick(stick, idx, frame);
-        const newLen = dist3D(trimmed.start, trimmed.end);
+        const final3d = getStickFinal3D(stick, idx, frame);
+        const newLen = dist3D(final3d.start, final3d.end);
         const delta = newLen - origLen;
         const color = COLORS[stick.usage]||COLORS.default;
         const cls = si === selectedStickIdx ? ' selected' : '';
         const dCls = delta < -0.001 ? 'delta-neg' : delta > 0.001 ? 'delta-pos' : 'delta-zero';
+        const trim = getStickTrim(idx, stick.name);
+        const ovr = getStickOverride(idx, stick.name);
+        const hasOverride = ovr.start || ovr.end;
+        const ovrMark = hasOverride ? ' *' : '';
 
         return `<tr class="${cls}" onclick="selectStick(${si})">
             <td><span class="color-dot" style="background:${color}"></span></td>
-            <td style="font-weight:600">${stick.name}</td>
+            <td style="font-weight:600">${stick.name}${ovrMark}</td>
             <td style="color:#94a3b8">${USAGE_LABELS[stick.usage]||stick.usage}</td>
             <td class="r"><input type="number" step="0.1" min="0" value="${trim.start}" onchange="setTrim(${si},'start',this.value)" onclick="event.stopPropagation()"></td>
             <td class="r"><input type="number" step="0.1" min="0" value="${trim.end}" onchange="setTrim(${si},'end',this.value)" onclick="event.stopPropagation()"></td>
             <td class="r">${origLen.toFixed(1)}</td>
             <td class="r">${newLen.toFixed(1)}</td>
-            <td class="r ${dCls}">${delta !== 0 ? (delta>0?'+':'') + delta.toFixed(1) : '-'}</td>
+            <td class="r ${dCls}">${Math.abs(delta) > 0.001 ? (delta>0?'+':'') + delta.toFixed(1) : '-'}</td>
         </tr>`;
     }).join('');
 
@@ -550,6 +678,9 @@ function setTrim(si, which, val) {
     const stick = frame.sticks[si];
     const trim = getStickTrim(currentFrameIdx, stick.name);
     trim[which] = Math.max(0, parseFloat(val) || 0);
+    const ovr = getStickOverride(currentFrameIdx, stick.name);
+    ovr.start = null;
+    ovr.end = null;
     renderComponentList();
     draw();
 }
@@ -567,6 +698,9 @@ function applyBatchTrim() {
                 const trim = getStickTrim(fi, stick.name);
                 trim.start = startV;
                 trim.end = endV;
+                const ovr = getStickOverride(fi, stick.name);
+                ovr.start = null;
+                ovr.end = null;
             }
         });
     });
@@ -580,19 +714,22 @@ function renderComparisonDetail(env) {
 
     const frame = allFrames[currentFrameIdx];
     const idx = currentFrameIdx;
-    const stick = frame.sticks[selectedStickIdx];
+    const si = selectedStickIdx;
+    const stick = frame.sticks[si];
     const color = COLORS[stick.usage]||COLORS.default;
 
     const tS = transformPoint3D(stick.start, frame, idx);
     const tE = transformPoint3D(stick.end, frame, idx);
     const trimmed = applyTrimToStick(stick, idx, frame);
+    const final3d = getStickFinal3D(stick, idx, frame);
+    const ovr = getStickOverride(idx, stick.name);
 
     const oS = project(tS, env);
     const oE = project(tE, env);
-    const mS = project(trimmed.start, env);
-    const mE = project(trimmed.end, env);
+    const fS = project(final3d.start, env);
+    const fE = project(final3d.end, env);
     const origLen = dist3D(tS, tE);
-    const newLen = dist3D(trimmed.start, trimmed.end);
+    const newLen = dist3D(final3d.start, final3d.end);
     const dLen = newLen - origLen;
 
     const profStr = stick.profile
@@ -602,20 +739,49 @@ function renderComparisonDetail(env) {
     function fmt(v) { return v.toFixed(3); }
     function fmtD(v) { return (v > 0.0005 ? '+' : '') + v.toFixed(3); }
     function dCls(v) { return Math.abs(v) < 0.001 ? 'delta-zero' : 'delta-col'; }
+    function ovrCls(which) { return ovr[which] ? ' overridden' : ''; }
+    function rstBtn(which) {
+        return ovr[which] ? `<button class="coord-reset-btn" onclick="event.stopPropagation();resetStickCoord(${si},'${which}')" title="Reset to computed value">×</button>` : '';
+    }
 
     area.innerHTML = `
     <div class="comp-detail">
         <h4><span class="color-dot" style="background:${color};width:10px;height:10px;border-radius:50%;display:inline-block"></span>
-            ${stick.name} &mdash; ${USAGE_LABELS[stick.usage]||stick.usage}</h4>
+            ${stick.name} &mdash; ${USAGE_LABELS[stick.usage]||stick.usage}
+            ${ovr.start || ovr.end ? '<span style="font-size:0.6rem;color:#f59e0b;font-weight:400;margin-left:0.25rem">(manually edited)</span>' : ''}</h4>
         <div class="profile-info">${profStr}</div>
         <table class="compare-table">
-            <tr><th></th><th>Before Trim</th><th>After Trim</th><th>&Delta;</th></tr>
-            <tr><td>Start H</td><td>${fmt(oS.h)}</td><td>${fmt(mS.h)}</td><td class="${dCls(mS.h-oS.h)}">${fmtD(mS.h-oS.h)}</td></tr>
-            <tr><td>Start V</td><td>${fmt(oS.v)}</td><td>${fmt(mS.v)}</td><td class="${dCls(mS.v-oS.v)}">${fmtD(mS.v-oS.v)}</td></tr>
-            <tr><td>End H</td><td>${fmt(oE.h)}</td><td>${fmt(mE.h)}</td><td class="${dCls(mE.h-oE.h)}">${fmtD(mE.h-oE.h)}</td></tr>
-            <tr><td>End V</td><td>${fmt(oE.v)}</td><td>${fmt(mE.v)}</td><td class="${dCls(mE.v-oE.v)}">${fmtD(mE.v-oE.v)}</td></tr>
+            <tr><th></th><th>Original</th><th>Modified</th><th>&Delta;</th><th></th></tr>
+            <tr>
+                <td>Start H</td>
+                <td>${fmt(oS.h)}</td>
+                <td><input type="number" step="0.001" value="${fS.h.toFixed(3)}" class="${ovrCls('start')}" onchange="setStickCoord(${si},'start','h',parseFloat(this.value))" onclick="event.stopPropagation()"></td>
+                <td class="${dCls(fS.h-oS.h)}">${fmtD(fS.h-oS.h)}</td>
+                <td>${rstBtn('start')}</td>
+            </tr>
+            <tr>
+                <td>Start V</td>
+                <td>${fmt(oS.v)}</td>
+                <td><input type="number" step="0.001" value="${fS.v.toFixed(3)}" class="${ovrCls('start')}" onchange="setStickCoord(${si},'start','v',parseFloat(this.value))" onclick="event.stopPropagation()"></td>
+                <td class="${dCls(fS.v-oS.v)}">${fmtD(fS.v-oS.v)}</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>End H</td>
+                <td>${fmt(oE.h)}</td>
+                <td><input type="number" step="0.001" value="${fE.h.toFixed(3)}" class="${ovrCls('end')}" onchange="setStickCoord(${si},'end','h',parseFloat(this.value))" onclick="event.stopPropagation()"></td>
+                <td class="${dCls(fE.h-oE.h)}">${fmtD(fE.h-oE.h)}</td>
+                <td>${rstBtn('end')}</td>
+            </tr>
+            <tr>
+                <td>End V</td>
+                <td>${fmt(oE.v)}</td>
+                <td><input type="number" step="0.001" value="${fE.v.toFixed(3)}" class="${ovrCls('end')}" onchange="setStickCoord(${si},'end','v',parseFloat(this.value))" onclick="event.stopPropagation()"></td>
+                <td class="${dCls(fE.v-oE.v)}">${fmtD(fE.v-oE.v)}</td>
+                <td></td>
+            </tr>
             <tr class="len-row"><td>Length</td><td>${fmt(origLen)}</td><td>${fmt(newLen)}</td>
-                <td class="${dLen < -0.001 ? 'delta-neg' : dLen > 0.001 ? 'delta-pos' : 'delta-zero'}">${fmtD(dLen)}</td></tr>
+                <td class="${dLen < -0.001 ? 'delta-neg' : dLen > 0.001 ? 'delta-pos' : 'delta-zero'}">${fmtD(dLen)}</td><td></td></tr>
         </table>
     </div>`;
 }
@@ -662,7 +828,6 @@ function draw() {
     const w = area.clientWidth, h = area.clientHeight;
     ctx.clearRect(0, 0, w, h);
 
-    // Envelope
     if (frame.envelope.length >= 4) {
         ctx.save(); ctx.setLineDash([4,4]); ctx.strokeStyle='#94a3b844'; ctx.lineWidth=1;
         ctx.beginPath();
@@ -672,7 +837,6 @@ function draw() {
         ctx.closePath(); ctx.stroke(); ctx.restore();
     }
 
-    // Tool actions
     if (layers.tools) {
         frame.toolActions.forEach(t => {
             const ts=transformPoint3D(t.start,frame,idx), te=transformPoint3D(t.end,frame,idx);
@@ -686,17 +850,16 @@ function draw() {
         });
     }
 
-    // Sticks
     if (layers.sticks) {
         frame.sticks.forEach((stick, si) => {
-            const trimmed = applyTrimToStick(stick, idx, frame);
+            const final3d = getStickFinal3D(stick, idx, frame);
             const color = COLORS[stick.usage]||COLORS.default;
             const isSelected = si === selectedStickIdx;
             const trim = getStickTrim(idx, stick.name);
-            const hasTrim = trim.start > 0 || trim.end > 0;
+            const ovr = getStickOverride(idx, stick.name);
+            const hasMod = trim.start > 0 || trim.end > 0 || ovr.start || ovr.end;
 
-            // Ghost: show original (pre-trim) position
-            if (layers.ghost && hasTrim) {
+            if (layers.ghost && hasMod) {
                 const oS = transformPoint3D(stick.start, frame, idx);
                 const oE = transformPoint3D(stick.end, frame, idx);
                 const gs = project(oS, env), ge = project(oE, env);
@@ -705,10 +868,9 @@ function draw() {
                 ctx.beginPath(); ctx.moveTo(gss.x,gss.y); ctx.lineTo(gse.x,gse.y); ctx.stroke(); ctx.restore();
             }
 
-            const s=project(trimmed.start,env), e=project(trimmed.end,env);
+            const s=project(final3d.start,env), e=project(final3d.end,env);
             const ss=toScreen(s.h,s.v), se=toScreen(e.h,e.v);
 
-            // Highlight selected
             if (isSelected) {
                 ctx.save(); ctx.strokeStyle=color+'44'; ctx.lineWidth=10; ctx.lineCap='round'; ctx.setLineDash([]);
                 ctx.beginPath(); ctx.moveTo(ss.x,ss.y); ctx.lineTo(se.x,se.y); ctx.stroke(); ctx.restore();
@@ -729,7 +891,6 @@ function draw() {
         });
     }
 
-    // Fasteners
     if (layers.fasteners) {
         frame.fasteners.forEach(f => {
             const tp=transformPoint3D(f.point,frame,idx);
@@ -765,6 +926,157 @@ function drawDimensions(env) {
     ctx.restore();
 }
 
+// === GENERIC FRAME DRAWING (for compare modal) ===
+function drawFrameOnCanvas(cvs, frame, frameIdx, useModifications) {
+    const c = cvs.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = cvs.getBoundingClientRect();
+    const w = rect.width, h = rect.height;
+    cvs.width = w * dpr;
+    cvs.height = h * dpr;
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.clearRect(0, 0, w, h);
+
+    let env;
+    if (useModifications) {
+        env = getProjectedEnvelope(frame, frameIdx);
+    } else {
+        env = getOriginalProjectedEnvelope(frame);
+    }
+    if (!env) return;
+
+    const fw = env.maxH - env.minH, fh = env.maxV - env.minV;
+    const pad = 50;
+    const scale = Math.min((w-pad*2)/fw, (h-pad*2)/fh);
+    const ox = (w - fw*scale)/2;
+    const oy = (h - fh*scale)/2;
+
+    function ts(hv, vv) {
+        return { x: ox + hv*scale, y: oy + (fh-vv)*scale };
+    }
+    function projPt(p3d) {
+        const hVal = env.horizontal === 'x' ? p3d.x : p3d.y;
+        return { h: hVal - env.minH, v: p3d.z - env.minV };
+    }
+
+    // Envelope
+    if (frame.envelope.length >= 4) {
+        c.save(); c.setLineDash([4,4]); c.strokeStyle='#94a3b844'; c.lineWidth=1;
+        c.beginPath();
+        const pts = frame.envelope.map(p => {
+            const tp = useModifications ? transformPoint3D(p, frame, frameIdx) : p;
+            const pr = projPt(tp);
+            return ts(pr.h, pr.v);
+        });
+        c.moveTo(pts[0].x,pts[0].y);
+        for (let i=1;i<pts.length;i++) c.lineTo(pts[i].x,pts[i].y);
+        c.closePath(); c.stroke(); c.restore();
+    }
+
+    // Tool actions
+    frame.toolActions.forEach(t => {
+        const tpS = useModifications ? transformPoint3D(t.start, frame, frameIdx) : t.start;
+        const tpE = useModifications ? transformPoint3D(t.end, frame, frameIdx) : t.end;
+        const s = projPt(tpS), e = projPt(tpE);
+        const ss = ts(s.h,s.v), se = ts(e.h,e.v);
+        c.save();
+        if (t.name==='Bolt') { c.strokeStyle='#f97316'; c.setLineDash([2,3]); c.lineWidth=1.5; }
+        else { c.strokeStyle='#06b6d488'; c.setLineDash([6,4]); c.lineWidth=1; }
+        c.beginPath(); c.moveTo(ss.x,ss.y); c.lineTo(se.x,se.y); c.stroke(); c.restore();
+        if (t.name==='Bolt') { c.fillStyle='#f97316'; c.beginPath(); c.arc(ss.x,ss.y,3,0,Math.PI*2); c.fill(); }
+    });
+
+    // Sticks
+    frame.sticks.forEach(stick => {
+        let startPt, endPt;
+        if (useModifications) {
+            const f3d = getStickFinal3D(stick, frameIdx, frame);
+            startPt = f3d.start;
+            endPt = f3d.end;
+        } else {
+            startPt = stick.start;
+            endPt = stick.end;
+        }
+        const color = COLORS[stick.usage]||COLORS.default;
+        const s = projPt(startPt), e = projPt(endPt);
+        const ss = ts(s.h,s.v), se = ts(e.h,e.v);
+
+        c.strokeStyle = color;
+        c.lineWidth = stick.usage==='Brace' ? 2 : 3;
+        c.lineCap = 'round';
+        c.setLineDash([]);
+        c.beginPath(); c.moveTo(ss.x,ss.y); c.lineTo(se.x,se.y); c.stroke();
+
+        const mx=(ss.x+se.x)/2, my=(ss.y+se.y)/2;
+        const fontSize = Math.max(8, Math.min(10, 9*scale/0.3));
+        c.font = `600 ${fontSize}px Figtree,sans-serif`;
+        c.fillStyle = color;
+        c.textAlign = 'center'; c.textBaseline = 'bottom';
+        const dx=se.x-ss.x, dy=se.y-ss.y, len=Math.sqrt(dx*dx+dy*dy);
+        const nx=len>0?-dy/len:0, ny=len>0?dx/len:-1;
+        c.fillText(stick.name, mx+nx*7, my+ny*7);
+    });
+
+    // Fasteners
+    frame.fasteners.forEach(f => {
+        const tp = useModifications ? transformPoint3D(f.point, frame, frameIdx) : f.point;
+        const p = projPt(tp);
+        const sp = ts(p.h, p.v);
+        c.fillStyle='#f59e0b'; c.strokeStyle='#fff'; c.lineWidth=1.5;
+        c.beginPath(); c.arc(sp.x,sp.y,3,0,Math.PI*2); c.fill(); c.stroke();
+    });
+
+    // Dimensions
+    const dimFs = Math.max(8, Math.min(10, 9*scale/0.3));
+    c.save(); c.strokeStyle='#64748b88'; c.fillStyle='#64748b'; c.lineWidth=0.5; c.setLineDash([]);
+    c.font = `${dimFs}px Figtree,sans-serif`;
+    const dimY = ts(0,-1).y + 20;
+    const lp = ts(0,0), rp = ts(fw,0);
+    c.beginPath(); c.moveTo(lp.x,dimY); c.lineTo(rp.x,dimY); c.stroke();
+    c.beginPath(); c.moveTo(lp.x,dimY-3); c.lineTo(lp.x,dimY+3); c.moveTo(rp.x,dimY-3); c.lineTo(rp.x,dimY+3); c.stroke();
+    c.textAlign='center'; c.textBaseline='top';
+    c.fillText(`${Math.round(fw)} mm`, (lp.x+rp.x)/2, dimY+4);
+
+    const dimX = ts(-1,0).x - 20;
+    const bp = ts(0,0), tp2 = ts(0,fh);
+    c.beginPath(); c.moveTo(dimX,bp.y); c.lineTo(dimX,tp2.y); c.stroke();
+    c.beginPath(); c.moveTo(dimX-3,bp.y); c.lineTo(dimX+3,bp.y); c.moveTo(dimX-3,tp2.y); c.lineTo(dimX+3,tp2.y); c.stroke();
+    c.save(); c.translate(dimX-6,(bp.y+tp2.y)/2); c.rotate(-Math.PI/2);
+    c.textAlign='center'; c.textBaseline='bottom';
+    c.fillText(`${Math.round(fh)} mm`,0,0); c.restore();
+    c.restore();
+}
+
+// === COMPARE MODAL ===
+function showCompareModal() {
+    if (allFrames.length === 0) return;
+    compareFrameIdx = currentFrameIdx >= 0 ? currentFrameIdx : 0;
+    document.getElementById('compare-modal').style.display = '';
+    document.body.style.overflow = 'hidden';
+    requestAnimationFrame(() => drawCompare());
+}
+
+function closeCompareModal() {
+    document.getElementById('compare-modal').style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+function compareNav(dir) {
+    compareFrameIdx = Math.max(0, Math.min(allFrames.length-1, compareFrameIdx + dir));
+    drawCompare();
+}
+
+function drawCompare() {
+    const frame = allFrames[compareFrameIdx];
+    document.getElementById('compare-title').textContent = `Compare: ${frame.name} — ${frame.type.replace(/([A-Z])/g,' $1').trim()}`;
+    document.getElementById('compare-frame-label').textContent = `${frame.name} (${compareFrameIdx+1} / ${allFrames.length})`;
+
+    const before = document.getElementById('compare-before');
+    const after = document.getElementById('compare-after');
+    drawFrameOnCanvas(before, frame, compareFrameIdx, false);
+    drawFrameOnCanvas(after, frame, compareFrameIdx, true);
+}
+
 // === EXPORT ===
 function exportXML() {
     if (!originalXmlDoc) return;
@@ -781,9 +1093,9 @@ function exportXML() {
 
         frameEl.querySelectorAll('stick').forEach((s, si) => {
             const stick = frame.sticks[si];
-            const trimmed = applyTrimToStick(stick, idx, frame);
-            s.querySelector('start').textContent = fmtCoord(trimmed.start);
-            s.querySelector('end').textContent = fmtCoord(trimmed.end);
+            const final3d = getStickFinal3D(stick, idx, frame);
+            s.querySelector('start').textContent = fmtCoord(final3d.start);
+            s.querySelector('end').textContent = fmtCoord(final3d.end);
         });
 
         frameEl.querySelectorAll('fastener').forEach((f, fi) => {
@@ -838,6 +1150,12 @@ canvas.addEventListener('wheel', e => {
 
 document.addEventListener('keydown', e => {
     if (e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return;
+    if (document.getElementById('compare-modal').style.display !== 'none') {
+        if (e.key==='Escape') closeCompareModal();
+        if (e.key==='ArrowLeft') compareNav(-1);
+        if (e.key==='ArrowRight') compareNav(1);
+        return;
+    }
     if (e.key==='ArrowLeft') prevFrame();
     if (e.key==='ArrowRight') nextFrame();
     if (e.key==='f'||e.key==='F') fitView();
@@ -845,7 +1163,10 @@ document.addEventListener('keydown', e => {
     if (e.key==='-') zoomOut();
 });
 
-window.addEventListener('resize', resizeCanvas);
+window.addEventListener('resize', () => {
+    resizeCanvas();
+    if (document.getElementById('compare-modal').style.display !== 'none') drawCompare();
+});
 resizeCanvas();
 canvas.style.cursor = 'grab';
 </script>
