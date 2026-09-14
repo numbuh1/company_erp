@@ -19,6 +19,24 @@
             </div>
         @endif
 
+        {{-- Search --}}
+        <div class="px-4 py-3 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <form method="GET" action="{{ route('users.index') }}" class="flex items-center gap-2 max-w-md">
+                <div class="relative flex-1">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text" name="search" value="{{ $search ?? '' }}"
+                        placeholder="{{ __('Search by name, email, position…') }}"
+                        class="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <x-primary-button class="!py-2">{{ __('Search') }}</x-primary-button>
+                @if(!empty($search))
+                    <a href="{{ route('users.index') }}" class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">{{ __('Clear') }}</a>
+                @endif
+            </form>
+        </div>
+
         {{-- Tab bar --}}
         <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4">
             <nav class="-mb-px flex">

@@ -55,9 +55,10 @@ class NotificationHelper
         }
 
 
+        $approverName = auth()->user()?->name ?? '';
+
         switch($request->status) {
             case 'approved':
-                $approverName = auth()->user()?->name ?? '';
                 $message = 'Yêu cầu ' . $request_type . ' (' .
                             $request->start_at->format('d/m/Y') . ') ' . $status .
                             ($approverName ? ' bởi ' . $approverName : '') . '.';
@@ -65,7 +66,7 @@ class NotificationHelper
             case 'rejected':
                 $message = 'Yêu cầu ' . $request_type . ' (' .
                             $request->start_at->format('d/m/Y') . ') ' . $status .
-                            ($approverName ? ' bởi ' . $approverName : '') '. ' .
+                            ($approverName ? ' bởi ' . $approverName : '') . '. ' .
                             'Lý do: ' . $request->reject_reason;
                 break;
             default:

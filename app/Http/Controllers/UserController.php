@@ -17,12 +17,23 @@ use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users           = User::with(['roles', 'teams', 'salaryRecord'])->paginate(20);
+        $query = User::with(['roles', 'teams', 'salaryRecord']);
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('full_name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('position', 'like', "%{$search}%");
+            });
+        }
+
+        $users           = $query->paginate(20)->appends($request->only('search'));
         $canViewSalary   = auth()->user()->canAny(['view salary', 'edit all user']);
         $canViewPersonal = auth()->user()->canAny(['view all user personal info', 'edit all user']);
-        return view('users.index', compact('users', 'canViewSalary', 'canViewPersonal'));
+        return view('users.index', compact('users', 'canViewSalary', 'canViewPersonal', 'search'));
     }
 
     public function create(Request $request)
