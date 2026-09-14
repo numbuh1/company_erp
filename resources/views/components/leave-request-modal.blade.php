@@ -52,20 +52,20 @@
             <div id="lrm-status-banner" class="hidden rounded-lg px-4 py-2.5 text-sm font-medium"></div>
 
             {{-- User --}}
-            <div id="lrm-user-row" class="hidden">
-                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('User') }}</label>
-                <p id="lrm-user-display" class="hidden text-sm font-medium text-gray-900 dark:text-gray-100 py-1"></p>
-                @if($lrmCanTeamOrAll)
-                    <select id="lrm-user-select" class="hidden w-full">
-                        <option value="">{{ __('— Select user —') }}</option>
-                        @foreach($lrmUsers as $u)
-                            <option value="{{ $u->id }}">{{ $u->name }}{{ $u->position ? ' · ' . $u->position : '' }}</option>
-                        @endforeach
-                    </select>
-                @else
-                    <input type="hidden" id="lrm-user-select" value="{{ $lrmAuth?->id }}">
-                @endif
-            </div>
+            @if($lrmCanTeamOrAll)
+                <div id="lrm-user-row" class="hidden">
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('User') }}</label>
+                    <p id="lrm-user-display" class="hidden text-sm font-medium text-gray-900 dark:text-gray-100 py-1"></p>                
+                        <select id="lrm-user-select" class="hidden w-full">
+                            <option value="">{{ __('— Select user —') }}</option>
+                            @foreach($lrmUsers as $u)
+                                <option value="{{ $u->id }}">{{ $u->name }}{{ $u->position ? ' · ' . $u->position : '' }}</option>
+                            @endforeach
+                        </select>
+                </div>            
+            @else
+                <input type="hidden" id="lrm-user-select" value="{{ $lrmAuth?->id }}">
+            @endif
 
             {{-- Type --}}
             <div>

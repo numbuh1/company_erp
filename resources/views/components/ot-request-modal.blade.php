@@ -48,20 +48,20 @@
             <div id="otm-status-banner" class="hidden rounded-lg px-4 py-2.5 text-sm font-medium"></div>
 
             {{-- User --}}
-            <div id="otm-user-row" class="hidden">
-                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('User') }}</label>
-                <p id="otm-user-display" class="hidden text-sm font-medium text-gray-900 dark:text-gray-100 py-1"></p>
-                @if($otmCanTeamOrAll && $otmUsers->count() > 1)
-                    <select id="otm-user-select" class="hidden w-full">
-                        <option value="">{{ __('— Select user —') }}</option>
-                        @foreach($otmUsers as $u)
-                            <option value="{{ $u->id }}">{{ $u->name }}{{ $u->position ? ' · ' . $u->position : '' }}</option>
-                        @endforeach
-                    </select>
-                @else
-                    <input type="hidden" id="otm-user-select" value="{{ $otmAuth?->id }}">
-                @endif
-            </div>
+            @if($otmCanTeamOrAll && $otmUsers->count() > 1)
+                <div id="otm-user-row" class="hidden">
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('User') }}</label>
+                    <p id="otm-user-display" class="hidden text-sm font-medium text-gray-900 dark:text-gray-100 py-1"></p>                
+                        <select id="otm-user-select" class="hidden w-full">
+                            <option value="">{{ __('— Select user —') }}</option>
+                            @foreach($otmUsers as $u)
+                                <option value="{{ $u->id }}">{{ $u->name }}{{ $u->position ? ' · ' . $u->position : '' }}</option>
+                            @endforeach
+                        </select>
+                </div>            
+            @else
+                <input type="hidden" id="otm-user-select" value="{{ $otmAuth?->id }}">
+            @endif
 
             {{-- OT Date --}}
             <div>
