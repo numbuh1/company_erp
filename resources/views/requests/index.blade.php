@@ -30,10 +30,10 @@
                     {{ __('Export') }}
                 </a>
                 @can('module leaves')
-                <x-primary-button onclick="openLeaveCreate()" type="button">+ Leave</x-primary-button>
+                <x-primary-button onclick="openLeaveCreate()" type="button">+ {{ __('Leave') }}</x-primary-button>
                 @endcan
                 @can('module ot')
-                <x-primary-button onclick="openOtCreate()" type="button">+ OT</x-primary-button>
+                <x-primary-button onclick="openOtCreate()" type="button">+ {{ __('OT') }}</x-primary-button>
                 @endcan
             </div>
         </div>
