@@ -61,6 +61,10 @@ class RequestController extends Controller
 
     public function exportPage(Request $request)
     {
+        if (!auth()->user()->can('export requests')) {
+            abort(403);
+        }
+
         return view('requests.export', [
             'dateFrom' => $request->input('date_from', now()->startOfMonth()->format('Y-m-d')),
             'dateTo'   => $request->input('date_to',   now()->endOfMonth()->format('Y-m-d')),
@@ -71,6 +75,10 @@ class RequestController extends Controller
 
     public function export(Request $request)
     {
+        if (!auth()->user()->can('export requests')) {
+            abort(403);
+        }
+
         $request->validate([
             'date_from' => 'nullable|date',
             'date_to'   => 'nullable|date|after_or_equal:date_from',

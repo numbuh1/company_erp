@@ -22,6 +22,7 @@
                     {{ __('View Calendar') }}
                 </a>
                 @endcan
+                @can('export requests')
                 <a href="{{ $exportUrl }}"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 bg-white dark:bg-gray-800 transition">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -29,6 +30,7 @@
                     </svg>
                     {{ __('Export') }}
                 </a>
+                @endcan
                 @can('module leaves')
                 <x-primary-button onclick="openLeaveCreate()" type="button">+ {{ __('Leave') }}</x-primary-button>
                 @endcan

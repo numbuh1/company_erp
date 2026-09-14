@@ -342,6 +342,17 @@ class PermissionSeeder extends Seeder
             );
         }
 
+        // REQUESTS (combined Leave + OT page)
+        $requests_parent = Permission::updateOrCreate(
+            ['name' => 'requests'],
+            ['display_name' => 'Requests', 'parent_id' => null]
+        );
+
+        Permission::firstOrCreate(
+            ['name' => 'export requests'],
+            ['display_name' => 'Export Requests', 'parent_id' => $requests_parent->id]
+        );
+
         // IMPORT / EXPORT
         $import_export_parent = Permission::updateOrCreate(
             ['name' => 'import_export'],
