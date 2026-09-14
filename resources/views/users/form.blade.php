@@ -260,7 +260,22 @@
                             {{-- Supervisors --}}
                             <div class="mb-6">
                                 <x-input-label value="{{ __('Supervisors') }}" />
-                                @if($user->supervisors->isEmpty())
+                                @if($canEditPersonal)
+                                    <p class="text-xs text-gray-400 mb-1">{{ __('Users who supervise this person') }}</p>
+                                    @if(empty($supervisorOptions) || $supervisorOptions->isEmpty())
+                                        <p class="text-xs text-gray-400 px-1">{{ __('No other users yet.') }}</p>
+                                    @else
+                                        <select name="supervisors[]" id="supervisors-select" data-multi-select
+                                                data-placeholder="{{ __('Select supervisors…') }}" class="mt-1 block w-full" multiple>
+                                            @foreach($supervisorOptions as $opt)
+                                                <option value="{{ $opt->id }}"
+                                                    {{ $user->supervisors->contains($opt->id) ? 'selected' : '' }}>
+                                                    {{ $opt->name }}{{ $opt->position ? ' · ' . $opt->position : '' }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    @endif
+                                @elseif($user->supervisors->isEmpty())
                                     <p class="mt-1 text-sm text-gray-400">{{ __('No supervisors yet.') }}</p>
                                 @else
                                     <div class="space-y-2 mt-1">
@@ -492,25 +507,6 @@
                                         </option>
                                     @endforeach
                                 </select>
-                            </div>
-
-                            {{-- Supervisors --}}
-                            <div class="mb-5">
-                                <x-input-label value="{{ __('Supervisors') }}" />
-                                <p class="text-xs text-gray-400 mb-1">{{ __('Users who supervise this person') }}</p>
-                                @if(empty($supervisorOptions) || $supervisorOptions->isEmpty())
-                                    <p class="text-xs text-gray-400 px-1">{{ __('No other users yet.') }}</p>
-                                @else
-                                    <select name="supervisors[]" id="supervisors-select" data-multi-select
-                                            data-placeholder="{{ __('Select supervisors…') }}" class="mt-1 block w-full" multiple>
-                                        @foreach($supervisorOptions ?? [] as $opt)
-                                            <option value="{{ $opt->id }}"
-                                                {{ isset($user) && $user->supervisors->contains($opt->id) ? 'selected' : '' }}>
-                                                {{ $opt->name }}{{ $opt->position ? ' · ' . $opt->position : '' }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                @endif
                             </div>
 
                             {{-- WFH --}}

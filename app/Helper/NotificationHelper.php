@@ -37,16 +37,16 @@ class NotificationHelper
     {
         $message = '';
         $url = '';
-        $status = $request->status == 'approved' ? ' đã được duyệt' : ' bị từ chối';
-        $request_type = $type == 'leave' ? 'Nghĩ phép' : 'OT';
+        $status = $request->status == 'approved' ? ' đã được duyệt' : ' đã bị từ chối';
+        $request_type = $type == 'leave' ? 'Nghỉ phép' : 'OT';
         switch($type) {
             case 'leave':
-                $title = 'Yêu cầu Nghỉ phép '  . $request->status;
+                $title = 'Yêu cầu ' . $request_type . ' ' . $status;
                 $type = ' leave request ';
                 $url = route('leave-requests.index');
                 break;
             case 'ot':
-                $title = 'Yêu cầu OT '  . $request->status;
+                $title = 'Yêu cầu ' . $request_type . ' ' . $status;
                 $type = ' request ';
                 $url = route('overtime-requests.index');
                 break;
@@ -57,12 +57,15 @@ class NotificationHelper
 
         switch($request->status) {
             case 'approved':
+                $approverName = auth()->user()?->name ?? '';
                 $message = 'Yêu cầu ' . $request_type . ' (' .
-                            $request->start_at->format('d/m/Y') . ') ' . $status . '.';
+                            $request->start_at->format('d/m/Y') . ') ' . $status .
+                            ($approverName ? ' bởi ' . $approverName : '') . '.';
                 break;
             case 'rejected':
                 $message = 'Yêu cầu ' . $request_type . ' (' .
-                            $request->start_at->format('d/m/Y') . ') ' . $status . '. ' .
+                            $request->start_at->format('d/m/Y') . ') ' . $status .
+                            ($approverName ? ' bởi ' . $approverName : '') '. ' .
                             'Lý do: ' . $request->reject_reason;
                 break;
             default:

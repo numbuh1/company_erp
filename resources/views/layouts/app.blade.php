@@ -65,7 +65,7 @@
                         </header>
                     @endisset
 
-                    <main>
+                    <main class="pb-24">
                         {{ $slot }}
                     </main>
                 </div>

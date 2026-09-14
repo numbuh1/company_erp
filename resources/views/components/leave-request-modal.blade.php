@@ -487,7 +487,11 @@
         var calDiff = _calDays(startDt, endDt);
         if (calDiff === 0) {
             hide($g('lrm-partial-section')); hide($g('lrm-breakdown'));
-            if (!_totalManual) h.value = ((endDt - startDt)/3600000).toFixed(2);
+            if (!_totalManual) {
+                var sMins = startDt.getHours()*60+startDt.getMinutes();
+                var eMins = endDt.getHours()*60+endDt.getMinutes();
+                h.value = Math.max(0, (endDt - startDt)/3600000 - _lo(sMins, eMins)).toFixed(2);
+            }
             _updateBalancePreview(); return;
         }
         show($g('lrm-partial-section'));
