@@ -44,8 +44,14 @@ return new class extends Migration
         }
 
         // Swap unique constraint from (help_page_id, locale) to (help_page_component_id, locale)
+        // MySQL won't drop the unique index while a FK references help_page_id,
+        // so: drop FK → drop unique → re-add FK (plain, no unique) → add new unique.
+        Schema::table('help_page_contents', function (Blueprint $table) {
+            $table->dropForeign(['help_page_id']);
+        });
         Schema::table('help_page_contents', function (Blueprint $table) {
             $table->dropUnique(['help_page_id', 'locale']);
+            $table->foreign('help_page_id')->references('id')->on('help_pages')->cascadeOnDelete();
             $table->unique(['help_page_component_id', 'locale']);
         });
     }
@@ -54,8 +60,12 @@ return new class extends Migration
     {
         Schema::table('help_page_contents', function (Blueprint $table) {
             $table->dropUnique(['help_page_component_id', 'locale']);
-            $table->unique(['help_page_id', 'locale']);
             $table->dropConstrainedForeignId('help_page_component_id');
+        });
+        Schema::table('help_page_contents', function (Blueprint $table) {
+            $table->dropForeign(['help_page_id']);
+            $table->unique(['help_page_id', 'locale']);
+            $table->foreign('help_page_id')->references('id')->on('help_pages')->cascadeOnDelete();
         });
 
         Schema::dropIfExists('help_page_components');
