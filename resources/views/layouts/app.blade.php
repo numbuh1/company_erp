@@ -204,12 +204,28 @@
                 }
             };
 
+            var _origValueDesc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+
             function _initFp(el, opts) {
                 var wasHidden = el.classList.contains('hidden');
                 var fp = flatpickr(el, opts);
                 if (wasHidden && fp.altInput) {
                     fp.altInput.classList.add('hidden');
                 }
+                var _fpSetting = false;
+                Object.defineProperty(el, 'value', {
+                    get: function () { return _origValueDesc.get.call(this); },
+                    set: function (v) {
+                        if (this._flatpickr && !_fpSetting) {
+                            _fpSetting = true;
+                            this._flatpickr.setDate(v, false);
+                            _fpSetting = false;
+                        } else {
+                            _origValueDesc.set.call(this, v);
+                        }
+                    },
+                    configurable: true
+                });
             }
 
             function initDateInputs(root) {
