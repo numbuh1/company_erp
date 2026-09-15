@@ -54,6 +54,11 @@
             .dark .flatpickr-day.prevMonthDay, .dark .flatpickr-day.nextMonthDay { color: #6b7280; }
             .dark .flatpickr-months .flatpickr-prev-month svg,
             .dark .flatpickr-months .flatpickr-next-month svg { fill: #9ca3af; }
+            .dark .flatpickr-time input,
+            .dark .flatpickr-time .flatpickr-am-pm { background: #1f2937; color: #d1d5db; border-color: #374151; }
+            .dark .flatpickr-time input:hover,
+            .dark .flatpickr-time .flatpickr-am-pm:hover { background: #374151; }
+            .dark .flatpickr-time .flatpickr-time-separator { color: #d1d5db; }
         </style>
 
         {{-- Tom Select --}}
@@ -170,10 +175,10 @@
                 }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
             })();
         </script>
-        {{-- Flatpickr: global init for all date inputs --}}
+        {{-- Flatpickr: global init for all date & datetime inputs --}}
         <script>
         (function () {
-            var fpOpts = {
+            var fpDateOpts = {
                 dateFormat: 'Y-m-d',
                 altInput: true,
                 altFormat: 'd/m/Y',
@@ -185,10 +190,36 @@
                 }
             };
 
+            var fpDateTimeOpts = {
+                enableTime: true,
+                dateFormat: 'Y-m-dTH:i',
+                altInput: true,
+                altFormat: 'd/m/Y H:i',
+                allowInput: true,
+                disableMobile: true,
+                time_24hr: true,
+                onChange: function (dates, str, inst) {
+                    inst.element.dispatchEvent(new Event('change', { bubbles: true }));
+                    inst.element.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            };
+
+            function _initFp(el, opts) {
+                var wasHidden = el.classList.contains('hidden');
+                var fp = flatpickr(el, opts);
+                if (wasHidden && fp.altInput) {
+                    fp.altInput.classList.add('hidden');
+                }
+            }
+
             function initDateInputs(root) {
                 (root || document).querySelectorAll('input[type="date"]').forEach(function (el) {
                     if (el._flatpickr) return;
-                    flatpickr(el, fpOpts);
+                    _initFp(el, fpDateOpts);
+                });
+                (root || document).querySelectorAll('input[type="datetime-local"]').forEach(function (el) {
+                    if (el._flatpickr) return;
+                    _initFp(el, fpDateTimeOpts);
                 });
             }
 

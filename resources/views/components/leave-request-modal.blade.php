@@ -220,8 +220,19 @@
     var _totalManual    = false;
 
     function $g(id) { return document.getElementById(id); }
-    function show(el) { if (el) el.classList.remove('hidden'); }
-    function hide(el) { if (el) el.classList.add('hidden'); }
+    function show(el) {
+        if (!el) return;
+        if (el._flatpickr && el._flatpickr.altInput) { el._flatpickr.altInput.classList.remove('hidden'); }
+        else { el.classList.remove('hidden'); }
+    }
+    function hide(el) {
+        if (!el) return;
+        if (el._flatpickr && el._flatpickr.altInput) { el._flatpickr.altInput.classList.add('hidden'); }
+        else { el.classList.add('hidden'); }
+    }
+    function _fpSet(el, val) {
+        if (el._flatpickr) { el._flatpickr.setDate(val, false); } else { el.value = val; }
+    }
 
     function _hideBody() {
         ['lrm-status-banner','lrm-user-row','lrm-user-display','lrm-partial-section',
@@ -328,7 +339,7 @@
         show($g('lrm-start-at')); show($g('lrm-end-at'));
         show($g('lrm-hours')); show($g('lrm-description'));
         $g('lrm-type').value = 'annual';
-        $g('lrm-start-at').value = ''; $g('lrm-end-at').value = '';
+        _fpSet($g('lrm-start-at'), ''); _fpSet($g('lrm-end-at'), '');
         $g('lrm-start-day').value = ''; $g('lrm-end-day').value = '';
         $g('lrm-hours').value = ''; $g('lrm-description').value = '';
         if (HAS_SELECT) {
@@ -415,8 +426,8 @@
         hide($g('lrm-balance-preview'));
 
         $g('lrm-type').value     = lr.type;
-        $g('lrm-start-at').value = lr.start_at_input;
-        $g('lrm-end-at').value   = lr.end_at_input;
+        _fpSet($g('lrm-start-at'), lr.start_at_input);
+        _fpSet($g('lrm-end-at'), lr.end_at_input);
         $g('lrm-start-day').value = lr.start_day_hours || '';
         $g('lrm-end-day').value   = lr.end_day_hours   || '';
         $g('lrm-hours').value    = lr.hours;

@@ -224,8 +224,19 @@
     var _dynTasks = ALL_TASKS.slice();
 
     function $g(id){ return document.getElementById(id); }
-    function show(el){ if(el) el.classList.remove('hidden'); }
-    function hide(el){ if(el) el.classList.add('hidden'); }
+    function show(el){
+        if(!el) return;
+        if(el._flatpickr && el._flatpickr.altInput){ el._flatpickr.altInput.classList.remove('hidden'); }
+        else { el.classList.remove('hidden'); }
+    }
+    function hide(el){
+        if(!el) return;
+        if(el._flatpickr && el._flatpickr.altInput){ el._flatpickr.altInput.classList.add('hidden'); }
+        else { el.classList.add('hidden'); }
+    }
+    function _fpSet(el, val){
+        if(el._flatpickr){ el._flatpickr.setDate(val, false); } else { el.value = val; }
+    }
 
     function _hideBody(){
         ['otm-status-banner','otm-user-display','otm-user-select','otm-date-display','otm-ot-date',
@@ -325,7 +336,7 @@
         show($g('otm-type-select')); show($g('otm-type-auto-note'));
         show($g('otm-hours')); show($g('otm-description'));
         show($g('otm-project-select')); show($g('otm-task-select'));
-        $g('otm-ot-date').value=''; $g('otm-start-time').value=''; $g('otm-end-time').value='';
+        _fpSet($g('otm-ot-date'),''); $g('otm-start-time').value=''; $g('otm-end-time').value='';
         $g('otm-type-select').value=''; $g('otm-hours').value=''; $g('otm-description').value='';
         hide($g('otm-hours-warning'));
         _fetchOtTotal(AUTH_ID);
@@ -411,7 +422,7 @@
         hide($g('otm-project-display')); show($g('otm-project-select'));
         hide($g('otm-task-display'));    show($g('otm-task-select'));
 
-        $g('otm-ot-date').value   =ot.ot_date;
+        _fpSet($g('otm-ot-date'), ot.ot_date);
         $g('otm-start-time').value=ot.start_time;
         $g('otm-end-time').value  =ot.end_time;
         $g('otm-type-select').value=ot.type||'';
