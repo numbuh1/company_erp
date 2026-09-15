@@ -117,6 +117,20 @@ class HelpPageController extends Controller
         return back()->with('success', __('Help page deleted.'));
     }
 
+    public function userIndex()
+    {
+        $helpPages = HelpPage::where('is_active', true)->orderBy('title')->get();
+        return view('help-pages.index', compact('helpPages'));
+    }
+
+    public function show(HelpPage $helpPage)
+    {
+        if (! $helpPage->is_active) abort(404);
+        $helpPage->load('contents');
+        $content = $helpPage->getContent(app()->getLocale());
+        return view('help-pages.show', compact('helpPage', 'content'));
+    }
+
     public function uploadImage(Request $request)
     {
         $this->authorize();

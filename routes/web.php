@@ -225,7 +225,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/data-transfer/logs/{log}/progress-data', [ImportExportController::class, 'progressData']) ->name('import-export.progress-data');
     Route::get('/data-transfer/logs/{log}',            [ImportExportController::class, 'logShow'])      ->name('import-export.log.show');
 
-    // Help Pages
+    // Help Pages (user-facing)
+    Route::get('/help-pages',              [HelpPageController::class, 'userIndex'])->name('help-pages.index');
+    Route::get('/help-pages/{helpPage}',   [HelpPageController::class, 'show'])->name('help-pages.show');
+
+    // Help Pages (admin)
     Route::prefix('admin/help-pages')->name('admin.help-pages.')->group(function () {
         Route::get('/',                         [HelpPageController::class, 'index'])      ->name('index');
         Route::get('/create',                   [HelpPageController::class, 'create'])     ->name('create');
