@@ -39,11 +39,30 @@
                 color: #4338ca;
             }
             .dark .ms-count-badge { background: #3730a3; color: #c7d2fe; }
+
+            /* Flatpickr: match app input styles */
+            .flatpickr-input.form-input, input.flatpickr-input[readonly] { cursor: pointer; }
+            .dark .flatpickr-calendar { background: #1f2937; border-color: #374151; box-shadow: 0 10px 25px rgba(0,0,0,.4); }
+            .dark .flatpickr-months .flatpickr-month,
+            .dark .flatpickr-current-month .flatpickr-monthDropdown-months,
+            .dark .flatpickr-weekdays,
+            .dark span.flatpickr-weekday { background: #1f2937; color: #d1d5db; }
+            .dark .flatpickr-day { color: #d1d5db; }
+            .dark .flatpickr-day:hover { background: #374151; border-color: #374151; }
+            .dark .flatpickr-day.today { border-color: #6366f1; }
+            .dark .flatpickr-day.selected { background: #6366f1; border-color: #6366f1; color: #fff; }
+            .dark .flatpickr-day.prevMonthDay, .dark .flatpickr-day.nextMonthDay { color: #6b7280; }
+            .dark .flatpickr-months .flatpickr-prev-month svg,
+            .dark .flatpickr-months .flatpickr-next-month svg { fill: #9ca3af; }
         </style>
 
         {{-- Tom Select --}}
         <link href="https://cdn.jsdelivr.net/npm/tom-select@2.5.2/dist/css/tom-select.css" rel="stylesheet">
         <script src="https://cdn.jsdelivr.net/npm/tom-select@2.5.2/dist/js/tom-select.complete.min.js" defer></script>
+
+        {{-- Flatpickr — force dd/mm/yyyy display on all date inputs --}}
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js" defer></script>
 
     </head>
     <body class="font-sans antialiased">
@@ -150,6 +169,43 @@
                     });
                 }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
             })();
+        </script>
+        {{-- Flatpickr: global init for all date inputs --}}
+        <script>
+        (function () {
+            var fpOpts = {
+                dateFormat: 'Y-m-d',
+                altInput: true,
+                altFormat: 'd/m/Y',
+                allowInput: true,
+                disableMobile: true,
+                onChange: function (dates, str, inst) {
+                    inst.element.dispatchEvent(new Event('change', { bubbles: true }));
+                    inst.element.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            };
+
+            function initDateInputs(root) {
+                (root || document).querySelectorAll('input[type="date"]').forEach(function (el) {
+                    if (el._flatpickr) return;
+                    flatpickr(el, fpOpts);
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                if (typeof flatpickr === 'undefined') return;
+                initDateInputs();
+                new MutationObserver(function (muts) {
+                    muts.forEach(function (m) {
+                        m.addedNodes.forEach(function (n) {
+                            if (n.nodeType === 1) initDateInputs(n);
+                        });
+                    });
+                }).observe(document.body, { childList: true, subtree: true });
+            });
+
+            window._initFlatpickrDates = initDateInputs;
+        })();
         </script>
     </body>
 </html>
