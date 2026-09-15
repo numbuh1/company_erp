@@ -3,10 +3,7 @@
 namespace App\Providers;
 
 use App\Translation\DatabaseLoader;
-use App\Listeners\LogSentMessage;
 use Carbon\Carbon;
-use Illuminate\Mail\Events\MessageSent;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -28,8 +25,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Event::listen(MessageSent::class, LogSentMessage::class);
-
         Carbon::setLocale('vi');
 
         if (str_starts_with(config('app.url'), 'https')) {
