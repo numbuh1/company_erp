@@ -278,7 +278,7 @@ class LeaveRequestController extends Controller
 
         $leaveRequest->update([
             'status' => 'approved',
-            'approver_by' => auth()->id(),
+            'approved_by' => auth()->id(),
             'reject_reason' => null
         ]);
 
@@ -306,7 +306,7 @@ class LeaveRequestController extends Controller
 
         $leaveRequest->update([
             'status' => 'rejected',
-            'approver_by' => auth()->id(),
+            'approved_by' => auth()->id(),
             'reject_reason' => $data['reject_reason']
         ]);
 

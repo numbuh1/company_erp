@@ -11,12 +11,6 @@ class NotificationHelper
 {
     /**
      * Send a database notification to a user.
-     *
-     * @param  User       $receivingUser  The user who receives the notification
-     * @param  string     $title          Short heading shown in the bell dropdown
-     * @param  string     $description    Supporting detail line
-     * @param  string     $url            Where to navigate when the user clicks the notification
-     * @param  User|null  $incomingUser   Optional sender (avatar shown in the bell dropdown)
      */
     public static function send(
         User $receivingUser,
@@ -35,51 +29,63 @@ class NotificationHelper
 
     public static function sendRequestApprovalNotification($request, $type)
     {
-        $message = '';
-        $url = '';
         $status = $request->status == 'approved' ? ' đã được duyệt' : ' đã bị từ chối';
         $request_type = $type == 'leave' ? 'Nghỉ phép' : 'OT';
-        switch($type) {
-            case 'leave':
-                $title = 'Yêu cầu ' . $request_type . ' ' . $status;
-                $type = ' leave request ';
-                $url = route('leave-requests.index');
-                break;
-            case 'ot':
-                $title = 'Yêu cầu ' . $request_type . ' ' . $status;
-                $type = ' request ';
-                $url = route('overtime-requests.index');
-                break;
-            default:
-                break;
-        }
+        $url = $type == 'leave' ? route('leave-requests.index') : route('overtime-requests.index');
 
+        $title = 'Yêu cầu ' . $request_type . ' ' . $status;
 
         $approverName = auth()->user()?->name ?? '';
+        $requesterName = $request->user?->name ?? '';
 
-        switch($request->status) {
+        switch ($request->status) {
             case 'approved':
                 $message = 'Yêu cầu ' . $request_type . ' (' .
-                            $request->start_at->format('d/m/Y') . ') ' . $status .
+                            $request->start_at->format('d/m/Y') . ') của ' . $requesterName .
+                            $status .
                             ($approverName ? ' bởi ' . $approverName : '') . '.';
                 break;
             case 'rejected':
                 $message = 'Yêu cầu ' . $request_type . ' (' .
-                            $request->start_at->format('d/m/Y') . ') ' . $status .
+                            $request->start_at->format('d/m/Y') . ') của ' . $requesterName .
+                            $status .
                             ($approverName ? ' bởi ' . $approverName : '') . '. ' .
                             'Lý do: ' . $request->reject_reason;
                 break;
             default:
-                break;
+                return;
         }
 
-        NotificationHelper::send(
+        // Notify the requester
+        self::send(
             receivingUser: $request->user,
             title: $title,
             description: $message,
             url: $url,
             incomingUser: auth()->user(),
         );
+
+        // Notify users with "receive all" permission
+        $receivePermission = $type === 'leave'
+            ? 'receive all leave notifications'
+            : 'receive all ot notifications';
+
+        $receiverIds = User::permission($receivePermission)->pluck('id');
+        $excludeIds = [$request->user_id, auth()->id()];
+
+        foreach ($receiverIds as $userId) {
+            if (in_array($userId, $excludeIds)) continue;
+            $receiver = User::find($userId);
+            if ($receiver) {
+                self::send(
+                    receivingUser: $receiver,
+                    title: $title,
+                    description: $message,
+                    url: $url,
+                    incomingUser: auth()->user(),
+                );
+            }
+        }
     }
 
     /**
@@ -90,7 +96,7 @@ class NotificationHelper
      *  2. Fallback primary:                   supervisors (if no team leaders)
      *  3. Fallback primary:                   "approve all" permission holders (if no supervisors)
      *  4. CC (email only, always):            "approve all" permission holders not already in primary
-     *  5. In-app notification:                primary ∪ "approve all" holders (deduplicated)
+     *  5. In-app notification:                primary ∪ "approve all" holders ∪ "receive all" holders (deduplicated)
      *
      * The requester is never notified.
      */
@@ -104,6 +110,12 @@ class NotificationHelper
         // "approve all" permission holders
         $approvePermission = $type === 'leave' ? 'approve all leaves' : 'approve all ot';
         $allApproverIds    = User::permission($approvePermission)->pluck('id');
+
+        // "receive all" permission holders
+        $receivePermission = $type === 'leave'
+            ? 'receive all leave notifications'
+            : 'receive all ot notifications';
+        $receiveAllIds = User::permission($receivePermission)->pluck('id');
 
         // Team leaders of the requester's teams
         $teamIds   = $requester->teams()->pluck('teams.id');
@@ -124,7 +136,6 @@ class NotificationHelper
             $primaryIds = $supervisorIds;
             $ccIds      = $allApproverIds->diff($supervisorIds);
         } else {
-            // No leader or supervisor — approvers receive both primary email and notification
             $primaryIds = $allApproverIds;
             $ccIds      = collect();
         }
@@ -133,7 +144,8 @@ class NotificationHelper
         $rid        = $requester->id;
         $primaryIds = $primaryIds->filter(fn($id) => $id !== $rid)->values();
         $ccIds      = $ccIds->filter(fn($id) => $id !== $rid)->values();
-        $notifyIds  = $primaryIds->merge($allApproverIds)->unique()->filter(fn($id) => $id !== $rid)->values();
+        $notifyIds  = $primaryIds->merge($allApproverIds)->merge($receiveAllIds)
+            ->unique()->filter(fn($id) => $id !== $rid)->values();
 
         // --- Build notification content ---
         if ($type === 'leave') {
