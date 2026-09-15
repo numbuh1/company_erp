@@ -269,6 +269,7 @@
         hide($g('lrm-overlay'));
         _destroyTs();
         _listenersBound = false;
+        _submitting = false;
     };
 
     window._lrmSwitchToEdit = function () {
@@ -276,7 +277,10 @@
         _populateEdit();
     };
 
+    var _submitting = false;
     window._lrmSubmit = function () {
+        if (_submitting) return;
+        _submitting = true;
         var userId = (_mode === 'edit' && _data) ? _data.leave.user_id : _tsVal();
         var payload = {
             user_id:         userId,
@@ -296,8 +300,8 @@
             body: JSON.stringify(payload),
         })
         .then(function(r){ return r.json(); })
-        .then(function(d){ if (d.success) { closeLR(); location.reload(); } else { alert(d.message || _LRM.errSave); } })
-        .catch(function(){ alert(_LRM.errConn); });
+        .then(function(d){ if (d.success) { closeLR(); location.reload(); } else { _submitting = false; alert(d.message || _LRM.errSave); } })
+        .catch(function(){ _submitting = false; alert(_LRM.errConn); });
     };
 
     window._lrmApprove = function () {

@@ -124,6 +124,15 @@
                     if (badge) badge.remove();
                 }).catch(() => {});
             }
+
+            document.addEventListener('submit', function (e) {
+                var form = e.target;
+                if (form.dataset.submitted) { e.preventDefault(); return; }
+                form.dataset.submitted = '1';
+                var btn = form.querySelector('[type="submit"]');
+                if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+                setTimeout(function () { delete form.dataset.submitted; if (btn) { btn.disabled = false; btn.style.opacity = ''; } }, 5000);
+            });
         </script>
         @stack('scripts')
         <script src="https://cdn.jsdelivr.net/npm/multi-select-dropdown-js/MultiSelect.min.js"></script>

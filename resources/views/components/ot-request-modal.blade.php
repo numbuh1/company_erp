@@ -272,11 +272,15 @@
     window.closeOtModal = function () {
         hide($g('otm-overlay'));
         _destroyTs(); _lBound=false;
+        _submitting=false;
     };
 
     window._otmSwitchToEdit = function () { _mode='edit'; _populateEdit(); };
 
+    var _submitting = false;
     window._otmSubmit = function () {
+        if (_submitting) return;
+        _submitting = true;
         var userId  = (_mode==='edit'&&_data) ? _data.ot.user_id : _tsUserVal();
         var otDate  = $g('otm-ot-date').value;
         var typeVal = $g('otm-type-select').value || _getOtType(otDate);
@@ -299,8 +303,8 @@
             body:JSON.stringify(payload),
         })
         .then(function(r){ return r.json(); })
-        .then(function(d){ if(d.success){ closeOtModal(); location.reload(); } else { alert(d.message||_OTM.errSave); } })
-        .catch(function(){ alert(_OTM.errConn); });
+        .then(function(d){ if(d.success){ closeOtModal(); location.reload(); } else { _submitting=false; alert(d.message||_OTM.errSave); } })
+        .catch(function(){ _submitting=false; alert(_OTM.errConn); });
     };
 
     window._otmApprove = function () {
