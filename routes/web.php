@@ -26,6 +26,7 @@ use App\Http\Controllers\PendingApprovalsController;
 use App\Http\Controllers\ImportExportController;
 use App\Http\Controllers\HelpPageController;
 use App\Http\Controllers\FramecadViewerController;
+use App\Http\Controllers\MailLogController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -238,6 +239,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/{helpPage}/edit',          [HelpPageController::class, 'edit'])       ->name('edit');
         Route::put('/{helpPage}',               [HelpPageController::class, 'update'])     ->name('update');
         Route::delete('/{helpPage}',            [HelpPageController::class, 'destroy'])    ->name('destroy');
+    });
+
+    // Mail Logs
+    Route::prefix('admin/mail-logs')->name('admin.mail-logs.')->group(function () {
+        Route::get('/',                    [MailLogController::class, 'index'])          ->name('index');
+        Route::get('/{mailLog}',           [MailLogController::class, 'show'])           ->name('show');
+        Route::get('/{mailLog}/preview',   [MailLogController::class, 'preview'])        ->name('preview');
+        Route::post('/toggle-logging',     [MailLogController::class, 'toggleLogging'])  ->name('toggle-logging');
     });
 
     // Holidays

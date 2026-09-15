@@ -268,6 +268,34 @@
         </div>
         @endcanany
 
+        {{-- ── Development ──────────────────────────────────── --}}
+        @can('manage settings')
+        <div class="relative px-2 py-0.5"
+             @mouseenter="open = 'dev'" @mouseleave="open = null">
+            <button type="button"
+                class="{{ $catBtn($active('admin.mail-logs.*')) }}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                </svg>
+            </button>
+            <div x-show="open === 'dev'" x-cloak
+                 @mouseenter="open = 'dev'" @mouseleave="open = null"
+                 class="{{ $flyout }}">
+                <p class="{{ $flyHead }}">{{ __('Development') }}</p>
+                <div class="px-1.5 space-y-0.5">
+                    <a href="{{ route('admin.mail-logs.index') }}" class="{{ $flyItem('admin.mail-logs.*') }}">
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        {{ __('Mail History') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+        @endcan
+
         {{-- ── Help ──────────────────────────────────────────── --}}
         <div class="relative px-2 py-0.5"
              @mouseenter="open = 'help'" @mouseleave="open = null">
