@@ -2,12 +2,13 @@
 @php
     $currentRoute = request()->route()?->getName();
     $helpPage = $currentRoute ? \App\Models\HelpPage::forRoute($currentRoute) : null;
-    $helpContent = $helpPage
-        ? $helpPage->getContent(session('locale', config('app.locale', 'en')))
-        : null;
+    $helpLocale = session('locale', config('app.locale', 'en'));
+    $helpComponents = $helpPage
+        ? $helpPage->components->filter(fn($c) => $c->getContent($helpLocale) || $c->image)
+        : collect();
 @endphp
 
-@if($helpPage && $helpContent)
+@if($helpPage && $helpComponents->isNotEmpty())
 <div x-data="{ open: false }"
      @keydown.escape.window="open = false"
      style="position:fixed; bottom:6rem; right:1.5rem; z-index:70">
@@ -60,12 +61,31 @@
             </div>
 
             {{-- Content --}}
-            <div class="overflow-y-auto flex-1 px-5 py-5">
-                <div class="ql-container ql-snow" style="border:none; font-size:0.9rem;">
-                    <div class="ql-editor" style="padding:0;">
-                        {!! $helpContent !!}
+            <div class="overflow-y-auto flex-1 px-5 py-5 space-y-5">
+                @foreach($helpComponents as $component)
+                    @php $fabContent = $component->getContent($helpLocale); @endphp
+                    <div class="{{ !$loop->last ? 'pb-5 border-b border-gray-100 dark:border-gray-700' : '' }}">
+                        @if($helpComponents->count() > 1)
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold shrink-0">{{ $loop->iteration }}</span>
+                            <span class="text-xs font-medium text-gray-400 dark:text-gray-500">{{ __('Step :number', ['number' => $loop->iteration]) }}</span>
+                        </div>
+                        @endif
+
+                        @if($component->type === 'text_with_image' && $component->image)
+                            @if($fabContent)
+                            <div class="ql-container ql-snow" style="border:none; font-size:0.9rem;">
+                                <div class="ql-editor" style="padding:0;">{!! $fabContent !!}</div>
+                            </div>
+                            @endif
+                            <img src="{{ $component->image }}" alt="" class="mt-3 rounded-lg border border-gray-200 dark:border-gray-700 max-w-full">
+                        @elseif($fabContent)
+                            <div class="ql-container ql-snow" style="border:none; font-size:0.9rem;">
+                                <div class="ql-editor" style="padding:0;">{!! $fabContent !!}</div>
+                            </div>
+                        @endif
                     </div>
-                </div>
+                @endforeach
             </div>
 
         </div>

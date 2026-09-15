@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\HelpPage;
-use App\Models\HelpPageContent;
+use App\Models\HelpPageComponent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
@@ -34,7 +34,7 @@ class HelpPageController extends Controller
     public function index()
     {
         $this->authorize();
-        $helpPages = HelpPage::withCount('contents')->latest()->get();
+        $helpPages = HelpPage::withCount('components')->latest()->get();
         return view('admin.help-pages.index', compact('helpPages'));
     }
 
@@ -50,11 +50,15 @@ class HelpPageController extends Controller
         $this->authorize();
 
         $data = $request->validate([
-            'title'      => 'required|string|max:255',
-            'route'      => 'required|string|max:255|unique:help_pages,route',
-            'is_active'  => 'boolean',
-            'contents'   => 'array',
-            'contents.*' => 'nullable|string',
+            'title'                      => 'required|string|max:255',
+            'route'                      => 'required|string|max:255|unique:help_pages,route',
+            'is_active'                  => 'boolean',
+            'components'                 => 'array',
+            'components.*.type'          => 'required|in:text,text_with_image',
+            'components.*.sort_order'    => 'required|integer|min:0',
+            'components.*.image'         => 'nullable|string|max:500',
+            'components.*.contents'      => 'array',
+            'components.*.contents.*'    => 'nullable|string',
         ]);
 
         $helpPage = HelpPage::create([
@@ -63,11 +67,7 @@ class HelpPageController extends Controller
             'is_active' => $request->boolean('is_active', true),
         ]);
 
-        foreach ($data['contents'] ?? [] as $locale => $content) {
-            if (filled($content)) {
-                $helpPage->contents()->create(['locale' => $locale, 'content' => $content]);
-            }
-        }
+        $this->syncComponents($helpPage, $data['components'] ?? []);
 
         return redirect()->route('admin.help-pages.index')
             ->with('success', __('Help page created.'));
@@ -76,7 +76,7 @@ class HelpPageController extends Controller
     public function edit(HelpPage $helpPage)
     {
         $this->authorize();
-        $helpPage->load('contents');
+        $helpPage->load('components.contents');
         $routes = $this->availableRoutes();
         return view('admin.help-pages.form', compact('helpPage', 'routes'));
     }
@@ -86,11 +86,16 @@ class HelpPageController extends Controller
         $this->authorize();
 
         $data = $request->validate([
-            'title'      => 'required|string|max:255',
-            'route'      => 'required|string|max:255|unique:help_pages,route,' . $helpPage->id,
-            'is_active'  => 'boolean',
-            'contents'   => 'array',
-            'contents.*' => 'nullable|string',
+            'title'                      => 'required|string|max:255',
+            'route'                      => 'required|string|max:255|unique:help_pages,route,' . $helpPage->id,
+            'is_active'                  => 'boolean',
+            'components'                 => 'array',
+            'components.*.id'            => 'nullable|integer',
+            'components.*.type'          => 'required|in:text,text_with_image',
+            'components.*.sort_order'    => 'required|integer|min:0',
+            'components.*.image'         => 'nullable|string|max:500',
+            'components.*.contents'      => 'array',
+            'components.*.contents.*'    => 'nullable|string',
         ]);
 
         $helpPage->update([
@@ -99,15 +104,43 @@ class HelpPageController extends Controller
             'is_active' => $request->boolean('is_active', true),
         ]);
 
-        foreach ($data['contents'] ?? [] as $locale => $content) {
-            $helpPage->contents()->updateOrCreate(
-                ['locale' => $locale],
-                ['content' => $content ?? '']
-            );
-        }
+        $this->syncComponents($helpPage, $data['components'] ?? []);
 
         return redirect()->route('admin.help-pages.index')
             ->with('success', __('Help page updated.'));
+    }
+
+    private function syncComponents(HelpPage $helpPage, array $componentsData): void
+    {
+        $existingIds = $helpPage->components()->pluck('id')->all();
+        $keepIds = [];
+
+        foreach ($componentsData as $compData) {
+            $compId = $compData['id'] ?? null;
+            $attrs = [
+                'type'       => $compData['type'],
+                'sort_order' => $compData['sort_order'],
+                'image'      => $compData['type'] === 'text_with_image' ? ($compData['image'] ?? null) : null,
+            ];
+
+            if ($compId && in_array($compId, $existingIds)) {
+                $component = HelpPageComponent::findOrFail($compId);
+                $component->update($attrs);
+            } else {
+                $component = $helpPage->components()->create($attrs);
+            }
+
+            $keepIds[] = $component->id;
+
+            foreach ($compData['contents'] ?? [] as $locale => $content) {
+                $component->contents()->updateOrCreate(
+                    ['locale' => $locale],
+                    ['help_page_id' => $helpPage->id, 'content' => $content ?? '']
+                );
+            }
+        }
+
+        $helpPage->components()->whereNotIn('id', $keepIds)->delete();
     }
 
     public function destroy(HelpPage $helpPage)
@@ -116,6 +149,16 @@ class HelpPageController extends Controller
         $helpPage->delete();
         return back()->with('success', __('Help page deleted.'));
     }
+
+    public function uploadImage(Request $request)
+    {
+        $this->authorize();
+        $request->validate(['image' => 'required|image|max:5120']);
+        $path = $request->file('image')->store('help_images', 'public');
+        return response()->json(['url' => asset('storage/' . $path)]);
+    }
+
+    // ── User-facing ────────────────────────────────────────────
 
     public function userIndex()
     {
@@ -126,16 +169,8 @@ class HelpPageController extends Controller
     public function show(HelpPage $helpPage)
     {
         if (! $helpPage->is_active) abort(404);
-        $helpPage->load('contents');
-        $content = $helpPage->getContent(app()->getLocale());
-        return view('help-pages.show', compact('helpPage', 'content'));
-    }
-
-    public function uploadImage(Request $request)
-    {
-        $this->authorize();
-        $request->validate(['image' => 'required|image|max:5120']);
-        $path = $request->file('image')->store('help_images', 'public');
-        return response()->json(['url' => asset('storage/' . $path)]);
+        $helpPage->load('components.contents');
+        $locale = app()->getLocale();
+        return view('help-pages.show', compact('helpPage', 'locale'));
     }
 }

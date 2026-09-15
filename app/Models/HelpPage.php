@@ -19,28 +19,35 @@ class HelpPage extends Model
         return $this->hasMany(HelpPageContent::class);
     }
 
+    public function components(): HasMany
+    {
+        return $this->hasMany(HelpPageComponent::class)->orderBy('sort_order');
+    }
+
     /**
-     * Return content for the given locale, falling back to any available language.
+     * Return concatenated content from all components for the given locale.
      */
     public function getContent(string $locale): ?string
     {
+        if ($this->relationLoaded('components') && $this->components->isNotEmpty()) {
+            $parts = $this->components->map(fn ($c) => $c->getContent($locale))->filter();
+            return $parts->isNotEmpty() ? $parts->implode('') : null;
+        }
+
         $exact = $this->contents->firstWhere('locale', $locale);
         if ($exact && filled($exact->content)) {
             return $exact->content;
         }
 
-        $any = $this->contents->first(fn($c) => filled($c->content));
+        $any = $this->contents->first(fn ($c) => filled($c->content));
         return $any?->content;
     }
 
-    /**
-     * Find an active help page for the given route name, with contents eager-loaded.
-     */
     public static function forRoute(string $routeName): ?self
     {
         return static::where('route', $routeName)
             ->where('is_active', true)
-            ->with('contents')
+            ->with('components.contents')
             ->first();
     }
 }
