@@ -74,13 +74,15 @@
 
                         @if($component->type === 'text_with_image' && $component->image)
                             @if($fabContent)
-                            <div class="ql-container ql-snow" style="border:none; font-size:0.9rem;">
+                            <div class="ql-container ql-snow" style="border:none; height:auto; font-size:0.9rem;">
                                 <div class="ql-editor" style="padding:0;">{!! $fabContent !!}</div>
                             </div>
                             @endif
-                            <img src="{{ $component->image }}" alt="" class="mt-3 rounded-lg border border-gray-200 dark:border-gray-700 max-w-full">
+                            <img src="{{ $component->image }}" alt=""
+                                 class="mt-3 rounded-lg border border-gray-200 dark:border-gray-700 max-w-full cursor-zoom-in hover:opacity-85 transition-opacity"
+                                 onclick="window._helpFabLightbox(this.src)">
                         @elseif($fabContent)
-                            <div class="ql-container ql-snow" style="border:none; font-size:0.9rem;">
+                            <div class="ql-container ql-snow" style="border:none; height:auto; font-size:0.9rem;">
                                 <div class="ql-editor" style="padding:0;">{!! $fabContent !!}</div>
                             </div>
                         @endif
@@ -96,9 +98,23 @@
 {{-- Quill snow CSS for rendering stored content --}}
 <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet" />
 <style>
-    #help-fab-modal .ql-container.ql-snow { border: none !important; }
+    #help-fab-modal .ql-container.ql-snow { border: none !important; height: auto !important; }
     #help-fab-modal .ql-editor { padding: 0; }
     #help-fab-modal .ql-editor img { max-width: 100%; border-radius: 0.375rem; }
 </style>
+
+{{-- Lightbox for FAB images --}}
+<div id="help-fab-lightbox" onclick="this.style.display='none'"
+     style="display:none; position:fixed; inset:0; z-index:200; background:rgba(0,0,0,0.85); cursor:zoom-out; justify-content:center; align-items:center;">
+    <img id="help-fab-lightbox-img" src="" alt=""
+         style="max-width:90vw; max-height:90vh; object-fit:contain; border-radius:0.5rem; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
+</div>
+<script>
+    window._helpFabLightbox = function(src) {
+        var lb = document.getElementById('help-fab-lightbox');
+        document.getElementById('help-fab-lightbox-img').src = src;
+        lb.style.display = 'flex';
+    };
+</script>
 @endif
 @endauth

@@ -1,9 +1,11 @@
 @push('styles')
     <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet" />
     <style>
+        .ql-container.ql-snow { border: none; height: auto; }
         .ql-editor { padding: 0; font-size: 0.9rem; line-height: 1.7; }
-        .ql-container.ql-snow { border: none; }
         .ql-editor img { max-width: 100%; border-radius: 0.375rem; }
+        .help-img-thumb { cursor: zoom-in; transition: opacity 0.15s; }
+        .help-img-thumb:hover { opacity: 0.85; }
     </style>
 @endpush
 
@@ -47,9 +49,10 @@
                             </div>
                         </div>
                         @endif
-                        <div class="md:w-2/5 shrink-0">
+                        <div class="md:w-1/2 shrink-0">
                             <img src="{{ $component->image }}" alt=""
-                                 class="rounded-lg border border-gray-200 dark:border-gray-700 w-full object-cover">
+                                 class="help-img-thumb rounded-lg border border-gray-200 dark:border-gray-700 w-full object-cover"
+                                 onclick="window._helpLightbox(this.src)">
                         </div>
                     </div>
                 @elseif($content)
@@ -64,4 +67,24 @@
             </div>
         @endforelse
     </div>
+
+    {{-- Lightbox overlay --}}
+    <div id="help-lightbox" onclick="this.style.display='none'"
+         style="display:none; position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.8); cursor:zoom-out; justify-content:center; align-items:center;">
+        <img id="help-lightbox-img" src="" alt=""
+             style="max-width:90vw; max-height:90vh; object-fit:contain; border-radius:0.5rem; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
+    </div>
+
+    @push('scripts')
+    <script>
+        window._helpLightbox = function(src) {
+            var lb = document.getElementById('help-lightbox');
+            document.getElementById('help-lightbox-img').src = src;
+            lb.style.display = 'flex';
+        };
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') document.getElementById('help-lightbox').style.display = 'none';
+        });
+    </script>
+    @endpush
 </x-app-layout>

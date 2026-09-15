@@ -51,7 +51,7 @@ class HelpPageController extends Controller
 
         $data = $request->validate([
             'title'                      => 'required|string|max:255',
-            'route'                      => 'required|string|max:255|unique:help_pages,route',
+            'route'                      => 'nullable|string|max:255|unique:help_pages,route',
             'is_active'                  => 'boolean',
             'components'                 => 'array',
             'components.*.type'          => 'required|in:text,text_with_image',
@@ -63,7 +63,7 @@ class HelpPageController extends Controller
 
         $helpPage = HelpPage::create([
             'title'     => $data['title'],
-            'route'     => $data['route'],
+            'route'     => filled($data['route'] ?? null) ? $data['route'] : null,
             'is_active' => $request->boolean('is_active', true),
         ]);
 
@@ -87,7 +87,7 @@ class HelpPageController extends Controller
 
         $data = $request->validate([
             'title'                      => 'required|string|max:255',
-            'route'                      => 'required|string|max:255|unique:help_pages,route,' . $helpPage->id,
+            'route'                      => 'nullable|string|max:255|unique:help_pages,route,' . $helpPage->id,
             'is_active'                  => 'boolean',
             'components'                 => 'array',
             'components.*.id'            => 'nullable|integer',
@@ -100,7 +100,7 @@ class HelpPageController extends Controller
 
         $helpPage->update([
             'title'     => $data['title'],
-            'route'     => $data['route'],
+            'route'     => filled($data['route'] ?? null) ? $data['route'] : null,
             'is_active' => $request->boolean('is_active', true),
         ]);
 

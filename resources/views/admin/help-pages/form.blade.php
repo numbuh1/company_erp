@@ -51,12 +51,13 @@
                         @enderror
                     </div>
 
-                    {{-- Route --}}
+                    {{-- Route (optional — without a route the page only appears in Help Pages) --}}
                     <div class="mb-5">
                         <x-input-label :value="__('Route')" />
+                        <p class="text-xs text-gray-400 mt-0.5 mb-1">{{ __('Optional. Links this help page to a specific screen via the Help button.') }}</p>
                         <select name="route" id="route-select"
                             class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="">— {{ __('Select a route') }} —</option>
+                            <option value="">— {{ __('None') }} —</option>
                             @foreach($routes as $routeName)
                                 <option value="{{ $routeName }}"
                                     {{ old('route', $helpPage->route ?? '') === $routeName ? 'selected' : '' }}>
