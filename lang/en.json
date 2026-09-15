@@ -847,5 +847,6 @@
     "name or ID (OT only)": "name or ID (OT only)",
     "Mix leave and OT requests in a single file. Each row is always created (no duplicate check).": "Mix leave and OT requests in a single file. Each row is always created (no duplicate check).",
     "Leave Balance: updates user balance and logs the change.": "Leave Balance: updates user balance and logs the change.",
-    "Enter reason…": "Enter reason…"
+    "Enter reason…": "Enter reason…",
+    "All Help Articles": "Help page"
 }
