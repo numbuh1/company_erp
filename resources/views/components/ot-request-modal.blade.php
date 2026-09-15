@@ -28,8 +28,8 @@
     $otmHolidays = PublicHoliday::getHolidayDates(Carbon::now()->subYear(), Carbon::now()->addYears(2));
 @endphp
 
-<div id="otm-overlay" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 hidden">
-    <div id="otm-box" class="relative bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto">
+<div id="otm-overlay" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 hidden pb-[4.5rem] sm:pb-0">
+    <div id="otm-box" class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto mx-2 sm:mx-0">
 
         {{-- Header --}}
         <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10">
@@ -63,52 +63,50 @@
                 <input type="hidden" id="otm-user-select" value="{{ $otmAuth?->id }}">
             @endif
 
-            {{-- OT Date --}}
-            <div>
-                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('OT Date') }}</label>
-                <p id="otm-date-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
-                <input id="otm-ot-date" type="date" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
-            </div>
-
-            {{-- From / To time --}}
-            <div>
-                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('Time') }}</label>
-                <p id="otm-time-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
-                <div id="otm-time-inputs" class="hidden grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs text-gray-400 dark:text-gray-500 mb-1">{{ __('From') }}</label>
-                        <input id="otm-start-time" type="time" lang="en-GB" class="w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-gray-400 dark:text-gray-500 mb-1">{{ __('To') }}</label>
-                        <input id="otm-end-time" type="time" lang="en-GB" class="w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
+            {{-- OT Date + Time (one row) --}}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('OT Date') }}</label>
+                    <p id="otm-date-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
+                    <input id="otm-ot-date" type="date" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('Time') }}</label>
+                    <p id="otm-time-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
+                    <div id="otm-time-inputs" class="hidden grid grid-cols-2 gap-2">
+                        <div>
+                            <input id="otm-start-time" type="time" lang="en-GB" placeholder="{{ __('From') }}" title="{{ __('From') }}" class="w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
+                        </div>
+                        <div>
+                            <input id="otm-end-time" type="time" lang="en-GB" placeholder="{{ __('To') }}" title="{{ __('To') }}" class="w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {{-- OT Type --}}
-            <div>
-                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('OT Type') }}</label>
-                <p id="otm-type-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
-                <select id="otm-type-select" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
-                    <option value="">{{ __('Auto by date') }}</option>
-                    <option value="OT x1.5">OT x1.5</option>
-                    <option value="OT x2">OT x2</option>
-                    <option value="OT x3">OT x3</option>
-                </select>
-                <p id="otm-type-auto-note" class="hidden mt-1 text-xs text-gray-400">{{ __('Auto-selected by date, can be changed.') }}</p>
-            </div>
-
-            {{-- Hours --}}
-            <div>
-                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('Hours') }}</label>
-                <p id="otm-hours-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
-                <input id="otm-hours" type="number" step="0.25" min="0.25" placeholder="0"
-                    class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
-                <p id="otm-hours-warning" class="hidden mt-1.5 text-xs text-amber-600 dark:text-amber-400 flex items-start gap-1">
-                    <span>⚠️</span>
-                    <span>{{ __('OT hours seem high. Please check start/end times.') }}</span>
-                </p>
+            {{-- OT Type + Hours (one row) --}}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('OT Type') }}</label>
+                    <p id="otm-type-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
+                    <select id="otm-type-select" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
+                        <option value="">{{ __('Auto by date') }}</option>
+                        <option value="OT x1.5">OT x1.5</option>
+                        <option value="OT x2">OT x2</option>
+                        <option value="OT x3">OT x3</option>
+                    </select>
+                    <p id="otm-type-auto-note" class="hidden mt-1 text-xs text-gray-400">{{ __('Auto-selected by date, can be changed.') }}</p>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('Hours') }}</label>
+                    <p id="otm-hours-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
+                    <input id="otm-hours" type="number" step="0.25" min="0.25" placeholder="0"
+                        class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
+                    <p id="otm-hours-warning" class="hidden mt-1.5 text-xs text-amber-600 dark:text-amber-400 flex items-start gap-1">
+                        <span>⚠️</span>
+                        <span>{{ __('OT hours seem high. Please check start/end times.') }}</span>
+                    </p>
+                </div>
             </div>
 
             {{-- OT month / year preview --}}
