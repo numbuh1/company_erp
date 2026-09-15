@@ -74,14 +74,14 @@
             <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('Time') }}</label>
                 <p id="otm-time-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
-                <div class="grid grid-cols-2 gap-3">
+                <div id="otm-time-inputs" class="hidden grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs text-gray-400 dark:text-gray-500 mb-1">{{ __('From') }}</label>
-                        <input id="otm-start-time" type="time" lang="en-GB" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
+                        <input id="otm-start-time" type="time" lang="en-GB" class="w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
                     </div>
                     <div>
                         <label class="block text-xs text-gray-400 dark:text-gray-500 mb-1">{{ __('To') }}</label>
-                        <input id="otm-end-time" type="time" lang="en-GB" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
+                        <input id="otm-end-time" type="time" lang="en-GB" class="w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
                     </div>
                 </div>
             </div>
@@ -240,7 +240,7 @@
 
     function _hideBody(){
         ['otm-status-banner','otm-user-display','otm-user-select','otm-date-display','otm-ot-date',
-         'otm-time-display','otm-start-time','otm-end-time',
+         'otm-time-display','otm-time-inputs',
          'otm-type-display','otm-type-select','otm-type-auto-note',
          'otm-hours-display','otm-hours','otm-hours-warning',
          'otm-ot-preview','otm-ot-arrow','otm-ot-after','otm-ot-month-arrow','otm-ot-month-after',
@@ -336,7 +336,7 @@
     function _populateCreate(){
         show($g('otm-user-row'));
         if(HAS_SEL){ show($g('otm-user-select')); _initUserTs(); }
-        show($g('otm-ot-date')); show($g('otm-start-time')); show($g('otm-end-time'));
+        show($g('otm-ot-date')); show($g('otm-time-inputs'));
         show($g('otm-type-select')); show($g('otm-type-auto-note'));
         show($g('otm-hours')); show($g('otm-description'));
         show($g('otm-project-select')); show($g('otm-task-select'));
@@ -419,7 +419,7 @@
         $g('otm-title').textContent=_OTM.titleEdit;
 
         hide($g('otm-date-display'));   show($g('otm-ot-date'));
-        hide($g('otm-time-display'));   show($g('otm-start-time')); show($g('otm-end-time'));
+        hide($g('otm-time-display'));   show($g('otm-time-inputs'));
         hide($g('otm-type-display'));   show($g('otm-type-select')); show($g('otm-type-auto-note'));
         hide($g('otm-hours-display')); show($g('otm-hours'));
         hide($g('otm-desc-display'));  show($g('otm-description'));
