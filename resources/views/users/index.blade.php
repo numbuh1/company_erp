@@ -18,6 +18,20 @@
             const u = new URL(window.location);
             u.searchParams.set('tab', t);
             history.replaceState(null, '', u);
+            this.syncPaginationLinks(t);
+        },
+        syncPaginationLinks(t) {
+            this.$refs.pagination?.querySelectorAll('a').forEach(a => {
+                const url = new URL(a.href);
+                if (t === 'overall') { url.searchParams.delete('tab'); }
+                else { url.searchParams.set('tab', t); }
+                a.href = url.toString();
+            });
+        },
+        init() {
+            if (this.tab !== 'overall') {
+                this.$nextTick(() => this.syncPaginationLinks(this.tab));
+            }
         }
     }">
 
@@ -416,7 +430,7 @@
         </div>
 
         {{-- Pagination --}}
-        <div class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-4 py-3">
+        <div x-ref="pagination" class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-4 py-3">
             {{ $users->appends(request()->query())->links() }}
         </div>
 
