@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Translation\DatabaseLoader;
 use Carbon\Carbon;
+use Illuminate\Mail\Events\MessageSending;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -32,6 +34,14 @@ class AppServiceProvider extends ServiceProvider
         }
 
         URL::forceRootUrl(config('app.url'));
+
+        Event::listen(MessageSending::class, function (MessageSending $event) {
+            $prefix = config('app.email_name');
+            if ($prefix) {
+                $subject = $event->message->getSubject() ?? '';
+                $event->message->subject($prefix . ' | ' . $subject);
+            }
+        });
 
         View::share([
             'calWeekendBg'       => 'bg-gray-200 dark:bg-gray-900/50',

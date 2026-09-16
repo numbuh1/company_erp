@@ -13,6 +13,7 @@ use Spatie\Permission\Traits\HasRoles;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Mail\ResetPasswordMail;
 
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
@@ -133,6 +134,19 @@ class User extends Authenticatable
             'hourly'  => $this->salary * 160,
             default   => null,
         };
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $url = url(route('password.reset', [
+            'token' => $token,
+            'email' => $this->getEmailForPasswordReset(),
+        ], false));
+
+        $expire = config('auth.passwords.' . config('auth.defaults.passwords') . '.expire');
+
+        \Illuminate\Support\Facades\Mail::to($this->email)
+            ->send(new ResetPasswordMail($url, $expire));
     }
 
     // Relationships
