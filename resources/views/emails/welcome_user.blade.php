@@ -27,7 +27,7 @@
         </div>
         <div class="body">
             <p>Xin chào <strong>{{ $user->name }}</strong>,</p>
-            <p>Tài khoản của bạn đã được tạo. Dưới đây là thông tin đăng nhập:</p>
+            <p>Tài khoản của bạn đã được tạo mới.</p>
 
             <div class="creds">
                 <table>

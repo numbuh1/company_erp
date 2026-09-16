@@ -848,5 +848,8 @@
     "Mix leave and OT requests in a single file. Each row is always created (no duplicate check).": "Kết hợp yêu cầu nghỉ phép và tăng ca trong cùng một file. Mỗi dòng luôn được tạo mới (không kiểm tra trùng).",
     "Leave Balance: updates user balance and logs the change.": "Số dư phép: cập nhật số dư phép và ghi log thay đổi.",
     "Enter reason…": "Lý do…",
-    "All Help Articles": "Tổng hợp hướng dẫn"
+    "All Help Articles": "Tổng hợp hướng dẫn",
+    "Personal Info": "Thông tin Cá nhân",
+    "Send Password": "Kích hoạt lại Tài khoản",
+    "Address": "Địa chỉ"
 }

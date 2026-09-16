@@ -22,7 +22,7 @@ class WelcomeUserMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Tài khoản của bạn đã được tạo — ' . config('app.name'),
+            subject: 'Cấp Tài Khoản mới — ' . config('app.name'),
         );
     }
 

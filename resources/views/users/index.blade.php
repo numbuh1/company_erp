@@ -11,7 +11,15 @@
         </div>
     </x-slot>
 
-    <div x-data="{ tab: 'overall' }">
+    <div x-data="{
+        tab: new URLSearchParams(window.location.search).get('tab') || 'overall',
+        setTab(t) {
+            this.tab = t;
+            const u = new URL(window.location);
+            u.searchParams.set('tab', t);
+            history.replaceState(null, '', u);
+        }
+    }">
 
         @if(session('success'))
             <div class="mx-4 mt-3 p-3 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-sm">
@@ -59,7 +67,7 @@
                 @foreach($tabs as $t)
                     @if($t['show'])
                     <button type="button"
-                        @click="tab = '{{ $t['key'] }}'"
+                        @click="setTab('{{ $t['key'] }}')"
                         :class="tab === '{{ $t['key'] }}'
                             ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400'
                             : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
@@ -409,7 +417,7 @@
 
         {{-- Pagination --}}
         <div class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-4 py-3">
-            {{ $users->links() }}
+            {{ $users->appends(request()->query())->links() }}
         </div>
 
     </div>
