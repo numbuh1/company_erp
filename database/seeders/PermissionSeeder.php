@@ -353,6 +353,23 @@ class PermissionSeeder extends Seeder
             ['display_name' => 'Export Requests', 'parent_id' => $requests_parent->id]
         );
 
+        // DEVELOPMENT
+        $dev_parent = Permission::updateOrCreate(
+            ['name' => 'development'],
+            ['display_name' => 'Development', 'parent_id' => null]
+        );
+
+        $dev_permissions = [
+            'view mail history' => 'View Mail History',
+        ];
+
+        foreach ($dev_permissions as $name => $label) {
+            Permission::firstOrCreate(
+                ['name' => $name],
+                ['display_name' => $label, 'parent_id' => $dev_parent->id]
+            );
+        }
+
         // IMPORT / EXPORT
         $import_export_parent = Permission::updateOrCreate(
             ['name' => 'import_export'],

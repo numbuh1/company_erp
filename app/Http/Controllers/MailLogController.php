@@ -10,7 +10,7 @@ class MailLogController extends Controller
 {
     private function authorize(): void
     {
-        if (! auth()->user()->can('manage settings')) abort(403);
+        if (! auth()->user()->can('view mail history')) abort(403);
     }
 
     public function index(Request $request)

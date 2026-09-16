@@ -269,7 +269,7 @@
         @endcanany
 
         {{-- ── Development ──────────────────────────────────── --}}
-        @can('manage settings')
+        @can('view mail history')
         <div class="relative px-2 py-0.5"
              @mouseenter="open = 'dev'" @mouseleave="open = null">
             <button type="button"
