@@ -72,11 +72,17 @@
                                     {{ $latestAnnouncement->author?->name ?? 'System' }}
                                     · {{ $latestAnnouncement->created_at->format('d/m/Y') }}
                                 </p>
-                                <div class="ql-container ql-snow line-clamp-[8] overflow-hidden">
-                                    <div class="ql-editor text-gray-700 dark:text-gray-300">
-                                        {!! $latestAnnouncement->content !!}
+                                @if($latestAnnouncement->excerpt)
+                                    <p class="text-sm text-gray-700 dark:text-gray-300 line-clamp-4">
+                                        {{ $latestAnnouncement->excerpt }}
+                                    </p>
+                                @else
+                                    <div class="ql-container ql-snow line-clamp-[8] overflow-hidden">
+                                        <div class="ql-editor text-gray-700 dark:text-gray-300">
+                                            {!! $latestAnnouncement->content !!}
+                                        </div>
                                     </div>
-                                </div>
+                                @endif
                                 <a href="{{ route('announcements.show', $latestAnnouncement) }}"
                                     class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline mt-2 inline-block">
                                     {{ __('Read more →') }}

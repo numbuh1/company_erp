@@ -45,6 +45,18 @@
                         @enderror
                     </div>
 
+                    <!-- Excerpt -->
+                    <div class="mb-5">
+                        <x-input-label :value="__('Excerpt')" />
+                        <textarea name="excerpt" rows="2"
+                            class="w-full mt-1 border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                            placeholder="{{ __('Short summary shown on the Dashboard (optional)') }}"
+                            maxlength="500">{{ old('excerpt', $announcement->excerpt ?? '') }}</textarea>
+                        @error('excerpt')
+                            <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     <!-- Audience -->
                     @php
                         $isAllCompany = old('all_company') !== null

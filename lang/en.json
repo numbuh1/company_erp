@@ -851,5 +851,8 @@
     "All Help Articles": "Help page",
     "Personal Info": "Personal Info",
     "Send Password": "Send Password",
-    "Address": "Address"
+    "Address": "Address",
+    "Search by name, email, position…": "Search by name, email, position…",
+    "Excerpt": "Excerpt",
+    "Short summary shown on the Dashboard (optional)": "Short summary shown on the Dashboard (optional)"
 }

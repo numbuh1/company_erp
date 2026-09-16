@@ -71,6 +71,7 @@ class AnnouncementController extends Controller
 
         $data = $request->validate([
             'title'   => 'required|string|max:255',
+            'excerpt' => 'nullable|string|max:500',
             'content' => 'required|string',
         ]);
 
@@ -119,6 +120,7 @@ class AnnouncementController extends Controller
 
         $data = $request->validate([
             'title'   => 'required|string|max:255',
+            'excerpt' => 'nullable|string|max:500',
             'content' => 'required|string',
         ]);
 
