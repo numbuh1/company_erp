@@ -85,6 +85,10 @@ Route::middleware('auth')->group(function () {
         ->name('users.leave-balance-history');
     Route::post('users/{user}/reset-password', [UserController::class, 'resetPassword'])
         ->name('users.reset-password');
+    Route::post('users/{user}/generate-password', [UserController::class, 'generatePassword'])
+        ->name('users.generate-password');
+    Route::post('users/{user}/toggle-active', [UserController::class, 'toggleActive'])
+        ->name('users.toggle-active');
     Route::get('/profile', [UserController::class, 'profile'])->name('users.profile');
     Route::post('/user/column-preferences', [UserController::class, 'updateColumnPreferences'])->name('user.column-preferences');
     Route::get('/users/{user}/request-info', [UserController::class, 'requestInfo'])->name('users.request-info');

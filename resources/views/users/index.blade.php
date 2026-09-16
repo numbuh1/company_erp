@@ -18,6 +18,11 @@
                 {{ session('success') }}
             </div>
         @endif
+        @if(session('error'))
+            <div class="mx-4 mt-3 p-3 bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded text-sm">
+                {{ session('error') }}
+            </div>
+        @endif
 
         {{-- Search --}}
         <div class="px-4 py-3 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
@@ -41,12 +46,14 @@
         <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4">
             <nav class="-mb-px flex">
                 @php
+                    $canEditAll = auth()->user()->can('edit all user');
                     $tabs = [
                         ['key' => 'overall',  'label' => 'Employee',      'show' => true],
                         ['key' => 'team',     'label' => 'Team',          'show' => true],
                         ['key' => 'salary',   'label' => 'Salary',        'show' => $canViewSalary],
                         ['key' => 'leaves',   'label' => 'Leave Balance', 'show' => true],
                         ['key' => 'personal', 'label' => 'Personal Info', 'show' => $canViewPersonal],
+                        ['key' => 'actions',  'label' => 'Actions',       'show' => $canEditAll],
                     ];
                 @endphp
                 @foreach($tabs as $t)
@@ -142,6 +149,18 @@
                         <th x-show="tab === 'personal'" class="{{ $thPer }} min-w-[7rem]">{{ __('Tax Code') }}</th>
                         <th x-show="tab === 'personal'" class="{{ $thPer }} min-w-[7rem]">{{ __('Social Insurance ID') }}</th>
                         <th x-show="tab === 'personal'" class="{{ $thPer }} min-w-[8rem]">{{ __('Contract Expiry') }}</th>
+                        @endif
+
+                        {{-- Actions columns --}}
+                        @if($canEditAll)
+                        <th x-show="tab === 'actions'"
+                            class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap min-w-[7rem]">
+                            {{ __('Status') }}
+                        </th>
+                        <th x-show="tab === 'actions'"
+                            class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap min-w-[12rem]">
+                            {{ __('Actions') }}
+                        </th>
                         @endif
 
                     </tr>
@@ -334,6 +353,45 @@
                             <td x-show="tab === 'personal'" class="{{ $tdPer }}">{{ $user->tax_code ?? '—' }}</td>
                             <td x-show="tab === 'personal'" class="{{ $tdPer }}">{{ $user->social_insurance_id ?? '—' }}</td>
                             <td x-show="tab === 'personal'" class="{{ $tdPer }}">{{ $user->contract_expiry ? $user->contract_expiry->format('d/m/Y') : '—' }}</td>
+                            @endif
+
+                            {{-- Actions columns --}}
+                            @if($canEditAll)
+                            <td x-show="tab === 'actions'" class="px-3 py-2 whitespace-nowrap">
+                                @if($user->id !== auth()->id())
+                                    <form method="POST" action="{{ route('users.toggle-active', $user) }}" class="inline"
+                                          onsubmit="return confirm('{{ $user->is_active ? __('Deactivate this account?') : __('Activate this account?') }}')">
+                                        @csrf
+                                        <button type="submit" class="text-xs font-medium px-2 py-1 rounded transition
+                                            {{ $user->is_active
+                                                ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800'
+                                                : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800' }}">
+                                            {{ $user->is_active ? __('Active') : __('Inactive') }}
+                                        </button>
+                                    </form>
+                                @else
+                                    <span class="text-xs text-gray-400">—</span>
+                                @endif
+                            </td>
+                            <td x-show="tab === 'actions'" class="px-3 py-2 whitespace-nowrap">
+                                @if($user->id !== auth()->id())
+                                    <form method="POST" action="{{ route('users.generate-password', $user) }}" class="inline"
+                                          onsubmit="return confirm('{{ __('Generate a new password and send it via email?') }}')">
+                                        @csrf
+                                        <button type="submit"
+                                            class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded
+                                                   bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300
+                                                   hover:bg-indigo-200 dark:hover:bg-indigo-800 transition">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                            </svg>
+                                            {{ __('Send Password') }}
+                                        </button>
+                                    </form>
+                                @else
+                                    <span class="text-xs text-gray-400">—</span>
+                                @endif
+                            </td>
                             @endif
 
                         </tr>

@@ -507,6 +507,52 @@ class UserController extends Controller
         return back()->with('success', 'Password updated.');
     }
 
+    public function generatePassword(User $user)
+    {
+        if (!auth()->user()->can('edit all user')) abort(403);
+        if (auth()->id() === $user->id) abort(403);
+
+        $plain = Str::random(10);
+        $user->update([
+            'password'  => bcrypt($plain),
+            'is_active' => true,
+        ]);
+
+        if ($user->employment_status === 'inactive') {
+            $user->update(['employment_status' => 'active']);
+        }
+
+        try {
+            Mail::to($user->email)->send(new WelcomeUserMail($user, $plain, route('login')));
+        } catch (\Throwable $e) {
+            logger()->error("Password email failed for user {$user->id}: " . $e->getMessage());
+            return back()->with('error', __('Password was reset but the email could not be sent.'));
+        }
+
+        return back()->with('success', __('New password generated and sent to :email.', ['email' => $user->email]));
+    }
+
+    public function toggleActive(User $user)
+    {
+        if (!auth()->user()->can('edit all user')) abort(403);
+        if (auth()->id() === $user->id) abort(403);
+
+        $newStatus = !$user->is_active;
+        $user->update(['is_active' => $newStatus]);
+
+        if ($newStatus && $user->employment_status === 'inactive') {
+            $user->update(['employment_status' => 'active']);
+        } elseif (!$newStatus && $user->employment_status !== 'inactive') {
+            $user->update(['employment_status' => 'inactive']);
+        }
+
+        $msg = $newStatus
+            ? __(':name has been activated.', ['name' => $user->name])
+            : __(':name has been deactivated.', ['name' => $user->name]);
+
+        return back()->with('success', $msg);
+    }
+
     public function requestInfo(User $user)
     {
         $otYearTotal = \App\Models\OvertimeRequest::where('user_id', $user->id)
