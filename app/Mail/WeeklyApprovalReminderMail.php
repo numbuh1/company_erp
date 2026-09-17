@@ -26,7 +26,7 @@ class WeeklyApprovalReminderMail extends Mailable
         $total = $this->pendingLeaves->count() + $this->pendingOts->count();
 
         return new Envelope(
-            subject: "[Nhắc nhở] Có {$total} yêu cầu đang chờ phê duyệt",
+            subject: '[' . __('Reminder') . '] ' . __(':total requests pending approval', ['total' => $total]),
         );
     }
 

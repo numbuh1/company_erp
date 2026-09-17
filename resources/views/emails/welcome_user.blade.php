@@ -1,11 +1,11 @@
 @extends('emails.layout')
 
-@section('title', 'Chào mừng bạn')
+@section('title', __('New Account'))
 @section('header-title', config('app.name'))
 
 @section('body')
-    <p>Xin chào <strong>{{ $user->name }}</strong>,</p>
-    <p>Tài khoản của bạn đã được tạo mới.</p>
+    <p>{{ __('Hello') }} <strong>{{ $user->name }}</strong>,</p>
+    <p>{{ __('Your account has been created.') }}</p>
 
     <div class="detail-box">
         <table>
@@ -14,18 +14,18 @@
                 <td>{{ $user->email }}</td>
             </tr>
             <tr>
-                <td>Mật khẩu:</td>
+                <td>{{ __('Password') }}:</td>
                 <td style="word-break:break-all;">{{ $plainPassword }}</td>
             </tr>
         </table>
     </div>
 
-    <p>Vui lòng đổi mật khẩu sau khi đăng nhập lần đầu.</p>
+    <p>{{ __('Please change your password after your first login.') }}</p>
 
-    <a href="{{ $loginUrl }}" class="btn">Đăng nhập ngay</a>
+    <a href="{{ $loginUrl }}" class="btn">{{ __('Login now') }}</a>
 
     <p class="url-fallback">
-        Nếu nút trên không hoạt động, hãy copy đường dẫn sau vào trình duyệt:<br>
+        {{ __('If the button above does not work, copy and paste the following link into your browser:') }}<br>
         <a href="{{ $loginUrl }}">{{ $loginUrl }}</a>
     </p>
 @endsection

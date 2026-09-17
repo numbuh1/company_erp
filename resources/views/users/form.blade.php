@@ -667,50 +667,6 @@
                         @if(isset($user) && !$isOwnProfile && $canEditPersonal)
                         <div x-show="activeTab === 'actions'" x-cloak class="space-y-6">
 
-                            {{-- Account Status --}}
-                            <div>
-                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ __('Account Status') }}</p>
-                                <div class="flex items-center gap-4">
-                                    <span class="inline-flex items-center gap-1.5 text-sm font-medium
-                                        {{ $user->is_active ? 'text-green-700 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
-                                        <span class="w-2 h-2 rounded-full {{ $user->is_active ? 'bg-green-500' : 'bg-red-500' }}"></span>
-                                        {{ $user->is_active ? __('Active') : __('Inactive') }}
-                                    </span>
-                                </div>
-                                <p class="text-xs text-gray-400 mt-1 mb-3">
-                                    {{ $user->is_active
-                                        ? __('This user can log in normally.')
-                                        : __('This user cannot log in.') }}
-                                </p>
-                                <form method="POST" action="{{ route('users.toggle-active', $user) }}"
-                                      onsubmit="return confirm('{{ $user->is_active ? __('Deactivate this account? The user will not be able to log in.') : __('Activate this account?') }}')">
-                                    @csrf
-                                    @if($user->is_active)
-                                        <button type="submit"
-                                            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg
-                                                   border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400
-                                                   hover:bg-red-50 dark:hover:bg-red-900/20 transition">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-                                            </svg>
-                                            {{ __('Deactivate Account') }}
-                                        </button>
-                                    @else
-                                        <button type="submit"
-                                            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg
-                                                   border border-green-300 dark:border-green-700 text-green-600 dark:text-green-400
-                                                   hover:bg-green-50 dark:hover:bg-green-900/20 transition">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                            </svg>
-                                            {{ __('Activate Account') }}
-                                        </button>
-                                    @endif
-                                </form>
-                            </div>
-
-                            <hr class="border-gray-200 dark:border-gray-700">
-
                             {{-- Generate Password & Send Email --}}
                             <div>
                                 <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ __('Password & Account Activation') }}</p>

@@ -2,7 +2,7 @@
     $brandColor = $brandColor ?? '#DB2777';
 @endphp
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="{{ app()->getLocale() }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -54,7 +54,7 @@
         </div>
 
         <div class="footer">
-            @yield('footer', 'Email này được gửi tự động từ ' . config('app.name') . '. Vui lòng không trả lời email này.')
+            @yield('footer', __('This email was sent automatically from :app. Please do not reply to this email.', ['app' => config('app.name')]))
         </div>
     </div>
 </body>

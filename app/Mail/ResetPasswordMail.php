@@ -20,7 +20,7 @@ class ResetPasswordMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Đặt lại mật khẩu — ' . config('app.name'),
+            subject: __('Reset Password') . ' — ' . config('app.name'),
         );
     }
 

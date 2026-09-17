@@ -26,10 +26,10 @@ class NewRequestMail extends Mailable
 
     public function envelope(): Envelope
     {
-        $label = $this->type === 'leave' ? 'Nghỉ phép' : 'Tăng ca';
+        $label = $this->type === 'leave' ? __('Leave Request') : __('OT Request');
 
         return new Envelope(
-            subject: "[Yêu cầu {$label}] {$this->requester->name} — "
+            subject: "[{$label}] {$this->requester->name} — "
                 . $this->request->start_at->format('d/m/Y'),
         );
     }

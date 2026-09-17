@@ -1,31 +1,31 @@
 @extends('emails.layout', ['brandColor' => '#7c3aed'])
 
-@section('title', 'Nhắc nhở phê duyệt yêu cầu')
-@section('header-title', '⏰ Nhắc nhở phê duyệt yêu cầu')
+@section('title', __('Approval Reminder'))
+@section('header-title', '⏰ ' . __('Approval Reminder'))
 @section('header-subtitle', now()->translatedFormat('l, d/m/Y'))
 
 @section('body')
-    <p>Xin chào <strong>{{ $recipient->name }}</strong>,</p>
+    <p>{{ __('Hello') }} <strong>{{ $recipient->name }}</strong>,</p>
 
     <div class="summary-box">
-        Nhóm của bạn hiện có
-        <strong>{{ $pendingLeaves->count() }} yêu cầu nghỉ phép</strong>
-        và
-        <strong>{{ $pendingOts->count() }} yêu cầu tăng ca</strong>
-        đang chờ phê duyệt.
+        {{ __('Your team currently has') }}
+        <strong>{{ __(':count leave requests', ['count' => $pendingLeaves->count()]) }}</strong>
+        {{ __('and') }}
+        <strong>{{ __(':count OT requests', ['count' => $pendingOts->count()]) }}</strong>
+        {{ __('pending approval.') }}
     </div>
 
     {{-- Pending Leaves --}}
     @if($pendingLeaves->isNotEmpty())
-    <h2 class="section">📋 Yêu cầu nghỉ phép đang chờ ({{ $pendingLeaves->count() }})</h2>
+    <h2 class="section">📋 {{ __('Pending leave requests') }} ({{ $pendingLeaves->count() }})</h2>
     <table class="data">
         <thead>
             <tr>
-                <th>Nhân viên</th>
-                <th>Loại</th>
-                <th>Từ ngày</th>
-                <th>Đến ngày</th>
-                <th>Số giờ</th>
+                <th>{{ __('Employee') }}</th>
+                <th>{{ __('Type') }}</th>
+                <th>{{ __('From date') }}</th>
+                <th>{{ __('To date') }}</th>
+                <th>{{ __('Hours') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -39,7 +39,7 @@
                 </td>
                 <td>
                     <span class="badge badge-type">
-                        {{ ['annual' => 'Nghỉ phép năm', 'sick' => 'Nghỉ ốm', 'unpaid' => 'Không lương'][$leave->type] ?? $leave->type }}
+                        {{ ['annual' => __('Annual Leave'), 'sick' => __('Sick Leave'), 'unpaid' => __('Unpaid Leave')][$leave->type] ?? $leave->type }}
                     </span>
                 </td>
                 <td>{{ $leave->start_at->format('d/m/Y H:i') }}</td>
@@ -53,15 +53,15 @@
 
     {{-- Pending OTs --}}
     @if($pendingOts->isNotEmpty())
-    <h2 class="section">⏱ Yêu cầu tăng ca đang chờ ({{ $pendingOts->count() }})</h2>
+    <h2 class="section">⏱ {{ __('Pending OT requests') }} ({{ $pendingOts->count() }})</h2>
     <table class="data">
         <thead>
             <tr>
-                <th>Nhân viên</th>
-                <th>Loại</th>
-                <th>Ngày</th>
-                <th>Giờ</th>
-                <th>Số giờ</th>
+                <th>{{ __('Employee') }}</th>
+                <th>{{ __('Type') }}</th>
+                <th>{{ __('Date') }}</th>
+                <th>{{ __('Time') }}</th>
+                <th>{{ __('Hours') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -85,12 +85,11 @@
 
     <div class="cta">
         <a href="{{ route('requests.index', ['status' => 'pending']) }}">
-            Xem & Phê duyệt yêu cầu →
+            {{ __('View & Approve requests') }} →
         </a>
     </div>
 @endsection
 
 @section('footer')
-    Email này được gửi tự động mỗi cuối tuần từ hệ thống {{ config('app.name') }}.
-    Vui lòng không trả lời email này.
+    {{ __('This email is sent automatically every weekend from') }} {{ config('app.name') }}.
 @endsection
