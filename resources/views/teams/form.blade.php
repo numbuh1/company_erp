@@ -68,7 +68,7 @@
                                 id="search-unassigned"
                             >
 
-                            <div id="unassigned-list" class="border border-gray-300 dark:border-gray-600 rounded p-3 min-h-[300px] space-y-2">
+                            <div id="unassigned-list" class="border border-gray-300 dark:border-gray-600 rounded p-3 h-[400px] overflow-y-auto space-y-2">
                                 @foreach($unassigned as $user)
                                     <div class="user-item flex items-center justify-between" data-id="{{ $user->id }}">
                                         
@@ -95,7 +95,7 @@
                                 id="search-assigned"
                             >
 
-                            <div id="assigned-list" class="border rounded p-3 min-h-[300px] space-y-2">
+                            <div id="assigned-list" class="border border-gray-300 dark:border-gray-600 rounded p-3 h-[400px] overflow-y-auto space-y-2">
                                 @foreach($assigned as $item)
                                     <div class="user-item flex items-center justify-between" data-id="{{ $item['model']->id }}">
                                         
