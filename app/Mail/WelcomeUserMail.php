@@ -22,7 +22,7 @@ class WelcomeUserMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: __('New Account') . ' — ' . config('app.name'),
+            subject: __('New Account'),
         );
     }
 
