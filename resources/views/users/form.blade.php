@@ -153,13 +153,13 @@
                             {{-- Password — only shown on create form here; edit uses Settings tab --}}
                             @if(!isset($user))
                             <div>
-                                <x-input-label value="{{ __('Password') }} *" />
-                                <x-text-input type="password" name="password" class="w-full mt-1" autocomplete="new-password" required />
+                                <x-input-label value="{{ __('Password') }}" />
+                                <x-text-input type="password" name="password" class="w-full mt-1" autocomplete="new-password" />
                                 @error('password')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                             </div>
                             <div>
-                                <x-input-label value="{{ __('Confirm Password') }} *" />
-                                <x-text-input type="password" name="password_confirmation" class="w-full mt-1" autocomplete="new-password" required />
+                                <x-input-label value="{{ __('Confirm Password') }}" />
+                                <x-text-input type="password" name="password_confirmation" class="w-full mt-1" autocomplete="new-password" />
                             </div>
                             @endif
                         </div>
@@ -500,7 +500,7 @@
                             {{-- Roles --}}
                             <div class="mb-5">
                                 <x-input-label value="{{ __('Role') }}" />
-                                <select name="roles[]" id="roles-select" data-multi-select
+                                <select name="roles[]" id="roles-select" data-multi-select multiple
                                         data-placeholder="{{ __('Select roles…') }}" class="mt-1">
                                     @foreach($roles as $role)
                                         <option value="{{ $role->name }}"

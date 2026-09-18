@@ -64,9 +64,9 @@
                 <ul class="mt-3 text-xs text-gray-500 dark:text-gray-400 space-y-1">
                     <li>{{ __('* Required. First row must be a header row.') }}</li>
                     <li>• <strong>password</strong> — {{ __('leave blank to auto-generate a random password.') }}</li>
-                    <li>• <strong>roles</strong> — {{ __('separated by :sep, e.g. :example.', ['sep' => '<code>|</code>', 'example' => '<code>Staff|Manager</code>']) }}</li>
+                    <li>• <strong>roles</strong> — {{ __('separated by :sep, e.g. :example.', ['sep' => '|', 'example' => 'Staff|Manager']) }}</li>
                     <li>• <strong>team</strong> — {{ __('optional. Team name to add the user to; will be created automatically if it does not exist.') }}</li>
-                    <li>• <strong>team_leader</strong> — {{ __('optional. Set :val to assign the user as team leader; default is :zero.', ['val' => '<code>1</code> (<code>true</code> / <code>yes</code>)', 'zero' => '<code>0</code>']) }}</li>
+                    <li>• <strong>team_leader</strong> — {{ __('optional. Set :val to assign the user as team leader; default is :zero.', ['val' => '1', 'zero' => '0']) }}</li>
                     <li>{{ __('Duplicate emails will be skipped.') }}</li>
                 </ul>
                 <div class="mt-3">

@@ -61,7 +61,7 @@ class UserController extends Controller
             'full_name'            => 'nullable|string|max:255',
             'email'                => 'required|email|unique:users',
             'contact_email'        => 'nullable|email|max:255',
-            'password'             => 'required|min:6|confirmed',
+            'password'             => 'nullable|min:6|confirmed',
             'position'             => 'nullable|string|max:255',
             'grade'                => 'nullable|string|max:255',
             'birthday'             => 'nullable|date',
@@ -88,7 +88,7 @@ class UserController extends Controller
             'other_deduction'      => 'nullable|integer|min:0',
         ]);
 
-        $plainPassword    = $data['password'];
+        $plainPassword    = $data['password'] ?? Str::random(12);
         $data['password'] = bcrypt($plainPassword);
 
         $user = User::create($data);
