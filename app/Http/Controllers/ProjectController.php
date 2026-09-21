@@ -610,6 +610,58 @@ class ProjectController extends Controller
     }
 
     /**
+     * API: list folder contents as JSON (for SPA file explorer)
+     */
+    public function filesIndex(Request $request, Project $project)
+    {
+        $user = auth()->user();
+        if (!$user->can('view all projects') && !$this->_isAssigned($project, $user)) abort(403);
+
+        $folderId      = $request->query('folder_id') ?: null;
+        $currentFolder = $folderId ? ProjectFile::findOrFail($folderId) : null;
+        if ($currentFolder && $currentFolder->project_id !== $project->id) abort(404);
+
+        $items = ProjectFile::where('project_id', $project->id)
+            ->where('parent_id', $folderId)
+            ->orderByDesc('is_folder')
+            ->orderBy('name')
+            ->orderBy('original_name')
+            ->with('uploader:id,name')
+            ->get();
+
+        $breadcrumb = [];
+        $folder = $currentFolder;
+        while ($folder) {
+            array_unshift($breadcrumb, $folder);
+            $folder = $folder->parent_id ? ProjectFile::find($folder->parent_id) : null;
+        }
+
+        $canUpload    = $user->can('edit all project files') || $user->can('edit own project files');
+        $canManageAll = $user->can('edit all project files');
+        $canEditOwn   = $user->can('edit own project files');
+
+        return response()->json([
+            'items' => $items->map(fn ($f) => [
+                'id'           => $f->id,
+                'is_folder'    => $f->is_folder,
+                'display_name' => $f->display_name,
+                'size'         => $f->size,
+                'uploader'     => $f->uploader?->name,
+                'uploaded_by'  => $f->uploaded_by,
+                'date'         => $f->created_at->format('d/m/y H:i'),
+                'stored_name'  => $f->stored_name,
+                'can_manage'   => $canManageAll || $f->uploaded_by === $user->id,
+                'can_delete'   => $canManageAll || (!$f->is_folder && $f->uploaded_by === $user->id),
+            ]),
+            'breadcrumb' => collect($breadcrumb)->map(fn ($f) => [
+                'id'           => $f->id,
+                'display_name' => $f->display_name,
+            ]),
+            'current_folder_id' => $currentFolder?->id,
+        ]);
+    }
+
+    /**
      * Upload file into a Project
      */
     public function uploadFile(Request $request, Project $project)
@@ -641,6 +693,9 @@ class ProjectController extends Controller
         activity()->causedBy($user)->performedOn($project)
             ->log("Uploaded file \"{$displayName}\"");
 
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
         return redirect()->back()->with('success', 'File uploaded.');
     }
 
@@ -648,7 +703,7 @@ class ProjectController extends Controller
     /**
      * Delete file from a Project
      */
-    public function deleteItem(Project $project, ProjectFile $file)
+    public function deleteItem(Request $request, Project $project, ProjectFile $file)
     {
         $user = auth()->user();
         if (!$this->_canAccessProject($project, $user)) abort(403);
@@ -668,6 +723,9 @@ class ProjectController extends Controller
         activity()->causedBy($user)->performedOn($project)
             ->log("Deleted {$itemType} \"{$itemName}\"");
 
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
         return back()->with('success', $file->is_folder ? 'Folder deleted.' : 'File deleted.');
     }
 
@@ -705,6 +763,9 @@ class ProjectController extends Controller
             'name'        => $request->name,
         ]);
 
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
         return back()->with('success', 'Folder created.');
     }
 
@@ -732,6 +793,9 @@ class ProjectController extends Controller
         activity()->causedBy($user)->performedOn($project)
             ->log("Renamed \"{$oldName}\" to \"{$request->name}\"");
 
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
         return back()->with('success', 'Renamed successfully.');
     }
 

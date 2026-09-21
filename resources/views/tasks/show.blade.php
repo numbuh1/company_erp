@@ -80,7 +80,7 @@
                 @endphp
                 <div class="mb-4 p-4 bg-gray-50 dark:bg-gray-700/40 rounded-lg border border-gray-200 dark:border-gray-600">
                     <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Budget & Time</span>
+                        <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ __('Budget & Time') }}</span>
                         <span class="text-xs font-semibold {{ $isOverBudget ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-300' }}">{{ $budgetPct }}%</span>
                     </div>
                     <div class="bg-white dark:bg-gray-900 rounded h-2 border border-gray-300 dark:border-gray-600 overflow-hidden mb-3">
@@ -88,15 +88,15 @@
                     </div>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                         <div>
-                            <p class="text-gray-400 dark:text-gray-500 mb-0.5">Budget</p>
+                            <p class="text-gray-400 dark:text-gray-500 mb-0.5">{{ __('Budget') }}</p>
                             <p class="font-semibold text-gray-700 dark:text-gray-200">{{ number_format($task->budget_hours, 1) }}h</p>
                         </div>
                         <div>
-                            <p class="text-gray-400 dark:text-gray-500 mb-0.5">Normal</p>
+                            <p class="text-gray-400 dark:text-gray-500 mb-0.5">{{ __('Normal') }}</p>
                             <p class="font-semibold text-gray-700 dark:text-gray-200">{{ number_format($taskTotalSpent, 1) }}h</p>
                         </div>
                         <div>
-                            <p class="text-gray-400 dark:text-gray-500 mb-0.5">OT</p>
+                            <p class="text-gray-400 dark:text-gray-500 mb-0.5">{{ __('OT') }}</p>
                             <p class="font-semibold text-gray-700 dark:text-gray-200">{{ number_format($taskTotalOt, 1) }}h</p>
                         </div>
                         <div>
@@ -109,8 +109,8 @@
                 </div>
                 @elseif($taskTotalSpent > 0 || $taskTotalOt > 0)
                 <div class="mb-4 flex gap-4 text-xs text-gray-500 dark:text-gray-400">
-                    @if($taskTotalSpent > 0)<span>Normal: <strong class="text-gray-700 dark:text-gray-200">{{ number_format($taskTotalSpent, 1) }}h</strong></span>@endif
-                    @if($taskTotalOt > 0)<span>OT: <strong class="text-orange-500">{{ number_format($taskTotalOt, 1) }}h</strong></span>@endif
+                    @if($taskTotalSpent > 0)<span>{{ __('Normal') }}: <strong class="text-gray-700 dark:text-gray-200">{{ number_format($taskTotalSpent, 1) }}h</strong></span>@endif
+                    @if($taskTotalOt > 0)<span>{{ __('OT') }}: <strong class="text-orange-500">{{ number_format($taskTotalOt, 1) }}h</strong></span>@endif
                 </div>
                 @endif
 

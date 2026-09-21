@@ -124,6 +124,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/tasks/search', [TaskController::class, 'search'])->name('tasks.search');
 
     Route::resource('projects', ProjectController::class);
+    Route::get('projects/{project}/files', [ProjectController::class, 'filesIndex'])
+        ->name('projects.files.index');
     Route::post('projects/{project}/files', [ProjectController::class, 'uploadFile'])
         ->name('projects.files.upload');
     Route::post('projects/{project}/files/{file}/rename', [ProjectController::class, 'renameItem'])
