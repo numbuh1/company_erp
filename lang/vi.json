@@ -922,5 +922,7 @@
     "Generate a new random password and send it to :email. This will also activate the account if it is currently inactive.": "Tạo password ngẫu nhiên mới và gửi đến email :email.",
     "Generate Password & Send Email": "Tạo password và gửi email",
     "Leave blank to generate a random password. The user can reset it via Forgot Password.": "Để trống để tạo password ngẫu nhiên. Người dùng có thể đặt lại qua Quên mật khẩu.",
-    "To set your password and activate your account, please use the Forgot Password feature on the login page.": "Để đặt mật khẩu và kích hoạt tài khoản, vui lòng sử dụng tính năng Quên mật khẩu trên trang đăng nhập."
+    "To set your password and activate your account, please use the Forgot Password feature on the login page.": "Để đặt mật khẩu và kích hoạt tài khoản, vui lòng sử dụng tính năng Quên mật khẩu trên trang đăng nhập.",
+
+    "Attach images": "Gắn hình"
 }

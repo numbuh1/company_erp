@@ -922,5 +922,7 @@
     "Generate a new random password and send it to :email. This will also activate the account if it is currently inactive.":"Generate a new random password and send it to :email. This will also activate the account if it is currently inactive.",
     "Generate Password & Send Email": "Generate Password & Send Email",
     "Leave blank to generate a random password. The user can reset it via Forgot Password.": "Leave blank to generate a random password. The user can reset it via Forgot Password.",
-    "To set your password and activate your account, please use the Forgot Password feature on the login page.": "To set your password and activate your account, please use the Forgot Password feature on the login page."
+    "To set your password and activate your account, please use the Forgot Password feature on the login page.": "To set your password and activate your account, please use the Forgot Password feature on the login page.",
+
+    "Attach images": "Attach images"
 }
