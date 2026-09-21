@@ -176,15 +176,23 @@ class TaskController extends Controller
             : null;
 
         // ── Timesheet tab ─────────────────────────────────────────────────────
-        // Completed task → auto-range to last 30 days of recorded activity
-        $isCompletedTask = in_array($task->status, ['Đã xong', 'Done']);
-        $lastTaskLogDate = TimeLog::where('task_id', $task->id)->max('date');
-        if (!$request->has('ts_from') && $isCompletedTask && $lastTaskLogDate) {
-            $tsRangeEnd   = Carbon::parse($lastTaskLogDate);
-            $tsRangeStart = $tsRangeEnd->copy()->subDays(30);
-        } else {
+        if ($request->has('ts_from') || $request->has('ts_to')) {
             $tsRangeStart = Carbon::parse($request->query('ts_from', now()->startOfMonth()->toDateString()));
             $tsRangeEnd   = Carbon::parse($request->query('ts_to',   now()->endOfMonth()->toDateString()));
+        } else {
+            $earliestLog = TimeLog::where('task_id', $task->id)->min('date');
+            $latestLog   = TimeLog::where('task_id', $task->id)->max('date');
+
+            if ($earliestLog && $latestLog) {
+                $tsRangeStart = Carbon::parse($earliestLog)->subDays(3);
+                $tsRangeEnd   = Carbon::parse($latestLog)->addDays(3);
+            } elseif ($task->start_date) {
+                $tsRangeStart = $task->start_date->copy();
+                $tsRangeEnd   = $task->start_date->copy()->addMonth();
+            } else {
+                $tsRangeStart = now()->startOfMonth();
+                $tsRangeEnd   = now()->endOfMonth();
+            }
         }
         if ($tsRangeStart->gt($tsRangeEnd)) $tsRangeEnd = $tsRangeStart->copy()->addDays(30);
         if ($tsRangeStart->diffInDays($tsRangeEnd) > 365) $tsRangeEnd = $tsRangeStart->copy()->addDays(365);

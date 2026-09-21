@@ -111,6 +111,7 @@ class ProjectController extends Controller
             ->orderByDesc('is_folder')
             ->orderBy('name')
             ->orderBy('original_name')
+            ->with('uploader:id,name')
             ->get();
 
         // Build breadcrumb by walking up parent chain
@@ -193,15 +194,23 @@ class ProjectController extends Controller
         })->orderBy('name')->get();
 
         // ── Timesheet tab data ────────────────────────────────────────────────
-        // Completed project → auto-range to last 30 days of recorded activity
-        $isCompletedProject = in_array($project->status, ['Đã xong', 'Done']);
-        $lastProjLogDate    = TimeLog::where('project_id', $project->id)->max('date');
-        if (!$request->has('ts_from') && $isCompletedProject && $lastProjLogDate) {
-            $tsRangeEnd   = Carbon::parse($lastProjLogDate);
-            $tsRangeStart = $tsRangeEnd->copy()->subDays(30);
-        } else {
+        if ($request->has('ts_from') || $request->has('ts_to')) {
             $tsRangeStart = Carbon::parse($request->query('ts_from', now()->startOfMonth()->toDateString()));
             $tsRangeEnd   = Carbon::parse($request->query('ts_to',   now()->endOfMonth()->toDateString()));
+        } else {
+            $earliestLog = TimeLog::where('project_id', $project->id)->min('date');
+            $latestLog   = TimeLog::where('project_id', $project->id)->max('date');
+
+            if ($earliestLog && $latestLog) {
+                $tsRangeStart = Carbon::parse($earliestLog)->subDays(3);
+                $tsRangeEnd   = Carbon::parse($latestLog)->addDays(3);
+            } elseif ($project->start_date) {
+                $tsRangeStart = $project->start_date->copy();
+                $tsRangeEnd   = $project->start_date->copy()->addMonth();
+            } else {
+                $tsRangeStart = now()->startOfMonth();
+                $tsRangeEnd   = now()->endOfMonth();
+            }
         }
         if ($tsRangeStart->gt($tsRangeEnd)) $tsRangeEnd = $tsRangeStart->copy()->addDays(30);
         if ($tsRangeStart->diffInDays($tsRangeEnd) > 365) $tsRangeEnd = $tsRangeStart->copy()->addDays(365);
@@ -756,11 +765,12 @@ class ProjectController extends Controller
         ]);
 
         ProjectFile::create([
-            'project_id'  => $project->id,
-            'uploaded_by' => $user->id,
-            'is_folder'   => true,
-            'parent_id'   => $request->parent_id,
-            'name'        => $request->name,
+            'project_id'    => $project->id,
+            'uploaded_by'   => $user->id,
+            'is_folder'     => true,
+            'parent_id'     => $request->parent_id,
+            'name'          => $request->name,
+            'original_name' => $request->name,
         ]);
 
         if ($request->wantsJson()) {
