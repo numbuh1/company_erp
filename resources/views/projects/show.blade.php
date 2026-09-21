@@ -88,11 +88,11 @@
                         <p class="mt-1 text-sm text-gray-700 dark:text-gray-300">{{ $project->start_date?->format('d/m/Y') ?? '—' }}</p>
                     </div>
                     <div>
-                        <x-input-label value="End (Est.)" />
+                        <x-input-label value="{{ __('End (Est.)') }}" />
                         <p class="mt-1 text-sm text-gray-700 dark:text-gray-300">{{ $project->expected_end_date?->format('d/m/Y') ?? '—' }}</p>
                     </div>
                     <div>
-                        <x-input-label value="End (Actual)" />
+                        <x-input-label value="{{ __('End (Actual)') }}" />
                         <p class="mt-1 text-sm {{ $project->actual_end_date ? 'text-green-600' : 'text-gray-400' }}">
                             {{ $project->actual_end_date?->format('d/m/Y') ?? '—' }}
                         </p>
@@ -116,15 +116,15 @@
                     </div>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                         <div>
-                            <p class="text-gray-400 dark:text-gray-500 mb-0.5">Budget</p>
+                            <p class="text-gray-400 dark:text-gray-500 mb-0.5">{{ __('Budget') }}</p>
                             <p class="font-semibold text-gray-700 dark:text-gray-200">{{ number_format($project->budget_hours, 1) }}h</p>
                         </div>
                         <div>
-                            <p class="text-gray-400 dark:text-gray-500 mb-0.5">Normal</p>
+                            <p class="text-gray-400 dark:text-gray-500 mb-0.5">{{ __('Normal') }}</p>
                             <p class="font-semibold text-gray-700 dark:text-gray-200">{{ number_format($projectTotalSpent, 1) }}h</p>
                         </div>
                         <div>
-                            <p class="text-gray-400 dark:text-gray-500 mb-0.5">OT</p>
+                            <p class="text-gray-400 dark:text-gray-500 mb-0.5">{{ __('OT') }}</p>
                             <p class="font-semibold text-gray-700 dark:text-gray-200">{{ number_format($projectTotalOt, 1) }}h</p>
                         </div>
                         <div>
@@ -183,14 +183,14 @@
                             ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400'
                             : 'border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
                         class="px-5 py-3 text-sm font-medium -mb-px transition">
-                        Files
+                        {{ __('Files') }}
                     </button>
                     <button @click="activeTab = 'comments'"
                         :class="activeTab === 'comments'
                             ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400'
                             : 'border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
                         class="px-5 py-3 text-sm font-medium -mb-px transition">
-                        Comments
+                        {{ __('Comments') }}
                         @if($project->comments->isNotEmpty())
                             <span class="ml-1.5 text-xs bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded-full">{{ $project->comments->count() }}</span>
                         @endif
@@ -208,7 +208,7 @@
                             ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400'
                             : 'border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
                         class="px-5 py-3 text-sm font-medium -mb-px transition">
-                        Timesheet
+                        {{ __('Timesheet') }}
                     </button>
                     @endcanany
                     <button @click="activeTab = 'assignees'"
@@ -306,13 +306,13 @@
                                         <input type="checkbox" x-model="cols.assignees"  @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> {{ __('Assignee') }}
                                     </label>
                                     <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400">
-                                        <input type="checkbox" x-model="cols.budget"     @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> Budget Time
+                                        <input type="checkbox" x-model="cols.budget"     @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> {{ __('Budget Time') }}
                                     </label>
                                     <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400">
                                         <input type="checkbox" x-model="cols.start_date" @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> {{ __('Start') }}
                                     </label>
                                     <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400">
-                                        <input type="checkbox" x-model="cols.due_date"   @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> End (EST)
+                                        <input type="checkbox" x-model="cols.due_date"   @change="saveCols()" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"> {{ __('End (EST)') }}
                                     </label>
                                 </div>
                             </div>
@@ -333,10 +333,10 @@
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">{{ __('Name') }}</th>
                                     <th :class="{ 'hidden': !cols.status }"     class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">{{ __('Status') }}</th>
                                     <th :class="{ 'hidden': !cols.assignees }"  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">{{ __('Assignee') }}</th>
-                                    <th :class="{ 'hidden': !cols.budget }" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Budget</th>
+                                    <th :class="{ 'hidden': !cols.budget }" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">{{ __('Budget') }}</th>
                                     <th :class="{ 'hidden': !cols.budget }" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">{{ __('Time Logged') }}</th>
                                     <th :class="{ 'hidden': !cols.start_date }" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">{{ __('Start') }}</th>
-                                    <th :class="{ 'hidden': !cols.due_date }"   class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">End (EST)</th>
+                                    <th :class="{ 'hidden': !cols.due_date }"   class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">{{ __('End (EST)') }}</th>
                                     <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">{{ __('Actions') }}</th>
                                 </tr>
                             </thead>
