@@ -117,8 +117,8 @@
                     </div>
 
                     <div class="flex justify-end gap-2">
-                        <a href="javascript:history.back()"><x-secondary-button type="button">{{ __('Cancel') }}</x-secondary-button></a>
-                        <x-primary-button type="submit">{{ isset($task) ? 'Update Task' : 'Create Task' }}</x-primary-button>
+                        <a href="javascript:history.back()"><x-secondary-button type="button">{{ __('Cancel') }}</x-secondary-button></a>                        
+                        <x-primary-button type="submit">{{ isset($task) ? __('Update Task') : __('Create Task') }}</x-primary-button>
                     </div>
                 </form>
             </div>
