@@ -376,6 +376,7 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
          editMode: false,
          editId: null,
          originalHours: 0,
+         bulkMode: false,
          get summaryTotal() { return Math.round((this.summaryWork + this.summaryLeave) * 100) / 100; },
          get baseTotal()    { return this.editMode ? Math.max(0, Math.round((this.summaryTotal - this.originalHours) * 100) / 100) : this.summaryTotal; },
          get summaryLeft()  { return Math.max(0, Math.round((8 - this.baseTotal) * 100) / 100); },
@@ -442,6 +443,7 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
                  editMode = false;
                  editId = null;
                  originalHours = 0;
+                 bulkMode = false;
                  hours = window._tlFabDefaultHours;
                  desc = '';
                  summaryWork  = {{ (float) $tlWorkHours }};
@@ -489,8 +491,17 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
             <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
                 <div>
                     <h3 class="font-semibold text-gray-800 dark:text-gray-100"
-                        x-text="editMode ? '✏️ {{ __('Edit log') }}' : '⏱ {{ __('Log time') }}'">⏱ {{ __('Log time') }}</h3>
-                    <p class="text-xs text-gray-400 mt-0.5">{{ now()->translatedFormat('l, d/m/Y') }}</p>
+                        x-text="editMode ? '✏️ {{ __('Edit log') }}' : (bulkMode ? '⏱ {{ __('Log multiple days') }}' : '⏱ {{ __('Log time') }}')">⏱ {{ __('Log time') }}</h3>
+                    <p class="text-xs text-gray-400 mt-0.5" x-show="!bulkMode">{{ now()->translatedFormat('l, d/m/Y') }}</p>
+                    {{-- Mode toggle --}}
+                    <div class="flex gap-1.5 mt-1.5" x-show="!editMode" x-cloak>
+                        <button type="button" @click="bulkMode = false"
+                            :class="!bulkMode ? 'bg-pink-100 dark:bg-pink-900/40 border-pink-400 text-pink-700 dark:text-pink-300' : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'"
+                            class="text-xs px-2 py-0.5 rounded border transition">{{ __('Single day') }}</button>
+                        <button type="button" @click="bulkMode = true"
+                            :class="bulkMode ? 'bg-pink-100 dark:bg-pink-900/40 border-pink-400 text-pink-700 dark:text-pink-300' : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'"
+                            class="text-xs px-2 py-0.5 rounded border transition">{{ __('Multiple days') }}</button>
+                    </div>
                 </div>
                 <button type="button" @click="open = false"
                     class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
@@ -501,12 +512,14 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
             </div>
 
             {{-- Form --}}
-            <form method="POST" :action="editMode ? ('{{ url('time-logs') }}/' + editId) : '{{ route('time-logs.store') }}'"
+            <form method="POST" :action="editMode ? ('{{ url('time-logs') }}/' + editId) : (bulkMode ? '{{ route('time-logs.store-bulk') }}' : '{{ route('time-logs.store') }}')"
                   @submit="
-                      const newTotal = (editMode ? baseTotal : summaryTotal) + (+hours);
-                      if (hours > summaryLeft) {
-                          const msg = '{{ __("Hours entered") }}' + ' (' + (+hours).toFixed(1) + 'h) {{ __("exceeds remaining") }} (' + summaryLeft.toFixed(1) + 'h). {{ __("Today total will be") }} ' + newTotal.toFixed(1) + 'h. {{ __("Continue?") }}';
-                          if (!window.confirm(msg)) { $event.preventDefault(); return; }
+                      if (!bulkMode) {
+                          const newTotal = (editMode ? baseTotal : summaryTotal) + (+hours);
+                          if (hours > summaryLeft) {
+                              const msg = '{{ __("Hours entered") }}' + ' (' + (+hours).toFixed(1) + 'h) {{ __("exceeds remaining") }} (' + summaryLeft.toFixed(1) + 'h). {{ __("Today total will be") }} ' + newTotal.toFixed(1) + 'h. {{ __("Continue?") }}';
+                              if (!window.confirm(msg)) { $event.preventDefault(); return; }
+                          }
                       }
                       submitting = true;
                   "
@@ -515,8 +528,13 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
                 {{-- Scrollable area --}}
                 <div class="overflow-y-auto flex-1">
 
+                    {{-- Bulk mode info banner --}}
+                    <div x-show="bulkMode" x-cloak class="px-5 py-3 bg-blue-50 dark:bg-blue-900/30 border-b border-blue-100 dark:border-blue-800 text-xs text-blue-700 dark:text-blue-300">
+                        {{ __('Each business day (excluding weekends, holidays, and approved leaves) will be filled up to 8 hours.') }}
+                    </div>
+
                     {{-- Summary bar — reactive via Alpine --}}
-                    <div class="px-5 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 flex items-center gap-4 text-xs">
+                    <div x-show="!bulkMode" class="px-5 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 flex items-center gap-4 text-xs">
                         <div class="flex items-center gap-1.5">
                             <span class="text-gray-500 dark:text-gray-400">{{ __('Work') }}:</span>
                             <span class="font-semibold text-gray-800 dark:text-gray-200" x-text="summaryWork.toFixed(1) + 'h'"></span>
@@ -560,14 +578,27 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
                                 </div>
                                 @endif
 
-                                {{-- Date --}}
-                                <div>
+                                {{-- Date (single) --}}
+                                <div x-show="!bulkMode">
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('Date') }}</label>
                                     <input type="date" id="fab-date" name="date" value="{{ $tlToday }}"
+                                        :disabled="bulkMode"
                                         @change="
                                             const uid = document.getElementById('fab-user-id-hidden')?.value || '{{ auth()->id() }}';
                                             fetchSummary(uid, $event.target.value);
                                         "
+                                        class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-pink-500 focus:border-pink-500">
+                                </div>
+
+                                {{-- Date range (bulk) --}}
+                                <div x-show="bulkMode" x-cloak>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('From date') }}</label>
+                                    <input type="date" name="from_date" value="{{ now()->startOfMonth()->format('Y-m-d') }}" :disabled="!bulkMode"
+                                        class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-pink-500 focus:border-pink-500">
+                                </div>
+                                <div x-show="bulkMode" x-cloak>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('To date') }}</label>
+                                    <input type="date" name="to_date" value="{{ now()->format('Y-m-d') }}" :disabled="!bulkMode"
                                         class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-pink-500 focus:border-pink-500">
                                 </div>
 
@@ -599,8 +630,8 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
                             {{-- RIGHT COLUMN --}}
                             <div class="space-y-4">
 
-                                {{-- Hours + quick buttons --}}
-                                <div>
+                                {{-- Hours + quick buttons (single day only) --}}
+                                <div x-show="!bulkMode">
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{{ __('Hours') }}</label>
                                     <div class="flex gap-1.5 flex-wrap mb-2">
                                         @foreach([0.5, 1, 2, 4, 8] as $qh)
@@ -619,7 +650,7 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
                                         @endif
                                     </div>
                                     <input type="number" name="time_spent" x-model.number="hours"
-                                        step="0.25" min="0.25" max="24" required
+                                        step="0.25" min="0.25" max="24" :required="!bulkMode"
                                         class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-pink-500 focus:border-pink-500">
                                 </div>
 
@@ -649,10 +680,10 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
                                text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
                         {{ __('Cancel') }}
                     </button>
-                    <button type="submit" :disabled="submitting || hours <= 0"
+                    <button type="submit" :disabled="submitting || (!bulkMode && hours <= 0)"
                         class="px-4 py-2 text-sm rounded-lg bg-pink-600 hover:bg-pink-700
                                text-white font-medium transition disabled:opacity-50">
-                        <span x-show="!submitting" x-text="editMode ? '{{ __('Update') }}' : '{{ __('Log hours') }}'">{{ __('Log hours') }}</span>
+                        <span x-show="!submitting" x-text="editMode ? '{{ __('Update') }}' : (bulkMode ? '{{ __('Log Time') }}' : '{{ __('Log hours') }}')">{{ __('Log hours') }}</span>
                         <span x-show="submitting" x-cloak>{{ __('Saving…') }}</span>
                     </button>
                 </div>
