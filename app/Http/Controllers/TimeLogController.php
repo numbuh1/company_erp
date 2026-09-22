@@ -161,6 +161,124 @@ class TimeLogController extends Controller
     }
 
     /**
+     * Store time logs across a date range, filling each business day up to 8h.
+     */
+    public function storeBulk(Request $request)
+    {
+        $user = auth()->user();
+        if (!$user->can('edit timesheet') && !$user->can('edit team timesheet') && !$user->can('edit own timesheet')) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'from_date'   => 'required|date',
+            'to_date'     => 'required|date|after_or_equal:from_date',
+            'project_id'  => 'nullable|integer|exists:projects,id',
+            'task_id'     => 'nullable|integer|exists:tasks,id',
+            'description' => 'nullable|string',
+        ]);
+
+        $targetId = (int) ($request->input('user_id') ?: $user->id);
+        if ($targetId !== $user->id) {
+            if (!$user->can('edit timesheet') && !$user->can('edit team timesheet')) {
+                $targetId = $user->id;
+            }
+        }
+
+        $from = Carbon::parse($data['from_date']);
+        $to   = Carbon::parse($data['to_date']);
+
+        if ($from->diffInDays($to) > 90) {
+            return back()->withErrors(['to_date' => __('Date range must not exceed 90 days.')]);
+        }
+
+        $holidays   = array_flip(PublicHoliday::getHolidayDates($from, $to));
+        $leaveDays  = $this->approvedLeaveHoursPerDay($targetId, $from, $to);
+
+        $created = 0;
+        $cursor  = $from->copy();
+
+        while ($cursor->lte($to)) {
+            $dateStr = $cursor->toDateString();
+
+            if ($cursor->isWeekend() || isset($holidays[$dateStr])) {
+                $cursor->addDay();
+                continue;
+            }
+
+            $leaveHours   = $leaveDays[$dateStr] ?? 0;
+            $loggedHours  = (float) TimeLog::where('user_id', $targetId)
+                ->whereDate('date', $dateStr)
+                ->sum('time_spent');
+            $remaining    = round(8 - $leaveHours - $loggedHours, 2);
+
+            if ($remaining >= 0.25) {
+                TimeLog::create([
+                    'user_id'     => $targetId,
+                    'project_id'  => $data['project_id'],
+                    'task_id'     => $data['task_id'],
+                    'description' => $data['description'],
+                    'date'        => $dateStr,
+                    'time_spent'  => $remaining,
+                ]);
+                $created++;
+            }
+
+            $cursor->addDay();
+        }
+
+        if ($request->boolean('_fab')) {
+            return redirect()->back()->with('success', __(':count time logs created.', ['count' => $created]));
+        }
+
+        return redirect()->route('time-logs.index')
+            ->with('success', __(':count time logs created.', ['count' => $created]));
+    }
+
+    /**
+     * Get prorated approved-leave hours per day for a user within a date range.
+     */
+    private function approvedLeaveHoursPerDay(int $userId, Carbon $from, Carbon $to): array
+    {
+        $leaves = LeaveRequest::where('status', 'approved')
+            ->where('user_id', $userId)
+            ->where('start_at', '<=', $to->endOfDay()->toDateTimeString())
+            ->where('end_at', '>=', $from->startOfDay()->toDateTimeString())
+            ->get(['start_at', 'end_at', 'hours', 'start_day_hours', 'end_day_hours']);
+
+        $result = [];
+
+        foreach ($leaves as $leave) {
+            $lStart    = Carbon::parse($leave->start_at);
+            $lEnd      = Carbon::parse($leave->end_at);
+            $lStartDay = $lStart->toDateString();
+            $lEndDay   = $lEnd->toDateString();
+
+            $cur = $lStart->copy()->startOfDay()->max($from->copy()->startOfDay());
+            $cap = $lEnd->copy()->startOfDay()->min($to->copy()->startOfDay());
+
+            while ($cur->lte($cap)) {
+                $dk = $cur->toDateString();
+
+                if ($lStartDay === $lEndDay) {
+                    $hpd = (float) $leave->hours;
+                } elseif ($dk === $lStartDay) {
+                    $hpd = (float) ($leave->start_day_hours ?? 4);
+                } elseif ($dk === $lEndDay) {
+                    $hpd = (float) ($leave->end_day_hours ?? 4);
+                } else {
+                    $hpd = 8.0;
+                }
+
+                $result[$dk] = ($result[$dk] ?? 0) + $hpd;
+                $cur->addDay();
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * Display the specified resource.
      */
     public function show(TimeLog $timeLog)

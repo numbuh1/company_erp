@@ -924,5 +924,18 @@
     "Leave blank to generate a random password. The user can reset it via Forgot Password.": "Để trống để tạo password ngẫu nhiên. Người dùng có thể đặt lại qua Quên mật khẩu.",
     "To set your password and activate your account, please use the Forgot Password feature on the login page.": "Để đặt mật khẩu và kích hoạt tài khoản, vui lòng sử dụng tính năng Quên mật khẩu trên trang đăng nhập.",
 
-    "Attach images": "Gắn hình"
+    "Attach images": "Gắn hình",
+
+    "Single day": "Một ngày",
+    "Multiple days": "Nhiều ngày",
+    "Each business day (excluding weekends, holidays, and approved leaves) will be filled up to 8 hours.": "Mỗi ngày làm việc (trừ cuối tuần, ngày lễ và nghỉ phép đã duyệt) sẽ được chấm đủ 8 giờ.",
+    ":count time logs created.": "Đã tạo :count bản ghi chấm công.",
+    "Date range must not exceed 90 days.": "Khoảng thời gian không được vượt quá 90 ngày.",
+    "Edit Time Log": "Chỉnh sửa chấm công",
+    "Time Log": "Chấm công",
+    "Search project...": "Tìm kiếm dự án...",
+    "Search task...": "Tìm kiếm công việc...",
+    "What did you work on?": "Bạn đã làm việc gì?",
+    "Decimal hours: 0.5 = 30 min, 1.5 = 1h 30m, ...": "Giờ thập phân: 0.5 = 30 phút, 1.5 = 1 giờ 30 phút, ...",
+    "Log Time": "Chấm công"
 }

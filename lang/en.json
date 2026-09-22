@@ -924,5 +924,18 @@
     "Leave blank to generate a random password. The user can reset it via Forgot Password.": "Leave blank to generate a random password. The user can reset it via Forgot Password.",
     "To set your password and activate your account, please use the Forgot Password feature on the login page.": "To set your password and activate your account, please use the Forgot Password feature on the login page.",
 
-    "Attach images": "Attach images"
+    "Attach images": "Attach images",
+
+    "Single day": "Single day",
+    "Multiple days": "Multiple days",
+    "Each business day (excluding weekends, holidays, and approved leaves) will be filled up to 8 hours.": "Each business day (excluding weekends, holidays, and approved leaves) will be filled up to 8 hours.",
+    ":count time logs created.": ":count time logs created.",
+    "Date range must not exceed 90 days.": "Date range must not exceed 90 days.",
+    "Edit Time Log": "Edit Time Log",
+    "Time Log": "Time Log",
+    "Search project...": "Search project...",
+    "Search task...": "Search task...",
+    "What did you work on?": "What did you work on?",
+    "Decimal hours: 0.5 = 30 min, 1.5 = 1h 30m, ...": "Decimal hours: 0.5 = 30 min, 1.5 = 1h 30m, ...",
+    "Log Time": "Log Time"
 }
