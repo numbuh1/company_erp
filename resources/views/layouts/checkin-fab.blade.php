@@ -591,16 +591,20 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
                                 </div>
 
                                 {{-- Date range (bulk) --}}
-                                <div x-show="bulkMode" x-cloak>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('From date') }}</label>
-                                    <input type="date" name="from_date" value="{{ now()->startOfMonth()->format('Y-m-d') }}" :disabled="!bulkMode"
-                                        class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-pink-500 focus:border-pink-500">
-                                </div>
-                                <div x-show="bulkMode" x-cloak>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('To date') }}</label>
-                                    <input type="date" name="to_date" value="{{ now()->format('Y-m-d') }}" :disabled="!bulkMode"
-                                        class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-pink-500 focus:border-pink-500">
-                                </div>
+                                <template x-if="bulkMode">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('From date') }}</label>
+                                        <input type="date" name="from_date" value="{{ now()->startOfMonth()->format('Y-m-d') }}"
+                                            class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-pink-500 focus:border-pink-500">
+                                    </div>
+                                </template>
+                                <template x-if="bulkMode">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('To date') }}</label>
+                                        <input type="date" name="to_date" value="{{ now()->format('Y-m-d') }}"
+                                            class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-pink-500 focus:border-pink-500">
+                                    </div>
+                                </template>
 
                                 {{-- Task (searchable via TomSelect; selecting a task auto-fills the project) --}}
                                 <div>
@@ -708,9 +712,15 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
         min-height: 2.25rem; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     }
     html.dark #timelog-fab .ts-wrapper .ts-control { background: #111827; border-color: #374151; color: #d1d5db; }
-    html.dark #timelog-fab .ts-dropdown           { background: #1f2937; border-color: #374151; color: #d1d5db; }
+    /* Dropdowns are appended to body via dropdownParent */
+    html.dark #timelog-fab .ts-dropdown,
+    html.dark body > .ts-dropdown       { background: #1f2937; border-color: #374151; color: #d1d5db; }
     html.dark #timelog-fab .ts-dropdown .option:hover,
-    html.dark #timelog-fab .ts-dropdown .option.active { background: #374151; }
+    html.dark #timelog-fab .ts-dropdown .option.active,
+    html.dark body > .ts-dropdown .option:hover,
+    html.dark body > .ts-dropdown .option.active { background: #374151; }
+    /* Ensure body-level dropdowns appear above the FAB modal */
+    body > .ts-dropdown { z-index: 100 !important; }
 </style>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -750,7 +760,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── Task TomSelect (initialised first so projTs.onChange can reference it) ──
     window._fabTaskTs = new TomSelect(taskEl, {
         allowEmptyOption: true,
+        plugins: ['clear_button'],
         placeholder: '— {{ __("No task") }} —',
+        dropdownParent: 'body',
         options: taskOpts(null),
         onChange: function (val) {
             document.getElementById('fab-task-id').value = val || '';
@@ -769,7 +781,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── Project TomSelect ──────────────────────────────────────────────────────
     window._fabProjTs = new TomSelect(projEl, {
         allowEmptyOption: true,
+        plugins: ['clear_button'],
         placeholder: '— {{ __("No project") }} —',
+        dropdownParent: 'body',
         onChange: function (val) {
             document.getElementById('fab-project-id').value = val || '';
             // Re-populate task options for the chosen project
