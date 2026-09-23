@@ -942,9 +942,11 @@
     "Preview": "Preview",
     "Calculating…": "Calculating…",
     "Total hours to log": "Total hours to log",
-    "Full 8h days": "Full 8h days",
-    "Every business day in this range will be logged with 8h.": "Every business day in this range will be logged with 8h.",
-    "Days with less than 8h": "Days with less than 8h",
+    "Full :hours days": "Full :hours days",
+    "Every business day in this range will be logged with :hours.": "Every business day in this range will be logged with :hours.",
+    "Days with less than :hours": "Days with less than :hours",
     "Already logged": "Already logged",
-    "Could not calculate preview.": "Could not calculate preview."
+    "Could not calculate preview.": "Could not calculate preview.",
+    "Hours per day": "Hours per day",
+    "0 = fill each day up to 8h": "0 = fill each day up to 8h"
 }

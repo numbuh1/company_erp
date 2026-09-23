@@ -942,9 +942,11 @@
     "Preview": "Xem trước",
     "Calculating…": "Đang tính…",
     "Total hours to log": "Tổng giờ sẽ chấm công",
-    "Full 8h days": "Số ngày đủ 8h",
-    "Every business day in this range will be logged with 8h.": "Tất cả ngày làm việc trong khoảng này sẽ được chấm công đủ 8h.",
-    "Days with less than 8h": "Ngày chấm dưới 8h",
+    "Full :hours days": "Số ngày đủ :hours",
+    "Every business day in this range will be logged with :hours.": "Tất cả ngày làm việc trong khoảng này sẽ được chấm :hours.",
+    "Days with less than :hours": "Ngày chấm dưới :hours",
     "Already logged": "Đã chấm công",
-    "Could not calculate preview.": "Không thể xem trước số giờ."
+    "Could not calculate preview.": "Không thể xem trước số giờ.",
+    "Hours per day": "Số giờ mỗi ngày",
+    "0 = fill each day up to 8h": "0 = chấm đủ 8h mỗi ngày"
 }

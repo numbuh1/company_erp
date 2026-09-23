@@ -176,6 +176,7 @@ class TimeLogController extends Controller
             'project_id'  => 'nullable|integer|exists:projects,id',
             'task_id'     => 'nullable|integer|exists:tasks,id',
             'description' => 'nullable|string',
+            'hours_per_day' => 'nullable|numeric|min:0|max:8',
         ]);
 
         $targetId = $this->bulkTargetUserId($request);
@@ -188,7 +189,7 @@ class TimeLogController extends Controller
         }
 
         $created = 0;
-        foreach ($this->bulkPlan($targetId, $from, $to) as $day) {
+        foreach ($this->bulkPlan($targetId, $from, $to, (float) ($data['hours_per_day'] ?? 0)) as $day) {
             if ($day['fill'] <= 0) continue;
             TimeLog::create([
                 'user_id'     => $targetId,
@@ -222,6 +223,7 @@ class TimeLogController extends Controller
         $data = $request->validate([
             'from_date' => 'required|date',
             'to_date'   => 'required|date|after_or_equal:from_date',
+            'hours_per_day' => 'nullable|numeric|min:0|max:8',
         ]);
 
         $from = Carbon::parse($data['from_date'])->startOfDay();
@@ -231,11 +233,14 @@ class TimeLogController extends Controller
             return response()->json(['message' => __('Date range must not exceed 90 days.')], 422);
         }
 
-        $plan = $this->bulkPlan($this->bulkTargetUserId($request), $from, $to);
+        $perDay = (float) ($data['hours_per_day'] ?? 0);
+        $target = $perDay > 0 ? $perDay : 8.0;
+        $plan   = $this->bulkPlan($this->bulkTargetUserId($request), $from, $to, $perDay);
 
-        $partial = array_values(array_filter($plan, fn ($d) => $d['fill'] < 8));
+        $partial = array_values(array_filter($plan, fn ($d) => $d['fill'] < $target));
 
         return response()->json([
+            'target'      => $target,
             'total_hours' => round(array_sum(array_column($plan, 'fill')), 2),
             'full_days'   => count($plan) - count($partial),
             'days_logged' => count(array_filter($plan, fn ($d) => $d['fill'] > 0)),
@@ -255,9 +260,9 @@ class TimeLogController extends Controller
 
     /**
      * Per business day (weekends omitted): holiday, approved leave, already-logged hours,
-     * and the hours bulk logging will add to reach 8h.
+     * and the hours bulk logging will add: $perDay each day (0 = fill to 8h), never pushing a day past 8h.
      */
-    private function bulkPlan(int $userId, Carbon $from, Carbon $to): array
+    private function bulkPlan(int $userId, Carbon $from, Carbon $to, float $perDay = 0): array
     {
         $holidays = [];
         foreach (PublicHoliday::getHolidaysForRange($from->copy(), $to->copy()) as $h) {
@@ -283,7 +288,8 @@ class TimeLogController extends Controller
             $holiday = $holidays[$date] ?? null;
             $leave   = round((float) ($leaveDays[$date] ?? 0), 2);
             $already = round((float) ($logged[$date] ?? 0), 2);
-            $fill    = $holiday ? 0 : round(8 - $leave - $already, 2);
+            $room    = $holiday ? 0 : round(8 - $leave - $already, 2);
+            $fill    = $perDay > 0 ? min($perDay, $room) : $room;
 
             $plan[] = [
                 'date'    => $date,

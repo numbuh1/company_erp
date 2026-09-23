@@ -379,6 +379,7 @@ window._tlFabMonthStart   = '{{ now()->startOfMonth()->toDateString() }}';</scri
          bulkMode: false,
          bulkFrom: window._tlFabMonthStart,
          bulkTo: window._tlFabToday,
+         bulkHours: 0,
          preview: null,
          previewLoading: false,
          previewError: '',
@@ -457,6 +458,7 @@ window._tlFabMonthStart   = '{{ now()->startOfMonth()->toDateString() }}';</scri
                  bulkMode = false;
                  bulkFrom = window._tlFabMonthStart;
                  bulkTo   = window._tlFabToday;
+                 bulkHours = 0;
                  preview  = null;
                  previewError = '';
                  hours = window._tlFabDefaultHours;
@@ -621,6 +623,16 @@ window._tlFabMonthStart   = '{{ now()->startOfMonth()->toDateString() }}';</scri
                                         <input type="date" name="to_date" :value="bulkTo"
                                             @change="bulkTo = $event.target.value; loadPreview()"
                                             class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-pink-500 focus:border-pink-500">
+                                    </div>
+                                </template>
+                                <template x-if="bulkMode">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('Hours per day') }}</label>
+                                        <input type="number" name="hours_per_day" x-model.number="bulkHours"
+                                            @input.debounce.400ms="loadPreview()"
+                                            step="0.25" min="0" max="8"
+                                            class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-pink-500 focus:border-pink-500">
+                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('0 = fill each day up to 8h') }}</p>
                                     </div>
                                 </template>
 

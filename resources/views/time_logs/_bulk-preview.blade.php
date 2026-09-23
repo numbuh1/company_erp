@@ -1,10 +1,10 @@
-{{-- Expects Alpine scope with: bulkFrom, bulkTo, preview, previewLoading, previewError, previewSeq --}}
+{{-- Expects Alpine scope with: bulkFrom, bulkTo, bulkHours, preview, previewLoading, previewError, previewSeq --}}
 @once
 <script>
 window.tlBulkPreview = function (ctx, userId) {
     if (!ctx.bulkFrom || !ctx.bulkTo) return;
     const seq = ++ctx.previewSeq;
-    const qs  = new URLSearchParams({ user_id: userId, from_date: ctx.bulkFrom, to_date: ctx.bulkTo });
+    const qs  = new URLSearchParams({ user_id: userId, from_date: ctx.bulkFrom, to_date: ctx.bulkTo, hours_per_day: ctx.bulkHours || 0 });
     ctx.previewLoading = true;
     fetch(@js(route('time-logs.bulk-preview')) + '?' + qs, { headers: { 'Accept': 'application/json' } })
         .then(r => r.json().then(d => ({ ok: r.ok, d })))
@@ -38,18 +38,18 @@ window.tlBulkPreview = function (ctx, userId) {
                     <div class="text-lg font-bold text-pink-600 dark:text-pink-400" x-text="preview.total_hours + 'h'"></div>
                 </div>
                 <div class="px-3 py-2">
-                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ __('Full 8h days') }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400"
+                         x-text="@js(__('Full :hours days', ['hours' => '__H__'])).replace('__H__', preview.target + 'h')"></div>
                     <div class="text-lg font-bold text-gray-800 dark:text-gray-100" x-text="preview.full_days"></div>
                 </div>
             </div>
 
-            <div x-show="preview.partial.length === 0" class="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
-                {{ __('Every business day in this range will be logged with 8h.') }}
-            </div>
+            <div x-show="preview.partial.length === 0" class="px-3 py-2 text-xs text-gray-500 dark:text-gray-400"
+                 x-text="@js(__('Every business day in this range will be logged with :hours.', ['hours' => '__H__'])).replace('__H__', preview.target + 'h')"></div>
 
             <div x-show="preview.partial.length > 0">
                 <div class="px-3 pt-2 pb-1 text-xs font-medium text-gray-500 dark:text-gray-400">
-                    {{ __('Days with less than 8h') }} (<span x-text="preview.partial.length"></span>)
+                    <span x-text="@js(__('Days with less than :hours', ['hours' => '__H__'])).replace('__H__', preview.target + 'h')"></span> (<span x-text="preview.partial.length"></span>)
                 </div>
                 <ul class="max-h-40 overflow-y-auto px-3 pb-2 space-y-1">
                     <template x-for="d in preview.partial" :key="d.date">
@@ -68,7 +68,7 @@ window.tlBulkPreview = function (ctx, userId) {
                             </span>
                             <span class="shrink-0 font-semibold"
                                   :class="d.fill > 0 ? 'text-pink-600 dark:text-pink-400' : 'text-gray-400'"
-                                  x-text="d.fill > 0 ? '+' + d.fill + 'h' : '—'"></span>
+                                  x-text="d.fill > 0 ? '+' + d.fill + 'h' : '0h'"></span>
                         </li>
                     </template>
                 </ul>

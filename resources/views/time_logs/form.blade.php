@@ -118,6 +118,7 @@
                     x-data="{
                         bulkFrom: @js(old('from_date', now()->startOfMonth()->format('Y-m-d'))),
                         bulkTo: @js(old('to_date', now()->format('Y-m-d'))),
+                        bulkHours: @js((float) old('hours_per_day', 0)),
                         preview: null,
                         previewLoading: false,
                         previewError: '',
@@ -143,6 +144,15 @@
                                 @change="bulkTo = $event.target.value; loadPreview()" />
                             <x-input-error :messages="$errors->get('to_date')" class="mt-1" />
                         </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <x-input-label for="hours_per_day" value="{{ __('Hours per day') }}" />
+                        <x-text-input id="hours_per_day" name="hours_per_day" type="number" min="0" max="8" step="0.25"
+                            class="mt-1 block w-full" x-model.number="bulkHours"
+                            @input.debounce.400ms="loadPreview()" />
+                        <p class="mt-1 text-xs text-gray-500">{{ __('0 = fill each day up to 8h') }}</p>
+                        <x-input-error :messages="$errors->get('hours_per_day')" class="mt-1" />
                     </div>
 
                     <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-md text-sm text-blue-700 dark:text-blue-300">
