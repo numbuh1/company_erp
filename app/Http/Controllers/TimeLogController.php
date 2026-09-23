@@ -178,53 +178,27 @@ class TimeLogController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        $targetId = (int) ($request->input('user_id') ?: $user->id);
-        if ($targetId !== $user->id) {
-            if (!$user->can('edit timesheet') && !$user->can('edit team timesheet')) {
-                $targetId = $user->id;
-            }
-        }
+        $targetId = $this->bulkTargetUserId($request);
 
-        $from = Carbon::parse($data['from_date']);
-        $to   = Carbon::parse($data['to_date']);
+        $from = Carbon::parse($data['from_date'])->startOfDay();
+        $to   = Carbon::parse($data['to_date'])->startOfDay();
 
         if ($from->diffInDays($to) > 90) {
             return back()->withErrors(['to_date' => __('Date range must not exceed 90 days.')]);
         }
 
-        $holidays   = array_flip(PublicHoliday::getHolidayDates($from, $to));
-        $leaveDays  = $this->approvedLeaveHoursPerDay($targetId, $from, $to);
-
         $created = 0;
-        $cursor  = $from->copy();
-
-        while ($cursor->lte($to)) {
-            $dateStr = $cursor->toDateString();
-
-            if ($cursor->isWeekend() || isset($holidays[$dateStr])) {
-                $cursor->addDay();
-                continue;
-            }
-
-            $leaveHours   = $leaveDays[$dateStr] ?? 0;
-            $loggedHours  = (float) TimeLog::where('user_id', $targetId)
-                ->whereDate('date', $dateStr)
-                ->sum('time_spent');
-            $remaining    = round(8 - $leaveHours - $loggedHours, 2);
-
-            if ($remaining >= 0.25) {
-                TimeLog::create([
-                    'user_id'     => $targetId,
-                    'project_id'  => $data['project_id'],
-                    'task_id'     => $data['task_id'],
-                    'description' => $data['description'],
-                    'date'        => $dateStr,
-                    'time_spent'  => $remaining,
-                ]);
-                $created++;
-            }
-
-            $cursor->addDay();
+        foreach ($this->bulkPlan($targetId, $from, $to) as $day) {
+            if ($day['fill'] <= 0) continue;
+            TimeLog::create([
+                'user_id'     => $targetId,
+                'project_id'  => $data['project_id'] ?? null,
+                'task_id'     => $data['task_id'] ?? null,
+                'description' => $data['description'] ?? null,
+                'date'        => $day['date'],
+                'time_spent'  => $day['fill'],
+            ]);
+            $created++;
         }
 
         if ($request->boolean('_fab')) {
@@ -233,6 +207,95 @@ class TimeLogController extends Controller
 
         return redirect()->route('time-logs.index')
             ->with('success', __(':count time logs created.', ['count' => $created]));
+    }
+
+    /**
+     * JSON: what storeBulk would log for the given range, without saving.
+     */
+    public function bulkPreview(Request $request)
+    {
+        $user = auth()->user();
+        if (!$user->can('edit timesheet') && !$user->can('edit team timesheet') && !$user->can('edit own timesheet')) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'from_date' => 'required|date',
+            'to_date'   => 'required|date|after_or_equal:from_date',
+        ]);
+
+        $from = Carbon::parse($data['from_date'])->startOfDay();
+        $to   = Carbon::parse($data['to_date'])->startOfDay();
+
+        if ($from->diffInDays($to) > 90) {
+            return response()->json(['message' => __('Date range must not exceed 90 days.')], 422);
+        }
+
+        $plan = $this->bulkPlan($this->bulkTargetUserId($request), $from, $to);
+
+        $partial = array_values(array_filter($plan, fn ($d) => $d['fill'] < 8));
+
+        return response()->json([
+            'total_hours' => round(array_sum(array_column($plan, 'fill')), 2),
+            'full_days'   => count($plan) - count($partial),
+            'days_logged' => count(array_filter($plan, fn ($d) => $d['fill'] > 0)),
+            'partial'     => $partial,
+        ]);
+    }
+
+    private function bulkTargetUserId(Request $request): int
+    {
+        $user     = auth()->user();
+        $targetId = (int) ($request->input('user_id') ?: $user->id);
+        if ($targetId !== $user->id && !$user->can('edit timesheet') && !$user->can('edit team timesheet')) {
+            return $user->id;
+        }
+        return $targetId;
+    }
+
+    /**
+     * Per business day (weekends omitted): holiday, approved leave, already-logged hours,
+     * and the hours bulk logging will add to reach 8h.
+     */
+    private function bulkPlan(int $userId, Carbon $from, Carbon $to): array
+    {
+        $holidays = [];
+        foreach (PublicHoliday::getHolidaysForRange($from->copy(), $to->copy()) as $h) {
+            for ($c = $h['start']->copy()->startOfDay(); $c->lte($h['end']); $c->addDay()) {
+                $holidays[$c->toDateString()] = $h['name'];
+            }
+        }
+
+        $leaveDays = $this->approvedLeaveHoursPerDay($userId, $from->copy(), $to->copy());
+
+        $logged = TimeLog::where('user_id', $userId)
+            ->whereDate('date', '>=', $from->toDateString())
+            ->whereDate('date', '<=', $to->toDateString())
+            ->selectRaw('DATE(date) as d, SUM(time_spent) as h')
+            ->groupByRaw('DATE(date)')
+            ->pluck('h', 'd');
+
+        $plan = [];
+        for ($c = $from->copy(); $c->lte($to); $c->addDay()) {
+            if ($c->isWeekend()) continue;
+
+            $date    = $c->toDateString();
+            $holiday = $holidays[$date] ?? null;
+            $leave   = round((float) ($leaveDays[$date] ?? 0), 2);
+            $already = round((float) ($logged[$date] ?? 0), 2);
+            $fill    = $holiday ? 0 : round(8 - $leave - $already, 2);
+
+            $plan[] = [
+                'date'    => $date,
+                'label'   => $c->translatedFormat('D, d/m/Y'),
+                'holiday' => $holiday,
+                'leave'   => $leave,
+                'logged'  => $already,
+                'fill'    => $fill >= 0.25 ? $fill : 0,
+            ];
+        }
+
+        return $plan;
     }
 
     /**

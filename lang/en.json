@@ -938,5 +938,13 @@
     "What did you work on?": "What did you work on?",
     "Decimal hours: 0.5 = 30 min, 1.5 = 1h 30m, ...": "Decimal hours: 0.5 = 30 min, 1.5 = 1h 30m, ...",
     "Log Time": "Log Time",
-    "Log multiple days": "Log multiple days"
+    "Log multiple days": "Log multiple days",
+    "Preview": "Preview",
+    "Calculating…": "Calculating…",
+    "Total hours to log": "Total hours to log",
+    "Full 8h days": "Full 8h days",
+    "Every business day in this range will be logged with 8h.": "Every business day in this range will be logged with 8h.",
+    "Days with less than 8h": "Days with less than 8h",
+    "Already logged": "Already logged",
+    "Could not calculate preview.": "Could not calculate preview."
 }

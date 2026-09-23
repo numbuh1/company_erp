@@ -114,7 +114,17 @@
                 {{-- Multi-day form --}}
                 @unless(isset($timeLog))
                 <form method="POST" action="{{ route('time-logs.store-bulk') }}"
-                    x-show="mode === 'multi'" x-cloak>
+                    x-show="mode === 'multi'" x-cloak
+                    x-data="{
+                        bulkFrom: @js(old('from_date', now()->startOfMonth()->format('Y-m-d'))),
+                        bulkTo: @js(old('to_date', now()->format('Y-m-d'))),
+                        preview: null,
+                        previewLoading: false,
+                        previewError: '',
+                        previewSeq: 0,
+                        loadPreview() { window.tlBulkPreview(this, {{ auth()->id() }}); },
+                    }"
+                    x-init="if (mode === 'multi') loadPreview(); $watch('mode', v => { if (v === 'multi') loadPreview(); })">
                     @csrf
 
                     {{-- Date range --}}
@@ -122,19 +132,25 @@
                         <div>
                             <x-input-label for="from_date" value="{{ __('From date') }} *" />
                             <x-text-input id="from_date" name="from_date" type="date" class="mt-1 block w-full"
-                                value="{{ old('from_date', now()->startOfMonth()->format('Y-m-d')) }}" required />
+                                value="{{ old('from_date', now()->startOfMonth()->format('Y-m-d')) }}" required
+                                @change="bulkFrom = $event.target.value; loadPreview()" />
                             <x-input-error :messages="$errors->get('from_date')" class="mt-1" />
                         </div>
                         <div>
                             <x-input-label for="to_date" value="{{ __('To date') }} *" />
                             <x-text-input id="to_date" name="to_date" type="date" class="mt-1 block w-full"
-                                value="{{ old('to_date', now()->format('Y-m-d')) }}" required />
+                                value="{{ old('to_date', now()->format('Y-m-d')) }}" required
+                                @change="bulkTo = $event.target.value; loadPreview()" />
                             <x-input-error :messages="$errors->get('to_date')" class="mt-1" />
                         </div>
                     </div>
 
                     <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-md text-sm text-blue-700 dark:text-blue-300">
                         {{ __('Each business day (excluding weekends, holidays, and approved leaves) will be filled up to 8 hours.') }}
+                    </div>
+
+                    <div class="mb-4">
+                        @include('time_logs._bulk-preview')
                     </div>
 
                     @php
@@ -179,7 +195,9 @@
 
                     <div class="flex justify-end gap-2">
                         <a href="{{ route('time-logs.index') }}"><x-secondary-button type="button">{{ __('Cancel') }}</x-secondary-button></a>
-                        <x-primary-button type="submit">{{ __('Log Time') }}</x-primary-button>
+                        <x-primary-button type="submit"
+                            x-bind:disabled="previewLoading || !preview || preview.total_hours <= 0"
+                            class="disabled:opacity-50">{{ __('Log Time') }}</x-primary-button>
                     </div>
                 </form>
                 @endunless
@@ -201,6 +219,8 @@
     @push('scripts')
         <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
         <script>
+            const noneOpt = { id: '', text: '— None —' };
+
             // Single-day selects
             const projectSelect = new TomSelect('#project_id', {
                 valueField: 'id',
@@ -215,6 +235,7 @@
                 onChange: function() {
                     taskSelect.clear();
                     taskSelect.clearOptions();
+                    taskSelect.addOption(noneOpt);
                     taskSelect.load('');
                 }
             });
@@ -248,6 +269,7 @@
                 onChange: function() {
                     bulkTaskSelect.clear();
                     bulkTaskSelect.clearOptions();
+                    bulkTaskSelect.addOption(noneOpt);
                     bulkTaskSelect.load('');
                 }
             });

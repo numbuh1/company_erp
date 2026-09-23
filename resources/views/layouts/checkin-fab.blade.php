@@ -363,7 +363,7 @@ window._tlFabDefaultHours = {{ $tlLeft > 0 ? (float) min($tlLeft, 8) : 1 }};
 window._tlFabDayHoursUrl  = '{{ route('timesheets.day-hours') }}';
 window._tlFabCurrentUser  = {{ auth()->id() }};
 window._tlFabToday        = '{{ now()->toDateString() }}';
-</script>
+window._tlFabMonthStart   = '{{ now()->startOfMonth()->toDateString() }}';</script>
 
 <div id="timelog-fab"
      x-data="{
@@ -377,6 +377,17 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
          editId: null,
          originalHours: 0,
          bulkMode: false,
+         bulkFrom: window._tlFabMonthStart,
+         bulkTo: window._tlFabToday,
+         preview: null,
+         previewLoading: false,
+         previewError: '',
+         previewSeq: 0,
+         loadPreview() {
+             if (!this.bulkMode) return;
+             const uid = document.getElementById('fab-user-id-hidden')?.value || window._tlFabCurrentUser;
+             window.tlBulkPreview(this, uid);
+         },
          get summaryTotal() { return Math.round((this.summaryWork + this.summaryLeave) * 100) / 100; },
          get baseTotal()    { return this.editMode ? Math.max(0, Math.round((this.summaryTotal - this.originalHours) * 100) / 100) : this.summaryTotal; },
          get summaryLeft()  { return Math.max(0, Math.round((8 - this.baseTotal) * 100) / 100); },
@@ -444,12 +455,17 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
                  editId = null;
                  originalHours = 0;
                  bulkMode = false;
+                 bulkFrom = window._tlFabMonthStart;
+                 bulkTo   = window._tlFabToday;
+                 preview  = null;
+                 previewError = '';
                  hours = window._tlFabDefaultHours;
                  desc = '';
                  summaryWork  = {{ (float) $tlWorkHours }};
                  summaryLeave = {{ (float) $tlLeaveHours }};
              }
-         })
+         });
+         $watch('bulkMode', val => { if (val) loadPreview(); });
      "
      @tl-fab-open.window="openFromCell($event.detail)"
      @tl-fab-edit.window="openEdit($event.detail)"
@@ -594,14 +610,16 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
                                 <template x-if="bulkMode">
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('From date') }}</label>
-                                        <input type="date" name="from_date" value="{{ now()->startOfMonth()->format('Y-m-d') }}"
+                                        <input type="date" name="from_date" :value="bulkFrom"
+                                            @change="bulkFrom = $event.target.value; loadPreview()"
                                             class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-pink-500 focus:border-pink-500">
                                     </div>
                                 </template>
                                 <template x-if="bulkMode">
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('To date') }}</label>
-                                        <input type="date" name="to_date" value="{{ now()->format('Y-m-d') }}"
+                                        <input type="date" name="to_date" :value="bulkTo"
+                                            @change="bulkTo = $event.target.value; loadPreview()"
                                             class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-pink-500 focus:border-pink-500">
                                     </div>
                                 </template>
@@ -666,6 +684,10 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
                                         placeholder="{{ __('What did you work on?') }}"></textarea>
                                 </div>
 
+                                <div x-show="bulkMode" x-cloak>
+                                    @include('time_logs._bulk-preview')
+                                </div>
+
                             </div>
                         </div>
                     </div>
@@ -684,7 +706,7 @@ window._tlFabToday        = '{{ now()->toDateString() }}';
                                text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
                         {{ __('Cancel') }}
                     </button>
-                    <button type="submit" :disabled="submitting || (!bulkMode && hours <= 0)"
+                    <button type="submit" :disabled="submitting || (!bulkMode && hours <= 0) || (bulkMode && (previewLoading || !preview || preview.total_hours <= 0))"
                         class="px-4 py-2 text-sm rounded-lg bg-pink-600 hover:bg-pink-700
                                text-white font-medium transition disabled:opacity-50">
                         <span x-show="!submitting" x-text="editMode ? '{{ __('Update') }}' : (bulkMode ? '{{ __('Log Time') }}' : '{{ __('Log hours') }}')">{{ __('Log hours') }}</span>
@@ -741,7 +763,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Update summary bar via Alpine
                 const fabEl = document.getElementById('timelog-fab');
                 if (fabEl && fabEl._x_dataStack) {
-                    try { Alpine.$data(fabEl).fetchSummary(val || window._tlFabCurrentUser, date); } catch(e) {}
+                    try {
+                        const fab = Alpine.$data(fabEl);
+                        fab.fetchSummary(val || window._tlFabCurrentUser, date);
+                        fab.loadPreview();
+                    } catch(e) {}
                 }
             },
         });
@@ -756,6 +782,8 @@ document.addEventListener('DOMContentLoaded', function () {
             : allTasks;
         return list.map(t => ({ value: String(t.id), text: t.code + ' · ' + t.name, pid: String(t.pid || '') }));
     }
+
+    const noTaskOpt = { value: '', text: @js('— ' . __('No task') . ' —') };
 
     // ── Task TomSelect (initialised first so projTs.onChange can reference it) ──
     window._fabTaskTs = new TomSelect(taskEl, {
@@ -789,6 +817,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Re-populate task options for the chosen project
             const currentTask = window._fabTaskTs.getValue();
             window._fabTaskTs.clearOptions();
+            window._fabTaskTs.addOption(noTaskOpt);
             taskOpts(val).forEach(o => window._fabTaskTs.addOption(o));
             window._fabTaskTs.refreshOptions(false);
             // Keep task selection if it still belongs to this project

@@ -148,6 +148,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('time-logs/export', [TimeLogController::class, 'export'])->name('time-logs.export');
     Route::post('time-logs/bulk', [TimeLogController::class, 'storeBulk'])->name('time-logs.store-bulk');
+    Route::get('time-logs/bulk-preview', [TimeLogController::class, 'bulkPreview'])->name('time-logs.bulk-preview');
     Route::resource('time-logs', TimeLogController::class);
     Route::get('timesheets/day-hours',   [TimeLogController::class, 'dayHours'])->name('timesheets.day-hours');
     Route::get('timesheets/timeline',    [TimeLogController::class, 'weekly'])->name('timesheets.timeline');
