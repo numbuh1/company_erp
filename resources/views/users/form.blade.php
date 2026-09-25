@@ -673,18 +673,15 @@
                                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
                                     {{ __('Generate a new random password and send it to :email. This will also activate the account if it is currently inactive.', ['email' => $user->email]) }}
                                 </p>
-                                <form method="POST" action="{{ route('users.generate-password', $user) }}"
-                                      onsubmit="return confirm('{{ __('Generate a new password and send it via email?') }}')">
-                                    @csrf
-                                    <button type="submit"
-                                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg
-                                               bg-indigo-600 hover:bg-indigo-700 text-white transition">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                                        </svg>
-                                        {{ __('Generate Password & Send Email') }}
-                                    </button>
-                                </form>
+                                {{-- Submits #generate-password-form, which lives outside the main form (forms can't nest) --}}
+                                <button type="submit" form="generate-password-form"
+                                    class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg
+                                           bg-indigo-600 hover:bg-indigo-700 text-white transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                    </svg>
+                                    {{ __('Generate Password & Send Email') }}
+                                </button>
                             </div>
 
                         </div>
@@ -701,6 +698,13 @@
                 </div>
 
             </form>
+
+            @if(isset($user) && !$isOwnProfile && $canEditPersonal)
+                <form id="generate-password-form" method="POST" action="{{ route('users.generate-password', $user) }}"
+                      onsubmit="return confirm(@js(__('Generate a new password and send it via email?')))">
+                    @csrf
+                </form>
+            @endif
         </div>
     </div>
 
