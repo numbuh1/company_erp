@@ -10,9 +10,14 @@ class HelpPage extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = ['route', 'title', 'is_active'];
+    protected $fillable = ['route', 'title', 'order_no', 'is_active'];
 
-    protected $casts = ['is_active' => 'boolean'];
+    protected $casts = ['is_active' => 'boolean', 'order_no' => 'integer'];
+
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('order_no')->orderBy('title');
+    }
 
     public function contents(): HasMany
     {

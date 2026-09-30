@@ -34,7 +34,7 @@ class HelpPageController extends Controller
     public function index()
     {
         $this->authorize();
-        $helpPages = HelpPage::withCount('components')->latest()->get();
+        $helpPages = HelpPage::withCount('components')->ordered()->get();
         return view('admin.help-pages.index', compact('helpPages'));
     }
 
@@ -42,7 +42,8 @@ class HelpPageController extends Controller
     {
         $this->authorize();
         $routes = $this->availableRoutes();
-        return view('admin.help-pages.form', compact('routes'));
+        $nextOrderNo = (int) HelpPage::max('order_no') + 1;
+        return view('admin.help-pages.form', compact('routes', 'nextOrderNo'));
     }
 
     public function store(Request $request)
@@ -52,6 +53,7 @@ class HelpPageController extends Controller
         $data = $request->validate([
             'title'                      => 'required|string|max:255',
             'route'                      => 'nullable|string|max:255|unique:help_pages,route',
+            'order_no'                   => 'nullable|integer|min:0',
             'is_active'                  => 'boolean',
             'components'                 => 'array',
             'components.*.type'          => 'required|in:text,text_with_image',
@@ -64,6 +66,7 @@ class HelpPageController extends Controller
         $helpPage = HelpPage::create([
             'title'     => $data['title'],
             'route'     => filled($data['route'] ?? null) ? $data['route'] : null,
+            'order_no'  => (int) ($data['order_no'] ?? 0),
             'is_active' => $request->boolean('is_active', true),
         ]);
 
@@ -88,6 +91,7 @@ class HelpPageController extends Controller
         $data = $request->validate([
             'title'                      => 'required|string|max:255',
             'route'                      => 'nullable|string|max:255|unique:help_pages,route,' . $helpPage->id,
+            'order_no'                   => 'nullable|integer|min:0',
             'is_active'                  => 'boolean',
             'components'                 => 'array',
             'components.*.id'            => 'nullable|integer',
@@ -101,6 +105,7 @@ class HelpPageController extends Controller
         $helpPage->update([
             'title'     => $data['title'],
             'route'     => filled($data['route'] ?? null) ? $data['route'] : null,
+            'order_no'  => (int) ($data['order_no'] ?? 0),
             'is_active' => $request->boolean('is_active', true),
         ]);
 
@@ -162,7 +167,7 @@ class HelpPageController extends Controller
 
     public function userIndex()
     {
-        $helpPages = HelpPage::where('is_active', true)->orderBy('title')->get();
+        $helpPages = HelpPage::where('is_active', true)->ordered()->get();
         return view('help-pages.index', compact('helpPages'));
     }
 

@@ -51,6 +51,17 @@
                         @enderror
                     </div>
 
+                    {{-- Order --}}
+                    <div class="mb-5">
+                        <x-input-label :value="__('Order No.')" />
+                        <p class="text-xs text-gray-400 mt-0.5 mb-1">{{ __('Lower numbers appear first in the Help Pages list.') }}</p>
+                        <x-text-input type="number" name="order_no" min="0" step="1" class="w-32 mt-1"
+                            value="{{ old('order_no', $helpPage->order_no ?? $nextOrderNo ?? 0) }}" />
+                        @error('order_no')
+                            <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     {{-- Route (optional — without a route the page only appears in Help Pages) --}}
                     <div class="mb-5">
                         <x-input-label :value="__('Route')" />

@@ -17,9 +17,9 @@
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-16">{{ __('Order No.') }}</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Title') }}</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Route') }}</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Languages') }}</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Status') }}</th>
                             <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{{ __('Actions') }}</th>
                         </tr>
@@ -27,17 +27,10 @@
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                         @forelse($helpPages as $page)
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                                <td class="px-4 py-3 text-gray-600 dark:text-gray-400 tabular-nums">{{ $page->order_no }}</td>
                                 <td class="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">{{ $page->title }}</td>
                                 <td class="px-4 py-3">
                                     <code class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-1.5 py-0.5 rounded">{{ $page->route }}</code>
-                                </td>
-                                <td class="px-4 py-3 text-gray-600 dark:text-gray-400 text-xs">
-                                    @php $locales = $page->contents->pluck('locale')->filter()->toArray(); @endphp
-                                    @if(count($locales))
-                                        {{ implode(', ', $locales) }}
-                                    @else
-                                        <span class="text-gray-400">—</span>
-                                    @endif
                                 </td>
                                 <td class="px-4 py-3">
                                     @if($page->is_active)
