@@ -8,6 +8,7 @@ use App\Models\Task;
 use App\Models\TimeLog;
 use App\Models\Project;
 use App\Models\User;
+use App\Policies\TaskPolicy;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Spatie\Activitylog\Models\Activity;
@@ -20,8 +21,8 @@ class TaskController extends Controller
     public function index(Request $request)
     {
         $user  = auth()->user();
-        $query = Task::with(['project', 'assignees']);
-        $this->_scopeQuery($query, $user);
+        if (!$user->can('viewAny', Task::class)) abort(403);
+        $query = Task::with(['project', 'assignees'])->visibleTo($user);
 
         // Search by name or TK-id
         if ($search = trim($request->input('search', ''))) {
@@ -99,13 +100,12 @@ class TaskController extends Controller
      */
     public function create()
     {
-        if (!auth()->user()->can('edit tasks')) abort(403);
-        $projects = Project::with(['users', 'teams.users'])->orderBy('name')->get();
-        $projectMembers = $projects->mapWithKeys(fn($p) => [
-            $p->id => $p->users->pluck('id')
-                ->merge($p->teams->flatMap->users->pluck('id'))
-                ->unique()->values()->toArray()
-        ]);
+        $user           = auth()->user();
+        $defaultProject = request('project_id') ? Project::find(request('project_id')) : null;
+        if (!$user->can('create', [Task::class, $defaultProject])) abort(403);
+
+        $projects = $this->_formProjects($user);
+        $projectMembers = $this->_projectMembers($projects);
         $nextTaskId = (Task::withTrashed()->max('id') ?? 0) + 1;
         return view('tasks.form', [
             'projects'           => $projects,
@@ -121,7 +121,8 @@ class TaskController extends Controller
      */
     public function store(Request $request)
     {
-        if (!auth()->user()->can('edit tasks')) abort(403);
+        $user = auth()->user();
+        if (!$user->can('create', Task::class)) abort(403);
 
         $data = $request->validate([
             'project_id'        => 'nullable|integer|exists:projects,id',
@@ -136,6 +137,13 @@ class TaskController extends Controller
             'assignees'         => 'nullable|array',
             'status'            => 'nullable|string',
         ]);
+
+        $assigneeIds = array_filter((array) ($request->assignees ?? []));
+        if (!app(TaskPolicy::class)->canManage($user, $data['project_id'] ?? null, $assigneeIds, viaOwnAssignment: false)) {
+            return back()->withInput()->withErrors([
+                'project_id' => __('You can only create tasks in your assigned projects or assigned to your team members.'),
+            ]);
+        }
 
         if (empty($data['task_code'])) {
             unset($data['task_code']);
@@ -156,7 +164,7 @@ class TaskController extends Controller
     public function show(Request $request, Task $task)
     {
         $user = auth()->user();
-        if (!$user->can('view all tasks') && !$this->_isAssigned($task, $user)) abort(403);
+        if (!$user->can('view', $task)) abort(403);
 
         $task->load(['project', 'assignees', 'comments.user']);
 
@@ -308,16 +316,10 @@ class TaskController extends Controller
     public function edit(Task $task)
     {
         $user = auth()->user();
-        if (!$user->can('edit tasks')) {
-            if (!$user->can('edit assigned tasks') || !$this->_isAssigned($task, $user)) abort(403);
-        }
+        if (!$user->can('update', $task)) abort(403);
 
-        $projects = Project::with(['users', 'teams.users'])->orderBy('name')->get();
-        $projectMembers = $projects->mapWithKeys(fn($p) => [
-            $p->id => $p->users->pluck('id')
-                ->merge($p->teams->flatMap->users->pluck('id'))
-                ->unique()->values()->toArray()
-        ]);
+        $projects = $this->_formProjects($user, $task->project_id);
+        $projectMembers = $this->_projectMembers($projects);
         $task->load('assignees');
         return view('tasks.form', [
             'task'           => $task,
@@ -334,9 +336,7 @@ class TaskController extends Controller
     public function update(Request $request, Task $task)
     {
         $user = auth()->user();
-        if (!$user->can('edit tasks')) {
-            if (!$user->can('edit assigned tasks') || !$this->_isAssigned($task, $user)) abort(403);
-        }
+        if (!$user->can('update', $task)) abort(403);
 
         $data = $request->validate([
             'project_id'        => 'nullable|integer|exists:projects,id',
@@ -378,8 +378,8 @@ class TaskController extends Controller
         $user      = auth()->user();
         $q         = $request->get('q', '');
         $projectId = $request->get('project_id');
-        $query     = Task::query();
-        $this->_scopeQuery($query, $user);
+        if (!$user->can('viewAny', Task::class)) abort(403);
+        $query     = Task::visibleTo($user);
 
         if ($projectId) $query->where('project_id', $projectId);
         if ($q)         $query->where('name', 'like', "%{$q}%");
@@ -395,28 +395,27 @@ class TaskController extends Controller
         ]));
     }
 
-    /*
-     * Check if current user is assigned to the Project
+    /**
+     * Projects offered in the task form. Users whose only create/edit right comes from
+     * "edit assigned projects" just get their own projects (plus the task's current one).
      */
-    private function _isAssigned(Task $task, $user): bool
+    private function _formProjects(User $user, ?int $keepProjectId = null)
     {
-        return $task->assignees()->where('users.id', $user->id)->exists();
+        $query = Project::with(['users', 'teams.users'])->orderBy('name');
+
+        if (!$user->canAny(['edit tasks', 'edit team tasks', 'edit assigned tasks'])) {
+            $query->whereIn('id', array_filter(array_merge($user->assignedProjectIds(), [$keepProjectId])));
+        }
+
+        return $query->get();
     }
 
-    /*
-     * Check list of projects to show based on user's permission
-     */
-    private function _scopeQuery($query, $user): void
+    private function _projectMembers($projects)
     {
-        if ($user->can('view all tasks')) {
-            return;
-        }
-
-        if ($user->can('view assigned tasks')) {
-            $query->whereHas('assignees', fn($q) => $q->where('users.id', $user->id));
-            return;
-        }
-
-        abort(403);
+        return $projects->mapWithKeys(fn($p) => [
+            $p->id => $p->users->pluck('id')
+                ->merge($p->teams->flatMap->users->pluck('id'))
+                ->unique()->values()->toArray()
+        ]);
     }
 }

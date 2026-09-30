@@ -7,9 +7,9 @@
             </div>
             <div class="flex gap-2">
                 <a href="{{ route('time-logs.create', ['task_id' => $task->id]) }}"><x-secondary-button>{{ __('Log time →') }}</x-secondary-button></a>
-                @canany(['edit tasks', 'edit assigned tasks'])
+                @can('update', $task)
                     <a href="{{ route('tasks.edit', $task) }}"><x-secondary-button>{{ __('Edit') }}</x-secondary-button></a>
-                @endcanany
+                @endcan
                 <a href="javascript:history.back()"><x-secondary-button>{{ __('Back') }}</x-secondary-button></a>
             </div>
         </div>

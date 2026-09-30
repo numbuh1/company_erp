@@ -427,8 +427,7 @@ class ProjectController extends Controller
             ->pluck('budget_hours', 'user_id')
             ->map(fn($v) => (float) $v);
 
-        $canEditBudget = $user->can('edit projects') ||
-            ($user->can('edit assigned projects') && $this->_isAssigned($project, $user));
+        $canEditBudget = $user->can('update', $project);
 
         // Sort assignees: budget desc (highest first), then name
         $assigneeUsers = $assigneeUsers->sort(function ($a, $b) use ($userBudgetMap) {
@@ -465,9 +464,7 @@ class ProjectController extends Controller
     public function edit(Project $project)
     {
         $user = auth()->user();
-        if (!$user->can('edit projects')) {
-            if (!$user->can('edit assigned projects') || !$this->_isAssigned($project, $user)) abort(403);
-        }
+        if (!$user->can('update', $project)) abort(403);
 
         $project->load(['teams', 'users']);
         $teams = Team::with('users')->orderBy('name')->get();
@@ -487,9 +484,7 @@ class ProjectController extends Controller
     public function update(Request $request, Project $project)
     {
         $user = auth()->user();
-        if (!$user->can('edit projects')) {
-            if (!$user->can('edit assigned projects') || !$this->_isAssigned($project, $user)) abort(403);
-        }
+        if (!$user->can('update', $project)) abort(403);
 
         $data = $request->validate([
             'name'              => 'required|string|max:255',
@@ -529,10 +524,7 @@ class ProjectController extends Controller
     public function updateUserBudget(Request $request, Project $project, User $user)
     {
         $authUser = auth()->user();
-        if (!$authUser->can('edit projects') &&
-            !($authUser->can('edit assigned projects') && $this->_isAssigned($project, $authUser))) {
-            abort(403);
-        }
+        if (!$authUser->can('update', $project)) abort(403);
 
         $data = $request->validate([
             'budget_hours' => 'required|numeric|min:0|max:9999.99',
@@ -562,10 +554,7 @@ class ProjectController extends Controller
     public function bulkUpdateUserBudgets(Request $request, Project $project)
     {
         $authUser = auth()->user();
-        if (!$authUser->can('edit projects') &&
-            !($authUser->can('edit assigned projects') && $this->_isAssigned($project, $authUser))) {
-            abort(403);
-        }
+        if (!$authUser->can('update', $project)) abort(403);
 
         $data = $request->validate([
             'budgets'   => 'required|array',

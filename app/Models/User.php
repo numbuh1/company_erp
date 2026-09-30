@@ -169,6 +169,25 @@ class User extends Authenticatable
         });
     }
 
+    /** Ids of everyone sharing a team with this user, including the user. Cached per request. */
+    public function teamMemberIds(): array
+    {
+        return once(fn () => $this->teamMembers()->pluck('id')->push($this->id)
+            ->map(fn ($id) => (int) $id)->unique()->values()->all());
+    }
+
+    /** Ids of projects this user is a member of, directly or through one of their teams. Cached per request. */
+    public function assignedProjectIds(): array
+    {
+        return once(function () {
+            $teamIds = $this->teams->pluck('id');
+            return Project::where(function ($q) use ($teamIds) {
+                $q->whereHas('users', fn ($q) => $q->where('users.id', $this->id))
+                  ->orWhereHas('teams', fn ($q) => $q->whereIn('teams.id', $teamIds));
+            })->pluck('id')->map(fn ($id) => (int) $id)->all();
+        });
+    }
+
     public function preferences()
     {
         return $this->hasOne(UserPreference::class);

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -46,6 +47,26 @@ class Task extends Model
     public function comments()
     {
         return $this->morphMany(Comment::class, 'commentable')->oldest();
+    }
+
+    /** Tasks the user may see in lists; mirrors TaskPolicy::view. */
+    public function scopeVisibleTo(Builder $query, User $user): Builder
+    {
+        if ($user->can('view all tasks') || $user->can('edit tasks')) return $query;
+
+        return $query->where(function ($q) use ($user) {
+            $q->whereRaw('1 = 0');
+
+            if ($user->can('view team tasks') || $user->can('edit team tasks')) {
+                $q->orWhereHas('assignees', fn ($a) => $a->whereIn('users.id', $user->teamMemberIds()));
+            }
+            if ($user->can('view assigned tasks') || $user->can('edit assigned tasks')) {
+                $q->orWhereHas('assignees', fn ($a) => $a->where('users.id', $user->id));
+            }
+            if ($user->can('edit assigned projects')) {
+                $q->orWhereIn('project_id', $user->assignedProjectIds());
+            }
+        });
     }
 
     // Acitvity
