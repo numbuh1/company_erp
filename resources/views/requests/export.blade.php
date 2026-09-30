@@ -63,7 +63,7 @@
                     <div class="mb-5">
                         <x-input-label value="Loại yêu cầu" />
                         <div class="flex gap-3 mt-2">
-                            @foreach(['all' => 'All (Leave + OT)', 'leave' => 'Leave Only', 'ot' => 'OT Only'] as $val => $label)
+                            @foreach(['all' => 'All (Leave + OT + WFH)', 'leave' => 'Leave Only', 'ot' => 'OT Only', 'wfh' => 'WFH Only'] as $val => $label)
                                 <label class="flex items-center gap-1.5 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
                                     <input type="radio" name="type" value="{{ $val }}"
                                         {{ $type === $val ? 'checked' : '' }}

@@ -100,7 +100,6 @@ class UserController extends Controller
             $employmentStatus = $request->input('employment_status', 'active');
 
             $user->update([
-                'wfh_without_approval' => $request->boolean('wfh_without_approval'),
                 'salary'               => $request->input('salary') ?: null,
                 'salary_type'          => $request->input('salary_type') ?: null,
                 'phone_number'         => $request->input('phone_number'),
@@ -400,7 +399,6 @@ class UserController extends Controller
             $user->update([
                 'is_active'            => $employmentStatus !== 'inactive',
                 'employment_status'    => $employmentStatus,
-                'wfh_without_approval' => $request->boolean('wfh_without_approval'),
                 'salary'               => $request->input('salary') ?: null,
                 'salary_type'          => $request->input('salary_type') ?: null,
                 'phone_number'         => $request->input('phone_number'),
@@ -432,6 +430,7 @@ class UserController extends Controller
                 ['email_notifications' => [
                     'leave'        => $request->boolean('email_notify_leave'),
                     'ot'           => $request->boolean('email_notify_ot'),
+                    'wfh'          => $request->boolean('email_notify_wfh'),
                     'project'      => $request->boolean('email_notify_project'),
                     'announcement' => $request->boolean('email_notify_announcement'),
                 ]]
@@ -570,6 +569,7 @@ class UserController extends Controller
             'leave_balance'  => $user->leave_balance,
             'ot_year_total'  => (float) $otYearTotal,
             'ot_month_total' => (float) $otMonthTotal,
+            ...WfhRequestController::totalsFor($user->id),
         ]);
     }
 

@@ -448,6 +448,7 @@
                                     $notifSettings = [
                                         ['key' => 'leave',        'label' => 'Leave Request Emails',    'desc' => 'Receive emails for leave requests requiring approval and when your request is updated'],
                                         ['key' => 'ot',           'label' => 'OT Request Emails',       'desc' => 'Receive emails for OT requests requiring approval and when your request is updated'],
+                                        ['key' => 'wfh',          'label' => 'WFH Request Emails',      'desc' => 'Receive emails for WFH requests requiring approval and when your request is updated'],
                                         ['key' => 'project',      'label' => 'Project & Task Emails',   'desc' => 'Receive emails for project and task updates assigned to you'],
                                         ['key' => 'announcement', 'label' => 'Announcement Emails',     'desc' => 'Receive emails when a new announcement is posted'],
                                     ];
@@ -509,18 +510,6 @@
                                         </option>
                                     @endforeach
                                 </select>
-                            </div>
-
-                            {{-- WFH --}}
-                            <div class="mb-5">
-                                <x-input-label value="{{ __('Work from Home Policy') }}" />
-                                <label class="inline-flex items-center gap-2 mt-2 cursor-pointer">
-                                    <input type="hidden" name="wfh_without_approval" value="0">
-                                    <input type="checkbox" name="wfh_without_approval" value="1"
-                                        class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
-                                        {{ old('wfh_without_approval', $user->wfh_without_approval ?? false) ? 'checked' : '' }}>
-                                    <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('WFH without approval') }}</span>
-                                </label>
                             </div>
 
                             @endif {{-- canEditPersonal --}}

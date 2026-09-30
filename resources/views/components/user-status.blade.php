@@ -1,10 +1,13 @@
 @props(['user', 'showName' => true])
 @php
     $att = \App\Services\AttendanceStatusCache::getAttendance($user->id);
-    $onLeave = !$att && \App\Services\AttendanceStatusCache::isOnLeave($user->id);
+    $wfh = \App\Services\AttendanceStatusCache::wfhStatus($user->id);
+    $onLeave = !$att && !$wfh && \App\Services\AttendanceStatusCache::isOnLeave($user->id);
 
     $status = match(true) {
         $att && $att->status === 'approved' && $att->type === 'on_site' => 'on_site',
+        $wfh === 'approved'                                              => 'wfh',
+        $wfh === 'pending'                                               => 'wfh_pending',
         $att && $att->status === 'approved' && $att->type === 'wfh'     => 'wfh',
         $att && $att->status === 'pending'                               => 'wfh_pending',
         $onLeave                                                         => 'on_leave',
@@ -19,13 +22,13 @@
         default       => 'bg-gray-400',
     };
 
-    $statusLabel = match($status) {
+    $statusLabel = __(match($status) {
         'on_site'     => 'On Site',
         'wfh'         => 'WFH',
         'wfh_pending' => 'WFH Pending',
         'on_leave'    => 'On Leave',
         default       => 'Not Checked In',
-    };
+    });
 @endphp
 
 @if($showName)

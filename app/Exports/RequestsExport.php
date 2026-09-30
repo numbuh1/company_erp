@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Models\LeaveRequest;
 use App\Models\OvertimeRequest;
+use App\Models\WfhRequest;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -69,6 +70,28 @@ class RequestsExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
             }
         }
 
+        if (in_array($this->type, ['all', 'wfh'])) {
+            $q = WfhRequest::with('user', 'approver');
+            $this->applyScope($q, 'wfh');
+            $this->applyDateFilter($q);
+            $this->applyStatusFilter($q);
+            foreach ($q->orderBy('start_at')->get() as $r) {
+                $rows->push([
+                    'WFH',
+                    $r->user?->name ?? '-',
+                    $r->start_at->format('d/m/Y H:i'),
+                    $r->end_at->format('d/m/Y H:i'),
+                    $r->hours,
+                    '',
+                    $r->description ?? '',
+                    ucfirst($r->status),
+                    $r->approver?->name ?? '-',
+                    $r->reject_reason ?? '',
+                    $r->created_at->format('d/m/Y H:i'),
+                ]);
+            }
+        }
+
         return $rows;
     }
 
@@ -90,8 +113,11 @@ class RequestsExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
 
     protected function applyScope($query, string $module): void
     {
-        $allPerm  = $module === 'leave' ? 'view all leaves' : 'view all ot';
-        $teamPerm = $module === 'leave' ? 'view team leaves' : 'view team ot';
+        [$allPerm, $teamPerm] = match ($module) {
+            'leave' => ['view all leaves', 'view team leaves'],
+            'wfh'   => ['view all wfh', 'view team wfh'],
+            default => ['view all ot', 'view team ot'],
+        };
 
         if ($this->user->can($allPerm)) {
             // no scope

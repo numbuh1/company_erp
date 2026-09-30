@@ -149,6 +149,9 @@
                 <span class="w-3 h-3 rounded bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600"></span>
                 Cuối tuần / Nghỉ lễ
             </span>
+            <span class="flex items-center gap-1.5 text-sky-600 dark:text-sky-400">
+                🏠 {{ __('WFH (approved) — included in logged work hours') }}
+            </span>
         </div>
 
         {{-- ── Table ──────────────────────────────────────────────────── --}}
@@ -222,6 +225,7 @@
                             $rowWork  = (float) collect($tlByUserDay[$member->id] ?? [])->sum();
                             $rowLeave = (float) collect($lvByUserDay[$member->id] ?? [])->sum();
                             $rowOt    = (float) collect($otByUserDay[$member->id] ?? [])->sum();
+                            $rowWfh   = (float) collect($wfhByUserDay[$member->id] ?? [])->sum();
                         @endphp
                         <td class="atts-c2 bg-gray-100 dark:bg-gray-700/50 group-hover/row:bg-gray-200 dark:group-hover/row:bg-gray-600/50
                                    border-b border-gray-200 dark:border-gray-700 px-1 py-1.5 text-center">
@@ -240,7 +244,12 @@
                                     ⏱ {{ \App\Models\TimeLog::formatTimeShort($rowOt) }}
                                 </div>
                             @endif
-                            @if($rowWork == 0 && $rowLeave == 0 && $rowOt == 0)
+                            @if($rowWfh > 0)
+                                <div class="text-[10px] text-sky-600 dark:text-sky-400 leading-tight">
+                                    🏠 {{ \App\Models\TimeLog::formatTimeShort($rowWfh) }}
+                                </div>
+                            @endif
+                            @if($rowWork == 0 && $rowLeave == 0 && $rowOt == 0 && $rowWfh == 0)
                                 <span class="text-gray-300 dark:text-gray-600 text-[10px]">—</span>
                             @endif
                         </td>
@@ -258,6 +267,7 @@
                                 $work  = (float) ($tlByUserDay[$member->id][$dk] ?? 0);
                                 $leave = (float) ($lvByUserDay[$member->id][$dk] ?? 0);
                                 $ot    = (float) ($otByUserDay[$member->id][$dk] ?? 0);
+                                $wfh   = (float) ($wfhByUserDay[$member->id][$dk] ?? 0);
                                 $total = $work + $leave;
                                 $hasAny = $work > 0 || $leave > 0 || $ot > 0;
 
@@ -293,7 +303,7 @@
                             @endphp
                             <td class="border-b border-r {{ $borderCls }} {{ $cellBg }}
                                        px-0.5 py-1 text-center align-top w-12 min-w-[3rem]">
-                                @if($hasAny)
+                                @if($hasAny || $wfh > 0)
                                     @php
                                         $cellUrl     = route('time-logs.index', ['user_id' => $member->id, 'date_from' => $dk, 'date_to' => $dk]);
                                         $dayLogs     = $tlRecordsByUserDay[$member->id][$dk] ?? [];
@@ -334,6 +344,21 @@
                                                class="block text-[10px] text-orange-500 dark:text-orange-400 hover:underline leading-tight">
                                                 ⏱ {{ \App\Models\TimeLog::formatTimeShort($ot) }}
                                             </a>
+                                        @endif
+                                        @if($wfh > 0)
+                                            <a href="{{ route('requests.index', ['type' => 'wfh', 'date_from' => $dk, 'date_to' => $dk]) }}"
+                                               class="block text-[10px] text-sky-600 dark:text-sky-400 hover:underline leading-tight"
+                                               title="{{ __('WFH (approved)') }}">
+                                                🏠 {{ \App\Models\TimeLog::formatTimeShort($wfh) }}
+                                            </a>
+                                        @endif
+                                        @if(!$hasAny && $isPast && !$isOff)
+                                            @can('module timesheet')
+                                            <button type="button"
+                                                onclick="window.dispatchEvent(new CustomEvent('tl-fab-open',{detail:{userId:{{ $member->id }},date:'{{ $dk }}'},bubbles:true}))"
+                                                class="w-full text-red-300 dark:text-red-700 text-[11px] font-medium hover:bg-red-100/50 dark:hover:bg-red-900/20 rounded transition"
+                                                title="Chấm giờ {{ $dk }}">–</button>
+                                            @endcan
                                         @endif
                                     </div>
                                 @elseif($isPast && !$isOff)

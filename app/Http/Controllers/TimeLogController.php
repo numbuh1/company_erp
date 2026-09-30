@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exports\TimeLogExport;
 use App\Models\AppSetting;
 use App\Models\TimeLog;
+use App\Models\WfhRequest;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\Team;
@@ -1305,6 +1306,21 @@ class TimeLogController extends Controller
             }
         }
 
+        // ── Approved WFH: [user_id][date] = hours (a label only; work is still logged separately) ──
+        $wfhByUserDay = [];
+        if (!empty($memberIds)) {
+            foreach (
+                WfhRequest::where('status', 'approved')
+                    ->whereIn('user_id', $memberIds)
+                    ->whereDate('start_at', '>=', $fromDate)
+                    ->whereDate('start_at', '<=', $toDate)
+                    ->get(['user_id', 'start_at', 'hours']) as $wfh
+            ) {
+                $dk = $wfh->start_at->toDateString();
+                $wfhByUserDay[$wfh->user_id][$dk] = ($wfhByUserDay[$wfh->user_id][$dk] ?? 0) + $wfh->hours;
+            }
+        }
+
         $holidayDates = PublicHoliday::getHolidayDates($start->copy(), $end->copy());
         $today        = now()->toDateString();
 
@@ -1322,7 +1338,7 @@ class TimeLogController extends Controller
 
         return view('time_logs.attendance', compact(
             'members', 'days', 'fromDate', 'toDate',
-            'tlByUserDay', 'tlRecordsByUserDay', 'lvByUserDay', 'otByUserDay',
+            'tlByUserDay', 'tlRecordsByUserDay', 'lvByUserDay', 'otByUserDay', 'wfhByUserDay',
             'availableTeams', 'availableUsers',
             'filterTeamIds', 'filterUserIds',
             'holidayDates', 'today', 'editableUserIds'

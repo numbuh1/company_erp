@@ -197,7 +197,7 @@ class EventController extends Controller
             'id'          => $event->id,
             'name'        => $event->name,
             'event_type'  => $event->event_type,
-            'event_type_label' => Event::$types[$event->event_type] ?? $event->event_type,
+            'event_type_label' => __(Event::$types[$event->event_type] ?? $event->event_type),
             'location'    => $event->location ?? '',
             'start_at'    => $event->start_at->format('Y-m-d\TH:i'),
             'end_at'      => $event->end_at->format('Y-m-d\TH:i'),

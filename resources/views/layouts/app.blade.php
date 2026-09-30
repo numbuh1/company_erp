@@ -100,6 +100,9 @@
         @include('layouts.checkin-fab')
         <x-leave-request-modal />
         <x-ot-request-modal />
+        @auth
+            <x-wfh-request-modal />
+        @endauth
         <x-pending-requests-fab />
         <x-help-fab />
 

@@ -1,4 +1,4 @@
-@canany(['approve team leaves', 'approve all leaves', 'approve team ot', 'approve all ot'])
+@canany(['approve team leaves', 'approve all leaves', 'approve team ot', 'approve all ot', 'approve team wfh', 'approve all wfh'])
 <div
     x-data="{
         open: false,
@@ -10,21 +10,25 @@
 
         get leaves() { return this.items ? this.items.leaves : []; },
         get ots()    { return this.items ? this.items.ots : []; },
-        get all()    { return [...this.leaves, ...this.ots]; },
+        get wfhs()   { return this.items ? (this.items.wfhs || []) : []; },
+        get all()    { return [...this.leaves, ...this.ots, ...this.wfhs]; },
 
-        total() { return this.items ? (this.items.leaves.length + this.items.ots.length) : 0; },
+        total() { return this.items ? this.all.length : 0; },
         tabCount(tab) {
             if (!this.items) return '';
-            if (tab === 'all')   return this.leaves.length + this.ots.length;
+            if (tab === 'all')   return this.all.length;
             if (tab === 'leave') return this.leaves.length;
             if (tab === 'ot')    return this.ots.length;
+            if (tab === 'wfh')   return this.wfhs.length;
             return 0;
         },
         currentItems() {
             if (this.activeTab === 'leave') return this.leaves;
             if (this.activeTab === 'ot')    return this.ots;
+            if (this.activeTab === 'wfh')   return this.wfhs;
             return this.all;
         },
+        itemKey(item) { return item.type_key + '-' + item.id; },
 
         toggle() { this.open = !this.open; if (this.open && this.items === null) this.load(); },
 
@@ -61,6 +65,7 @@
 
         openItem(item) {
             if (item.type_key === 'leave') window.openLeaveModal && openLeaveModal(item.id);
+            else if (item.type_key === 'wfh') window.openWfhModal && openWfhModal(item.id);
             else window.openOtModal && openOtModal(item.id);
         }
     }"
@@ -88,7 +93,7 @@
 
         {{-- Tabs --}}
         <div class="flex border-b border-gray-100 dark:border-gray-700">
-            <template x-for="tab in [{key:'all',label:'{{ __('All') }}'},{key:'leave',label:'{{ __('Leave Requests') }}'},{key:'ot',label:'{{ __('OT') }}'}]" :key="tab.key">
+            <template x-for="tab in @js([['key' => 'all', 'label' => __('All')], ['key' => 'leave', 'label' => __('Leave Requests')], ['key' => 'ot', 'label' => __('OT')], ['key' => 'wfh', 'label' => __('WFH')]])" :key="tab.key">
                 <button
                     @click="activeTab = tab.key"
                     :class="activeTab === tab.key
@@ -137,18 +142,21 @@
                                 <template x-if="item.type_key === 'ot'">
                                     <span class="text-xs px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300" x-text="item.ot_type"></span>
                                 </template>
+                                <template x-if="item.type_key === 'wfh'">
+                                    <span class="text-xs px-1.5 py-0.5 rounded bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300">{{ __('WFH') }}</span>
+                                </template>
                             </div>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="item.user.position"></p>
                             <p class="text-xs text-gray-600 dark:text-gray-300 mt-0.5" x-text="item.start_at_text + ' → ' + item.end_at_text"></p>
                             <span class="inline-block mt-1 text-xs font-bold px-1.5 py-0.5 rounded"
-                                :class="item.type_key === 'ot' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'"
+                                :class="{ ot: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300', wfh: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300' }[item.type_key] || 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'"
                                 x-text="item.hours + 'h'"></span>
                             <p x-show="item.description" class="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate" x-text="item.description"></p>
                         </div>
                     </div>
 
                     {{-- Reject inline --}}
-                    <div x-show="rejectingId === item.id" class="mt-2 space-y-1.5">
+                    <div x-show="rejectingId === itemKey(item)" class="mt-2 space-y-1.5">
                         <textarea x-model="rejectReason" rows="2" placeholder="{{ __('Rejection reason…') }}"
                             class="w-full text-xs border border-red-300 dark:border-red-600 dark:bg-gray-900 dark:text-gray-300 rounded-md px-2 py-1.5"></textarea>
                         <div class="flex gap-1.5 justify-end">
@@ -158,13 +166,13 @@
                     </div>
 
                     {{-- Action buttons --}}
-                    <div x-show="rejectingId !== item.id" class="flex gap-1.5 mt-2 justify-end">
+                    <div x-show="rejectingId !== itemKey(item)" class="flex gap-1.5 mt-2 justify-end">
                         <button @click.stop="approve(item)"
                             class="px-2.5 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded transition flex items-center gap-1">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                             {{ __('Approve') }}
                         </button>
-                        <button @click.stop="showReject(item.id)"
+                        <button @click.stop="showReject(itemKey(item))"
                             class="px-2.5 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition flex items-center gap-1">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                             {{ __('Reject') }}

@@ -215,6 +215,48 @@
                         @endif
                     </div>
 
+                    {{-- WFH (pending + approved) --}}
+                    @can('module wfh')
+                    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">
+                        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-3">
+                            {{ __('Work From Home') }}
+                            <span class="font-normal text-gray-400 normal-case">({{ __('next 2 weeks') }})</span>
+                        </h3>
+                        @if($upcomingWfh->isEmpty())
+                            <p class="text-sm text-gray-400">{{ __('No upcoming WFH.') }}</p>
+                        @else
+                            <div class="space-y-2">
+                                @foreach($upcomingWfh as $wfh)
+                                    @php
+                                        $isPending  = $wfh->status === 'pending';
+                                        $canOpenWfh = auth()->user()->canAny(['view all wfh', 'view team wfh'])
+                                            || ($wfh->user_id === auth()->id() && auth()->user()->can('view own wfh'));
+                                    @endphp
+                                    <div @if($canOpenWfh) role="button" onclick="openWfhModal({{ $wfh->id }})" @endif
+                                        class="{{ $canOpenWfh ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/40' : '' }} w-full text-left flex items-center gap-3 text-sm border-l-2 {{ $isPending ? 'border-yellow-300' : 'border-sky-300' }} pl-3 py-1 rounded-r transition">
+                                        <div class="flex-1 min-w-0">
+                                            <span class="font-medium text-gray-800 dark:text-gray-200">{{ $wfh->user?->name }}</span>
+                                            @if($wfh->user?->position)
+                                                <span class="text-xs text-gray-400 ml-1">{{ $wfh->user->position }}</span>
+                                            @endif
+                                            <div class="text-xs text-gray-500">
+                                                {{ $wfh->start_at->translatedFormat('D, d/m') }}
+                                                · {{ $wfh->start_at->format('H:i') }}–{{ $wfh->end_at->format('H:i') }}
+                                                · {{ rtrim(rtrim(number_format($wfh->hours, 2), '0'), '.') }}h
+                                            </div>
+                                        </div>
+                                        <span class="shrink-0 text-xs px-2 py-0.5 rounded {{ $isPending
+                                            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                                            : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' }}">
+                                            {{ $isPending ? __('Pending') : __('Approved') }}
+                                        </span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                    @endcan
+
                     {{-- Birthdays & Public Holidays this month --}}
                     @if($upcomingBirthdays->isNotEmpty() || count($monthHolidays) > 0 || $contractExpiryUsers->isNotEmpty())
                         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-5">

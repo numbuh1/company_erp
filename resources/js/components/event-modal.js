@@ -1,3 +1,5 @@
+import { t } from '../i18n.js';
+
 let _tsAttendants = null;
 let _tsLocation   = null;
 let _usersLoaded  = false;
@@ -60,7 +62,7 @@ async function _loadLocations() {
             create: true,
             createOnBlur: true,
             maxOptions: null,
-            placeholder: '— None —',
+            placeholder: t('— None —'),
             allowEmptyOption: true,
         });
         _locsLoaded = true;
@@ -96,11 +98,11 @@ window.openEventModal = async function(data = {}) {
     if (data.id) {
         form.action = window.eventRoutes.base + '/' + data.id;
         document.getElementById('event-modal-method').value = 'PUT';
-        document.getElementById('event-modal-title').textContent = data.title || 'Edit Event';
+        document.getElementById('event-modal-title').textContent = data.title || t('Edit Event');
     } else {
         form.action = window.eventRoutes.store;
         document.getElementById('event-modal-method').value = 'POST';
-        document.getElementById('event-modal-title').textContent = data.title || 'New Event';
+        document.getElementById('event-modal-title').textContent = data.title || t('New Event');
     }
 
     // Show/hide delete button
@@ -123,7 +125,7 @@ window.openEventModal = async function(data = {}) {
     if (linkRow && linkEl) {
         if (data.applicantUrl) {
             linkEl.href        = data.applicantUrl;
-            linkEl.textContent = data.applicantName ? 'Applicant: ' + data.applicantName : 'View Applicant';
+            linkEl.textContent = data.applicantName ? t('Applicant: :name', { name: data.applicantName }) : t('View Applicant');
             linkRow.classList.remove('hidden');
         } else {
             linkRow.classList.add('hidden');
@@ -187,7 +189,7 @@ window.closeEventModal = function() {
 window.openViewEventModal = function(data) {
     _currentViewData = data;
 
-    document.getElementById('view-event-title').textContent = data.name || 'Event';
+    document.getElementById('view-event-title').textContent = data.name || t('Event');
     document.getElementById('view-event-type').textContent  = data.event_type_label || data.event_type || '';
 
     const locationRow = document.getElementById('view-event-location-row');
@@ -249,7 +251,7 @@ window.openViewEventModal = function(data) {
     const fileLink = document.getElementById('view-event-file-link');
     if (data.file_url) {
         fileLink.href        = data.file_url;
-        fileLink.textContent = data.file_name || 'Tải tệp đính kèm';
+        fileLink.textContent = data.file_name || t('Download attachment');
         fileRow.classList.remove('hidden');
     } else {
         fileRow.classList.add('hidden');
@@ -272,7 +274,7 @@ window.closeViewEventModal = function() {
 window.editFromView = function() {
     if (!_currentViewData) return;
     closeViewEventModal();
-    openEventModal({ ..._currentViewData, title: 'Edit Event' });
+    openEventModal({ ..._currentViewData, title: t('Edit Event') });
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -384,9 +386,9 @@ window.sendEmailViaOutlookWeb = function() {
     // copy the CC addresses to the clipboard and let the user paste them in.
     if (cc.length && navigator.clipboard) {
         navigator.clipboard.writeText(cc.join('; ')).then(() => {
-            alert('Outlook trên web hiện chưa hỗ trợ tự điền CC.\n'
-                + 'Danh sách CC đã được sao chép vào clipboard:\n' + cc.join('; ')
-                + '\n\nVui lòng dán (Ctrl+V / Cmd+V) vào ô CC trong cửa sổ soạn thư.');
+            alert(t('Outlook on the web cannot pre-fill CC yet.') + '\n'
+                + t('The CC list has been copied to your clipboard:') + '\n' + cc.join('; ')
+                + '\n\n' + t('Please paste it (Ctrl+V / Cmd+V) into the CC field of the compose window.'));
         }).catch(() => {});
     }
 };

@@ -18,7 +18,6 @@
 
             {{-- ── Personal Check-In Section ────────────────────────────── --}}
             <div x-data="{
-                showWfhModal: false, hours: 8, reason: '', submitting: false,
                 showCheckoutConfirm: false, coSubmitting: false, estimatedHours: '0.00',
                 checkInTime: '{{ $myAttendance?->check_in_time ? substr($myAttendance->check_in_time, 0, 5) : ($myAttendance?->created_at?->format('H:i') ?? '') }}',
                 lunchStart: '{{ $lunchBreakStart }}',
@@ -168,12 +167,14 @@
                         </form>
 
 
-                        {{-- WFH button --}}
-                        <button type="button" @click="showWfhModal = true"
+                        {{-- WFH is a request (with approval), not a check-in type --}}
+                        @canany(['edit own wfh', 'edit team wfh', 'edit all wfh'])
+                        <button type="button" onclick="openWfhCreate()"
                             class="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow transition">
                             <span class="text-xl">🏠</span>
-                            {{ __('Work from Home') }}
+                            {{ __('Request WFH') }}
                         </button>
+                        @endcanany
 
                         {{-- Geolocation error --}}
                         <div id="geoErrorBox"
@@ -251,58 +252,6 @@
                     </div>
                 </div>
 
-                {{-- WFH Modal --}}
-                <div x-show="showWfhModal" x-cloak
-                     x-transition:enter="transition ease-out duration-200"
-                     x-transition:enter-start="opacity-0"
-                     x-transition:enter-end="opacity-100"
-                     x-transition:leave="transition ease-in duration-150"
-                     x-transition:leave-start="opacity-100"
-                     x-transition:leave-end="opacity-0"
-                     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-                     @click.self="showWfhModal = false">
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
-                        <h3 class="text-base font-semibold text-gray-800 dark:text-gray-100 mb-4">
-                            🏠 {{ __('Work from Home Request') }}
-                        </h3>
-
-                        <form method="POST" action="{{ route('attendance.store') }}" @submit="submitting = true">
-                            @csrf
-                            <input type="hidden" name="type" value="wfh">
-
-                            <div class="mb-4">
-                                <x-input-label :value="__('Hours Working Today')" />
-                                <x-text-input type="number" name="hours" step="0.5" min="0.5" max="24"
-                                    x-model="hours" class="w-full mt-1" />
-                                @error('hours')
-                                    <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <div class="mb-5">
-                                <x-input-label :value="__('Reason / Task for Today')" />
-                                <textarea name="reason" rows="3" x-model="reason"
-                                    class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                    placeholder="{{ __('Briefly describe what you will be working on...') }}"></textarea>
-                                @error('reason')
-                                    <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <div class="flex justify-end gap-2">
-                                <button type="button" @click="showWfhModal = false"
-                                    class="px-4 py-2 text-sm rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                                    {{ __('Cancel') }}
-                                </button>
-                                <button type="submit" :disabled="submitting"
-                                    class="px-4 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 text-white font-medium transition disabled:opacity-50">
-                                    <span x-show="!submitting">{{ __('Submit WFH Request') }}</span>
-                                    <span x-show="submitting" x-cloak>{{ __('Submitting…') }}</span>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
             </div>
 
             {{-- ── Stats Dashboard (module attendance only) ─────────────── --}}
@@ -405,7 +354,7 @@
                                         {{-- Approve / Reject for pending WFH --}}
                                         <template x-if="u.category === 'wfh_pending' && u.can_approve">
                                             <div class="flex gap-1 ml-1">
-                                                <form :action="'/attendance/' + u.att_id + '/approve'" method="POST" class="inline">
+                                                <form :action="u.wfh_id ? @js(url('wfh-requests')) + '/' + u.wfh_id + '/approve' : '/attendance/' + u.att_id + '/approve'" method="POST" class="inline">
                                                     @csrf
                                                     <button type="submit"
                                                         class="text-xs px-2 py-0.5 rounded bg-green-600 hover:bg-green-700 text-white transition">
@@ -423,7 +372,7 @@
                                                          @click.self="showReject = false">
                                                         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-sm mx-4">
                                                             <h4 class="font-semibold text-gray-800 dark:text-gray-100 mb-3">{{ __('Reject WFH Request') }}</h4>
-                                                            <form :action="'/attendance/' + u.att_id + '/reject'" method="POST">
+                                                            <form :action="u.wfh_id ? @js(url('wfh-requests')) + '/' + u.wfh_id + '/reject' : '/attendance/' + u.att_id + '/reject'" method="POST">
                                                                 @csrf
                                                                 <textarea name="reject_reason" rows="3" x-model="reason" required
                                                                     class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm mb-3"

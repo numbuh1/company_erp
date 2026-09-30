@@ -194,7 +194,7 @@
                                     attendants: {{ $assignedIds }},
                                     description: @json($interviewDesc),
                                     hideFile: true,
-                                    title: "Book Interview",
+                                    title: @json(__('Book Interview')),
                                     applicantId: {{ $recruitmentApplicant->id }},
                                     applicantUrl: @json($applicantUrl),
                                     applicantName: @json($recruitmentApplicant->name)

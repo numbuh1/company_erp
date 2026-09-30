@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exports\RequestsExport;
 use App\Models\LeaveRequest;
 use App\Models\OvertimeRequest;
+use App\Models\WfhRequest;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Maatwebsite\Excel\Facades\Excel;
@@ -15,7 +16,7 @@ class RequestController extends Controller
     {
         $user = auth()->user();
 
-        if (!$user->canAny(['module leaves', 'module ot'])) {
+        if (!$user->canAny(['module leaves', 'module ot', 'module wfh'])) {
             abort(403);
         }
 
@@ -42,6 +43,15 @@ class RequestController extends Controller
             $this->applyDateFilter($q, $dateFrom, $dateTo);
             $this->applyStatusFilter($q, $status);
             $rows = $rows->concat($q->get()->map(fn($r) => ['_type' => 'ot', 'record' => $r]));
+        }
+
+        // ── WFH ────────────────────────────────────────────────────
+        if ($user->can('module wfh') && in_array($type, ['all', 'wfh'])) {
+            $q = WfhRequest::with('user', 'approver');
+            $this->applyScope($q, 'wfh', $user);
+            $this->applyDateFilter($q, $dateFrom, $dateTo);
+            $this->applyStatusFilter($q, $status);
+            $rows = $rows->concat($q->get()->map(fn($r) => ['_type' => 'wfh', 'record' => $r]));
         }
 
         // ── Sort + manual paginate ─────────────────────────────────
@@ -83,7 +93,7 @@ class RequestController extends Controller
             'date_from' => 'nullable|date',
             'date_to'   => 'nullable|date|after_or_equal:date_from',
             'status'    => 'nullable|string',
-            'type'      => 'nullable|string|in:all,leave,ot',
+            'type'      => 'nullable|string|in:all,leave,ot,wfh',
         ]);
 
         $filename = 'requests_' . now()->format('Ymd_His') . '.xlsx';
