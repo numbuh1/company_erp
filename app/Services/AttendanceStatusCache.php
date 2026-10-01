@@ -30,7 +30,8 @@ class AttendanceStatusCache
 
         // Approved wins over pending when a user has both today
         static::$wfhStatuses = WfhRequest::whereIn('status', ['pending', 'approved'])
-            ->whereDate('start_at', $today)
+            ->whereDate('start_at', '<=', $today)
+            ->whereDate('end_at', '>=', $today)
             ->orderByRaw("status = 'approved'")
             ->pluck('status', 'user_id');
     }

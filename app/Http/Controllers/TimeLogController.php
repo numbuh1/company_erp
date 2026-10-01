@@ -1312,12 +1312,14 @@ class TimeLogController extends Controller
             foreach (
                 WfhRequest::where('status', 'approved')
                     ->whereIn('user_id', $memberIds)
-                    ->whereDate('start_at', '>=', $fromDate)
-                    ->whereDate('start_at', '<=', $toDate)
-                    ->get(['user_id', 'start_at', 'hours']) as $wfh
+                    ->where('start_at', '<=', $end->toDateTimeString())
+                    ->where('end_at', '>=', $start->toDateTimeString())
+                    ->get(['user_id', 'start_at', 'end_at', 'hours']) as $wfh
             ) {
-                $dk = $wfh->start_at->toDateString();
-                $wfhByUserDay[$wfh->user_id][$dk] = ($wfhByUserDay[$wfh->user_id][$dk] ?? 0) + $wfh->hours;
+                foreach ($wfh->dailyHours() as $dk => $h) {
+                    if ($dk < $fromDate || $dk > $toDate) continue;
+                    $wfhByUserDay[$wfh->user_id][$dk] = ($wfhByUserDay[$wfh->user_id][$dk] ?? 0) + $h;
+                }
             }
         }
 

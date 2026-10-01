@@ -240,8 +240,12 @@
                                                 <span class="text-xs text-gray-400 ml-1">{{ $wfh->user->position }}</span>
                                             @endif
                                             <div class="text-xs text-gray-500">
-                                                {{ $wfh->start_at->translatedFormat('D, d/m') }}
-                                                · {{ $wfh->start_at->format('H:i') }}–{{ $wfh->end_at->format('H:i') }}
+                                                @if($wfh->isMultiDay())
+                                                    {{ $wfh->start_at->format('d/m H:i') }} – {{ $wfh->end_at->format('d/m H:i') }}
+                                                @else
+                                                    {{ $wfh->start_at->translatedFormat('D, d/m') }}
+                                                    · {{ $wfh->start_at->format('H:i') }}–{{ $wfh->end_at->format('H:i') }}
+                                                @endif
                                                 · {{ rtrim(rtrim(number_format($wfh->hours, 2), '0'), '.') }}h
                                             </div>
                                         </div>

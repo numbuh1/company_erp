@@ -108,7 +108,7 @@ class PendingApprovalsController extends Controller
                 ],
                 'hours'         => $w->hours,
                 'start_at_text' => $w->start_at->translatedFormat('D, d/m/y H:i'),
-                'end_at_text'   => $w->end_at->format('H:i'),
+                'end_at_text'   => $w->end_at->translatedFormat('D, d/m/y H:i'),
                 'description'   => $w->description,
                 'created_at'    => $w->created_at->format('d/m/y H:i'),
                 'approve_url'   => route('wfh-requests.approve', $w->id),

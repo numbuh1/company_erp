@@ -1033,5 +1033,8 @@
     "WFH request updated.": "WFH request updated.",
     "WFH this month:": "WFH this month:",
     "WFH this year:": "WFH this year:",
-    "Work From Home": "Work From Home"
+    "Work From Home": "Work From Home",
+    "Day": "Day",
+    "A WFH request cannot span more than 31 days.": "A WFH request cannot span more than 31 days.",
+    "This range has no working hours.": "This range has no working hours."
 }

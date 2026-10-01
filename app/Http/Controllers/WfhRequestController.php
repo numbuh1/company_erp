@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Helper\Helper;
 use App\Helper\NotificationHelper;
-use App\Models\AppSetting;
 use App\Models\User;
 use App\Models\WfhRequest;
 use Carbon\Carbon;
@@ -66,9 +65,11 @@ class WfhRequestController extends Controller
                 'description'   => $wfhRequest->description,
                 'reject_reason' => $wfhRequest->reject_reason,
                 'approver_name' => $wfhRequest->approver?->name,
-                'wfh_date'      => $wfhRequest->start_at->format('Y-m-d'),
-                'start_time'    => $wfhRequest->start_at->format('H:i'),
-                'end_time'      => $wfhRequest->end_at->format('H:i'),
+                'start_at_input' => $wfhRequest->start_at->format('Y-m-d\TH:i'),
+                'end_at_input'   => $wfhRequest->end_at->format('Y-m-d\TH:i'),
+                'start_at_text'  => $wfhRequest->start_at->translatedFormat('D, d/m/y H:i'),
+                'end_at_text'    => $wfhRequest->end_at->translatedFormat('D, d/m/y H:i'),
+                'is_multi_day'   => $wfhRequest->isMultiDay(),
             ],
             ...$this->totalsFor($wfhRequest->user_id),
             'can_edit'    => $canEdit,
@@ -173,9 +174,8 @@ class WfhRequestController extends Controller
     private function _validate(Request $request): array
     {
         return $request->validate([
-            'wfh_date'    => 'required|date',
-            'start_time'  => 'required|date_format:H:i',
-            'end_time'    => 'required|date_format:H:i|after:start_time',
+            'start_at'    => 'required|date',
+            'end_at'      => 'required|date|after:start_at',
             'hours'       => 'nullable|numeric|min:0.25|max:24',
             'description' => 'nullable|string',
         ]);
@@ -201,26 +201,30 @@ class WfhRequestController extends Controller
         abort(403);
     }
 
-    /** Hours = span minus the lunch break overlap, unless the user entered hours manually (capped at the span). */
+    /**
+     * Single day: span minus lunch, or the hand-entered hours (capped at the span).
+     * Multi-day: always the per-day breakdown total (see WfhRequest::breakdown).
+     */
     private function _resolveSpan(array $data): array
     {
-        $start = Carbon::parse($data['wfh_date'] . ' ' . $data['start_time']);
-        $end   = Carbon::parse($data['wfh_date'] . ' ' . $data['end_time']);
+        $start = Carbon::parse($data['start_at'])->seconds(0);
+        $end   = Carbon::parse($data['end_at'])->seconds(0);
 
-        $toMins     = fn (string $hm) => (int) substr($hm, 0, 2) * 60 + (int) substr($hm, 3, 2);
-        $lunchStart = $toMins(AppSetting::get('lunch_break_start', '12:00'));
-        $lunchEnd   = $toMins(AppSetting::get('lunch_break_end', '13:00'));
-        $fromM      = $toMins($data['start_time']);
-        $toM        = $toMins($data['end_time']);
-        $spanHours  = ($toM - $fromM) / 60;
-        $lunchHours = max(0, min($toM, $lunchEnd) - max($fromM, $lunchStart)) / 60;
+        if ($start->diffInDays($end) > 31) {
+            throw ValidationException::withMessages(['end_at' => __('A WFH request cannot span more than 31 days.')]);
+        }
 
-        $hours = isset($data['hours']) && $data['hours'] !== ''
-            ? (float) $data['hours']
-            : $spanHours - $lunchHours;
+        $hours = array_sum(WfhRequest::breakdown($start, $end));
 
-        if ($hours > $spanHours) {
-            throw ValidationException::withMessages(['hours' => __('WFH hours cannot exceed the time range.')]);
+        if ($start->isSameDay($end) && isset($data['hours']) && $data['hours'] !== '') {
+            $hours = (float) $data['hours'];
+            if ($hours > $start->diffInMinutes($end) / 60) {
+                throw ValidationException::withMessages(['hours' => __('WFH hours cannot exceed the time range.')]);
+            }
+        }
+
+        if ($hours <= 0) {
+            throw ValidationException::withMessages(['end_at' => __('This range has no working hours.')]);
         }
 
         return [$start, $end, round($hours, 2)];
@@ -236,7 +240,7 @@ class WfhRequestController extends Controller
             ->exists();
 
         if ($overlaps) {
-            throw ValidationException::withMessages(['wfh_date' => __('This time overlaps another WFH request.')]);
+            throw ValidationException::withMessages(['start_at' => __('This time overlaps another WFH request.')]);
         }
     }
 }

@@ -54,7 +54,8 @@ class AttendanceController extends Controller
 
             // Today's WFH requests; an approved one wins over a pending one for the same user.
             $todayWfh = WfhRequest::whereIn('status', ['pending', 'approved'])
-                ->whereDate('start_at', $today)
+                ->whereDate('start_at', '<=', $today)
+                ->whereDate('end_at', '>=', $today)
                 ->whereIn('user_id', $scopedUserIds)
                 ->orderByRaw("status = 'approved'")
                 ->get()

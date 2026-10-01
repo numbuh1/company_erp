@@ -93,7 +93,7 @@
 
         {{-- Tabs --}}
         <div class="flex border-b border-gray-100 dark:border-gray-700">
-            <template x-for="tab in @js([['key' => 'all', 'label' => __('All')], ['key' => 'leave', 'label' => __('Leave Requests')], ['key' => 'ot', 'label' => __('OT')], ['key' => 'wfh', 'label' => __('WFH')]])" :key="tab.key">
+            <template x-for="tab in @js([['key' => 'all', 'label' => __('All')], ['key' => 'leave', 'label' => __('Leave')], ['key' => 'ot', 'label' => __('OT')], ['key' => 'wfh', 'label' => __('WFH')]])" :key="tab.key">
                 <button
                     @click="activeTab = tab.key"
                     :class="activeTab === tab.key

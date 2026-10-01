@@ -1033,5 +1033,8 @@
     "WFH request updated.": "Đã cập nhật yêu cầu WFH.",
     "WFH this month:": "WFH tháng này:",
     "WFH this year:": "WFH năm nay:",
-    "Work From Home": "Làm việc tại nhà"
+    "Work From Home": "Làm việc tại nhà",
+    "Day": "Ngày",
+    "A WFH request cannot span more than 31 days.": "Yêu cầu WFH không được kéo dài quá 31 ngày.",
+    "This range has no working hours.": "Khoảng thời gian này không có giờ làm việc."
 }

@@ -51,20 +51,17 @@
                 <input type="hidden" id="wfm-user-select" value="{{ $wfmAuth?->id }}">
             @endif
 
-            {{-- Date + Time --}}
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {{-- Start / End (same as the leave form) --}}
+            <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('WFH Date') }}</label>
-                    <p id="wfm-date-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
-                    <input id="wfm-date" type="date" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('Start') }}</label>
+                    <p id="wfm-start-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
+                    <input id="wfm-start-at" type="datetime-local" lang="en-GB" data-default-hour="8" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('Time') }}</label>
-                    <p id="wfm-time-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
-                    <div id="wfm-time-inputs" class="hidden grid grid-cols-2 gap-2">
-                        <input id="wfm-start-time" type="time" lang="en-GB" title="{{ __('From') }}" class="w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
-                        <input id="wfm-end-time" type="time" lang="en-GB" title="{{ __('To') }}" class="w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
-                    </div>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('End') }}</label>
+                    <p id="wfm-end-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
+                    <input id="wfm-end-at" type="datetime-local" lang="en-GB" data-default-hour="17" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
                 </div>
             </div>
 
@@ -76,6 +73,9 @@
                     class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
                 <p id="wfm-hours-note" class="hidden mt-1 text-xs text-gray-400">{{ __('Calculated from the time range minus the lunch break, can be changed.') }}</p>
             </div>
+
+            {{-- Multi-day breakdown --}}
+            <div id="wfm-breakdown" class="hidden px-4 py-3 bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-700 rounded-lg text-xs text-gray-700 dark:text-gray-300"></div>
 
             {{-- WFH month / year totals --}}
             <div id="wfm-preview" class="hidden p-3 bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-700 rounded-lg space-y-1">
@@ -133,6 +133,8 @@
         'titleCreate' => __('Create WFH Request'), 'titleView' => __('WFH Request'), 'titleEdit' => __('Edit WFH Request'),
         'pending' => __('Pending'), 'approved' => __('Approved'), 'rejected' => __('Rejected'),
         'errSave' => __('Error saving.'), 'errConn' => __('Connection error.'),
+        'bdTitle' => __('Expected total hours'), 'bdDay' => __('Day'),
+        'bdWorkDays' => __('working days'), 'bdExcl' => __('8h/day, excl. weekends & holidays'),
     ]);
     var CSRF        = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     var AUTH_ID     = @js($wfmAuth?->id);
@@ -142,6 +144,9 @@
     var USR_URL     = @js(url('users'));
     var LUNCH_START = @js(\App\Models\AppSetting::get('lunch_break_start', '12:00'));
     var LUNCH_END   = @js(\App\Models\AppSetting::get('lunch_break_end', '13:00'));
+    var DAY_START   = @js(\App\Models\WfhRequest::DAY_START);
+    var DAY_END     = @js(\App\Models\WfhRequest::DAY_END);
+    var HOLIDAYS    = @js(\App\Models\PublicHoliday::getHolidayDates(now()->subYear(), now()->addYears(2)));
 
     var _mode = 'create', _id = null, _data = null;
     var _monthTotal = 0, _yearTotal = 0;
@@ -154,8 +159,8 @@
     function _fmtH(h){ return (Math.round(h * 100) / 100) + 'h'; }
 
     function _hideBody(){
-        ['wfm-status-banner','wfm-user-display','wfm-user-select','wfm-date-display','wfm-date',
-         'wfm-time-display','wfm-time-inputs','wfm-hours-display','wfm-hours','wfm-hours-note',
+        ['wfm-status-banner','wfm-user-display','wfm-user-select','wfm-start-display','wfm-start-at',
+         'wfm-end-display','wfm-end-at','wfm-hours-display','wfm-hours','wfm-hours-note','wfm-breakdown',
          'wfm-preview','wfm-month-arrow','wfm-month-after','wfm-year-arrow','wfm-year-after',
          'wfm-desc-display','wfm-description','wfm-reject-display','wfm-reject-section']
         .forEach(function(id){ var el = $g(id); if (el && el.type !== 'hidden') hide(el); });
@@ -182,10 +187,9 @@
         if (HAS_SEL) { show($g('wfm-user-select')); _initUserTs(); }
         else { $g('wfm-user-display').textContent = AUTH_NAME; show($g('wfm-user-display')); }
 
-        show($g('wfm-date')); show($g('wfm-time-inputs')); show($g('wfm-hours')); show($g('wfm-hours-note')); show($g('wfm-description'));
-        _fpSet($g('wfm-date'), ''); $g('wfm-start-time').value = '08:00'; $g('wfm-end-time').value = '17:00';
-        $g('wfm-hours').value = ''; $g('wfm-description').value = '';
-        _calcHours();
+        show($g('wfm-start-at')); show($g('wfm-end-at')); show($g('wfm-hours')); show($g('wfm-hours-note')); show($g('wfm-description'));
+        _fpSet($g('wfm-start-at'), ''); _fpSet($g('wfm-end-at'), '');
+        $g('wfm-hours').value = ''; $g('wfm-hours').disabled = false; $g('wfm-description').value = '';
         _fetchTotals(AUTH_ID);
         _bindListeners();
         $g('wfm-btn-area').innerHTML = _btn(_L.cancel, 'closeWfhModal()', 'secondary') + _btn(_L.create, '_wfmSubmit()', 'primary');
@@ -204,10 +208,9 @@
         _submitting = true;
         var payload = {
             user_id:     (_mode === 'edit' && _data) ? _data.wfh.user_id : _userVal(),
-            wfh_date:    $g('wfm-date').value,
-            start_time:  $g('wfm-start-time').value,
-            end_time:    $g('wfm-end-time').value,
-            hours:       _manualH ? $g('wfm-hours').value : '',
+            start_at:    $g('wfm-start-at').value,
+            end_at:      $g('wfm-end-at').value,
+            hours:       (_manualH && !_isMultiDay()) ? $g('wfm-hours').value : '',
             description: $g('wfm-description').value,
         };
         fetch(_mode === 'create' ? WFH_URL : WFH_URL + '/' + _id, {
@@ -261,8 +264,8 @@
         show(banner);
 
         $g('wfm-user-display').textContent = w.user_name; show($g('wfm-user-display'));
-        $g('wfm-date-display').textContent = _fmtDate(w.wfh_date); show($g('wfm-date-display'));
-        $g('wfm-time-display').textContent = w.start_time + ' – ' + w.end_time; show($g('wfm-time-display'));
+        $g('wfm-start-display').textContent = w.start_at_text; show($g('wfm-start-display'));
+        $g('wfm-end-display').textContent   = w.end_at_text;   show($g('wfm-end-display'));
         $g('wfm-hours-display').textContent = _fmtH(w.hours); show($g('wfm-hours-display'));
         $g('wfm-desc-display').textContent = w.description || '—'; show($g('wfm-desc-display'));
 
@@ -283,19 +286,22 @@
         var w = _data.wfh;
         $g('wfm-title').textContent = _L.titleEdit;
         hide($g('wfm-status-banner'));
-        hide($g('wfm-date-display'));  show($g('wfm-date'));
-        hide($g('wfm-time-display'));  show($g('wfm-time-inputs'));
+        hide($g('wfm-start-display')); show($g('wfm-start-at'));
+        hide($g('wfm-end-display'));   show($g('wfm-end-at'));
         hide($g('wfm-hours-display')); show($g('wfm-hours')); show($g('wfm-hours-note'));
         hide($g('wfm-desc-display'));  show($g('wfm-description'));
 
-        _fpSet($g('wfm-date'), w.wfh_date);
-        $g('wfm-start-time').value = w.start_time;
-        $g('wfm-end-time').value   = w.end_time;
-        $g('wfm-hours').value      = w.hours;
+        _fpSet($g('wfm-start-at'), w.start_at_input);
+        _fpSet($g('wfm-end-at'), w.end_at_input);
         $g('wfm-description').value = w.description || '';
         _manualH = false;
         _bindListeners();
-        _showTotals(parseFloat(w.hours));
+        _calcHours();
+        if (!w.is_multi_day) {
+            _manualH = Math.abs((parseFloat($g('wfm-hours').value) || 0) - parseFloat(w.hours)) > 0.001;
+            $g('wfm-hours').value = w.hours;
+            _showTotals(parseFloat(w.hours));
+        }
 
         $g('wfm-btn-area').innerHTML = _btn(_L.cancel, 'closeWfhModal()', 'secondary') + _btn(_L.save, '_wfmSubmit()', 'primary');
     }
@@ -327,22 +333,69 @@
     // ── Hours calculation ─────────────────────────────────────────────
 
     function _toMins(t){ var p = String(t).split(':').map(Number); return p[0] * 60 + (p[1] || 0); }
+    function _pad(n){ return String(n).padStart(2, '0'); }
+    function _iso(dt){ return dt.getFullYear() + '-' + _pad(dt.getMonth() + 1) + '-' + _pad(dt.getDate()); }
+    function _fd(dt){ return _pad(dt.getDate()) + '/' + _pad(dt.getMonth() + 1); }
+    function _mins(dt){ return dt.getHours() * 60 + dt.getMinutes(); }
+
+    // Net hours between two minute marks on one day, minus the lunch overlap (mirrors WfhRequest::breakdown)
+    function _net(from, to){
+        var lunch = Math.max(0, Math.min(to, _toMins(LUNCH_END)) - Math.max(from, _toMins(LUNCH_START)));
+        return Math.max(0, to - from - lunch) / 60;
+    }
+
+    function _range(){
+        var s = $g('wfm-start-at').value, e = $g('wfm-end-at').value;
+        if (!s || !e) return null;
+        var start = new Date(s), end = new Date(e);
+        return end > start ? { start: start, end: end } : null;
+    }
+
+    function _isMultiDay(){ var r = _range(); return !!r && _iso(r.start) !== _iso(r.end); }
 
     function _calcHours(){
-        var s = $g('wfm-start-time').value, e = $g('wfm-end-time').value;
-        if (_manualH || !s || !e) return;
-        var from = _toMins(s), to = _toMins(e);
-        if (to <= from) { $g('wfm-hours').value = ''; _showTotals(0); return; }
-        var lunch = Math.max(0, Math.min(to, _toMins(LUNCH_END)) - Math.max(from, _toMins(LUNCH_START)));
-        var h = (to - from - lunch) / 60;
-        $g('wfm-hours').value = h.toFixed(2).replace(/\.?0+$/, '');
-        _showTotals(h);
+        var r = _range(), h = $g('wfm-hours'), bd = $g('wfm-breakdown');
+        hide(bd);
+        if (!r) { if (!_manualH) h.value = ''; h.disabled = false; _showTotals(0); return; }
+
+        if (!_isMultiDay()) {
+            h.disabled = false;
+            if (!_manualH) h.value = _net(_mins(r.start), _mins(r.end)).toFixed(2).replace(/\.?0+$/, '');
+            _showTotals(parseFloat(h.value) || 0);
+            return;
+        }
+
+        // Multi-day: first day to DAY_END, full days in between, last day from DAY_START; weekends/holidays count 0
+        var workDay = function(dt){ var dow = dt.getDay(); return dow !== 0 && dow !== 6 && HOLIDAYS.indexOf(_iso(dt)) === -1; };
+        var first = workDay(r.start) ? _net(_mins(r.start), _toMins(DAY_END)) : 0;
+        var last  = workDay(r.end) ? _net(_toMins(DAY_START), _mins(r.end)) : 0;
+        var mid = 0, d = new Date(r.start); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() + 1);
+        var stop = new Date(r.end); stop.setHours(0, 0, 0, 0);
+        while (d < stop) { if (workDay(d)) mid++; d.setDate(d.getDate() + 1); }
+        var midH  = mid * _net(_toMins(DAY_START), _toMins(DAY_END));
+        var total = first + midH + last;
+
+        _manualH = false; h.disabled = true;
+        h.value = total.toFixed(2).replace(/\.?0+$/, '');
+        _showTotals(total);
+
+        var esc = function(t){ var x = document.createElement('span'); x.textContent = t; return x.innerHTML; };
+        var dot = '<span class="text-sky-400 mr-1">•</span>';
+        var html = '<p class="font-semibold text-sky-700 dark:text-sky-400 mb-1.5">' + esc(_L.bdTitle) + '</p><div class="space-y-0.5">';
+        html += dot + '<strong>' + esc(_L.bdDay) + ' ' + _fd(r.start) + '</strong>: ' + _fmtH(first) + '<br>';
+        if (mid > 0) html += dot + '<strong>' + mid + ' ' + esc(_L.bdWorkDays) + '</strong>: ' + _fmtH(midH) + ' <span class="text-gray-400">(' + esc(_L.bdExcl) + ')</span><br>';
+        html += dot + '<strong>' + esc(_L.bdDay) + ' ' + _fd(r.end) + '</strong>: ' + _fmtH(last) + '</div>';
+        bd.innerHTML = html; show(bd);
     }
 
     function _bindListeners(){
         if (_bound) return; _bound = true;
-        $g('wfm-start-time').addEventListener('change', _calcHours);
-        $g('wfm-end-time').addEventListener('change', _calcHours);
+        $g('wfm-start-at').addEventListener('change', function(){
+            // Convenience: an empty End defaults to the same day at DAY_END
+            if (this.value && !$g('wfm-end-at').value) _fpSet($g('wfm-end-at'), this.value.slice(0, 10) + 'T' + DAY_END);
+            _calcHours();
+        });
+        $g('wfm-end-at').addEventListener('change', _calcHours);
         $g('wfm-hours').addEventListener('input', function(){ _manualH = true; _showTotals(parseFloat(this.value) || 0); });
     }
 
@@ -358,8 +411,6 @@
         if (_tsUser) return _tsUser.getValue() || AUTH_ID;
         var sel = $g('wfm-user-select'); return sel ? (sel.value || AUTH_ID) : AUTH_ID;
     }
-
-    function _fmtDate(iso){ if (!iso) return iso; var p = iso.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
 
     function _btn(label, fn, type){
         var base = 'px-4 py-2 text-sm rounded-lg font-medium transition ';
