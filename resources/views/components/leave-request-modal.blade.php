@@ -83,12 +83,12 @@
                 <div>
                     <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('Start') }}</label>
                     <p id="lrm-start-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
-                    <input id="lrm-start-at" type="datetime-local" lang="en-GB" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
+                    <input id="lrm-start-at" type="datetime-local" lang="en-GB" data-default-hour="8" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('End') }}</label>
                     <p id="lrm-end-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
-                    <input id="lrm-end-at" type="datetime-local" lang="en-GB" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
+                    <input id="lrm-end-at" type="datetime-local" lang="en-GB" data-default-hour="17" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
                 </div>
             </div>
 

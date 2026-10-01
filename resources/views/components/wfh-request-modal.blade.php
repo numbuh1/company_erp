@@ -91,7 +91,6 @@
                     <span id="wfm-year-arrow" class="hidden text-gray-400">→</span>
                     <span id="wfm-year-after" class="hidden font-semibold text-green-600 dark:text-green-400"></span>
                 </div>
-                <p class="text-xs text-gray-400">{{ __('WFH hours are a label on your work day — keep logging your work time as usual.') }}</p>
             </div>
 
             {{-- Reason --}}
@@ -184,8 +183,9 @@
         else { $g('wfm-user-display').textContent = AUTH_NAME; show($g('wfm-user-display')); }
 
         show($g('wfm-date')); show($g('wfm-time-inputs')); show($g('wfm-hours')); show($g('wfm-hours-note')); show($g('wfm-description'));
-        _fpSet($g('wfm-date'), ''); $g('wfm-start-time').value = ''; $g('wfm-end-time').value = '';
+        _fpSet($g('wfm-date'), ''); $g('wfm-start-time').value = '08:00'; $g('wfm-end-time').value = '17:00';
         $g('wfm-hours').value = ''; $g('wfm-description').value = '';
+        _calcHours();
         _fetchTotals(AUTH_ID);
         _bindListeners();
         $g('wfm-btn-area').innerHTML = _btn(_L.cancel, 'closeWfhModal()', 'secondary') + _btn(_L.create, '_wfmSubmit()', 'primary');

@@ -220,6 +220,9 @@
 
             function _initFp(el, opts) {
                 var wasHidden = el.classList.contains('hidden');
+                if (el.dataset.defaultHour) {
+                    opts = Object.assign({}, opts, { defaultHour: +el.dataset.defaultHour, defaultMinute: 0 });
+                }
                 var fp = flatpickr(el, opts);
                 if (wasHidden && fp.altInput) {
                     fp.altInput.classList.add('hidden');

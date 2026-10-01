@@ -57,7 +57,7 @@
                     <!-- Start datetime -->
                     <div class="mb-4">
                         <x-input-label :value="__('Start Time')" />
-                        <input type="datetime-local" name="start_at" id="start_at" lang="en-GB"
+                        <input type="datetime-local" name="start_at" id="start_at" lang="en-GB" data-default-hour="8"
                             value="{{ old('start_at', isset($leave) ? $leave->start_at->format('Y-m-d\TH:i') : '') }}"
                             class="w-full border rounded p-2" @disabled($readonly)>
                     </div>
@@ -65,7 +65,7 @@
                     <!-- End datetime -->
                     <div class="mb-4">
                         <x-input-label :value="__('End Time')" />
-                        <input type="datetime-local" name="end_at" id="end_at" lang="en-GB"
+                        <input type="datetime-local" name="end_at" id="end_at" lang="en-GB" data-default-hour="17"
                             value="{{ old('end_at', isset($leave) ? $leave->end_at->format('Y-m-d\TH:i') : '') }}"
                             class="w-full border rounded p-2" @disabled($readonly)>
                     </div>
