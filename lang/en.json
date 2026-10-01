@@ -950,5 +950,7 @@
     "Hours per day": "Hours per day",
     "0 = fill each day up to 8h": "0 = fill each day up to 8h",
     "Order No.": "Order No.",
-    "Lower numbers appear first in the Help Pages list.": "Lower numbers appear first in the Help Pages list."
+    "Lower numbers appear first in the Help Pages list.": "Lower numbers appear first in the Help Pages list.",
+    "Show password": "Show password",
+    "Hide password": "Hide password"
 }

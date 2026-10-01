@@ -950,5 +950,7 @@
     "Hours per day": "Số giờ mỗi ngày",
     "0 = fill each day up to 8h": "0 = chấm đủ 8h mỗi ngày",
     "Order No.": "STT",
-    "Lower numbers appear first in the Help Pages list.": "Số nhỏ hơn sẽ hiển thị trước trong danh sách Trang trợ giúp."
+    "Lower numbers appear first in the Help Pages list.": "Số nhỏ hơn sẽ hiển thị trước trong danh sách Trang trợ giúp.",
+    "Show password": "Hiện mật khẩu",
+    "Hide password": "Ẩn mật khẩu"
 }
