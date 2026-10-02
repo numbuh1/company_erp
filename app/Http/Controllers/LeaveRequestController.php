@@ -7,7 +7,10 @@ use App\Models\User;
 use App\Models\LeaveBalanceLog;
 use App\Helper\Helper;
 use App\Helper\NotificationHelper;
+use App\Support\WorkHours;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class LeaveRequestController extends Controller
 {
@@ -95,10 +98,10 @@ class LeaveRequestController extends Controller
             'end_at'          => 'required|date|after_or_equal:start_at',
             'type'            => 'required|string',
             'hours'           => 'nullable|numeric|min:0',
-            'start_day_hours' => 'nullable|numeric|min:0|max:24',
-            'end_day_hours'   => 'nullable|numeric|min:0|max:24',
             'description'     => 'nullable|string',
         ]);
+
+        $request->merge($this->_resolveHours($request->only('start_at', 'end_at', 'hours')));
 
         $requestedUserId = $request->user_id;
 
@@ -226,12 +229,10 @@ class LeaveRequestController extends Controller
             'start_at'        => 'required|date',
             'end_at'          => 'required|date|after_or_equal:start_at',
             'hours'           => 'nullable|numeric|min:0',
-            'start_day_hours' => 'nullable|numeric|min:0|max:24',
-            'end_day_hours'   => 'nullable|numeric|min:0|max:24',
             'description'     => 'nullable|string',
         ]);
 
-        $leaveRequest->update($data);
+        $leaveRequest->update(array_merge($data, $this->_resolveHours($data)));
 
         if ($request->expectsJson()) {
             return response()->json(['success' => true]);
@@ -317,6 +318,37 @@ class LeaveRequestController extends Controller
         }
 
         return back()->with('success', 'Leave rejected.');
+    }
+
+    /**
+     * Multi-day: hours and the first/last-day split always come from WorkHours (same rules as WFH).
+     * Single day: the entered total, or the span minus lunch when left empty.
+     */
+    private function _resolveHours(array $data): array
+    {
+        $start = Carbon::parse($data['start_at']);
+        $end   = Carbon::parse($data['end_at']);
+        $days  = WorkHours::breakdown($start, $end);
+
+        if ($start->isSameDay($end)) {
+            $entered = $data['hours'] ?? null;
+            return [
+                'hours'           => round($entered !== null && $entered !== '' ? (float) $entered : array_sum($days), 2),
+                'start_day_hours' => null,
+                'end_day_hours'   => null,
+            ];
+        }
+
+        $hours = array_sum($days);
+        if ($hours <= 0) {
+            throw ValidationException::withMessages(['end_at' => __('This range has no working hours.')]);
+        }
+
+        return [
+            'hours'           => round($hours, 2),
+            'start_day_hours' => $days[$start->toDateString()] ?? 0,
+            'end_day_hours'   => $days[$end->toDateString()] ?? 0,
+        ];
     }
 
     // public function authorize(string $all_permission, string $team_permission, $leaveRequest) {

@@ -97,6 +97,25 @@
             </div>
         </div>
 
+        @auth
+        {{-- Rules for resources/js/components/work-hours.js (mirror of App\Support\WorkHours) --}}
+        <script>
+            window.WorkHoursConfig = @js([
+                'lunchStart' => \App\Models\AppSetting::get('lunch_break_start', '12:00'),
+                'lunchEnd'   => \App\Models\AppSetting::get('lunch_break_end', '13:00'),
+                'dayStart'   => \App\Support\WorkHours::DAY_START,
+                'dayEnd'     => \App\Support\WorkHours::DAY_END,
+                'holidays'   => \App\Models\PublicHoliday::getHolidayDates(now()->subYear(), now()->addYears(2)),
+                'labels'     => [
+                    'title'    => __('Expected total hours'),
+                    'day'      => __('Day'),
+                    'workDays' => __('working days'),
+                    'excl'     => __('8h/day, excl. weekends & holidays'),
+                ],
+            ]);
+        </script>
+        @endauth
+
         @include('layouts.checkin-fab')
         <x-leave-request-modal />
         <x-ot-request-modal />

@@ -134,8 +134,6 @@
         'pending' => __('Pending'), 'approved' => __('Approved'), 'rejected' => __('Rejected'),
         'errSave' => __('Error saving.'), 'errConn' => __('Connection error.'),
         'saving' => __('Saving…'), 'processing' => __('Processing…'),
-        'bdTitle' => __('Expected total hours'), 'bdDay' => __('Day'),
-        'bdWorkDays' => __('working days'), 'bdExcl' => __('8h/day, excl. weekends & holidays'),
     ]);
     var CSRF        = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     var AUTH_ID     = @js($wfmAuth?->id);
@@ -143,11 +141,6 @@
     var HAS_SEL     = @js($wfmHasSelect);
     var WFH_URL     = @js(url('wfh-requests'));
     var USR_URL     = @js(url('users'));
-    var LUNCH_START = @js(\App\Models\AppSetting::get('lunch_break_start', '12:00'));
-    var LUNCH_END   = @js(\App\Models\AppSetting::get('lunch_break_end', '13:00'));
-    var DAY_START   = @js(\App\Models\WfhRequest::DAY_START);
-    var DAY_END     = @js(\App\Models\WfhRequest::DAY_END);
-    var HOLIDAYS    = @js(\App\Models\PublicHoliday::getHolidayDates(now()->subYear(), now()->addYears(2)));
 
     var _mode = 'create', _id = null, _data = null;
     var _monthTotal = 0, _yearTotal = 0;
@@ -323,67 +316,39 @@
 
     // ── Hours calculation ─────────────────────────────────────────────
 
-    function _toMins(t){ var p = String(t).split(':').map(Number); return p[0] * 60 + (p[1] || 0); }
-    function _pad(n){ return String(n).padStart(2, '0'); }
-    function _iso(dt){ return dt.getFullYear() + '-' + _pad(dt.getMonth() + 1) + '-' + _pad(dt.getDate()); }
-    function _fd(dt){ return _pad(dt.getDate()) + '/' + _pad(dt.getMonth() + 1); }
-    function _mins(dt){ return dt.getHours() * 60 + dt.getMinutes(); }
-
-    // Net hours between two minute marks on one day, minus the lunch overlap (mirrors WfhRequest::breakdown)
-    function _net(from, to){
-        var lunch = Math.max(0, Math.min(to, _toMins(LUNCH_END)) - Math.max(from, _toMins(LUNCH_START)));
-        return Math.max(0, to - from - lunch) / 60;
-    }
-
     function _range(){
         var s = $g('wfm-start-at').value, e = $g('wfm-end-at').value;
-        if (!s || !e) return null;
-        var start = new Date(s), end = new Date(e);
-        return end > start ? { start: start, end: end } : null;
+        return s && e ? { start: new Date(s), end: new Date(e) } : null;
     }
 
-    function _isMultiDay(){ var r = _range(); return !!r && _iso(r.start) !== _iso(r.end); }
+    function _isMultiDay(){ var r = _range(); return !!r && r.start.toDateString() !== r.end.toDateString(); }
 
+    // Same rules as the leave form (window.WorkHours); multi-day totals are calculated, a single day can be edited.
     function _calcHours(){
         var r = _range(), h = $g('wfm-hours'), bd = $g('wfm-breakdown');
         hide(bd);
-        if (!r) { if (!_manualH) h.value = ''; h.disabled = false; _showTotals(0); return; }
+        var b = r ? window.WorkHours.breakdown(r.start, r.end) : null;
+        if (!b) { if (!_manualH) h.value = ''; h.disabled = false; _showTotals(0); return; }
 
-        if (!_isMultiDay()) {
+        if (!b.multiDay) {
             h.disabled = false;
-            if (!_manualH) h.value = _net(_mins(r.start), _mins(r.end)).toFixed(2).replace(/\.?0+$/, '');
+            if (!_manualH) h.value = b.total.toFixed(2).replace(/\.?0+$/, '');
             _showTotals(parseFloat(h.value) || 0);
             return;
         }
 
-        // Multi-day: first day to DAY_END, full days in between, last day from DAY_START; weekends/holidays count 0
-        var workDay = function(dt){ var dow = dt.getDay(); return dow !== 0 && dow !== 6 && HOLIDAYS.indexOf(_iso(dt)) === -1; };
-        var first = workDay(r.start) ? _net(_mins(r.start), _toMins(DAY_END)) : 0;
-        var last  = workDay(r.end) ? _net(_toMins(DAY_START), _mins(r.end)) : 0;
-        var mid = 0, d = new Date(r.start); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() + 1);
-        var stop = new Date(r.end); stop.setHours(0, 0, 0, 0);
-        while (d < stop) { if (workDay(d)) mid++; d.setDate(d.getDate() + 1); }
-        var midH  = mid * _net(_toMins(DAY_START), _toMins(DAY_END));
-        var total = first + midH + last;
-
         _manualH = false; h.disabled = true;
-        h.value = total.toFixed(2).replace(/\.?0+$/, '');
-        _showTotals(total);
-
-        var esc = function(t){ var x = document.createElement('span'); x.textContent = t; return x.innerHTML; };
-        var dot = '<span class="text-sky-400 mr-1">•</span>';
-        var html = '<p class="font-semibold text-sky-700 dark:text-sky-400 mb-1.5">' + esc(_L.bdTitle) + '</p><div class="space-y-0.5">';
-        html += dot + '<strong>' + esc(_L.bdDay) + ' ' + _fd(r.start) + '</strong>: ' + _fmtH(first) + '<br>';
-        if (mid > 0) html += dot + '<strong>' + mid + ' ' + esc(_L.bdWorkDays) + '</strong>: ' + _fmtH(midH) + ' <span class="text-gray-400">(' + esc(_L.bdExcl) + ')</span><br>';
-        html += dot + '<strong>' + esc(_L.bdDay) + ' ' + _fd(r.end) + '</strong>: ' + _fmtH(last) + '</div>';
-        bd.innerHTML = html; show(bd);
+        h.value = b.total.toFixed(2).replace(/\.?0+$/, '');
+        _showTotals(b.total);
+        bd.innerHTML = window.WorkHours.html(b, r.start, r.end, 'sky');
+        show(bd);
     }
 
     function _bindListeners(){
         if (_bound) return; _bound = true;
         $g('wfm-start-at').addEventListener('change', function(){
-            // Convenience: an empty End defaults to the same day at DAY_END
-            if (this.value && !$g('wfm-end-at').value) _fpSet($g('wfm-end-at'), this.value.slice(0, 10) + 'T' + DAY_END);
+            // Convenience: an empty End defaults to the same day at the end of the work day
+            if (this.value && !$g('wfm-end-at').value) _fpSet($g('wfm-end-at'), this.value.slice(0, 10) + 'T' + window.WorkHoursConfig.dayEnd);
             _calcHours();
         });
         $g('wfm-end-at').addEventListener('change', _calcHours);
