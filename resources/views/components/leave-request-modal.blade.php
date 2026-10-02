@@ -164,7 +164,7 @@
                     class="w-full border-red-300 dark:border-red-600 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2"></textarea>
                 <div class="flex gap-2 justify-end">
                     <button onclick="_lrmCancelReject()" class="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition">{{ __('Cancel') }}</button>
-                    <button onclick="_lrmConfirmReject()" class="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition">{{ __('Confirm Reject') }}</button>
+                    <button onclick="_lrmConfirmReject(this)" class="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition">{{ __('Confirm Reject') }}</button>
                 </div>
             </div>
 
@@ -196,6 +196,8 @@
         unpaid:      '{{ __("Unpaid leave") }}',
         errSave:     '{{ __("Error saving request.") }}',
         errConn:     '{{ __("Connection error.") }}',
+        saving:      @js(__('Saving…')),
+        processing:  @js(__('Processing…')),
         bdTitle:     '{{ __("Expected total hours") }}',
         bdDay:       'Ngày',
         bdWorkDays:  '{{ __("working days") }}',
@@ -269,7 +271,6 @@
         hide($g('lrm-overlay'));
         _destroyTs();
         _listenersBound = false;
-        _submitting = false;
     };
 
     window._lrmSwitchToEdit = function () {
@@ -277,10 +278,7 @@
         _populateEdit();
     };
 
-    var _submitting = false;
-    window._lrmSubmit = function () {
-        if (_submitting) return;
-        _submitting = true;
+    window._lrmSubmit = function (btn) {
         var userId = (_mode === 'edit' && _data) ? _data.leave.user_id : _tsVal();
         var payload = {
             user_id:         userId,
@@ -292,25 +290,20 @@
             hours:           $g('lrm-hours').value,
             description:     $g('lrm-description').value,
         };
-        var url    = _mode === 'create' ? _LR_URL : _LR_URL + '/' + _id;
-        var method = _mode === 'create' ? 'POST'                     : 'PUT';
-        fetch(url, {
-            method: method,
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
-            body: JSON.stringify(payload),
-        })
-        .then(function(r){ return r.json(); })
-        .then(function(d){ if (d.success) { closeLR(); location.reload(); } else { _submitting = false; alert(d.message || _LRM.errSave); } })
-        .catch(function(){ _submitting = false; alert(_LRM.errConn); });
+        _send(btn, _LRM.saving, {
+            url:    _mode === 'create' ? _LR_URL : _LR_URL + '/' + _id,
+            method: _mode === 'create' ? 'POST' : 'PUT',
+            body:   payload,
+        });
     };
 
-    window._lrmApprove = function () {
-        fetch(_LR_URL + '/' + _id + '/approve', {
-            method: 'POST', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF }
-        })
-        .then(function(r){ return r.json(); })
-        .then(function(d){ if (d.success) { closeLR(); location.reload(); } });
+    window._lrmApprove = function (btn) {
+        _send(btn, _LRM.processing, { url: _LR_URL + '/' + _id + '/approve' });
     };
+
+    function _send(btn, label, req) {
+        window.sendRequestModal(btn, $g('lrm-overlay'), Object.assign({ label: label, errMsg: _LRM.errSave, errConn: _LRM.errConn }, req));
+    }
 
     window._lrmShowReject = function () {
         show($g('lrm-reject-section'));
@@ -318,16 +311,10 @@
         $g('lrm-reject-input').focus();
     };
     window._lrmCancelReject = function () { hide($g('lrm-reject-section')); };
-    window._lrmConfirmReject = function () {
+    window._lrmConfirmReject = function (btn) {
         var reason = $g('lrm-reject-input').value.trim();
         if (!reason) { $g('lrm-reject-input').focus(); return; }
-        fetch(_LR_URL + '/' + _id + '/reject', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
-            body: JSON.stringify({ reject_reason: reason }),
-        })
-        .then(function(r){ return r.json(); })
-        .then(function(d){ if (d.success) { closeLR(); location.reload(); } });
+        _send(btn, _LRM.processing, { url: _LR_URL + '/' + _id + '/reject', body: { reject_reason: reason } });
     };
 
     // ── Private ───────────────────────────────────────────────────────
@@ -354,7 +341,7 @@
         _bindListeners();
         $g('lrm-btn-area').innerHTML =
             _btn(_LRM.cancel, 'closeLR()', 'secondary') +
-            _btn(_LRM.create, '_lrmSubmit()', 'primary');
+            _btn(_LRM.create, '_lrmSubmit(this)', 'primary');
     }
 
     function _populateView(d) {
@@ -413,7 +400,7 @@
 
         var btns = '';
         if (d.can_edit)    btns += _btn(_LRM.edit, '_lrmSwitchToEdit()', 'secondary');
-        if (d.can_approve) btns += _btn(_LRM.approve, '_lrmApprove()', 'success') + _btn(_LRM.reject, '_lrmShowReject()', 'danger');
+        if (d.can_approve) btns += _btn(_LRM.approve, '_lrmApprove(this)', 'success') + _btn(_LRM.reject, '_lrmShowReject()', 'danger');
         btns += _btn(_LRM.close, 'closeLR()', 'secondary');
         $g('lrm-btn-area').innerHTML = btns;
     }
@@ -444,7 +431,7 @@
 
         $g('lrm-btn-area').innerHTML =
             _btn(_LRM.cancel, 'closeLR()', 'secondary') +
-            _btn(_LRM.save, '_lrmSubmit()', 'primary');
+            _btn(_LRM.save, '_lrmSubmit(this)', 'primary');
     }
 
     // ── Balance ───────────────────────────────────────────────────────

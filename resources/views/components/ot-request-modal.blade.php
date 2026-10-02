@@ -171,7 +171,7 @@
                     class="w-full border-red-300 dark:border-red-600 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2"></textarea>
                 <div class="flex gap-2 justify-end">
                     <button onclick="_otmCancelReject()" class="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition">{{ __('Cancel') }}</button>
-                    <button onclick="_otmConfirmReject()" class="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition">{{ __('Confirm Reject') }}</button>
+                    <button onclick="_otmConfirmReject(this)" class="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition">{{ __('Confirm Reject') }}</button>
                 </div>
             </div>
         </div>
@@ -199,6 +199,8 @@
         rejected:    '{{ __("Rejected") }}',
         errSave:     '{{ __("Error saving.") }}',
         errConn:     '{{ __("Connection error.") }}',
+        saving:      @js(__('Saving…')),
+        processing:  @js(__('Processing…')),
         noneOpt:     '{{ __("— None —") }}',
     };
     var CSRF         = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
@@ -270,15 +272,11 @@
     window.closeOtModal = function () {
         hide($g('otm-overlay'));
         _destroyTs(); _lBound=false;
-        _submitting=false;
     };
 
     window._otmSwitchToEdit = function () { _mode='edit'; _populateEdit(); };
 
-    var _submitting = false;
-    window._otmSubmit = function () {
-        if (_submitting) return;
-        _submitting = true;
+    window._otmSubmit = function (btn) {
         var userId  = (_mode==='edit'&&_data) ? _data.ot.user_id : _tsUserVal();
         var otDate  = $g('otm-ot-date').value;
         var typeVal = $g('otm-type-select').value || _getOtType(otDate);
@@ -293,36 +291,27 @@
             description: $g('otm-description').value,
         };
 
-        var url    = _mode==='create' ? _OT_URL : _OT_URL+'/'+_id;
-        var method = _mode==='create' ? 'POST'                         : 'PUT';
-        fetch(url,{
-            method:method,
-            headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':CSRF},
-            body:JSON.stringify(payload),
-        })
-        .then(function(r){ return r.json(); })
-        .then(function(d){ if(d.success){ closeOtModal(); location.reload(); } else { _submitting=false; alert(d.message||_OTM.errSave); } })
-        .catch(function(){ _submitting=false; alert(_OTM.errConn); });
+        _send(btn, _OTM.saving, {
+            url:    _mode==='create' ? _OT_URL : _OT_URL+'/'+_id,
+            method: _mode==='create' ? 'POST' : 'PUT',
+            body:   payload,
+        });
     };
 
-    window._otmApprove = function () {
-        fetch(_OT_URL+'/'+_id+'/approve',{method:'POST',headers:{'Accept':'application/json','X-CSRF-TOKEN':CSRF}})
-        .then(function(r){ return r.json(); })
-        .then(function(d){ if(d.success){ closeOtModal(); location.reload(); } });
+    window._otmApprove = function (btn) {
+        _send(btn, _OTM.processing, { url: _OT_URL+'/'+_id+'/approve' });
     };
+
+    function _send(btn, label, req){
+        window.sendRequestModal(btn, $g('otm-overlay'), Object.assign({ label: label, errMsg: _OTM.errSave, errConn: _OTM.errConn }, req));
+    }
 
     window._otmShowReject  = function(){ show($g('otm-reject-section')); $g('otm-reject-input').value=''; $g('otm-reject-input').focus(); };
     window._otmCancelReject= function(){ hide($g('otm-reject-section')); };
-    window._otmConfirmReject=function(){
+    window._otmConfirmReject=function(btn){
         var reason=$g('otm-reject-input').value.trim();
         if(!reason){ $g('otm-reject-input').focus(); return; }
-        fetch(_OT_URL+'/'+_id+'/reject',{
-            method:'POST',
-            headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':CSRF},
-            body:JSON.stringify({reject_reason:reason}),
-        })
-        .then(function(r){ return r.json(); })
-        .then(function(d){ if(d.success){ closeOtModal(); location.reload(); } });
+        _send(btn, _OTM.processing, { url: _OT_URL+'/'+_id+'/reject', body: { reject_reason: reason } });
     };
 
     // ── Private ───────────────────────────────────────────────────────
@@ -344,7 +333,7 @@
         _fetchOtTotal(AUTH_ID);
         _bindListeners();
         _initProjectTaskTs();
-        $g('otm-btn-area').innerHTML=_btn(_OTM.cancel,'closeOtModal()','secondary')+_btn(_OTM.create,'_otmSubmit()','primary');
+        $g('otm-btn-area').innerHTML=_btn(_OTM.cancel,'closeOtModal()','secondary')+_btn(_OTM.create,'_otmSubmit(this)','primary');
     }
 
     function _populateView(d){
@@ -407,7 +396,7 @@
 
         var btns='';
         if(d.can_edit)    btns+=_btn(_OTM.edit,'_otmSwitchToEdit()','secondary');
-        if(d.can_approve) btns+=_btn(_OTM.approve,'_otmApprove()','success')+_btn(_OTM.reject,'_otmShowReject()','danger');
+        if(d.can_approve) btns+=_btn(_OTM.approve,'_otmApprove(this)','success')+_btn(_OTM.reject,'_otmShowReject()','danger');
         btns+=_btn(_OTM.close,'closeOtModal()','secondary');
         $g('otm-btn-area').innerHTML=btns;
     }
@@ -459,7 +448,7 @@
         _updateOtPreview();
         _checkHoursWarning();
 
-        $g('otm-btn-area').innerHTML=_btn(_OTM.cancel,'closeOtModal()','secondary')+_btn(_OTM.save,'_otmSubmit()','primary');
+        $g('otm-btn-area').innerHTML=_btn(_OTM.cancel,'closeOtModal()','secondary')+_btn(_OTM.save,'_otmSubmit(this)','primary');
     }
 
     // ── OT preview ────────────────────────────────────────────────────

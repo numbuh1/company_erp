@@ -151,7 +151,7 @@
 
     var _mode = 'create', _id = null, _data = null;
     var _monthTotal = 0, _yearTotal = 0;
-    var _tsUser = null, _manualH = false, _bound = false, _submitting = false;
+    var _tsUser = null, _manualH = false, _bound = false;
 
     function $g(id){ return document.getElementById(id); }
     function show(el){ if(!el) return; (el._flatpickr && el._flatpickr.altInput ? el._flatpickr.altInput : el).classList.remove('hidden'); }
@@ -159,32 +159,8 @@
     function _fpSet(el, val){ if(el._flatpickr){ el._flatpickr.setDate(val, false); } else { el.value = val; } }
     function _fmtH(h){ return (Math.round(h * 100) / 100) + 'h'; }
 
-    // Disables every action button while a request is in flight; the clicked one shows a spinner + label.
-    var SPINNER = '<svg class="inline w-4 h-4 mr-1.5 -mt-0.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>';
-    function _setBusy(btn, busy, label){
-        _submitting = busy;
-        document.querySelectorAll('#wfm-btn-area button, #wfm-reject-section button').forEach(function(b){
-            b.disabled = busy;
-            b.classList.toggle('opacity-60', busy);
-            b.classList.toggle('cursor-not-allowed', busy);
-        });
-        if (!btn) return;
-        if (busy) { btn.dataset.label = btn.textContent; btn.innerHTML = SPINNER; btn.appendChild(document.createTextNode(label)); }
-        else if (btn.dataset.label) { btn.textContent = btn.dataset.label; }
-    }
-
-    // On success keep the busy state until the reload replaces the page; on failure restore the buttons.
-    function _send(btn, label, url, opts, errMsg){
-        if (_submitting) return;
-        _setBusy(btn, true, label);
-        fetch(url, opts)
-            .then(function(r){ return r.json(); })
-            .then(function(d){
-                if (d.success) { location.reload(); return; }
-                _setBusy(btn, false);
-                alert(d.message || errMsg);
-            })
-            .catch(function(){ _setBusy(btn, false); alert(_L.errConn); });
+    function _send(btn, label, req){
+        window.sendRequestModal(btn, $g('wfm-overlay'), Object.assign({ label: label, errMsg: _L.errSave, errConn: _L.errConn }, req));
     }
 
     function _hideBody(){
@@ -227,7 +203,6 @@
     window.closeWfhModal = function () {
         hide($g('wfm-overlay'));
         if (_tsUser) { try { _tsUser.destroy(); } catch (e) {} _tsUser = null; }
-        _setBusy(null, false);
     };
 
     window._wfmSwitchToEdit = function () { _mode = 'edit'; _populateEdit(); };
@@ -240,16 +215,15 @@
             hours:       (_manualH && !_isMultiDay()) ? $g('wfm-hours').value : '',
             description: $g('wfm-description').value,
         };
-        _send(btn, _L.saving, _mode === 'create' ? WFH_URL : WFH_URL + '/' + _id, {
-            method:  _mode === 'create' ? 'POST' : 'PUT',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
-            body:    JSON.stringify(payload),
-        }, _L.errSave);
+        _send(btn, _L.saving, {
+            url:    _mode === 'create' ? WFH_URL : WFH_URL + '/' + _id,
+            method: _mode === 'create' ? 'POST' : 'PUT',
+            body:   payload,
+        });
     };
 
     window._wfmApprove = function (btn) {
-        _send(btn, _L.processing, WFH_URL + '/' + _id + '/approve',
-            { method: 'POST', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF } }, _L.errSave);
+        _send(btn, _L.processing, { url: WFH_URL + '/' + _id + '/approve' });
     };
 
     window._wfmShowReject   = function () { show($g('wfm-reject-section')); $g('wfm-reject-input').value = ''; $g('wfm-reject-input').focus(); };
@@ -257,11 +231,7 @@
     window._wfmConfirmReject = function (btn) {
         var reason = $g('wfm-reject-input').value.trim();
         if (!reason) { $g('wfm-reject-input').focus(); return; }
-        _send(btn, _L.processing, WFH_URL + '/' + _id + '/reject', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
-            body: JSON.stringify({ reject_reason: reason }),
-        }, _L.errSave);
+        _send(btn, _L.processing, { url: WFH_URL + '/' + _id + '/reject', body: { reject_reason: reason } });
     };
 
     // ── Views ─────────────────────────────────────────────────────────

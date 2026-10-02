@@ -4,6 +4,7 @@ import searchableSelect from './components/searchable-select.js';
 import './components/event-modal.js';
 import './components/skill-picker.js';
 import './components/recruitment-kanban.js';
+import './components/request-modal.js';
 
 import Alpine from 'alpinejs';
 
