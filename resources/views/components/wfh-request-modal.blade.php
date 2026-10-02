@@ -115,7 +115,7 @@
                     class="w-full border-red-300 dark:border-red-600 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2"></textarea>
                 <div class="flex gap-2 justify-end">
                     <button onclick="_wfmCancelReject()" class="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition">{{ __('Cancel') }}</button>
-                    <button onclick="_wfmConfirmReject()" class="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition">{{ __('Confirm Reject') }}</button>
+                    <button onclick="_wfmConfirmReject(this)" class="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition">{{ __('Confirm Reject') }}</button>
                 </div>
             </div>
         </div>
@@ -133,6 +133,7 @@
         'titleCreate' => __('Create WFH Request'), 'titleView' => __('WFH Request'), 'titleEdit' => __('Edit WFH Request'),
         'pending' => __('Pending'), 'approved' => __('Approved'), 'rejected' => __('Rejected'),
         'errSave' => __('Error saving.'), 'errConn' => __('Connection error.'),
+        'saving' => __('Saving…'), 'processing' => __('Processing…'),
         'bdTitle' => __('Expected total hours'), 'bdDay' => __('Day'),
         'bdWorkDays' => __('working days'), 'bdExcl' => __('8h/day, excl. weekends & holidays'),
     ]);
@@ -157,6 +158,34 @@
     function hide(el){ if(!el) return; (el._flatpickr && el._flatpickr.altInput ? el._flatpickr.altInput : el).classList.add('hidden'); }
     function _fpSet(el, val){ if(el._flatpickr){ el._flatpickr.setDate(val, false); } else { el.value = val; } }
     function _fmtH(h){ return (Math.round(h * 100) / 100) + 'h'; }
+
+    // Disables every action button while a request is in flight; the clicked one shows a spinner + label.
+    var SPINNER = '<svg class="inline w-4 h-4 mr-1.5 -mt-0.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>';
+    function _setBusy(btn, busy, label){
+        _submitting = busy;
+        document.querySelectorAll('#wfm-btn-area button, #wfm-reject-section button').forEach(function(b){
+            b.disabled = busy;
+            b.classList.toggle('opacity-60', busy);
+            b.classList.toggle('cursor-not-allowed', busy);
+        });
+        if (!btn) return;
+        if (busy) { btn.dataset.label = btn.textContent; btn.innerHTML = SPINNER; btn.appendChild(document.createTextNode(label)); }
+        else if (btn.dataset.label) { btn.textContent = btn.dataset.label; }
+    }
+
+    // On success keep the busy state until the reload replaces the page; on failure restore the buttons.
+    function _send(btn, label, url, opts, errMsg){
+        if (_submitting) return;
+        _setBusy(btn, true, label);
+        fetch(url, opts)
+            .then(function(r){ return r.json(); })
+            .then(function(d){
+                if (d.success) { location.reload(); return; }
+                _setBusy(btn, false);
+                alert(d.message || errMsg);
+            })
+            .catch(function(){ _setBusy(btn, false); alert(_L.errConn); });
+    }
 
     function _hideBody(){
         ['wfm-status-banner','wfm-user-display','wfm-user-select','wfm-start-display','wfm-start-at',
@@ -192,20 +221,18 @@
         $g('wfm-hours').value = ''; $g('wfm-hours').disabled = false; $g('wfm-description').value = '';
         _fetchTotals(AUTH_ID);
         _bindListeners();
-        $g('wfm-btn-area').innerHTML = _btn(_L.cancel, 'closeWfhModal()', 'secondary') + _btn(_L.create, '_wfmSubmit()', 'primary');
+        $g('wfm-btn-area').innerHTML = _btn(_L.cancel, 'closeWfhModal()', 'secondary') + _btn(_L.create, '_wfmSubmit(this)', 'primary');
     };
 
     window.closeWfhModal = function () {
         hide($g('wfm-overlay'));
         if (_tsUser) { try { _tsUser.destroy(); } catch (e) {} _tsUser = null; }
-        _submitting = false;
+        _setBusy(null, false);
     };
 
     window._wfmSwitchToEdit = function () { _mode = 'edit'; _populateEdit(); };
 
-    window._wfmSubmit = function () {
-        if (_submitting) return;
-        _submitting = true;
+    window._wfmSubmit = function (btn) {
         var payload = {
             user_id:     (_mode === 'edit' && _data) ? _data.wfh.user_id : _userVal(),
             start_at:    $g('wfm-start-at').value,
@@ -213,34 +240,28 @@
             hours:       (_manualH && !_isMultiDay()) ? $g('wfm-hours').value : '',
             description: $g('wfm-description').value,
         };
-        fetch(_mode === 'create' ? WFH_URL : WFH_URL + '/' + _id, {
+        _send(btn, _L.saving, _mode === 'create' ? WFH_URL : WFH_URL + '/' + _id, {
             method:  _mode === 'create' ? 'POST' : 'PUT',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
             body:    JSON.stringify(payload),
-        })
-        .then(function(r){ return r.json(); })
-        .then(function(d){ if (d.success) { closeWfhModal(); location.reload(); } else { _submitting = false; alert(d.message || _L.errSave); } })
-        .catch(function(){ _submitting = false; alert(_L.errConn); });
+        }, _L.errSave);
     };
 
-    window._wfmApprove = function () {
-        fetch(WFH_URL + '/' + _id + '/approve', { method: 'POST', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF } })
-            .then(function(r){ return r.json(); })
-            .then(function(d){ if (d.success) { closeWfhModal(); location.reload(); } });
+    window._wfmApprove = function (btn) {
+        _send(btn, _L.processing, WFH_URL + '/' + _id + '/approve',
+            { method: 'POST', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF } }, _L.errSave);
     };
 
     window._wfmShowReject   = function () { show($g('wfm-reject-section')); $g('wfm-reject-input').value = ''; $g('wfm-reject-input').focus(); };
     window._wfmCancelReject = function () { hide($g('wfm-reject-section')); };
-    window._wfmConfirmReject = function () {
+    window._wfmConfirmReject = function (btn) {
         var reason = $g('wfm-reject-input').value.trim();
         if (!reason) { $g('wfm-reject-input').focus(); return; }
-        fetch(WFH_URL + '/' + _id + '/reject', {
+        _send(btn, _L.processing, WFH_URL + '/' + _id + '/reject', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
             body: JSON.stringify({ reject_reason: reason }),
-        })
-        .then(function(r){ return r.json(); })
-        .then(function(d){ if (d.success) { closeWfhModal(); location.reload(); } });
+        }, _L.errSave);
     };
 
     // ── Views ─────────────────────────────────────────────────────────
@@ -277,7 +298,7 @@
 
         var btns = '';
         if (d.can_edit)    btns += _btn(_L.edit, '_wfmSwitchToEdit()', 'secondary');
-        if (d.can_approve) btns += _btn(_L.approve, '_wfmApprove()', 'success') + _btn(_L.reject, '_wfmShowReject()', 'danger');
+        if (d.can_approve) btns += _btn(_L.approve, '_wfmApprove(this)', 'success') + _btn(_L.reject, '_wfmShowReject()', 'danger');
         btns += _btn(_L.close, 'closeWfhModal()', 'secondary');
         $g('wfm-btn-area').innerHTML = btns;
     }
@@ -303,7 +324,7 @@
             _showTotals(parseFloat(w.hours));
         }
 
-        $g('wfm-btn-area').innerHTML = _btn(_L.cancel, 'closeWfhModal()', 'secondary') + _btn(_L.save, '_wfmSubmit()', 'primary');
+        $g('wfm-btn-area').innerHTML = _btn(_L.cancel, 'closeWfhModal()', 'secondary') + _btn(_L.save, '_wfmSubmit(this)', 'primary');
     }
 
     // ── Totals preview ────────────────────────────────────────────────
