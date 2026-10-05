@@ -1038,5 +1038,6 @@
     "Work From Home": "Work From Home",
     "Day": "Day",
     "A WFH request cannot span more than 31 days.": "A WFH request cannot span more than 31 days.",
-    "This range has no working hours.": "This range has no working hours."
+    "This range has no working hours.": "This range has no working hours.",
+    "View WFH request": "View WFH request"
 }

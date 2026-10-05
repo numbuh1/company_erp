@@ -890,7 +890,7 @@
     "Task": "Công việc",
     "Please log in to review and approve the request:": "Vui lòng đăng nhập để xem và phê duyệt yêu cầu:",
     "View leave request": "Xem yêu cầu nghỉ phép",
-    "View OT request": "Xem yêu cầu tăng ca",
+    "View OT request": "Xem yêu cầu",
     "Leave Request": "Yêu cầu Nghỉ phép",
     "OT Request": "Yêu cầu Tăng ca",
 
@@ -1038,5 +1038,6 @@
     "Work From Home": "Làm việc tại nhà",
     "Day": "Ngày",
     "A WFH request cannot span more than 31 days.": "Yêu cầu WFH không được kéo dài quá 31 ngày.",
-    "This range has no working hours.": "Khoảng thời gian này không có giờ làm việc."
+    "This range has no working hours.": "Khoảng thời gian này không có giờ làm việc.",
+    "View WFH request": "Xem yêu cầu WFH"
 }

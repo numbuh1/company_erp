@@ -70,10 +70,12 @@
     <p>{{ __('Please log in to review and approve the request:') }}</p>
 
     @php
-        $actionUrl = $type === 'leave'
-            ? route('requests.index', ['type' => 'leave', 'status' => 'pending'])
-            : route('requests.index', ['type' => 'ot', 'status' => 'pending']);
-        $actionLabel = $type === 'leave' ? __('View leave request') : __('View OT request');
+        $actionUrl = route('requests.index', ['type' => $type, 'status' => 'pending']);
+        $actionLabel = match ($type) {
+            'leave' => __('View leave request'),
+            'wfh'   => __('View WFH request'),
+            default => __('View OT request'),
+        };
     @endphp
 
     <a href="{{ $actionUrl }}" class="btn">{{ $actionLabel }}</a>
