@@ -20,6 +20,8 @@
 //   manually, when a single CV-drop applicant is saved from the modal for
 //   the first time, or as one combined notification after a multi-CV drop
 
+import { t } from '../i18n.js';
+
 let _draggingCard = null;
 let _draggingColumn = null;
 
@@ -58,7 +60,7 @@ function _renderCvPreview(url, filename) {
 
     if (!url) {
         container.innerHTML = `<div class="flex flex-col items-center justify-center h-64 text-sm text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded">`
-            + `<p>Chưa có file CV.</p>`
+            + `<p>${_escapeHtml(t('No CV file yet.'))}</p>`
             + `</div>`;
         return;
     }
@@ -72,10 +74,10 @@ function _renderCvPreview(url, filename) {
         container.innerHTML = `<iframe src="${url}" class="w-full rounded border border-gray-200 dark:border-gray-700" style="height: 60vh;"></iframe>`;
     } else if (['doc', 'docx'].includes(ext)) {
         container.innerHTML = `<iframe src="https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}" class="w-full rounded border border-gray-200 dark:border-gray-700" style="height: 60vh;"></iframe>`
-            + `<p class="text-xs text-gray-400 mt-2">Bản xem trước file Word/Doc cần URL có thể truy cập được từ Internet. Nếu không hiển thị được, vui lòng tải xuống để xem.</p>`;
+            + `<p class="text-xs text-gray-400 mt-2">${_escapeHtml(t('Word/Doc previews require a URL that is reachable from the Internet. If the preview does not appear, download the file to view it.'))}</p>`;
     } else {
         container.innerHTML = `<div class="flex flex-col items-center justify-center h-64 text-sm text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded text-center px-4">`
-            + `<p>Không có bản xem trước cho loại file này.</p>`
+            + `<p>${_escapeHtml(t('No preview available for this file type.'))}</p>`
             + `</div>`;
     }
 }
@@ -96,11 +98,11 @@ function _previewLocalCvFile(file) {
     } else if (['doc', 'docx'].includes(ext)) {
         container.innerHTML = `<div class="flex flex-col items-center justify-center h-64 text-sm text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded text-center px-4">`
             + `<p>📄 ${file.name.replace(/[<>&]/g, '')}</p>`
-            + `<p class="mt-1 text-xs">Bản xem trước Word sẽ khả dụng sau khi lưu.</p>`
+            + `<p class="mt-1 text-xs">${_escapeHtml(t('The Word preview will be available after saving.'))}</p>`
             + `</div>`;
     } else {
         container.innerHTML = `<div class="flex flex-col items-center justify-center h-64 text-sm text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded">`
-            + `<p>Không có bản xem trước cho loại file này.</p>`
+            + `<p>${_escapeHtml(t('No preview available for this file type.'))}</p>`
             + `</div>`;
     }
 }
@@ -225,14 +227,14 @@ function _showApplicantModal() {
 function _fillActivityLog(activities, cvUploadedAt) {
     const cvDate = document.getElementById('am-cv-uploaded-at');
     if (cvDate) {
-        cvDate.textContent = cvUploadedAt ? '(Tải lên: ' + cvUploadedAt + ')' : '';
+        cvDate.textContent = cvUploadedAt ? '(' + t('Uploaded: :date', { date: cvUploadedAt }) + ')' : '';
     }
 
     const container = document.getElementById('am-activity-log');
     if (!container) return;
 
     if (!activities || activities.length === 0) {
-        container.innerHTML = '<p class="text-sm text-gray-400">Chưa có hoạt động nào.</p>';
+        container.innerHTML = '<p class="text-sm text-gray-400">' + _escapeHtml(t('No activity yet.')) + '</p>';
         return;
     }
 
@@ -270,7 +272,7 @@ function _openApplicantModal(applicant, cvUrl, opts) {
 
     const titleEl    = document.getElementById('am-title');
     const subtitleEl = document.getElementById('am-subtitle');
-    if (titleEl)    titleEl.textContent = opts.isNew ? 'Đã thêm ứng viên từ CV' : 'Chỉnh sửa Ứng viên';
+    if (titleEl)    titleEl.textContent = opts.isNew ? t('Applicant added from CV') : t('Edit Applicant');
     if (subtitleEl) subtitleEl.classList.toggle('hidden', !opts.isNew);
 
     _clearApplicantModalErrors();
@@ -298,7 +300,7 @@ window.openApplicantEditModal = async function (id) {
         });
     } catch (err) {
         console.error('Load applicant failed', err);
-        alert('Không thể tải thông tin ứng viên. Vui lòng thử lại.');
+        alert(t('Could not load applicant details. Please try again.'));
     }
 };
 
@@ -309,7 +311,7 @@ window.openApplicantCreateModal = function () {
 
     const titleEl    = document.getElementById('am-title');
     const subtitleEl = document.getElementById('am-subtitle');
-    if (titleEl)    titleEl.textContent = 'Thêm Ứng viên mới';
+    if (titleEl)    titleEl.textContent = t('Add New Applicant');
     if (subtitleEl) subtitleEl.classList.add('hidden');
 
     _clearApplicantModalErrors();
@@ -339,7 +341,7 @@ window.submitApplicantModal = async function () {
 
     const name = document.getElementById('am-name')?.value.trim() || '';
     if (!name) {
-        _showApplicantModalErrors({ name: ['Vui lòng nhập tên ứng viên.'] });
+        _showApplicantModalErrors({ name: [t('Please enter the applicant name.')] });
         return;
     }
 
@@ -398,7 +400,7 @@ async function _submitApplicantFormData(formData) {
     const isCreate = !_editApplicantId;
 
     const submitBtn = document.getElementById('am-submit-btn');
-    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Đang lưu…'; }
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = t('Saving…'); }
 
     const url = isCreate
         ? window.recruitmentStoreUrl
@@ -438,9 +440,9 @@ async function _submitApplicantFormData(formData) {
         console.error('Save applicant failed', err);
         _showApplicantModalErrors(null);
         const el = document.getElementById('am-error');
-        if (el) { el.textContent = 'Không thể lưu thông tin. Vui lòng thử lại.'; el.classList.remove('hidden'); }
+        if (el) { el.textContent = t('Could not save. Please try again.'); el.classList.remove('hidden'); }
     } finally {
-        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Lưu'; }
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = t('Save'); }
     }
 }
 
@@ -459,7 +461,7 @@ function _showDuplicateModal(duplicates) {
     list.innerHTML = '';
 
     if (!duplicates.length) {
-        list.innerHTML = '<p class="text-sm text-gray-400">Không tìm thấy ứng viên trùng.</p>';
+        list.innerHTML = '<p class="text-sm text-gray-400">' + _escapeHtml(t('No duplicate applicants found.')) + '</p>';
     }
 
     duplicates.forEach(function (d) {
@@ -470,7 +472,7 @@ function _showDuplicateModal(duplicates) {
                 <a href="${_escapeHtml(d.url)}" target="_blank" class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline truncate block">${_escapeHtml(d.name)}</a>
                 <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">${_escapeHtml(d.position_name || '')} · ${_escapeHtml(d.status_label || '')}</p>
             </div>
-            <button type="button" class="shrink-0 px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition">Nhập thông tin cũ</button>
+            <button type="button" class="shrink-0 px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition">${_escapeHtml(t('Import old info'))}</button>
         `;
         row.querySelector('button').addEventListener('click', function () {
             importDuplicateApplicant(d.id);
@@ -521,7 +523,7 @@ window.deleteApplicantFromDuplicateModal = function () {
 
 window.deleteApplicantModal = async function () {
     if (!_editApplicantId) return;
-    if (!confirm('Bạn có chắc muốn xóa ứng viên này? Hành động này không thể hoàn tác.')) return;
+    if (!confirm(t('Are you sure you want to delete this applicant? This action cannot be undone.'))) return;
 
     const deleteBtn = document.getElementById('am-delete-btn');
     if (deleteBtn) deleteBtn.disabled = true;
@@ -539,7 +541,7 @@ window.deleteApplicantModal = async function () {
         window.location.href = window.recruitmentBaseUrl;
     } catch (err) {
         console.error('Delete applicant failed', err);
-        alert('Không thể xóa ứng viên. Vui lòng thử lại.');
+        alert(t('Could not delete the applicant. Please try again.'));
         if (deleteBtn) deleteBtn.disabled = false;
     }
 };
@@ -576,7 +578,7 @@ async function _importCvFile(file, status) {
         _openApplicantModal(data.applicant, data.cv_url, { isNew: true });
     } catch (err) {
         console.error('Import applicant failed', err);
-        alert('Không thể thêm ứng viên từ file này. Vui lòng thử lại.');
+        alert(t('Could not add an applicant from this file. Please try again.'));
     }
 }
 
@@ -630,10 +632,10 @@ async function _importCvFilesBulk(files, status) {
     if (successCount === files.length) {
         window.location.reload();
     } else if (successCount > 0) {
-        alert(`Đã thêm ${successCount}/${files.length} ứng viên. Một số file không thể nhập.`);
+        alert(t('Added :success/:total applicants. Some files could not be imported.', { success: successCount, total: files.length }));
         window.location.reload();
     } else {
-        alert('Không thể thêm ứng viên từ các file này. Vui lòng thử lại.');
+        alert(t('Could not add applicants from these files. Please try again.'));
     }
 }
 
@@ -663,7 +665,7 @@ window.submitAddStatus = async function () {
     const name    = input ? input.value.trim() : '';
 
     if (!name) {
-        if (errorEl) { errorEl.textContent = 'Vui lòng nhập tên trạng thái.'; errorEl.classList.remove('hidden'); }
+        if (errorEl) { errorEl.textContent = t('Please enter a status name.'); errorEl.classList.remove('hidden'); }
         return;
     }
 
@@ -687,7 +689,7 @@ window.submitAddStatus = async function () {
         window.location.reload();
     } catch (err) {
         console.error('Add status failed', err);
-        if (errorEl) { errorEl.textContent = 'Không thể thêm trạng thái. Có thể trạng thái đã tồn tại.'; errorEl.classList.remove('hidden'); }
+        if (errorEl) { errorEl.textContent = t('Could not add the status. It may already exist.'); errorEl.classList.remove('hidden'); }
     }
 };
 
@@ -842,7 +844,7 @@ window.deleteKanbanApplicant = async function (e, id) {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!confirm('Bạn có chắc muốn xóa ứng viên này?')) return;
+    if (!confirm(t('Are you sure you want to delete this applicant?'))) return;
 
     try {
         const resp = await fetch(`${window.recruitmentBaseUrl}/applicants/${id}`, {
@@ -865,7 +867,7 @@ window.deleteKanbanApplicant = async function (e, id) {
         }
     } catch (err) {
         console.error('Delete applicant failed', err);
-        alert('Không thể xóa ứng viên. Vui lòng thử lại.');
+        alert(t('Could not delete the applicant. Please try again.'));
     }
 };
 
@@ -915,7 +917,7 @@ document.addEventListener('DOMContentLoaded', function () {
             maxOptions: null,
             render: {
                 option_create: function (data, escape) {
-                    return '<div class="create">Create tag <strong>' + escape(data.input) + '</strong></div>';
+                    return '<div class="create">' + _escapeHtml(t('Create tag')) + ' <strong>' + escape(data.input) + '</strong></div>';
                 }
             }
         });

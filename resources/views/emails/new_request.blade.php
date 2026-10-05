@@ -3,7 +3,7 @@
 @section('title', __('New Request'))
 @section('header-title', config('app.name'))
 @section('header-subtitle')
-    {!! __('New :type request pending approval', ['type' => '<strong style="color:#fff;">' . ($type === 'leave' ? __('Leave') : __('Overtime')) . '</strong>']) !!}
+    {!! __('New :type request pending approval', ['type' => '<strong style="color:#fff;">' . match ($type) { 'leave' => __('Leave'), 'wfh' => __('WFH'), default => __('Overtime') } . '</strong>']) !!}
 @endsection
 
 @section('body')
@@ -16,6 +16,8 @@
         {{ __('has just submitted a') }}
         @if($type === 'leave')
             <span class="badge badge-leave">{{ __('Leave') }}</span>
+        @elseif($type === 'wfh')
+            <span class="badge badge-leave">{{ __('WFH') }}</span>
         @else
             <span class="badge badge-ot">{{ __('Overtime') }}</span>
         @endif
@@ -30,7 +32,7 @@
             </tr>
             <tr>
                 <td>{{ __('Type') }}:</td>
-                <td>{{ $request->type }}</td>
+                <td>{{ $type === 'wfh' ? __('WFH') : $request->type }}</td>
             </tr>
             <tr>
                 <td>{{ __('From') }}:</td>

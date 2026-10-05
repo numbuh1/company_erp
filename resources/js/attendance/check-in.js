@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (!navigator.geolocation) {
-            showError('Trình duyệt không hỗ trợ định vị. Vui lòng chọn WFH hoặc liên hệ với HR/Admin.');
+            showError('Trình duyệt không hỗ trợ định vị. Vui lòng gửi yêu cầu WFH hoặc liên hệ với HR/Admin.');
             return;
         }
 
@@ -61,13 +61,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else {
                     showError(
                         'Bạn đang ở vị trí cách công ty ' + dist.toFixed(1) + ' km (khoảng cách tối đa: ' + officeRadius + ' km). ' +
-                        'Vui lòng chọn WFH hoặc liên hệ với HR/Admin.'
+                        'Vui lòng gửi yêu cầu WFH hoặc liên hệ với HR/Admin.'
                     );
                 }
             },
             function (err) {
                 setLoading(false);
-                showError('Không thể tìm vị trí của bạn (' + err.message + '). Vui lòng bật Định vị, chọn WFH hoặc liên hệ với HR/Admin.');
+                showError('Không thể tìm vị trí của bạn (' + err.message + '). Vui lòng bật Định vị, gửi yêu cầu WFH hoặc liên hệ với HR/Admin.');
             },
             { timeout: 10000, maximumAge: 60000 }
         );

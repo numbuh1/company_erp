@@ -349,7 +349,7 @@
                                             attendants: {{ $assignedIds }},
                                             description: @json($interviewDesc),
                                             hideFile: true,
-                                            title: "Book Interview",
+                                            title: @json(__('Book Interview')),
                                             applicantId: {{ $applicant->id }},
                                             applicantUrl: @json($applicantUrl),
                                             applicantName: @json($applicant->name)

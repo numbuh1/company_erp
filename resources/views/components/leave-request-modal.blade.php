@@ -1,8 +1,4 @@
 @php
-    use App\Models\AppSetting;
-    use App\Models\PublicHoliday;
-    use Carbon\Carbon;
-
     $lrmAuth         = auth()->user();
     $lrmCanCreate    = $lrmAuth?->canAny(['edit own leaves', 'edit team leaves', 'edit all leaves']);
     $lrmCanTeamOrAll = $lrmAuth?->canAny(['edit team leaves', 'edit all leaves']);
@@ -27,9 +23,6 @@
         $lrmUsers = collect();
     }
 
-    $lrmHolidays   = PublicHoliday::getHolidayDates(Carbon::now()->subYear(), Carbon::now()->addYears(2));
-    $lrmLunchStart = AppSetting::get('lunch_break_start', '12:00');
-    $lrmLunchEnd   = AppSetting::get('lunch_break_end', '13:00');
 @endphp
 
 <div id="lrm-overlay" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 hidden pb-[4.5rem] sm:pb-0">
@@ -83,35 +76,12 @@
                 <div>
                     <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('Start') }}</label>
                     <p id="lrm-start-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
-                    <input id="lrm-start-at" type="datetime-local" lang="en-GB" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
+                    <input id="lrm-start-at" type="datetime-local" lang="en-GB" data-default-hour="8" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('End') }}</label>
                     <p id="lrm-end-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
-                    <input id="lrm-end-at" type="datetime-local" lang="en-GB" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
-                </div>
-            </div>
-
-            {{-- Partial-day section --}}
-            <div id="lrm-partial-section" class="hidden p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg space-y-2">
-                <p class="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide">⚡ {{ __('Customize daily leave hours') }}</p>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">{{ __('Start Day') }} <span id="lrm-start-label" class="text-gray-400"></span></label>
-                        <div class="flex items-center gap-1.5">
-                            <input type="number" step="0.25" min="0" max="24" id="lrm-start-day" placeholder="0"
-                                class="w-20 border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-1.5">
-                            <span class="text-xs text-gray-500">{{ __('hours') }}</span>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">{{ __('End Day') }} <span id="lrm-end-label" class="text-gray-400"></span></label>
-                        <div class="flex items-center gap-1.5">
-                            <input type="number" step="0.25" min="0" max="24" id="lrm-end-day" placeholder="0"
-                                class="w-20 border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-1.5">
-                            <span class="text-xs text-gray-500">{{ __('hours') }}</span>
-                        </div>
-                    </div>
+                    <input id="lrm-end-at" type="datetime-local" lang="en-GB" data-default-hour="17" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
                 </div>
             </div>
 
@@ -164,7 +134,7 @@
                     class="w-full border-red-300 dark:border-red-600 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm px-2 py-2"></textarea>
                 <div class="flex gap-2 justify-end">
                     <button onclick="_lrmCancelReject()" class="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition">{{ __('Cancel') }}</button>
-                    <button onclick="_lrmConfirmReject()" class="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition">{{ __('Confirm Reject') }}</button>
+                    <button onclick="_lrmConfirmReject(this)" class="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition">{{ __('Confirm Reject') }}</button>
                 </div>
             </div>
 
@@ -196,10 +166,8 @@
         unpaid:      '{{ __("Unpaid leave") }}',
         errSave:     '{{ __("Error saving request.") }}',
         errConn:     '{{ __("Connection error.") }}',
-        bdTitle:     '{{ __("Expected total hours") }}',
-        bdDay:       'Ngày',
-        bdWorkDays:  '{{ __("working days") }}',
-        bdExcl:      '{{ __("8h/day, excl. weekends & holidays") }}',
+        saving:      @js(__('Saving…')),
+        processing:  @js(__('Processing…')),
     };
     var CSRF    = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     var AUTH_ID = {{ $lrmAuth?->id ?? 'null' }};
@@ -207,9 +175,6 @@
     var _LR_URL  = '{{ url("leave-requests") }}';
     var _USR_URL = '{{ url("users") }}';
     var HAS_SELECT = {{ ($lrmCanTeamOrAll && $lrmUsers->count() > 1) ? 'true' : 'false' }};
-    var HOLIDAYS    = {!! json_encode($lrmHolidays, JSON_HEX_TAG) !!};
-    var LUNCH_S     = '{{ $lrmLunchStart }}';
-    var LUNCH_E     = '{{ $lrmLunchEnd }}';
 
     var _mode    = 'create';
     var _id      = null;
@@ -235,7 +200,7 @@
     }
 
     function _hideBody() {
-        ['lrm-status-banner','lrm-user-row','lrm-user-display','lrm-partial-section',
+        ['lrm-status-banner','lrm-user-row','lrm-user-display',
          'lrm-breakdown','lrm-balance-preview','lrm-reject-display','lrm-reject-section',
          'lrm-type-display','lrm-type','lrm-start-display','lrm-start-at',
          'lrm-end-display','lrm-end-at','lrm-hours-display','lrm-hours',
@@ -269,7 +234,6 @@
         hide($g('lrm-overlay'));
         _destroyTs();
         _listenersBound = false;
-        _submitting = false;
     };
 
     window._lrmSwitchToEdit = function () {
@@ -277,40 +241,30 @@
         _populateEdit();
     };
 
-    var _submitting = false;
-    window._lrmSubmit = function () {
-        if (_submitting) return;
-        _submitting = true;
+    window._lrmSubmit = function (btn) {
         var userId = (_mode === 'edit' && _data) ? _data.leave.user_id : _tsVal();
         var payload = {
             user_id:         userId,
             type:            $g('lrm-type').value,
             start_at:        $g('lrm-start-at').value,
             end_at:          $g('lrm-end-at').value,
-            start_day_hours: $g('lrm-start-day').value || null,
-            end_day_hours:   $g('lrm-end-day').value   || null,
-            hours:           $g('lrm-hours').value,
+            hours:           _isMultiDay() ? '' : $g('lrm-hours').value,
             description:     $g('lrm-description').value,
         };
-        var url    = _mode === 'create' ? _LR_URL : _LR_URL + '/' + _id;
-        var method = _mode === 'create' ? 'POST'                     : 'PUT';
-        fetch(url, {
-            method: method,
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
-            body: JSON.stringify(payload),
-        })
-        .then(function(r){ return r.json(); })
-        .then(function(d){ if (d.success) { closeLR(); location.reload(); } else { _submitting = false; alert(d.message || _LRM.errSave); } })
-        .catch(function(){ _submitting = false; alert(_LRM.errConn); });
+        _send(btn, _LRM.saving, {
+            url:    _mode === 'create' ? _LR_URL : _LR_URL + '/' + _id,
+            method: _mode === 'create' ? 'POST' : 'PUT',
+            body:   payload,
+        });
     };
 
-    window._lrmApprove = function () {
-        fetch(_LR_URL + '/' + _id + '/approve', {
-            method: 'POST', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF }
-        })
-        .then(function(r){ return r.json(); })
-        .then(function(d){ if (d.success) { closeLR(); location.reload(); } });
+    window._lrmApprove = function (btn) {
+        _send(btn, _LRM.processing, { url: _LR_URL + '/' + _id + '/approve' });
     };
+
+    function _send(btn, label, req) {
+        window.sendRequestModal(btn, $g('lrm-overlay'), Object.assign({ label: label, errMsg: _LRM.errSave, errConn: _LRM.errConn }, req));
+    }
 
     window._lrmShowReject = function () {
         show($g('lrm-reject-section'));
@@ -318,16 +272,10 @@
         $g('lrm-reject-input').focus();
     };
     window._lrmCancelReject = function () { hide($g('lrm-reject-section')); };
-    window._lrmConfirmReject = function () {
+    window._lrmConfirmReject = function (btn) {
         var reason = $g('lrm-reject-input').value.trim();
         if (!reason) { $g('lrm-reject-input').focus(); return; }
-        fetch(_LR_URL + '/' + _id + '/reject', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
-            body: JSON.stringify({ reject_reason: reason }),
-        })
-        .then(function(r){ return r.json(); })
-        .then(function(d){ if (d.success) { closeLR(); location.reload(); } });
+        _send(btn, _LRM.processing, { url: _LR_URL + '/' + _id + '/reject', body: { reject_reason: reason } });
     };
 
     // ── Private ───────────────────────────────────────────────────────
@@ -344,8 +292,7 @@
         show($g('lrm-hours')); show($g('lrm-description'));
         $g('lrm-type').value = 'annual';
         _fpSet($g('lrm-start-at'), ''); _fpSet($g('lrm-end-at'), '');
-        $g('lrm-start-day').value = ''; $g('lrm-end-day').value = '';
-        $g('lrm-hours').value = ''; $g('lrm-description').value = '';
+        $g('lrm-hours').value = ''; $g('lrm-hours').disabled = false; $g('lrm-description').value = '';
         if (HAS_SELECT) {
             show($g('lrm-user-select'));
             _initTs();
@@ -354,7 +301,7 @@
         _bindListeners();
         $g('lrm-btn-area').innerHTML =
             _btn(_LRM.cancel, 'closeLR()', 'secondary') +
-            _btn(_LRM.create, '_lrmSubmit()', 'primary');
+            _btn(_LRM.create, '_lrmSubmit(this)', 'primary');
     }
 
     function _populateView(d) {
@@ -413,7 +360,7 @@
 
         var btns = '';
         if (d.can_edit)    btns += _btn(_LRM.edit, '_lrmSwitchToEdit()', 'secondary');
-        if (d.can_approve) btns += _btn(_LRM.approve, '_lrmApprove()', 'success') + _btn(_LRM.reject, '_lrmShowReject()', 'danger');
+        if (d.can_approve) btns += _btn(_LRM.approve, '_lrmApprove(this)', 'success') + _btn(_LRM.reject, '_lrmShowReject()', 'danger');
         btns += _btn(_LRM.close, 'closeLR()', 'secondary');
         $g('lrm-btn-area').innerHTML = btns;
     }
@@ -432,19 +379,22 @@
         $g('lrm-type').value     = lr.type;
         _fpSet($g('lrm-start-at'), lr.start_at_input);
         _fpSet($g('lrm-end-at'), lr.end_at_input);
-        $g('lrm-start-day').value = lr.start_day_hours || '';
-        $g('lrm-end-day').value   = lr.end_day_hours   || '';
-        $g('lrm-hours').value    = lr.hours;
         $g('lrm-description').value = lr.description || '';
         _totalManual = false;
 
         _fetchBalance(lr.user_id);
         _bindListeners();
         _lrmCalc();
+        // Keep a hand-edited single-day total instead of replacing it with the calculated one
+        if (!_isMultiDay()) {
+            _totalManual = Math.abs((parseFloat($g('lrm-hours').value) || 0) - parseFloat(lr.hours)) > 0.001;
+            $g('lrm-hours').value = lr.hours;
+            _updateBalancePreview();
+        }
 
         $g('lrm-btn-area').innerHTML =
             _btn(_LRM.cancel, 'closeLR()', 'secondary') +
-            _btn(_LRM.save, '_lrmSubmit()', 'primary');
+            _btn(_LRM.save, '_lrmSubmit(this)', 'primary');
     }
 
     // ── Balance ───────────────────────────────────────────────────────
@@ -484,68 +434,44 @@
         if (_listenersBound) return;
         _listenersBound = true;
         var s = $g('lrm-start-at'); var e = $g('lrm-end-at');
-        var sd = $g('lrm-start-day'); var ed = $g('lrm-end-day');
         var h = $g('lrm-hours'); var t = $g('lrm-type');
-        s?.addEventListener('change', function(){ if(sd) sd.value=''; _totalManual=false; _lrmCalc(); });
-        e?.addEventListener('change', function(){ if(ed) ed.value=''; _totalManual=false; _lrmCalc(); });
-        sd?.addEventListener('input', function(){ _totalManual=false; _lrmCalc(); });
-        ed?.addEventListener('input', function(){ _totalManual=false; _lrmCalc(); });
-        h?.addEventListener('input',  function(){ _totalManual=true; _updateBalancePreview(); });
+        s?.addEventListener('change', function(){
+            // Convenience: an empty End defaults to the same day at the end of the work day
+            if (s.value && !e.value) _fpSet(e, s.value.slice(0, 10) + 'T' + window.WorkHoursConfig.dayEnd);
+            _totalManual = false; _lrmCalc();
+        });
+        e?.addEventListener('change', function(){ _totalManual = false; _lrmCalc(); });
+        h?.addEventListener('input',  function(){ _totalManual = true; _updateBalancePreview(); });
         t?.addEventListener('change', function(){ _updateBalancePreview(); });
     }
 
-    function _lrmCalc() {
-        var s = $g('lrm-start-at'); var e = $g('lrm-end-at'); var h = $g('lrm-hours');
-        if (!s||!e||!h||!s.value||!e.value) return;
-        var startDt = new Date(s.value); var endDt = new Date(e.value);
-        if (endDt < startDt) { h.value=''; return; }
-        var calDiff = _calDays(startDt, endDt);
-        if (calDiff === 0) {
-            hide($g('lrm-partial-section')); hide($g('lrm-breakdown'));
-            if (!_totalManual) {
-                var sMins = startDt.getHours()*60+startDt.getMinutes();
-                var eMins = endDt.getHours()*60+endDt.getMinutes();
-                h.value = Math.max(0, (endDt - startDt)/3600000 - _lo(sMins, eMins)).toFixed(2);
-            }
-            _updateBalancePreview(); return;
-        }
-        show($g('lrm-partial-section'));
-        var sd=$g('lrm-start-day'); var ed=$g('lrm-end-day');
-        if (sd && sd.value==='') sd.value = _defStartH(startDt).toFixed(2);
-        if (ed && ed.value==='') ed.value = _defEndH(endDt).toFixed(2);
-        var sl=$g('lrm-start-label'); var el=$g('lrm-end-label');
-        if(sl) sl.textContent='('+_fd(startDt)+')';
-        if(el) el.textContent='('+_fd(endDt)+')';
-        var mid=_midDays(startDt,endDt);
-        var sdH=parseFloat(sd?.value)||0; var edH=parseFloat(ed?.value)||0;
-        if(!_totalManual) h.value=(sdH+mid*8+edH).toFixed(2);
-        var bd=$g('lrm-breakdown');
-        if(bd){
-            var dot='<span class="text-blue-400 mr-1">•</span>';
-            var html='<p class="font-semibold text-blue-700 dark:text-blue-400 mb-1.5">'+_LRM.bdTitle+'</p><div class="space-y-0.5">';
-            html+=dot+'<strong>'+_LRM.bdDay+' '+_fd(startDt)+'</strong>: '+sdH.toFixed(1)+'h<br>';
-            if(mid>0) html+=dot+'<strong>'+mid+' '+_LRM.bdWorkDays+'</strong>: '+(mid*8)+'h <span class="text-gray-400">('+_LRM.bdExcl+')</span><br>';
-            html+=dot+'<strong>'+_LRM.bdDay+' '+_fd(endDt)+'</strong>: '+edH.toFixed(1)+'h';
-            html+='</div>'; bd.innerHTML=html; show(bd);
-        }
-        _updateBalancePreview();
+    function _range() {
+        var s = $g('lrm-start-at').value, e = $g('lrm-end-at').value;
+        return s && e ? { start: new Date(s), end: new Date(e) } : null;
     }
 
-    function _pad(n){ return String(n).padStart(2,'0'); }
-    function _fd(dt){ return _pad(dt.getDate())+'/'+_pad(dt.getMonth()+1); }
-    function _iso(dt){ return dt.getFullYear()+'-'+_pad(dt.getMonth()+1)+'-'+_pad(dt.getDate()); }
-    function _calDays(a,b){ var d1=new Date(a); d1.setHours(0,0,0,0); var d2=new Date(b); d2.setHours(0,0,0,0); return Math.round((d2-d1)/86400000); }
+    function _isMultiDay() {
+        var r = _range();
+        return !!r && r.start.toDateString() !== r.end.toDateString();
+    }
 
-    var _pMins = function(str){ var p=(str||'00:00').split(':').map(Number); return p[0]*60+(p[1]||0); };
-    var _lS = _pMins(LUNCH_S); var _lE = _pMins(LUNCH_E);
-    function _lo(f,t){ return Math.max(0,Math.min(t,_lE)-Math.max(f,_lS))/60; }
-    function _defStartH(dt){ var s=dt.getHours()*60+dt.getMinutes(); var g=Math.max(0,17.5*60-s)/60; return Math.max(0,g-_lo(s,17.5*60)); }
-    function _defEndH(dt){ var e=dt.getHours()*60+dt.getMinutes(); var g=Math.max(0,e-8.5*60)/60; return Math.max(0,g-_lo(8.5*60,e)); }
-    function _midDays(s,e){
-        var count=0; var d=new Date(s); d.setHours(12,0,0,0); d.setDate(d.getDate()+1);
-        var stop=new Date(e); stop.setHours(0,0,0,0);
-        while(d<stop){ var dow=d.getDay(); if(dow!==0&&dow!==6&&!HOLIDAYS.includes(_iso(d))) count++; d.setDate(d.getDate()+1); }
-        return count;
+    // Same rules as the WFH form (window.WorkHours); multi-day totals are calculated, a single day can be edited.
+    function _lrmCalc() {
+        var r = _range(), h = $g('lrm-hours'), bd = $g('lrm-breakdown');
+        hide(bd);
+        var b = r ? window.WorkHours.breakdown(r.start, r.end) : null;
+        if (!b) { if (!_totalManual) h.value = ''; h.disabled = false; _updateBalancePreview(); return; }
+
+        if (!b.multiDay) {
+            h.disabled = false;
+            if (!_totalManual) h.value = b.total.toFixed(2).replace(/\.?0+$/, '');
+        } else {
+            _totalManual = false; h.disabled = true;
+            h.value = b.total.toFixed(2).replace(/\.?0+$/, '');
+            bd.innerHTML = window.WorkHours.html(b, r.start, r.end, 'blue');
+            show(bd);
+        }
+        _updateBalancePreview();
     }
 
     // ── TomSelect ─────────────────────────────────────────────────────

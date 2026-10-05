@@ -70,7 +70,7 @@
 @if($fabShow)
 <div id="fab-root"
      x-data="{
-         open: false, showWfh: false, hours: 8, reason: '', submitting: false,
+         open: false,
          showCheckoutConfirm: false, coSubmitting: false, estimatedHours: '0.00',
          checkInTime: '{{ $fabCheckInTime ?? '' }}',
          lunchStart:  '{{ $fabLunchStart }}',
@@ -97,7 +97,7 @@
              this.showCheckoutConfirm = true;
          }
      }"
-     @keydown.escape.window="open = false; showWfh = false; showCheckoutConfirm = false"
+     @keydown.escape.window="open = false; showCheckoutConfirm = false"
      class="flex flex-col items-end gap-2"
      style="position:fixed; bottom:1.5rem; right:1.5rem; z-index:70">
 
@@ -127,7 +127,7 @@
             </button>
         </form>
 
-        <button type="button" @click="showWfh = true; open = false"
+        <button type="button" @click="open = false; openWfhCreate()"
             class="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700
                    text-white font-semibold rounded-full transition-colors text-sm whitespace-nowrap">
             <span class="text-base leading-none">🏠</span>
@@ -151,63 +151,6 @@
         </svg>
         <span class="text-sm" x-text="open ? '{{ __('Close') }}' : 'Check In'">Check In</span>
     </button>
-
-    {{-- WFH modal (fixed inset-0, works fine inside a non-transform parent) --}}
-    <div x-show="showWfh" x-cloak
-         x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="transition ease-in duration-150"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         @click.self="showWfh = false"
-         class="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 px-4">
-        <div x-transition:enter="transition ease-out duration-200"
-             x-transition:enter-start="opacity-0 scale-95"
-             x-transition:enter-end="opacity-100 scale-100"
-             class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md
-                    border border-gray-200 dark:border-gray-700 overflow-hidden">
-
-            <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-                <h3 class="font-semibold text-gray-800 dark:text-gray-100">🏠 Work from Home</h3>
-                <button type="button" @click="showWfh = false"
-                    class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
-
-            <form method="POST" action="{{ route('attendance.store') }}" @submit="submitting = true" class="px-5 py-5 space-y-4">
-                @csrf
-                <input type="hidden" name="type" value="wfh">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('Hours Working Today') }}</label>
-                    <input type="number" name="hours" step="0.5" min="0.5" max="24" x-model="hours"
-                        class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('Reason / Task for Today') }}</label>
-                    <textarea name="reason" rows="3" x-model="reason"
-                        class="block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                        placeholder="{{ __('Briefly describe what you will be working on...') }}"></textarea>
-                </div>
-                <div class="flex justify-end gap-2 pt-1">
-                    <button type="button" @click="showWfh = false"
-                        class="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600
-                               text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                        {{ __('Cancel') }}
-                    </button>
-                    <button type="submit" :disabled="submitting"
-                        class="px-4 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-700
-                               text-white font-medium transition disabled:opacity-50">
-                        <span x-show="!submitting">{{ __('Send WFH request') }}</span>
-                        <span x-show="submitting" x-cloak>{{ __('Submitting…') }}</span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
 
     @else
     {{-- ── CHECK-OUT MODE ──────────────────────────────── --}}

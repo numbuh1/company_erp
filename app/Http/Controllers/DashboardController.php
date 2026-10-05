@@ -10,6 +10,7 @@ use App\Models\TimeLog;
 use App\Models\Event;
 use App\Models\PublicHoliday;
 use App\Models\User;
+use App\Models\WfhRequest;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -72,6 +73,23 @@ class DashboardController extends Controller
         }
 
         $upcomingLeaves = $leaveQuery->get();
+
+        // ── WFH (pending + approved, today → +2 weeks) ─────────────
+        $upcomingWfh = collect();
+        if ($user->can('module wfh')) {
+            $wfhQuery = WfhRequest::with('user')
+                ->whereIn('status', ['pending', 'approved'])
+                ->where('end_at', '>=', $leaveWindowStart)
+                ->where('start_at', '<=', $leaveWindowEnd)
+                ->orderBy('start_at');
+
+            if (!$user->can('edit all user')) {
+                $teamUserIds = $user->teamMembers()->pluck('id')->toArray();
+                $wfhQuery->whereIn('user_id', array_unique(array_merge([$user->id], $teamUserIds)));
+            }
+
+            $upcomingWfh = $wfhQuery->get();
+        }
 
         // ── In Progress tasks nearing deadline (≤ 5 days) ─────────
         $deadlineQuery = Task::with(['project', 'assignees'])
@@ -191,7 +209,7 @@ class DashboardController extends Controller
         return view('dashboard', compact(
             'latestAnnouncement', 'previousAnnouncements',
             'weekTimeLogs', 'monthTimeLogs', 'monthOTHours',
-            'upcomingLeaves', 'deadlineTasks',
+            'upcomingLeaves', 'upcomingWfh', 'deadlineTasks',
             'pendingLeavesCount', 'pendingOTCount',
             'todayEvents', 'weekEvents',
             'upcomingBirthdays', 'monthHolidays',

@@ -57,7 +57,7 @@
                     <!-- Start datetime -->
                     <div class="mb-4">
                         <x-input-label :value="__('Start Time')" />
-                        <input type="datetime-local" name="start_at" id="start_at" lang="en-GB"
+                        <input type="datetime-local" name="start_at" id="start_at" lang="en-GB" data-default-hour="8"
                             value="{{ old('start_at', isset($leave) ? $leave->start_at->format('Y-m-d\TH:i') : '') }}"
                             class="w-full border rounded p-2" @disabled($readonly)>
                     </div>
@@ -65,46 +65,9 @@
                     <!-- End datetime -->
                     <div class="mb-4">
                         <x-input-label :value="__('End Time')" />
-                        <input type="datetime-local" name="end_at" id="end_at" lang="en-GB"
+                        <input type="datetime-local" name="end_at" id="end_at" lang="en-GB" data-default-hour="17"
                             value="{{ old('end_at', isset($leave) ? $leave->end_at->format('Y-m-d\TH:i') : '') }}"
                             class="w-full border rounded p-2" @disabled($readonly)>
-                    </div>
-
-                    <!-- Partial-day hours section (multi-day leaves only, shown/hidden by JS) -->
-                    <div id="partial-day-section" class="hidden mb-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg space-y-3">
-                        <p class="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide">⚡ {{ __('Customize daily leave hours') }}</p>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <!-- Start day -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    {{ __('Start Day') }} <span id="partial-start-label" class="font-normal text-gray-400 text-xs"></span>
-                                </label>
-                                <div class="flex items-center gap-1.5">
-                                    <input type="number" step="0.25" min="0" max="24" id="start_day_hours" name="start_day_hours"
-                                        value="{{ old('start_day_hours', isset($leave) ? ($leave->start_day_hours ?? '') : '') }}"
-                                        class="w-24 border rounded p-2 text-sm" @disabled($readonly)
-                                        placeholder="0">
-                                    <span class="text-xs text-gray-500">{{ __('hours') }}</span>
-                                </div>
-                                <p class="text-xs text-gray-400 mt-1">{{ __('Leave hours on start day') }}</p>
-                            </div>
-
-                            <!-- End day -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    {{ __('End Day') }} <span id="partial-end-label" class="font-normal text-gray-400 text-xs"></span>
-                                </label>
-                                <div class="flex items-center gap-1.5">
-                                    <input type="number" step="0.25" min="0" max="24" id="end_day_hours" name="end_day_hours"
-                                        value="{{ old('end_day_hours', isset($leave) ? ($leave->end_day_hours ?? '') : '') }}"
-                                        class="w-24 border rounded p-2 text-sm" @disabled($readonly)
-                                        placeholder="0">
-                                    <span class="text-xs text-gray-500">{{ __('hours') }}</span>
-                                </div>
-                                <p class="text-xs text-gray-400 mt-1">{{ __('Leave hours on return day') }}</p>
-                            </div>
-                        </div>
                     </div>
 
                     <!-- Breakdown (appears above total hours input; header + bullet lines written by JS) -->
@@ -112,7 +75,7 @@
                          class="hidden mb-3 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg text-xs text-gray-700 dark:text-gray-300">
                     </div>
 
-                    <!-- Total hours (auto-calculated from partial-day inputs) -->
+                    <!-- Total hours (calculated; editable for a single day) -->
                     <div class="mb-4">
                         <x-input-label :value="__('Total leave hours')" />
                         <input type="number" step="0.25" id="hours" name="hours"
@@ -171,19 +134,6 @@
         @include('leave_requests._partials.reject_modal')
     @endif
     @push('scripts')
-        @php
-            $formHolidays  = \App\Models\PublicHoliday::getHolidayDates(
-                \Carbon\Carbon::now()->subYear(),
-                \Carbon\Carbon::now()->addYears(2)
-            );
-            $formLunchStart = \App\Models\AppSetting::get('lunch_break_start', '12:00');
-            $formLunchEnd   = \App\Models\AppSetting::get('lunch_break_end',   '13:00');
-        @endphp
-        <script>
-            window._leaveHolidays   = {!! json_encode($formHolidays, JSON_HEX_TAG) !!};
-            window._leaveLunchStart = '{{ $formLunchStart }}';
-            window._leaveLunchEnd   = '{{ $formLunchEnd }}';
-        </script>
         @vite('resources/js/leave_requests/form.js')
         <script>
         document.addEventListener('DOMContentLoaded', function () {

@@ -6,8 +6,8 @@
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <div>
-                <h3 class="font-semibold text-lg text-gray-800 dark:text-gray-100">Chọn kỹ năng</h3>
-                <p class="text-xs text-gray-400 mt-0.5">Nhấn để chuyển: Không có → Sơ cấp → Trung cấp → Nâng cao</p>
+                <h3 class="font-semibold text-lg text-gray-800 dark:text-gray-100">{{ __('Select skills') }}</h3>
+                <p class="text-xs text-gray-400 mt-0.5">{{ __('Click to cycle: None → Beginner → Intermediate → Advanced') }}</p>
             </div>
             <button type="button" onclick="closeSkillModal()"
                 class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl leading-none">&times;</button>
@@ -20,25 +20,27 @@
         <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
             <div class="flex gap-3 text-xs text-gray-400">
                 <span class="flex items-center gap-1">
-                    <span class="inline-block w-3 h-3 rounded-full bg-green-400"></span> Beginner
+                    <span class="inline-block w-3 h-3 rounded-full bg-green-400"></span> {{ __('Beginner') }}
                 </span>
                 <span class="flex items-center gap-1">
-                    <span class="inline-block w-3 h-3 rounded-full bg-blue-400"></span> Intermediate
+                    <span class="inline-block w-3 h-3 rounded-full bg-blue-400"></span> {{ __('Intermediate') }}
                 </span>
                 <span class="flex items-center gap-1">
-                    <span class="inline-block w-3 h-3 rounded-full bg-red-400"></span> Advanced
+                    <span class="inline-block w-3 h-3 rounded-full bg-red-400"></span> {{ __('Advanced') }}
                 </span>
             </div>
             <div class="flex gap-3">
                 <button type="button" onclick="closeSkillModal()"
                     class="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                    Hủy
+                    {{ __('Cancel') }}
                 </button>
                 <button type="button" onclick="applySkills()"
                     class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition">
-                    Áp dụng
+                    {{ __('Apply') }}
                 </button>
             </div>
         </div>
     </div>
 </div>
+
+<x-js-i18n :keys="['Beginner', 'Intermediate', 'Advanced', 'No skills selected', 'No skills available.']" />

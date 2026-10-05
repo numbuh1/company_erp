@@ -8,6 +8,7 @@ use App\Models\LeaveRequest;
 use App\Models\PublicHoliday;
 use App\Models\Team;
 use App\Models\User;
+use App\Models\WfhRequest;
 use App\Models\AppSetting;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -51,18 +52,32 @@ class AttendanceController extends Controller
                 ->pluck('user_id')
                 ->flip();
 
+            // Today's WFH requests; an approved one wins over a pending one for the same user.
+            $todayWfh = WfhRequest::whereIn('status', ['pending', 'approved'])
+                ->whereDate('start_at', '<=', $today)
+                ->whereDate('end_at', '>=', $today)
+                ->whereIn('user_id', $scopedUserIds)
+                ->orderByRaw("status = 'approved'")
+                ->get()
+                ->keyBy('user_id');
+
             $attendanceUsers = User::whereIn('id', $scopedUserIds)
                 ->orderBy('name')
                 ->get()
-                ->map(function ($u) use ($todayAttendances, $onLeaveIds) {
+                ->map(function ($u) use ($todayAttendances, $onLeaveIds, $todayWfh) {
                     $att = $todayAttendances->get($u->id);
+                    $wfh = $todayWfh->get($u->id);
 
-                    if ($att) {
+                    if ($att && $att->status === 'approved' && $att->type === 'on_site') {
+                        $category = 'on_site';
+                    } elseif ($wfh) {
+                        $category = $wfh->status === 'approved' ? 'wfh' : 'wfh_pending';
+                    } elseif ($att) {
+                        // Legacy WFH check-ins recorded before WFH moved to requests
                         $category = match (true) {
-                            $att->status === 'approved' && $att->type === 'on_site' => 'on_site',
-                            $att->status === 'approved' && $att->type === 'wfh'     => 'wfh',
-                            $att->status === 'pending'                               => 'wfh_pending',
-                            default                                                  => 'not_checked_in',
+                            $att->status === 'approved' && $att->type === 'wfh' => 'wfh',
+                            $att->status === 'pending'                          => 'wfh_pending',
+                            default                                             => 'not_checked_in',
                         };
                     } elseif ($onLeaveIds->has($u->id)) {
                         $category = 'on_leave';
@@ -78,9 +93,10 @@ class AttendanceController extends Controller
                         'category'        => $category,
                         'att_type'        => $att?->type,
                         'att_id'          => $att?->id,
-                        'can_approve'     => $att && $att->status === 'pending'
-                                            ? $this->_canApprove(auth()->user(), $att)
-                                            : false,
+                        'wfh_id'          => $wfh?->id,
+                        'can_approve'     => $wfh
+                                            ? $wfh->status === 'pending' && auth()->user()->canAny(['approve team wfh', 'approve all wfh'])
+                                            : ($att && $att->status === 'pending' && $this->_canApprove(auth()->user(), $att)),
                     ];
                 });
 
@@ -118,77 +134,36 @@ class AttendanceController extends Controller
             return back()->with('error', 'Bạn đã check in ngày hôm nay.');
         }
 
-        $type = $request->input('type');
+        $request->validate(['type' => 'required|in:on_site']);
 
-        if ($request->type === 'on_site') {
-            $savedIps = AppSetting::get('office_ips', '');
+        $savedIps = AppSetting::get('office_ips', '');
 
-            if (!empty(trim($savedIps))) {
-                $allowedIps = array_map('trim', explode(',', $savedIps));
-                $clientIp   = $_SERVER['HTTP_CF_CONNECTING_IP'];
+        if (!empty(trim($savedIps))) {
+            $allowedIps = array_map('trim', explode(',', $savedIps));
+            $clientIp   = $_SERVER['HTTP_CF_CONNECTING_IP'];
 
-                if (!in_array($clientIp, $allowedIps)) {
-                    return back()->withErrors([
-                        'attendance' => 'On-Site check-in is only available on the company Wi-Fi. '
-                            . 'Your current IP (' . $clientIp . ') is not recognised. '
-                            . 'Please connect to the office network or use WFH instead.',
-                    ]);
-                }
+            if (!in_array($clientIp, $allowedIps)) {
+                return back()->withErrors([
+                    'attendance' => 'On-Site check-in is only available on the company Wi-Fi. '
+                        . 'Your current IP (' . $clientIp . ') is not recognised. '
+                        . 'Please connect to the office network, or submit a WFH request instead.',
+                ]);
             }
-
-            Attendance::create([
-                'user_id'        => $user->id,
-                'date'           => $today,
-                'type'           => 'on_site',
-                'check_in_time'  => now()->format('H:i:s'),
-                'status'         => 'approved',
-                'hours'          => 8,
-                'approved_by'    => $user->id,
-                'approved_at'    => now(),
-                'created_by'     => $user->id,
-            ]);
-
-            return back()->with('success', 'Đã check in thành công.');
         }
 
-        // WFH
-        $request->validate([
-            'hours'  => 'required|numeric|min:0.5|max:24',
-            'reason' => 'required|string|max:500',
-        ]);
-
-        // Auto-approve if flagged
-        $autoApprove = $user->wfh_without_approval;
-
-        $attendance = Attendance::create([
+        Attendance::create([
             'user_id'        => $user->id,
             'date'           => $today,
-            'type'           => 'wfh',
+            'type'           => 'on_site',
             'check_in_time'  => now()->format('H:i:s'),
-            'status'         => $autoApprove ? 'approved' : 'pending',
-            'hours'          => $request->hours,
-            'reason'         => $request->reason,
-            'approved_by'    => $autoApprove ? $user->id : null,
-            'approved_at'    => $autoApprove ? now() : null,
+            'status'         => 'approved',
+            'hours'          => 8,
+            'approved_by'    => $user->id,
+            'approved_at'    => now(),
             'created_by'     => $user->id,
         ]);
 
-        if (!$autoApprove) {
-            $approvers = $this->_findApprovers($user);
-            foreach ($approvers as $approver) {
-                NotificationHelper::send(
-                    receivingUser: $approver,
-                    title: 'WFH Request — ' . $user->name,
-                    description: $user->name . ' submitted a WFH request for ' . now()->format('d/m/Y')
-                        . ' (' . $request->hours . 'h): ' . \Str::limit($request->reason, 60),
-                    url: route('attendance.index'),
-                    incomingUser: $user,
-                );
-            }
-            return back()->with('success', 'Yêu cầu WFH đã được gửi và chờ duyệt.');
-        }
-
-        return back()->with('success', 'Đã check in WFH thành công.');
+        return back()->with('success', 'Đã check in thành công.');
     }
 
     public function approve(Attendance $attendance)
@@ -383,6 +358,16 @@ class AttendanceController extends Controller
             'attendance_id'  => 'nullable|exists:attendances,id',
         ]);
 
+        // WFH is requested through WFH requests; only records that are already WFH may keep that type.
+        $existing = $request->filled('attendance_id') ? Attendance::find($request->attendance_id) : null;
+        foreach (['check_in_type' => $existing?->type, 'check_out_type' => $existing?->check_out_type ?? $existing?->type] as $field => $current) {
+            if ($request->input($field) === 'wfh' && $current !== 'wfh') {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    $field => __('WFH is no longer a check-in type. Please submit a WFH request instead.'),
+                ]);
+            }
+        }
+
         $checkOutVal  = $request->filled('check_out_time') ? $request->check_out_time . ':00' : null;
         $checkOutType = $request->filled('check_out_type') ? $request->check_out_type : null;
 
@@ -435,30 +420,6 @@ class AttendanceController extends Controller
     }
 
     // ── Private helpers ────────────────────────────────────────────────────
-
-    /**
-     * Find who should receive the WFH notification for $user.
-     * Priority: team leaders → supervisors → nobody.
-     */
-    private function _findApprovers(User $user): \Illuminate\Support\Collection
-    {
-        // Leaders of teams the user belongs to (where user is NOT the leader)
-        $leaderIds = DB::table('team_user as tu_member')
-            ->join('team_user as tu_leader', 'tu_member.team_id', '=', 'tu_leader.team_id')
-            ->where('tu_member.user_id', $user->id)
-            ->where('tu_member.is_leader', false)
-            ->where('tu_leader.is_leader', true)
-            ->where('tu_leader.user_id', '!=', $user->id)
-            ->pluck('tu_leader.user_id')
-            ->unique();
-
-        if ($leaderIds->isNotEmpty()) {
-            return User::whereIn('id', $leaderIds)->get();
-        }
-
-        // Fall back to supervisors
-        return $user->supervisors()->get();
-    }
 
     /**
      * Returns the IDs of users this viewer can see.

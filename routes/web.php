@@ -11,6 +11,7 @@ use App\Http\Controllers\RequestController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\WfhRequestController;
 use App\Http\Controllers\TimeLogController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\AttendanceController;
@@ -113,6 +114,12 @@ Route::middleware('auth')->group(function () {
         ->name('overtime-requests.approve');
     Route::post('overtime-requests/{overtimeRequest}/reject', [OvertimeRequestController::class, 'reject'])
         ->name('overtime-requests.reject');
+
+    Route::resource('wfh-requests', WfhRequestController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
+    Route::post('wfh-requests/{wfhRequest}/approve', [WfhRequestController::class, 'approve'])
+        ->name('wfh-requests.approve');
+    Route::post('wfh-requests/{wfhRequest}/reject', [WfhRequestController::class, 'reject'])
+        ->name('wfh-requests.reject');
 
     // All Requests (combined)
     Route::get('/requests',        [RequestController::class, 'index'])->name('requests.index');

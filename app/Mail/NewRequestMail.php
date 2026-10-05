@@ -14,8 +14,8 @@ class NewRequestMail extends Mailable
     use Queueable, SerializesModels;
 
     /**
-     * @param  \App\Models\LeaveRequest|\App\Models\OvertimeRequest  $request
-     * @param  string  $type   'leave' | 'ot'
+     * @param  \App\Models\LeaveRequest|\App\Models\OvertimeRequest|\App\Models\WfhRequest  $request
+     * @param  string  $type   'leave' | 'ot' | 'wfh'
      * @param  User    $requester
      */
     public function __construct(
@@ -26,7 +26,11 @@ class NewRequestMail extends Mailable
 
     public function envelope(): Envelope
     {
-        $label = $this->type === 'leave' ? __('Leave Request') : __('OT Request');
+        $label = match ($this->type) {
+            'leave' => __('Leave Request'),
+            'wfh'   => __('WFH Request'),
+            default => __('OT Request'),
+        };
 
         return new Envelope(
             subject: "[{$label}] {$this->requester->name} — "

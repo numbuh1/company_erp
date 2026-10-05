@@ -34,6 +34,11 @@ class PermissionSeeder extends Seeder
             ['display_name' => 'OT Requests', 'parent_id' => null]
         );
 
+        $wfh_permission = Permission::updateOrCreate(
+            ['name' => 'wfh'],
+            ['display_name' => 'WFH Requests', 'parent_id' => null]
+        );
+
         $announcement_permission = Permission::updateOrCreate(
             ['name' => 'announcement'],
             ['display_name' => 'Announcements & Policies', 'parent_id' => null]
@@ -149,6 +154,33 @@ class PermissionSeeder extends Seeder
                 [
                     'display_name' => $label,
                     'parent_id' => $ot_permission->id
+                ]
+            );
+        }
+
+        // WFH REQUESTS
+        $wfh_permissions = [
+            'module wfh' => 'Enable',
+            'view own wfh' => 'View Own WFH Requests',
+            'edit own wfh' => 'Create/Edit Own WFH Requests',
+            'delete own wfh' => 'Delete Own WFH Requests',
+            'view team wfh' => 'View Team WFH Requests',
+            'edit team wfh' => 'Create/Edit Team WFH Requests',
+            'delete team wfh' => 'Delete Team WFH Requests',
+            'approve team wfh' => 'Approve Team WFH Requests',
+            'view all wfh' => 'View All WFH Requests',
+            'edit all wfh' => 'Create/Edit All WFH Requests',
+            'delete all wfh' => 'Delete All WFH Requests',
+            'approve all wfh' => 'Approve All WFH Requests',
+            'receive all wfh notifications' => 'Receive all WFH Request Notifications',
+        ];
+
+        foreach ($wfh_permissions as $name => $label) {
+            Permission::updateOrCreate(
+                ['name' => $name],
+                [
+                    'display_name' => $label,
+                    'parent_id' => $wfh_permission->id
                 ]
             );
         }

@@ -1,6 +1,8 @@
 // Skill level cycling picker
 // Used in recruitment position and applicant edit forms
 
+import { t } from '../i18n.js';
+
 const _LEVEL_ORDER = [null, 'beginner', 'intermediate', 'advanced'];
 
 const _LEVEL_LABELS = {
@@ -35,13 +37,13 @@ function _renderSummary() {
     if (!el) return;
     const selected = Object.entries(_skillState).filter(([, v]) => v !== null);
     if (selected.length === 0) {
-        el.innerHTML = '<span class="text-xs text-gray-400 dark:text-gray-500">No skills selected</span>';
+        el.innerHTML = '<span class="text-xs text-gray-400 dark:text-gray-500">' + t('No skills selected') + '</span>';
         return;
     }
     el.innerHTML = selected.map(([id, level]) =>
         `<span class="inline-flex items-center text-xs px-2 py-0.5 rounded-full border ${_LEVEL_CLS[level]}">
             ${_getSkillName(parseInt(id))}
-            <span class="opacity-60 ml-1">· ${_LEVEL_LABELS[level]}</span>
+            <span class="opacity-60 ml-1">· ${t(_LEVEL_LABELS[level])}</span>
         </span>`
     ).join('');
 }
@@ -67,7 +69,7 @@ function _renderModal() {
             <div class="flex flex-wrap gap-2">`;
         for (const skill of skills) {
             const level = _skillState[skill.id] ?? null;
-            const label = level ? ` <span class="opacity-60">· ${_LEVEL_LABELS[level]}</span>` : '';
+            const label = level ? ` <span class="opacity-60">· ${t(_LEVEL_LABELS[level])}</span>` : '';
             html += `<button type="button"
                 onclick="window.cycleSkill(${skill.id})"
                 id="skill-btn-${skill.id}"
@@ -77,7 +79,7 @@ function _renderModal() {
         }
         html += `</div></div>`;
     }
-    body.innerHTML = html || '<p class="text-sm text-gray-400">No skills available.</p>';
+    body.innerHTML = html || '<p class="text-sm text-gray-400">' + t('No skills available.') + '</p>';
 }
 
 window.initSkillPicker = function(skills, initial) {
@@ -112,7 +114,7 @@ window.cycleSkill = function(id) {
 
     const btn = document.getElementById(`skill-btn-${id}`);
     if (!btn) return;
-    const label = next ? ` <span class="opacity-60">· ${_LEVEL_LABELS[next]}</span>` : '';
+    const label = next ? ` <span class="opacity-60">· ${t(_LEVEL_LABELS[next])}</span>` : '';
     btn.className = `px-2 py-1 rounded-full text-xs font-medium border cursor-pointer transition ${_LEVEL_CLS[next]}`;
     btn.innerHTML = _getSkillName(id) + label;
 };

@@ -27,11 +27,25 @@ class NotificationHelper
         ));
     }
 
+    /** Per request type: display name, list URL, and the "approve all" / "receive all" permissions. */
+    private static function requestType(string $type): array
+    {
+        return match ($type) {
+            'leave' => ['label' => 'Nghỉ phép', 'verb' => 'nghỉ phép', 'approve' => 'approve all leaves', 'receive' => 'receive all leave notifications'],
+            'wfh'   => ['label' => 'WFH',       'verb' => 'làm việc tại nhà (WFH)', 'approve' => 'approve all wfh', 'receive' => 'receive all wfh notifications'],
+            default => ['label' => 'OT',        'verb' => 'tăng ca', 'approve' => 'approve all ot', 'receive' => 'receive all ot notifications'],
+        };
+    }
+
     public static function sendRequestApprovalNotification($request, $type)
     {
         $status = $request->status == 'approved' ? ' đã được duyệt' : ' đã bị từ chối';
-        $request_type = $type == 'leave' ? 'Nghỉ phép' : 'OT';
-        $url = $type == 'leave' ? route('leave-requests.index') : route('overtime-requests.index');
+        $request_type = self::requestType($type)['label'];
+        $url = match ($type) {
+            'leave' => route('leave-requests.index'),
+            'wfh'   => route('requests.index', ['type' => 'wfh']),
+            default => route('overtime-requests.index'),
+        };
 
         $title = 'Yêu cầu ' . $request_type . ' ' . $status;
 
@@ -66,9 +80,7 @@ class NotificationHelper
         );
 
         // Notify users with "receive all" permission
-        $receivePermission = $type === 'leave'
-            ? 'receive all leave notifications'
-            : 'receive all ot notifications';
+        $receivePermission = self::requestType($type)['receive'];
 
         $receiverIds = User::permission($receivePermission)->pluck('id');
         $excludeIds = [$request->user_id, auth()->id()];
@@ -89,7 +101,7 @@ class NotificationHelper
     }
 
     /**
-     * Notify team leaders / supervisors / approvers when a new leave or OT request is submitted.
+     * Notify team leaders / supervisors / approvers when a new leave, OT or WFH request is submitted.
      *
      * Routing logic:
      *  1. Primary (notification + email TO):  team leaders of the requester's teams
@@ -108,14 +120,11 @@ class NotificationHelper
         // --- Resolve recipients ---
 
         // "approve all" permission holders
-        $approvePermission = $type === 'leave' ? 'approve all leaves' : 'approve all ot';
-        $allApproverIds    = User::permission($approvePermission)->pluck('id');
+        $typeInfo       = self::requestType($type);
+        $allApproverIds = User::permission($typeInfo['approve'])->pluck('id');
 
         // "receive all" permission holders
-        $receivePermission = $type === 'leave'
-            ? 'receive all leave notifications'
-            : 'receive all ot notifications';
-        $receiveAllIds = User::permission($receivePermission)->pluck('id');
+        $receiveAllIds = User::permission($typeInfo['receive'])->pluck('id');
 
         // Team leaders of the requester's teams
         $teamIds   = $requester->teams()->pluck('teams.id');
@@ -148,17 +157,10 @@ class NotificationHelper
             ->unique()->filter(fn($id) => $id !== $rid)->values();
 
         // --- Build notification content ---
-        if ($type === 'leave') {
-            $title       = 'Yêu cầu Nghỉ phép mới';
-            $description = $requester->name . ' gửi yêu cầu nghỉ phép ('
-                . $leaveOrOtRequest->start_at->format('d/m/Y') . ')';
-            $url         = route('requests.index', ['type' => 'leave', 'status' => 'pending']);
-        } else {
-            $title       = 'Yêu cầu OT mới';
-            $description = $requester->name . ' gửi yêu cầu tăng ca ('
-                . $leaveOrOtRequest->start_at->format('d/m/Y') . ')';
-            $url         = route('requests.index', ['type' => 'ot', 'status' => 'pending']);
-        }
+        $title       = 'Yêu cầu ' . $typeInfo['label'] . ' mới';
+        $description = $requester->name . ' gửi yêu cầu ' . $typeInfo['verb'] . ' ('
+            . $leaveOrOtRequest->start_at->format('d/m/Y') . ')';
+        $url         = route('requests.index', ['type' => $type, 'status' => 'pending']);
 
         // --- Send in-app notifications ---
         foreach ($notifyIds as $userId) {
@@ -176,7 +178,7 @@ class NotificationHelper
 
         // --- Send email ---
         if ($primaryIds->isNotEmpty()) {
-            $emailKey     = $type; // 'leave' or 'ot'
+            $emailKey     = $type; // 'leave', 'ot' or 'wfh'
             $primaryUsers = User::with('preferences')->whereIn('id', $primaryIds)->get()
                 ->filter(fn($u) => $u->emailNotificationEnabled($emailKey));
             $ccUsers      = $ccIds->isNotEmpty()

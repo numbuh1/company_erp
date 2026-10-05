@@ -37,6 +37,9 @@
                 @can('module ot')
                 <x-primary-button onclick="openOtCreate()" type="button">+ {{ __('OT') }}</x-primary-button>
                 @endcan
+                @canany(['edit own wfh', 'edit team wfh', 'edit all wfh'])
+                <x-primary-button onclick="openWfhCreate()" type="button">+ {{ __('WFH') }}</x-primary-button>
+                @endcanany
             </div>
         </div>
     </x-slot>
@@ -47,11 +50,13 @@
 
     {{-- Tab bar --}}
     @php
-        $tabs = [
+        $tabs = array_filter([
             'all'   => __('All'),
             'leave' => __('Leave'),
             'ot'    => __('OT'),
-        ];
+            'wfh'   => auth()->user()->can('module wfh') ? __('WFH') : null,
+        ]);
+        $showProjectCols = in_array($type, ['all', 'ot']);
     @endphp
     <div class="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4">
         <div class="flex">
@@ -94,7 +99,7 @@
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Date') }}</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Hours') }}</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Category') }}</th>
-                    @if($type !== 'leave')
+                    @if($showProjectCols)
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Project') }}</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Task') }}</th>
                     @endif
@@ -109,25 +114,29 @@
                 @forelse($items as $row)
                     @php
                         $r       = $row['record'];
-                        $isLeave = $row['_type'] === 'leave';
-                        $showRoute  = $isLeave ? route('leave-requests.show', $r) : route('overtime-requests.show', $r);
-                        $editRoute  = $isLeave ? route('leave-requests.edit', $r) : route('overtime-requests.edit', $r);
-                        $approveRoute = $isLeave
-                            ? route('leave-requests.approve', $r)
-                            : route('overtime-requests.approve', $r);
-                        $rejectRoute  = $isLeave
-                            ? route('leave-requests.reject', $r->id)
-                            : route('overtime-requests.reject', $r->id);
+                        $rowType = $row['_type'];
+                        $me      = auth()->user();
+                        $isMine  = $r->user_id === $me->id;
 
-                        $canApprove = $isLeave
-                            ? auth()->user()->canAny(['approve team leaves', 'approve all leaves'])
-                            : auth()->user()->canAny(['approve team ot', 'approve all ot']);
+                        [$routePrefix, $modalFn, $typeLabel, $typeClass] = match ($rowType) {
+                            'leave' => ['leave-requests', 'openLeaveModal', __('Leave'), 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'],
+                            'wfh'   => ['wfh-requests', 'openWfhModal', __('WFH'), 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300'],
+                            default => ['overtime-requests', 'openOtModal', __('OT'), 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'],
+                        };
+                        $approveRoute = route($routePrefix . '.approve', $r->id);
+                        $rejectRoute  = route($routePrefix . '.reject', $r->id);
 
-                        $canEdit = $isLeave
-                            ? auth()->user()->canAny(['edit team leaves', 'edit all leaves'])
-                            : (auth()->user()->can('edit all ot')
-                                || auth()->user()->can('edit team ot')
-                                || (auth()->user()->can('edit own ot') && $r->user_id === auth()->id()));
+                        $canApprove = match ($rowType) {
+                            'leave' => $me->canAny(['approve team leaves', 'approve all leaves']),
+                            'wfh'   => $me->canAny(['approve team wfh', 'approve all wfh']),
+                            default => $me->canAny(['approve team ot', 'approve all ot']),
+                        };
+
+                        $canEdit = match ($rowType) {
+                            'leave' => $me->canAny(['edit team leaves', 'edit all leaves']),
+                            'wfh'   => $me->canAny(['edit team wfh', 'edit all wfh']) || ($isMine && $me->can('edit own wfh')),
+                            default => $me->canAny(['edit all ot', 'edit team ot']) || ($isMine && $me->can('edit own ot')),
+                        };
 
                         $statusClass = match($r->status) {
                             'approved' => 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
@@ -138,9 +147,8 @@
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                         @if($type === 'all')
                         <td class="px-4 py-3">
-                            <span class="inline-block text-xs px-2 py-1 rounded font-medium
-                                {{ $isLeave ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' }}">
-                                {{ $isLeave ? 'Leave' : 'OT' }}
+                            <span class="inline-block text-xs px-2 py-1 rounded font-medium {{ $typeClass }}">
+                                {{ $typeLabel }}
                             </span>
                         </td>
                         @endif
@@ -158,17 +166,16 @@
                         </td>
                         <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{{ $r->hours }}h</td>
                         <td class="px-4 py-3">
-                            <span class="inline-block text-xs px-2 py-1 rounded
-                                {{ $isLeave ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' }}">
-                                {{ ['annual' => __('Annual leave'), 'sick' => __('Sick leave'), 'unpaid' => __('Unpaid leave')][$r->type] ?? $r->type }}
+                            <span class="inline-block text-xs px-2 py-1 rounded {{ $typeClass }}">
+                                {{ $rowType === 'wfh' ? __('WFH') : (['annual' => __('Annual leave'), 'sick' => __('Sick leave'), 'unpaid' => __('Unpaid leave')][$r->type] ?? $r->type) }}
                             </span>
                         </td>
-                        @if($type !== 'leave')
+                        @if($showProjectCols)
                         <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                            {{ $isLeave ? '—' : ($r->project?->name ?? '—') }}
+                            {{ $rowType === 'ot' ? ($r->project?->name ?? '—') : '—' }}
                         </td>
                         <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                            {{ $isLeave ? '—' : ($r->task?->name ?? '—') }}
+                            {{ $rowType === 'ot' ? ($r->task?->name ?? '—') : '—' }}
                         </td>
                         @endif
                         <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 max-w-[180px]">
@@ -202,7 +209,7 @@
                         <td class="px-4 py-3 text-right">
                             <div class="flex items-center justify-end gap-1.5">
                                 {{-- View --}}
-                                @php $modalFn = $isLeave ? 'openLeaveModal('.$r->id.')' : 'openOtModal('.$r->id.')'; @endphp
+                                @php $modalFn = $modalFn . '(' . $r->id . ')'; @endphp
                                 <button onclick="{{ $modalFn }}" title="{{ __('View') }}"
                                     class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-blue-600 hover:border-blue-400 bg-white dark:bg-gray-700 transition">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
@@ -239,7 +246,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="{{ $type === 'all' ? 13 : ($type === 'leave' ? 10 : 12) }}" class="px-6 py-10 text-center text-gray-400">
+                        <td colspan="{{ ($type === 'all' ? 11 : 10) + ($showProjectCols ? 2 : 0) }}" class="px-6 py-10 text-center text-gray-400">
                             {{ __('No requests found for the selected period.') }}
                         </td>
                     </tr>

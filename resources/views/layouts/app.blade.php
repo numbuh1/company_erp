@@ -97,9 +97,31 @@
             </div>
         </div>
 
+        @auth
+        {{-- Rules for resources/js/components/work-hours.js (mirror of App\Support\WorkHours) --}}
+        <script>
+            window.WorkHoursConfig = @js([
+                'lunchStart' => \App\Models\AppSetting::get('lunch_break_start', '12:00'),
+                'lunchEnd'   => \App\Models\AppSetting::get('lunch_break_end', '13:00'),
+                'dayStart'   => \App\Support\WorkHours::DAY_START,
+                'dayEnd'     => \App\Support\WorkHours::DAY_END,
+                'holidays'   => \App\Models\PublicHoliday::getHolidayDates(now()->subYear(), now()->addYears(2)),
+                'labels'     => [
+                    'title'    => __('Expected total hours'),
+                    'day'      => __('Day'),
+                    'workDays' => __('working days'),
+                    'excl'     => __('8h/day, excl. weekends & holidays'),
+                ],
+            ]);
+        </script>
+        @endauth
+
         @include('layouts.checkin-fab')
         <x-leave-request-modal />
         <x-ot-request-modal />
+        @auth
+            <x-wfh-request-modal />
+        @endauth
         <x-pending-requests-fab />
         <x-help-fab />
 
@@ -217,6 +239,9 @@
 
             function _initFp(el, opts) {
                 var wasHidden = el.classList.contains('hidden');
+                if (el.dataset.defaultHour) {
+                    opts = Object.assign({}, opts, { defaultHour: +el.dataset.defaultHour, defaultMinute: 0 });
+                }
                 var fp = flatpickr(el, opts);
                 if (wasHidden && fp.altInput) {
                     fp.altInput.classList.add('hidden');

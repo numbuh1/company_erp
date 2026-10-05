@@ -72,7 +72,7 @@
             </svg>
             <a href="#" @click.prevent="navigate(null)"
                 :class="!currentFolderId ? 'font-semibold text-gray-800 dark:text-gray-200' : 'text-blue-500 hover:underline cursor-pointer'">
-                Root
+                {{ __('Root') }}
             </a>
             <template x-for="(crumb, idx) in breadcrumb" :key="crumb.id">
                 <span class="flex items-center gap-1">
@@ -183,7 +183,7 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                                         </svg>
                                         <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-0.5 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none"
-                                            x-text="item.is_folder ? 'Download as ZIP' : 'Download'"></span>
+                                            x-text="item.is_folder ? @js(__('Download as ZIP')) : @js(__('Download'))"></span>
                                     </a>
                                 </template>
                                 <template x-if="item.can_manage">
@@ -227,7 +227,7 @@
             <form @submit.prevent="createFolder()">
                 <div class="mb-4">
                     <x-input-label :value="__('Folder Name')" />
-                    <x-text-input x-model="newFolderName" class="mt-1 block w-full" required placeholder="e.g. Documents" />
+                    <x-text-input x-model="newFolderName" class="mt-1 block w-full" required placeholder="{{ __('e.g. Documents') }}" />
                 </div>
                 <div class="flex justify-end gap-2">
                     <x-secondary-button type="button" @click="showNewFolder = false">{{ __('Cancel') }}</x-secondary-button>

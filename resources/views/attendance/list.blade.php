@@ -624,7 +624,8 @@
                                            class="text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600">
                                     <span class="text-sm text-gray-700 dark:text-gray-300">On Site</span>
                                 </label>
-                                <label class="flex items-center gap-1.5 cursor-pointer">
+                                {{-- WFH is requested via WFH requests now; kept only so legacy WFH records stay editable --}}
+                                <label x-show="editCheckInType === 'wfh'" class="flex items-center gap-1.5 cursor-pointer">
                                     <input type="radio" name="check_in_type" value="wfh" x-model="editCheckInType"
                                            class="text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600">
                                     <span class="text-sm text-gray-700 dark:text-gray-300">WFH</span>
@@ -649,7 +650,7 @@
                                            class="text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600">
                                     <span class="text-sm text-gray-700 dark:text-gray-300">On Site</span>
                                 </label>
-                                <label class="flex items-center gap-1.5 cursor-pointer">
+                                <label x-show="editCheckOutType === 'wfh'" class="flex items-center gap-1.5 cursor-pointer">
                                     <input type="radio" name="check_out_type" value="wfh" x-model="editCheckOutType"
                                            class="text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600">
                                     <span class="text-sm text-gray-700 dark:text-gray-300">WFH</span>

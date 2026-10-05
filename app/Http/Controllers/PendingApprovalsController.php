@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\LeaveRequest;
 use App\Models\OvertimeRequest;
+use App\Models\WfhRequest;
 use Illuminate\Http\Request;
 
 class PendingApprovalsController extends Controller
@@ -24,6 +25,13 @@ class PendingApprovalsController extends Controller
             $otQuery = OvertimeRequest::query();
         } elseif ($user->can('approve team ot')) {
             $otQuery = OvertimeRequest::whereIn('user_id', $user->teamMembers()->pluck('id'));
+        }
+
+        $wfhQuery = null;
+        if ($user->can('approve all wfh')) {
+            $wfhQuery = WfhRequest::query();
+        } elseif ($user->can('approve team wfh')) {
+            $wfhQuery = WfhRequest::whereIn('user_id', $user->teamMembers()->pluck('id'));
         }
 
         $leaves = $leaveQuery
@@ -83,10 +91,36 @@ class PendingApprovalsController extends Controller
             ])
             : collect();
 
+        $wfhs = $wfhQuery
+            ? $wfhQuery->with('user')->where('status', 'pending')->latest()->get()->map(fn($w) => [
+                'id'            => $w->id,
+                'type_key'      => 'wfh',
+                'user'          => [
+                    'id'       => $w->user->id,
+                    'name'     => $w->user->name,
+                    'position' => $w->user->position,
+                    'grade'    => $w->user->grade,
+                    'avatar'   => $w->user->profile_picture
+                        ? asset('storage/profile_pictures/' . $w->user->profile_picture)
+                        : null,
+                    'initials' => mb_strtoupper(mb_substr($w->user->name, 0, 1)),
+                    'url'      => route('users.show', $w->user),
+                ],
+                'hours'         => $w->hours,
+                'start_at_text' => $w->start_at->translatedFormat('D, d/m/y H:i'),
+                'end_at_text'   => $w->end_at->translatedFormat('D, d/m/y H:i'),
+                'description'   => $w->description,
+                'created_at'    => $w->created_at->format('d/m/y H:i'),
+                'approve_url'   => route('wfh-requests.approve', $w->id),
+                'reject_url'    => route('wfh-requests.reject', $w->id),
+            ])
+            : collect();
+
         return response()->json([
             'leaves' => $leaves->values(),
             'ots'    => $ots->values(),
-            'total'  => $leaves->count() + $ots->count(),
+            'wfhs'   => $wfhs->values(),
+            'total'  => $leaves->count() + $ots->count() + $wfhs->count(),
         ]);
     }
 }
