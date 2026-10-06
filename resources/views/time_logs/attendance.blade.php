@@ -268,10 +268,12 @@
                                 $leave = (float) ($lvByUserDay[$member->id][$dk] ?? 0);
                                 $ot    = (float) ($otByUserDay[$member->id][$dk] ?? 0);
                                 $wfh   = (float) ($wfhByUserDay[$member->id][$dk] ?? 0);
-                                $total = $work + $leave;
-                                $hasAny = $work > 0 || $leave > 0 || $ot > 0;
+                                // Approved WFH counts as work time (only the part not already in the time logs)
+                                $workEff = $work + (float) ($wfhUnloggedByUserDay[$member->id][$dk] ?? 0);
+                                $total = $workEff + $leave;
+                                $hasAny = $workEff > 0 || $leave > 0 || $ot > 0;
 
-                                // ── Cell background priority ───────────────────
+                                // ── Cell background priority (work includes approved WFH) ───
                                 // 1. Off day with no data           → gray
                                 // 2. Only leave (no work, no OT)    → yellow (any day)
                                 // 3. Only OT   (no work, no leave)  → orange (any day)
@@ -281,17 +283,17 @@
                                 // 7. Otherwise                      → white
                                 if ($isOff && !$hasAny) {
                                     $cellBg = 'bg-gray-100 dark:bg-gray-700/40';
-                                } elseif ($leave > 0 && $work == 0 && $ot == 0) {
+                                } elseif ($leave > 0 && $workEff == 0 && $ot == 0) {
                                     $cellBg = 'bg-yellow-100 dark:bg-yellow-900/30';
-                                } elseif ($ot > 0 && $work == 0 && $leave == 0) {
+                                } elseif ($ot > 0 && $workEff == 0 && $leave == 0) {
                                     $cellBg = 'bg-orange-100 dark:bg-orange-900/30';
                                 } elseif ($isPast && !$isOff) {
                                     if ($total >= 8) {
-                                        $cellBg = '';                                        // full day / overwork (NT + Leave >= 8h)
+                                        $cellBg = '';                                        // full day / overwork (NT + WFH + Leave >= 8h)
                                     } elseif ($total == 0) {
                                         $cellBg = 'bg-red-200 dark:bg-red-900/50';           // no hours at all
                                     } else {
-                                        $cellBg = 'bg-red-100 dark:bg-red-900/30';           // short day (NT + Leave < 8h)
+                                        $cellBg = 'bg-red-100 dark:bg-red-900/30';           // short day (NT + WFH + Leave < 8h)
                                     }
                                 } else {
                                     $cellBg = '';

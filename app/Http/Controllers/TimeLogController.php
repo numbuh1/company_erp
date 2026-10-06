@@ -1179,14 +1179,18 @@ class TimeLogController extends Controller
         // ── Time logs: [user_id][date] = hours, plus per-record detail ─────
         $tlByUserDay        = [];
         $tlRecordsByUserDay = [];
+        $wfhLoggedByUserDay = []; // part of the time logs that was created from approved WFH
         if (!empty($memberIds)) {
             foreach (
                 TimeLog::whereIn('user_id', $memberIds)
                     ->whereBetween('date', [$fromDate, $toDate])
-                    ->get(['id', 'user_id', 'project_id', 'task_id', 'date', 'time_spent', 'description']) as $log
+                    ->get(['id', 'user_id', 'project_id', 'task_id', 'date', 'time_spent', 'description', 'wfh_request_id']) as $log
             ) {
                 $dk = $log->date->format('Y-m-d');
                 $tlByUserDay[$log->user_id][$dk] = ($tlByUserDay[$log->user_id][$dk] ?? 0) + $log->time_spent;
+                if ($log->wfh_request_id) {
+                    $wfhLoggedByUserDay[$log->user_id][$dk] = ($wfhLoggedByUserDay[$log->user_id][$dk] ?? 0) + $log->time_spent;
+                }
                 $tlRecordsByUserDay[$log->user_id][$dk][] = [
                     'id'          => $log->id,
                     'project_id'  => $log->project_id,
@@ -1280,6 +1284,15 @@ class TimeLogController extends Controller
             }
         }
 
+        // Approved WFH counts as work time. Hours already turned into time logs on approval are in
+        // $tlByUserDay; this is the rest (e.g. requests approved before logs were created), so nothing counts twice.
+        $wfhUnloggedByUserDay = [];
+        foreach ($wfhByUserDay as $uid => $byDay) {
+            foreach ($byDay as $dk => $h) {
+                $wfhUnloggedByUserDay[$uid][$dk] = max(0, $h - ($wfhLoggedByUserDay[$uid][$dk] ?? 0));
+            }
+        }
+
         $holidayDates = PublicHoliday::getHolidayDates($start->copy(), $end->copy());
         $today        = now()->toDateString();
 
@@ -1297,7 +1310,7 @@ class TimeLogController extends Controller
 
         return view('time_logs.attendance', compact(
             'members', 'days', 'fromDate', 'toDate',
-            'tlByUserDay', 'tlRecordsByUserDay', 'lvByUserDay', 'otByUserDay', 'wfhByUserDay',
+            'tlByUserDay', 'tlRecordsByUserDay', 'lvByUserDay', 'otByUserDay', 'wfhByUserDay', 'wfhUnloggedByUserDay',
             'availableTeams', 'availableUsers',
             'filterTeamIds', 'filterUserIds',
             'holidayDates', 'today', 'editableUserIds'
