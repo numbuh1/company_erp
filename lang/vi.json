@@ -1039,5 +1039,7 @@
     "Day": "Ngày",
     "A WFH request cannot span more than 31 days.": "Yêu cầu WFH không được kéo dài quá 31 ngày.",
     "This range has no working hours.": "Khoảng thời gian này không có giờ làm việc.",
-    "View WFH request": "Xem yêu cầu WFH"
+    "View WFH request": "Xem yêu cầu WFH",
+    "This WFH request has already been processed.": "Yêu cầu WFH này đã được xử lý.",
+    "Once approved, WFH hours are logged as work time automatically (up to 8h per day, after leave and work already logged).": "Sau khi được duyệt, giờ WFH sẽ tự động được chấm công (tối đa 8h/ngày, sau khi trừ nghỉ phép và giờ đã chấm)."
 }

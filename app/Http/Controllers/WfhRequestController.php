@@ -6,8 +6,10 @@ use App\Helper\Helper;
 use App\Helper\NotificationHelper;
 use App\Models\User;
 use App\Models\WfhRequest;
+use App\Support\Assignments;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class WfhRequestController extends Controller
@@ -30,12 +32,14 @@ class WfhRequestController extends Controller
 
         $wfh = WfhRequest::create([
             'user_id'     => $userId,
+            'project_id'  => $data['project_id'] ?? null,
+            'task_id'     => $data['task_id'] ?? null,
             'start_at'    => $start,
             'end_at'      => $end,
             'hours'       => $hours,
             'description' => $data['description'] ?? null,
         ]);
-        NotificationHelper::sendNewRequestNotification($wfh, 'wfh');
+        NotificationHelper::sendNewRequestNotification($wfh->load('project', 'task'), 'wfh');
 
         if ($request->expectsJson()) {
             return response()->json(['success' => true, 'id' => $wfh->id]);
@@ -47,7 +51,8 @@ class WfhRequestController extends Controller
     public function show(WfhRequest $wfhRequest)
     {
         $this->_authorize($wfhRequest, 'view all wfh', 'view team wfh', 'view own wfh');
-        $wfhRequest->load('user', 'approver');
+        $wfhRequest->load('user', 'approver', 'project', 'task');
+        ['projects' => $projects, 'tasks' => $tasks] = Assignments::projectsAndTasksFor($wfhRequest->user);
 
         $user     = auth()->user();
         $isFinal  = in_array($wfhRequest->status, ['approved', 'rejected']);
@@ -70,7 +75,13 @@ class WfhRequestController extends Controller
                 'start_at_text'  => $wfhRequest->start_at->translatedFormat('D, d/m/y H:i'),
                 'end_at_text'    => $wfhRequest->end_at->translatedFormat('D, d/m/y H:i'),
                 'is_multi_day'   => $wfhRequest->isMultiDay(),
+                'project_id'     => $wfhRequest->project_id,
+                'task_id'        => $wfhRequest->task_id,
+                'project_text'   => $wfhRequest->project ? $wfhRequest->project->project_code . ' · ' . $wfhRequest->project->name : null,
+                'task_text'      => $wfhRequest->task ? $wfhRequest->task->task_code . ' · ' . $wfhRequest->task->name : null,
             ],
+            'projects'    => $projects->map(fn ($p) => ['id' => $p->id, 'text' => $p->project_code . ' · ' . $p->name]),
+            'tasks'       => $tasks->map(fn ($t) => ['id' => $t->id, 'text' => $t->task_code . ' · ' . $t->name, 'project_id' => $t->project_id]),
             ...$this->totalsFor($wfhRequest->user_id),
             'can_edit'    => $canEdit,
             'can_approve' => $canApprove,
@@ -89,6 +100,8 @@ class WfhRequestController extends Controller
         $this->_assertNoOverlap($wfhRequest->user_id, $start, $end, $wfhRequest->id);
 
         $wfhRequest->update([
+            'project_id'  => $data['project_id'] ?? null,
+            'task_id'     => $data['task_id'] ?? null,
             'start_at'    => $start,
             'end_at'      => $end,
             'hours'       => $hours,
@@ -121,12 +134,17 @@ class WfhRequestController extends Controller
     public function approve(WfhRequest $wfhRequest)
     {
         Helper::authorizeRequest('approve all wfh', 'approve team wfh', $wfhRequest);
+        $this->_assertPending($wfhRequest);
 
-        $wfhRequest->update([
-            'status'        => 'approved',
-            'approved_by'   => auth()->id(),
-            'reject_reason' => null,
-        ]);
+        // Approved WFH counts as work time: record it as time logs together with the approval
+        DB::transaction(function () use ($wfhRequest) {
+            $wfhRequest->update([
+                'status'        => 'approved',
+                'approved_by'   => auth()->id(),
+                'reject_reason' => null,
+            ]);
+            $wfhRequest->logWorkTime();
+        });
 
         NotificationHelper::sendRequestApprovalNotification($wfhRequest, 'wfh');
 
@@ -140,6 +158,7 @@ class WfhRequestController extends Controller
     public function reject(Request $request, WfhRequest $wfhRequest)
     {
         Helper::authorizeRequest('approve all wfh', 'approve team wfh', $wfhRequest);
+        $this->_assertPending($wfhRequest);
 
         $data = $request->validate(['reject_reason' => 'required|string|max:500']);
 
@@ -177,8 +196,17 @@ class WfhRequestController extends Controller
             'start_at'    => 'required|date',
             'end_at'      => 'required|date|after:start_at',
             'hours'       => 'nullable|numeric|min:0.25|max:24',
+            'project_id'  => 'nullable|integer|exists:projects,id',
+            'task_id'     => 'nullable|integer|exists:tasks,id',
             'description' => 'nullable|string',
         ]);
+    }
+
+    private function _assertPending(WfhRequest $wfh): void
+    {
+        if ($wfh->status !== 'pending') {
+            throw ValidationException::withMessages(['status' => __('This WFH request has already been processed.')]);
+        }
     }
 
     /** Own requests need the "own" permission; others go through the team/all approval-style check. */

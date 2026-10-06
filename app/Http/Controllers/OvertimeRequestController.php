@@ -3,12 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\OvertimeRequest;
-use App\Models\Project;
 use App\Models\PublicHoliday;
-use App\Models\Task;
 use App\Models\User;
 use App\Helper\Helper;
 use App\Helper\NotificationHelper;
+use App\Support\Assignments;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -347,22 +346,8 @@ class OvertimeRequestController extends Controller
         );
     }
 
-    /**
-     * Return projects and tasks assigned to the given user.
-     */
     private function _getProjectsAndTasksFor(User $user): array
     {
-        $userId = $user->id;
-
-        $projects = Project::where(function ($q) use ($userId) {
-            $q->whereHas('users', fn($q2) => $q2->where('users.id', $userId))
-              ->orWhereHas('teams', fn($q2) => $q2->whereHas('users', fn($q3) => $q3->where('users.id', $userId)));
-        })->orderBy('name')->get(['id', 'name', 'project_code']);
-
-        $tasks = Task::whereHas('assignees', fn($q) => $q->where('users.id', $userId))
-            ->orderBy('name')
-            ->get(['id', 'name', 'project_id', 'task_code']);
-
-        return compact('projects', 'tasks');
+        return Assignments::projectsAndTasksFor($user);
     }
 }

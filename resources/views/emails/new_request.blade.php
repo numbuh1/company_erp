@@ -52,13 +52,13 @@
                 <td class="desc">{{ $request->description }}</td>
             </tr>
             @endif
-            @if($type === 'ot' && $request->relationLoaded('project') && $request->project)
+            @if(in_array($type, ['ot', 'wfh']) && $request->relationLoaded('project') && $request->project)
             <tr>
                 <td>{{ __('Project') }}:</td>
                 <td>{{ $request->project->name }}</td>
             </tr>
             @endif
-            @if($type === 'ot' && $request->relationLoaded('task') && $request->task)
+            @if(in_array($type, ['ot', 'wfh']) && $request->relationLoaded('task') && $request->task)
             <tr>
                 <td>{{ __('Task') }}:</td>
                 <td>{{ $request->task->name }}</td>

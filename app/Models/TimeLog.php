@@ -13,6 +13,7 @@ class TimeLog extends Model
         'description',
         'date',
         'time_spent',
+        'wfh_request_id',
     ];
 
     protected $casts = [

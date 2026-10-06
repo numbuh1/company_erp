@@ -150,7 +150,7 @@
                 Cuối tuần / Nghỉ lễ
             </span>
             <span class="flex items-center gap-1.5 text-sky-600 dark:text-sky-400">
-                🏠 {{ __('WFH (approved) — included in logged work hours') }}
+                🏠 {{ __('WFH (approved)') }}
             </span>
         </div>
 

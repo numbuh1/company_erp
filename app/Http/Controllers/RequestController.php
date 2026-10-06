@@ -47,7 +47,7 @@ class RequestController extends Controller
 
         // ── WFH ────────────────────────────────────────────────────
         if ($user->can('module wfh') && in_array($type, ['all', 'wfh'])) {
-            $q = WfhRequest::with('user', 'approver');
+            $q = WfhRequest::with('user', 'approver', 'project', 'task');
             $this->applyScope($q, 'wfh', $user);
             $this->applyDateFilter($q, $dateFrom, $dateTo);
             $this->applyStatusFilter($q, $status);

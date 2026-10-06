@@ -56,7 +56,7 @@
             'ot'    => __('OT'),
             'wfh'   => auth()->user()->can('module wfh') ? __('WFH') : null,
         ]);
-        $showProjectCols = in_array($type, ['all', 'ot']);
+        $showProjectCols = in_array($type, ['all', 'ot', 'wfh']);
     @endphp
     <div class="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4">
         <div class="flex">
@@ -172,10 +172,10 @@
                         </td>
                         @if($showProjectCols)
                         <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                            {{ $rowType === 'ot' ? ($r->project?->name ?? '—') : '—' }}
+                            {{ $rowType !== 'leave' ? ($r->project?->name ?? '—') : '—' }}
                         </td>
                         <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                            {{ $rowType === 'ot' ? ($r->task?->name ?? '—') : '—' }}
+                            {{ $rowType !== 'leave' ? ($r->task?->name ?? '—') : '—' }}
                         </td>
                         @endif
                         <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 max-w-[180px]">

@@ -11,6 +11,10 @@
         $wfmUsers = collect([$wfmAuth])->filter();
     }
     $wfmHasSelect = $wfmCanTeamOrAll && $wfmUsers->count() > 1;
+
+    ['projects' => $wfmProjects, 'tasks' => $wfmTasks] = $wfmCanCreate
+        ? \App\Support\Assignments::projectsAndTasksFor($wfmAuth)
+        : ['projects' => collect(), 'tasks' => collect()];
 @endphp
 
 <div id="wfm-overlay" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 hidden pb-[4.5rem] sm:pb-0">
@@ -91,6 +95,19 @@
                     <span id="wfm-year-arrow" class="hidden text-gray-400">→</span>
                     <span id="wfm-year-after" class="hidden font-semibold text-green-600 dark:text-green-400"></span>
                 </div>
+                <p class="text-xs text-gray-400">{{ __('Once approved, WFH hours are logged as work time automatically (up to 8h per day, after leave and work already logged).') }}</p>
+            </div>
+
+            {{-- Project / Task (optional): approved hours are logged against them --}}
+            <div id="wfm-project-row">
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('Project') }} <span class="normal-case font-normal text-gray-400">{{ __('(optional)') }}</span></label>
+                <p id="wfm-project-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
+                <select id="wfm-project-select" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm"></select>
+            </div>
+            <div id="wfm-task-row">
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{{ __('Task') }} <span class="normal-case font-normal text-gray-400">{{ __('(optional)') }}</span></label>
+                <p id="wfm-task-display" class="hidden text-sm text-gray-900 dark:text-gray-100 py-1"></p>
+                <select id="wfm-task-select" class="hidden w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm"></select>
             </div>
 
             {{-- Reason --}}
@@ -133,7 +150,7 @@
         'titleCreate' => __('Create WFH Request'), 'titleView' => __('WFH Request'), 'titleEdit' => __('Edit WFH Request'),
         'pending' => __('Pending'), 'approved' => __('Approved'), 'rejected' => __('Rejected'),
         'errSave' => __('Error saving.'), 'errConn' => __('Connection error.'),
-        'saving' => __('Saving…'), 'processing' => __('Processing…'),
+        'saving' => __('Saving…'), 'processing' => __('Processing…'), 'noneOpt' => __('— None —'),
     ]);
     var CSRF        = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     var AUTH_ID     = @js($wfmAuth?->id);
@@ -141,10 +158,12 @@
     var HAS_SEL     = @js($wfmHasSelect);
     var WFH_URL     = @js(url('wfh-requests'));
     var USR_URL     = @js(url('users'));
+    var MY_PROJECTS = @js($wfmProjects->map(fn ($p) => ['id' => $p->id, 'text' => $p->project_code . ' · ' . $p->name])->values());
+    var MY_TASKS    = @js($wfmTasks->map(fn ($t) => ['id' => $t->id, 'text' => $t->task_code . ' · ' . $t->name, 'project_id' => $t->project_id])->values());
 
     var _mode = 'create', _id = null, _data = null;
     var _monthTotal = 0, _yearTotal = 0;
-    var _tsUser = null, _manualH = false, _bound = false;
+    var _tsUser = null, _tsProject = null, _tsTask = null, _manualH = false, _bound = false;
 
     function $g(id){ return document.getElementById(id); }
     function show(el){ if(!el) return; (el._flatpickr && el._flatpickr.altInput ? el._flatpickr.altInput : el).classList.remove('hidden'); }
@@ -160,6 +179,7 @@
         ['wfm-status-banner','wfm-user-display','wfm-user-select','wfm-start-display','wfm-start-at',
          'wfm-end-display','wfm-end-at','wfm-hours-display','wfm-hours','wfm-hours-note','wfm-breakdown',
          'wfm-preview','wfm-month-arrow','wfm-month-after','wfm-year-arrow','wfm-year-after',
+         'wfm-project-display','wfm-task-display',
          'wfm-desc-display','wfm-description','wfm-reject-display','wfm-reject-section']
         .forEach(function(id){ var el = $g(id); if (el && el.type !== 'hidden') hide(el); });
         show($g('wfm-user-row'));
@@ -188,6 +208,7 @@
         show($g('wfm-start-at')); show($g('wfm-end-at')); show($g('wfm-hours')); show($g('wfm-hours-note')); show($g('wfm-description'));
         _fpSet($g('wfm-start-at'), ''); _fpSet($g('wfm-end-at'), '');
         $g('wfm-hours').value = ''; $g('wfm-hours').disabled = false; $g('wfm-description').value = '';
+        _initProjectTask(MY_PROJECTS, MY_TASKS, '', '');
         _fetchTotals(AUTH_ID);
         _bindListeners();
         $g('wfm-btn-area').innerHTML = _btn(_L.cancel, 'closeWfhModal()', 'secondary') + _btn(_L.create, '_wfmSubmit(this)', 'primary');
@@ -196,6 +217,7 @@
     window.closeWfhModal = function () {
         hide($g('wfm-overlay'));
         if (_tsUser) { try { _tsUser.destroy(); } catch (e) {} _tsUser = null; }
+        _destroyProjectTask();
     };
 
     window._wfmSwitchToEdit = function () { _mode = 'edit'; _populateEdit(); };
@@ -206,6 +228,8 @@
             start_at:    $g('wfm-start-at').value,
             end_at:      $g('wfm-end-at').value,
             hours:       (_manualH && !_isMultiDay()) ? $g('wfm-hours').value : '',
+            project_id:  _tsProject ? _tsProject.getValue() : '',
+            task_id:     _tsTask ? _tsTask.getValue() : '',
             description: $g('wfm-description').value,
         };
         _send(btn, _L.saving, {
@@ -252,6 +276,8 @@
         $g('wfm-end-display').textContent   = w.end_at_text;   show($g('wfm-end-display'));
         $g('wfm-hours-display').textContent = _fmtH(w.hours); show($g('wfm-hours-display'));
         $g('wfm-desc-display').textContent = w.description || '—'; show($g('wfm-desc-display'));
+        $g('wfm-project-display').textContent = w.project_text || '—'; show($g('wfm-project-display'));
+        $g('wfm-task-display').textContent    = w.task_text || '—';    show($g('wfm-task-display'));
 
         _showTotals(w.status === 'approved' ? 0 : parseFloat(w.hours));
 
@@ -274,6 +300,8 @@
         hide($g('wfm-end-display'));   show($g('wfm-end-at'));
         hide($g('wfm-hours-display')); show($g('wfm-hours')); show($g('wfm-hours-note'));
         hide($g('wfm-desc-display'));  show($g('wfm-description'));
+        hide($g('wfm-project-display')); hide($g('wfm-task-display'));
+        _initProjectTask(_data.projects || [], _data.tasks || [], w.project_id, w.task_id);
 
         _fpSet($g('wfm-start-at'), w.start_at_input);
         _fpSet($g('wfm-end-at'), w.end_at_input);
@@ -353,6 +381,43 @@
         });
         $g('wfm-end-at').addEventListener('change', _calcHours);
         $g('wfm-hours').addEventListener('input', function(){ _manualH = true; _showTotals(parseFloat(this.value) || 0); });
+    }
+
+    // Project + task pickers: the task list follows the project, and picking a task fills in its project.
+    function _initProjectTask(projects, tasks, projectId, taskId){
+        _destroyProjectTask();
+        var none = { value: '', text: _L.noneOpt };
+        var taskOpts = function(pid){
+            return [none].concat(tasks.filter(function(t){ return !pid || String(t.project_id) === String(pid); })
+                .map(function(t){ return { value: String(t.id), text: t.text }; }));
+        };
+        var pSel = $g('wfm-project-select'), tSel = $g('wfm-task-select');
+        show(pSel); show(tSel);
+
+        _tsTask = new TomSelect(tSel, {
+            options: taskOpts(projectId), allowEmptyOption: true, maxOptions: null,
+            onChange: function(v){
+                var t = tasks.find(function(x){ return String(x.id) === String(v); });
+                if (t && t.project_id && _tsProject.getValue() !== String(t.project_id)) _tsProject.setValue(String(t.project_id), true);
+            },
+        });
+        _tsProject = new TomSelect(pSel, {
+            options: [none].concat(projects.map(function(p){ return { value: String(p.id), text: p.text }; })),
+            allowEmptyOption: true, maxOptions: null,
+            onChange: function(v){
+                var keep = _tsTask.getValue();
+                _tsTask.clear(true); _tsTask.clearOptions(); _tsTask.addOptions(taskOpts(v)); _tsTask.refreshOptions(false);
+                if (keep && taskOpts(v).some(function(o){ return o.value === keep; })) _tsTask.setValue(keep, true);
+            },
+        });
+        _tsProject.setValue(projectId ? String(projectId) : '', true);
+        _tsTask.setValue(taskId ? String(taskId) : '', true);
+    }
+
+    function _destroyProjectTask(){
+        [_tsProject, _tsTask].forEach(function(ts){ if (ts) { try { ts.destroy(); } catch (e) {} } });
+        _tsProject = null; _tsTask = null;
+        hide($g('wfm-project-select')); hide($g('wfm-task-select'));
     }
 
     function _initUserTs(){

@@ -272,7 +272,7 @@ class TimeLogController extends Controller
             }
         }
 
-        $leaveDays = $this->approvedLeaveHoursPerDay($userId, $from->copy(), $to->copy());
+        $leaveDays = LeaveRequest::approvedHoursPerDay($userId, $from, $to);
 
         $logged = TimeLog::where('user_id', $userId)
             ->whereDate('date', '>=', $from->toDateString())
@@ -303,49 +303,6 @@ class TimeLogController extends Controller
         }
 
         return $plan;
-    }
-
-    /**
-     * Get prorated approved-leave hours per day for a user within a date range.
-     */
-    private function approvedLeaveHoursPerDay(int $userId, Carbon $from, Carbon $to): array
-    {
-        $leaves = LeaveRequest::where('status', 'approved')
-            ->where('user_id', $userId)
-            ->where('start_at', '<=', $to->endOfDay()->toDateTimeString())
-            ->where('end_at', '>=', $from->startOfDay()->toDateTimeString())
-            ->get(['start_at', 'end_at', 'hours', 'start_day_hours', 'end_day_hours']);
-
-        $result = [];
-
-        foreach ($leaves as $leave) {
-            $lStart    = Carbon::parse($leave->start_at);
-            $lEnd      = Carbon::parse($leave->end_at);
-            $lStartDay = $lStart->toDateString();
-            $lEndDay   = $lEnd->toDateString();
-
-            $cur = $lStart->copy()->startOfDay()->max($from->copy()->startOfDay());
-            $cap = $lEnd->copy()->startOfDay()->min($to->copy()->startOfDay());
-
-            while ($cur->lte($cap)) {
-                $dk = $cur->toDateString();
-
-                if ($lStartDay === $lEndDay) {
-                    $hpd = (float) $leave->hours;
-                } elseif ($dk === $lStartDay) {
-                    $hpd = (float) ($leave->start_day_hours ?? 4);
-                } elseif ($dk === $lEndDay) {
-                    $hpd = (float) ($leave->end_day_hours ?? 4);
-                } else {
-                    $hpd = 8.0;
-                }
-
-                $result[$dk] = ($result[$dk] ?? 0) + $hpd;
-                $cur->addDay();
-            }
-        }
-
-        return $result;
     }
 
     /**

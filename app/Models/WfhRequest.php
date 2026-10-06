@@ -10,6 +10,8 @@ class WfhRequest extends Model
 {
     protected $fillable = [
         'user_id',
+        'project_id',
+        'task_id',
         'start_at',
         'end_at',
         'hours',
@@ -32,6 +34,63 @@ class WfhRequest extends Model
     public function approver()
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function project()
+    {
+        return $this->belongsTo(Project::class);
+    }
+
+    public function task()
+    {
+        return $this->belongsTo(Task::class);
+    }
+
+    /** Time logs created from this request when it was approved. */
+    public function timeLogs()
+    {
+        return $this->hasMany(TimeLog::class);
+    }
+
+    /**
+     * Records the approved WFH hours as work time. Each day gets at most what is left of 8h after
+     * approved leave and work already logged, so nothing is double-counted. Returns the number of logs created.
+     */
+    public function logWorkTime(): int
+    {
+        $this->timeLogs()->delete();
+
+        $days = $this->dailyHours();
+        if (!$days) return 0;
+
+        $from   = Carbon::parse(array_key_first($days));
+        $to     = Carbon::parse(array_key_last($days));
+        $leave  = LeaveRequest::approvedHoursPerDay($this->user_id, $from, $to);
+        $logged = TimeLog::where('user_id', $this->user_id)
+            ->whereDate('date', '>=', $from->toDateString())
+            ->whereDate('date', '<=', $to->toDateString())
+            ->selectRaw('DATE(date) as d, SUM(time_spent) as h')
+            ->groupByRaw('DATE(date)')
+            ->pluck('h', 'd');
+
+        $created = 0;
+        foreach ($days as $date => $wfhHours) {
+            $hours = round(min($wfhHours, 8 - ($leave[$date] ?? 0) - (float) ($logged[$date] ?? 0)), 2);
+            if ($hours < 0.25) continue;
+
+            TimeLog::create([
+                'user_id'        => $this->user_id,
+                'project_id'     => $this->project_id,
+                'task_id'        => $this->task_id,
+                'description'    => $this->description ? 'WFH: ' . $this->description : 'WFH',
+                'date'           => $date,
+                'time_spent'     => $hours,
+                'wfh_request_id' => $this->id,
+            ]);
+            $created++;
+        }
+
+        return $created;
     }
 
     public function isMultiDay(): bool
