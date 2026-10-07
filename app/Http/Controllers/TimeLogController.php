@@ -58,6 +58,34 @@ class TimeLogController extends Controller
             $otItems = $otQuery->get();
         }
 
+        // Leave / WFH rows cover a date range: keep those overlapping the date filter
+        $inRange = function ($q) use ($request) {
+            if ($request->filled('date_from')) $q->whereDate('end_at', '>=', $request->date_from);
+            if ($request->filled('date_to'))   $q->whereDate('start_at', '<=', $request->date_to);
+        };
+
+        // ── Approved leave (no project/task, so hidden when filtering by them) ──
+        $leaveItems = collect();
+        if (!$request->filled('project_id') && !$request->filled('task_id') && !$request->boolean('no_context')) {
+            $leaveQuery = LeaveRequest::with('user')->where('status', 'approved');
+            if ($effectiveIds !== null) $leaveQuery->whereIn('user_id', $effectiveIds);
+            $inRange($leaveQuery);
+            $leaveItems = $leaveQuery->get();
+        }
+
+        // ── Approved WFH not yet in the time logs ──
+        // Approval turns WFH into time logs, which are listed above (tagged WFH); this only adds the hours
+        // that have no log yet (e.g. requests approved before logs were created), so nothing is listed twice.
+        $wfhQuery = WfhRequest::with(['user', 'project', 'task'])->where('status', 'approved');
+        if ($effectiveIds !== null)          $wfhQuery->whereIn('user_id', $effectiveIds);
+        if ($request->filled('project_id'))  $wfhQuery->where('project_id', $request->project_id);
+        if ($request->filled('task_id'))     $wfhQuery->where('task_id', $request->task_id);
+        if ($request->boolean('no_context')) $wfhQuery->whereNull('project_id')->whereNull('task_id');
+        $inRange($wfhQuery);
+        $wfhItems = $wfhQuery->get()
+            ->each(fn ($w) => $w->unlogged_hours = round(array_sum($w->missingWorkHours()), 2))
+            ->filter(fn ($w) => $w->unlogged_hours > 0);
+
         // ── Merge, sort, paginate ──
         $allItems = collect();
         foreach ($logsQuery->get() as $log) {
@@ -65,6 +93,12 @@ class TimeLogController extends Controller
         }
         foreach ($otItems as $ot) {
             $allItems->push(['_type' => 'ot', '_date' => Carbon::parse($ot->start_at)->format('Y-m-d'), '_ts' => $ot->created_at?->timestamp ?? 0, '_model' => $ot]);
+        }
+        foreach ($leaveItems as $leave) {
+            $allItems->push(['_type' => 'leave', '_date' => $leave->start_at->format('Y-m-d'), '_ts' => $leave->created_at?->timestamp ?? 0, '_model' => $leave]);
+        }
+        foreach ($wfhItems as $wfh) {
+            $allItems->push(['_type' => 'wfh', '_date' => $wfh->start_at->format('Y-m-d'), '_ts' => $wfh->created_at?->timestamp ?? 0, '_model' => $wfh]);
         }
         $allItems = $allItems->sort(function ($a, $b) {
             if ($a['_date'] !== $b['_date']) return strcmp($b['_date'], $a['_date']);
@@ -1285,11 +1319,13 @@ class TimeLogController extends Controller
         }
 
         // Approved WFH counts as work time. Hours already turned into time logs on approval are in
-        // $tlByUserDay; this is the rest (e.g. requests approved before logs were created), so nothing counts twice.
+        // $tlByUserDay; this adds the rest (e.g. requests approved before logs were created), capped at what is
+        // left of 8h after leave and logged work — the same rule as WfhRequest::missingWorkHours().
         $wfhUnloggedByUserDay = [];
         foreach ($wfhByUserDay as $uid => $byDay) {
             foreach ($byDay as $dk => $h) {
-                $wfhUnloggedByUserDay[$uid][$dk] = max(0, $h - ($wfhLoggedByUserDay[$uid][$dk] ?? 0));
+                $room = 8 - ($lvByUserDay[$uid][$dk] ?? 0) - ($tlByUserDay[$uid][$dk] ?? 0);
+                $wfhUnloggedByUserDay[$uid][$dk] = max(0, min($h - ($wfhLoggedByUserDay[$uid][$dk] ?? 0), $room));
             }
         }
 

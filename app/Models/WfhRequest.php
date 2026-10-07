@@ -53,31 +53,14 @@ class WfhRequest extends Model
     }
 
     /**
-     * Records the approved WFH hours as work time. Each day gets at most what is left of 8h after
-     * approved leave and work already logged, so nothing is double-counted. Returns the number of logs created.
+     * Records the approved WFH hours as work time (see missingWorkHours). Returns the number of logs created.
      */
     public function logWorkTime(): int
     {
         $this->timeLogs()->delete();
 
-        $days = $this->dailyHours();
-        if (!$days) return 0;
-
-        $from   = Carbon::parse(array_key_first($days));
-        $to     = Carbon::parse(array_key_last($days));
-        $leave  = LeaveRequest::approvedHoursPerDay($this->user_id, $from, $to);
-        $logged = TimeLog::where('user_id', $this->user_id)
-            ->whereDate('date', '>=', $from->toDateString())
-            ->whereDate('date', '<=', $to->toDateString())
-            ->selectRaw('DATE(date) as d, SUM(time_spent) as h')
-            ->groupByRaw('DATE(date)')
-            ->pluck('h', 'd');
-
         $created = 0;
-        foreach ($days as $date => $wfhHours) {
-            $hours = round(min($wfhHours, 8 - ($leave[$date] ?? 0) - (float) ($logged[$date] ?? 0)), 2);
-            if ($hours < 0.25) continue;
-
+        foreach ($this->missingWorkHours() as $date => $hours) {
             TimeLog::create([
                 'user_id'        => $this->user_id,
                 'project_id'     => $this->project_id,
@@ -91,6 +74,35 @@ class WfhRequest extends Model
         }
 
         return $created;
+    }
+
+    /**
+     * [Y-m-d => hours] still to be logged for this WFH: each day's WFH hours, capped at what is left of 8h
+     * after approved leave and all work already logged (including this request's own logs), so nothing is
+     * double-counted. Empty once the request has been logged.
+     */
+    public function missingWorkHours(): array
+    {
+        $days = $this->dailyHours();
+        if (!$days) return [];
+
+        $from   = Carbon::parse(array_key_first($days));
+        $to     = Carbon::parse(array_key_last($days));
+        $leave  = LeaveRequest::approvedHoursPerDay($this->user_id, $from, $to);
+        $logged = TimeLog::where('user_id', $this->user_id)
+            ->whereDate('date', '>=', $from->toDateString())
+            ->whereDate('date', '<=', $to->toDateString())
+            ->selectRaw('DATE(date) as d, SUM(time_spent) as h')
+            ->groupByRaw('DATE(date)')
+            ->pluck('h', 'd');
+
+        $missing = [];
+        foreach ($days as $date => $wfhHours) {
+            $hours = round(min($wfhHours, 8 - ($leave[$date] ?? 0) - (float) ($logged[$date] ?? 0)), 2);
+            if ($hours >= 0.25) $missing[$date] = $hours;
+        }
+
+        return $missing;
     }
 
     public function isMultiDay(): bool

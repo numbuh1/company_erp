@@ -129,12 +129,31 @@
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                         @forelse($logs as $entry)
                             @php
-                                $isOt  = $entry['_type'] === 'ot';
-                                $model = $entry['_model'];
+                                $type     = $entry['_type'];
+                                $model    = $entry['_model'];
+                                $isOt     = $type === 'ot';
+                                $isLeave  = $type === 'leave';
+                                $isWfh    = $type === 'wfh';                          // approved WFH hours not yet logged
+                                $isWfhLog = $type === 'log' && $model->wfh_request_id; // time log created from approved WFH
+                                $rowBorder = match (true) {
+                                    $isOt              => 'border-l-4 border-orange-400',
+                                    $isLeave           => 'border-l-4 border-amber-400',
+                                    $isWfh || $isWfhLog => 'border-l-4 border-sky-400',
+                                    default            => '',
+                                };
+                                $wfhBadge = '<span class="text-xs font-semibold px-1.5 py-0.5 rounded bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300 shrink-0">🏠 WFH</span>';
                             @endphp
-                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition {{ $isOt ? 'border-l-4 border-orange-400' : '' }}">
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition {{ $rowBorder }}">
                                 <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                                    {{ $isOt ? \Carbon\Carbon::parse($model->start_at)->format('d/m/Y') : $model->date->format('d/m/Y') }}
+                                    @if($isLeave || $isWfh)
+                                        @if($model->start_at->isSameDay($model->end_at))
+                                            {{ $model->start_at->format('d/m/Y') }}
+                                        @else
+                                            {{ $model->start_at->format('d/m') }} – {{ $model->end_at->format('d/m/Y') }}
+                                        @endif
+                                    @else
+                                        {{ $isOt ? \Carbon\Carbon::parse($model->start_at)->format('d/m/Y') : $model->date->format('d/m/Y') }}
+                                    @endif
                                 </td>
                                 @if($users)
                                     <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
@@ -142,9 +161,15 @@
                                     </td>
                                 @endif
                                 <td class="px-4 py-3 text-sm">
-                                    @if($isOt)
-                                        <div class="flex flex-wrap items-center gap-1.5">
+                                    <div class="flex flex-wrap items-center gap-1.5">
+                                        @if($isOt)
                                             <span class="text-xs font-semibold px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400 shrink-0">OT</span>
+                                        @elseif($isLeave)
+                                            <span class="text-xs font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 shrink-0">🏖 {{ ['annual' => __('Annual leave'), 'sick' => __('Sick leave'), 'unpaid' => __('Unpaid leave')][$model->type] ?? __('Leave') }}</span>
+                                        @elseif($isWfh || $isWfhLog)
+                                            {!! $wfhBadge !!}
+                                        @endif
+                                        @if(!$isLeave)
                                             @if($model->task)
                                                 <a href="{{ route('tasks.show', $model->task) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
                                                     <span class="font-mono text-xs font-semibold">{{ $model->task->task_code }}</span>
@@ -155,31 +180,23 @@
                                                     <span class="font-mono text-xs font-semibold">{{ $model->project->project_code }}</span>
                                                     <span class="ml-1">{{ $model->project->name }}</span>
                                                 </a>
+                                            @elseif($type === 'log' && !$isWfhLog)
+                                                <span class="text-gray-400 text-xs">Khác</span>
                                             @endif
-                                        </div>
-                                    @else
-                                        @if($model->task)
-                                            <a href="{{ route('tasks.show', $model->task) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
-                                                <span class="font-mono text-xs font-semibold">{{ $model->task->task_code }}</span>
-                                                <span class="ml-1">{{ $model->task->name }}</span>
-                                            </a>
-                                        @elseif($model->project)
-                                            <a href="{{ route('projects.show', $model->project) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
-                                                <span class="font-mono text-xs font-semibold">{{ $model->project->project_code }}</span>
-                                                <span class="ml-1">{{ $model->project->name }}</span>
-                                            </a>
-                                        @else
-                                            <span class="text-gray-400 text-xs">Khác</span>
                                         @endif
-                                    @endif
+                                    </div>
                                 </td>
                                 <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 max-w-sm truncate">
                                     {{ $model->description ?? '—' }}
                                 </td>
-                                <td class="px-4 py-3 text-sm font-semibold whitespace-nowrap {{ $isOt ? 'text-orange-600 dark:text-orange-400' : 'text-gray-800 dark:text-gray-200' }}">
+                                <td class="px-4 py-3 text-sm font-semibold whitespace-nowrap {{ match (true) { $isOt => 'text-orange-600 dark:text-orange-400', $isLeave => 'text-amber-600 dark:text-amber-400', $isWfh || $isWfhLog => 'text-sky-600 dark:text-sky-400', default => 'text-gray-800 dark:text-gray-200' } }}">
                                     @if($isOt)
                                         {{ \App\Models\TimeLog::formatTime($model->hours) }}
                                         <span class="ml-1 text-xs font-medium text-orange-500 dark:text-orange-400">{{ $model->type }}</span>
+                                    @elseif($isLeave)
+                                        {{ \App\Models\TimeLog::formatTime($model->hours) }}
+                                    @elseif($isWfh)
+                                        {{ \App\Models\TimeLog::formatTime($model->unlogged_hours) }}
                                     @else
                                         {{ $model->formatted_time }}
                                     @endif
@@ -188,10 +205,16 @@
                                     <div class="flex items-center justify-end gap-2">
                                         @if($isOt)
                                             <a href="{{ route('overtime-requests.show', $model) }}" title="Xem OT"
-                                                class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-orange-600 hover:border-orange-400 bg-white dark:bg-gray-700 transition">
+                                                class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 bg-white dark:bg-gray-700 transition hover:text-orange-600 hover:border-orange-400">
                                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                                 <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Xem OT</span>
                                             </a>
+                                        @elseif($isLeave || $isWfh)
+                                            <button type="button" onclick="{{ $isLeave ? 'openLeaveModal' : 'openWfhModal' }}({{ $model->id }})" title="{{ __('View') }}"
+                                                class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 bg-white dark:bg-gray-700 transition {{ $isLeave ? 'hover:text-amber-600 hover:border-amber-400' : 'hover:text-sky-600 hover:border-sky-400' }}">
+                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">{{ __('View') }}</span>
+                                            </button>
                                         @else
                                             <a href="{{ route('time-logs.show', $model) }}" title="Xem"
                                                 class="relative group inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-blue-600 hover:border-blue-400 bg-white dark:bg-gray-700 transition">
